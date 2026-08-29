@@ -2,6 +2,8 @@
 
 Research and zero-fine-tuning baselines for robust detection of fully AI-generated still images under distribution shift.
 
+See [`TODO.md`](TODO.md) for prioritised next steps and acceptance gates.
+
 ## Current result
 
 Ateeqq SigLIP was the strongest tested open-source baseline. On the frozen 80-image SID_Set confirmation slice:
