@@ -1,0 +1,1728 @@
+{
+  "model": "wkaandemir_clip",
+  "model_info": {
+    "model_id": "wkaandemir/ai-image-detector",
+    "kind": "timm_real_logit",
+    "threshold": 0.08,
+    "license": "MIT",
+    "temperature": 0.595,
+    "parameters": 85846273,
+    "id2label": null,
+    "resolved_commit": null
+  },
+  "sample_count": 24,
+  "fine_tuning": false,
+  "conditions": {
+    "clean": {
+      "dataset": "SID_Set validation gate:clean",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.75,
+      "precision": 0.6875,
+      "recall": 0.916667,
+      "f1": 0.785714,
+      "roc_auc": 0.9375,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 7,
+        "false_positive": 5,
+        "false_negative": 1
+      },
+      "seconds": 20.2981,
+      "images_per_second": 1.182377,
+      "threshold_sweep": {
+        "best_threshold": 0.989882,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "jpeg_q30": {
+      "dataset": "SID_Set validation gate:jpeg_q30",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.666667,
+      "balanced_accuracy": 0.666667,
+      "precision": 0.611111,
+      "recall": 0.916667,
+      "f1": 0.733333,
+      "roc_auc": 0.9375,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 5,
+        "false_positive": 7,
+        "false_negative": 1
+      },
+      "seconds": 18.984188,
+      "images_per_second": 1.26421,
+      "threshold_sweep": {
+        "best_threshold": 0.989621,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "blur_sigma2": {
+      "dataset": "SID_Set validation gate:blur_sigma2",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.75,
+      "precision": 0.6875,
+      "recall": 0.916667,
+      "f1": 0.785714,
+      "roc_auc": 0.9375,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 7,
+        "false_positive": 5,
+        "false_negative": 1
+      },
+      "seconds": 19.169783,
+      "images_per_second": 1.25197,
+      "threshold_sweep": {
+        "best_threshold": 0.989689,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "resize_0.25": {
+      "dataset": "SID_Set validation gate:resize_0.25",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.791667,
+      "balanced_accuracy": 0.791667,
+      "precision": 0.733333,
+      "recall": 0.916667,
+      "f1": 0.814815,
+      "roc_auc": 0.9375,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 8,
+        "false_positive": 4,
+        "false_negative": 1
+      },
+      "seconds": 15.717941,
+      "images_per_second": 1.526918,
+      "threshold_sweep": {
+        "best_threshold": 0.989789,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "noise_sigma0.10": {
+      "dataset": "SID_Set validation gate:noise_sigma0.10",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.791667,
+      "balanced_accuracy": 0.791667,
+      "precision": 0.733333,
+      "recall": 0.916667,
+      "f1": 0.814815,
+      "roc_auc": 0.916667,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 8,
+        "false_positive": 4,
+        "false_negative": 1
+      },
+      "seconds": 18.068327,
+      "images_per_second": 1.328291,
+      "threshold_sweep": {
+        "best_threshold": 0.989009,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "color_jitter_20": {
+      "dataset": "SID_Set validation gate:color_jitter_20",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.75,
+      "precision": 0.6875,
+      "recall": 0.916667,
+      "f1": 0.785714,
+      "roc_auc": 0.923611,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 7,
+        "false_positive": 5,
+        "false_negative": 1
+      },
+      "seconds": 14.936808,
+      "images_per_second": 1.606769,
+      "threshold_sweep": {
+        "best_threshold": 0.990047,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "center_crop_80": {
+      "dataset": "SID_Set validation gate:center_crop_80",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.08,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.75,
+      "precision": 0.6875,
+      "recall": 0.916667,
+      "f1": 0.785714,
+      "roc_auc": 0.923611,
+      "confusion": {
+        "true_positive": 11,
+        "true_negative": 7,
+        "false_positive": 5,
+        "false_negative": 1
+      },
+      "seconds": 13.721635,
+      "images_per_second": 1.749063,
+      "threshold_sweep": {
+        "best_threshold": 0.989578,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.956522,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    }
+  },
+  "predictions": [
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.045240700244903564,
+      "raw_score": 1.8144301176071167,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9943939978256822,
+      "raw_score": -3.0810859203338623,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.8802709132432938,
+      "raw_score": -1.1870238780975342,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.01258927583694458,
+      "raw_score": 2.595534324645996,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.009063184261322021,
+      "raw_score": 2.7931811809539795,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.989882237277925,
+      "raw_score": -2.7270596027374268,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.008793532848358154,
+      "raw_score": 2.811317205429077,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.08745115995407104,
+      "raw_score": 1.3953709602355957,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9918105136603117,
+      "raw_score": -2.85402512550354,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.993974553886801,
+      "raw_score": -3.0379035472869873,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9907972365617752,
+      "raw_score": -2.784008502960205,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.04639899730682373,
+      "raw_score": 1.7986667156219482,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.9270541593432426,
+      "raw_score": -1.5126653909683228,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.009388267993927002,
+      "raw_score": 2.772023916244507,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9917849777266383,
+      "raw_score": -2.8521573543548584,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9933693134225905,
+      "raw_score": -2.9805896282196045,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.9772975984960794,
+      "raw_score": -2.2385807037353516,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.009506046772003174,
+      "raw_score": 2.7645316123962402,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.9829500410705805,
+      "raw_score": -2.412374258041382,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.011141419410705566,
+      "raw_score": 2.6691019535064697,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9915592595934868,
+      "raw_score": -2.8358941078186035,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9926679576747119,
+      "raw_score": -2.920344591140747,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9932194869033992,
+      "raw_score": -2.9672048091888428,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "clean",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9899875922128558,
+      "raw_score": -2.733350992202759,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.14430564641952515,
+      "raw_score": 1.0590877532958984,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9943283176980913,
+      "raw_score": -3.0741159915924072,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.9189381152391434,
+      "raw_score": -1.4446635246276855,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.012739896774291992,
+      "raw_score": 2.588369131088257,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.006088137626647949,
+      "raw_score": 3.0317015647888184,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9896211037412286,
+      "raw_score": -2.711740732192993,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.010261237621307373,
+      "raw_score": 2.7185962200164795,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.08555871248245239,
+      "raw_score": 1.409620761871338,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9923773217014968,
+      "raw_score": -2.897040605545044,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9942239471711218,
+      "raw_score": -3.063204050064087,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9913374306634068,
+      "raw_score": -2.8203258514404297,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.1099470853805542,
+      "raw_score": 1.2443126440048218,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.8489248007535934,
+      "raw_score": -1.0270848274230957,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.009121716022491455,
+      "raw_score": 2.789323091506958,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9913676399737597,
+      "raw_score": -2.822422504425049,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9935089452192187,
+      "raw_score": -2.9933366775512695,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.9775777719914913,
+      "raw_score": -2.2461400032043457,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.010463476181030273,
+      "raw_score": 2.7068588733673096,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.9865401294082403,
+      "raw_score": -2.555222272872925,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.013681888580322266,
+      "raw_score": 2.545353651046753,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9920392669737339,
+      "raw_score": -2.871018648147583,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9928900049999356,
+      "raw_score": -2.9387755393981934,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9934874549508095,
+      "raw_score": -2.9913570880889893,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9905701661482453,
+      "raw_score": -2.76936936378479,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.05667966604232788,
+      "raw_score": 1.673134207725525,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9944457863457501,
+      "raw_score": -3.086639165878296,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.5359635949134827,
+      "raw_score": -0.08574140071868896,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.010748684406280518,
+      "raw_score": 2.690687417984009,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.00787198543548584,
+      "raw_score": 2.8777453899383545,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9896892383694649,
+      "raw_score": -2.715700626373291,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.00877845287322998,
+      "raw_score": 2.8123490810394287,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.0448649525642395,
+      "raw_score": 1.8196258544921875,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9917232450097799,
+      "raw_score": -2.847665786743164,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9936788398772478,
+      "raw_score": -3.009219169616699,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9907714007422328,
+      "raw_score": -2.782325029373169,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.08809250593185425,
+      "raw_score": 1.390605092048645,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.5858820378780365,
+      "raw_score": -0.20644572377204895,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.009032189846038818,
+      "raw_score": 2.795241594314575,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9919404219835997,
+      "raw_score": -2.863617181777954,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9932415415532887,
+      "raw_score": -2.969156503677368,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.9614558070898056,
+      "raw_score": -1.9139026403427124,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.009157538414001465,
+      "raw_score": 2.7869675159454346,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.984404593706131,
+      "raw_score": -2.466310977935791,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.013165771961212158,
+      "raw_score": 2.568544626235962,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9917060798034072,
+      "raw_score": -2.8464229106903076,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9928317326121032,
+      "raw_score": -2.9338839054107666,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9926119782030582,
+      "raw_score": -2.915785551071167,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9901811890304089,
+      "raw_score": -2.745084762573242,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.055824339389801025,
+      "raw_score": 1.6827212572097778,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9945042948238552,
+      "raw_score": -3.09297513961792,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.7634720951318741,
+      "raw_score": -0.6972271800041199,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.011335134506225586,
+      "raw_score": 2.6587257385253906,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.008048057556152344,
+      "raw_score": 2.864476442337036,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9897892875596881,
+      "raw_score": -2.721562623977661,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.008546590805053711,
+      "raw_score": 2.828416109085083,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.06238257884979248,
+      "raw_score": 1.6124827861785889,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9918161472305655,
+      "raw_score": -2.854438066482544,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9938627630472183,
+      "raw_score": -3.0268986225128174,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.990774474106729,
+      "raw_score": -2.782525062561035,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.05722278356552124,
+      "raw_score": 1.6671175956726074,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.6997155845165253,
+      "raw_score": -0.5033365488052368,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.00931936502456665,
+      "raw_score": 2.776447057723999,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9919611681252718,
+      "raw_score": -2.8651630878448486,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9932874692603946,
+      "raw_score": -2.973241090774536,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.9706847034394741,
+      "raw_score": -2.0824358463287354,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.009662508964538574,
+      "raw_score": 2.7547221183776855,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.984436091966927,
+      "raw_score": -2.4675328731536865,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.012794971466064453,
+      "raw_score": 2.585766553878784,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9916750425472856,
+      "raw_score": -2.844181776046753,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9927618722431362,
+      "raw_score": -2.9280712604522705,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9928102637641132,
+      "raw_score": -2.932091474533081,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.990136656910181,
+      "raw_score": -2.742365598678589,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.046679019927978516,
+      "raw_score": 1.7949111461639404,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9936371436342597,
+      "raw_score": -3.005282402038574,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.8482796996831894,
+      "raw_score": -1.024097204208374,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.011298775672912598,
+      "raw_score": 2.660659074783325,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.010649621486663818,
+      "raw_score": 2.696258783340454,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.989008734934032,
+      "raw_score": -2.6772634983062744,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.008548915386199951,
+      "raw_score": 2.8282482624053955,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.03053802251815796,
+      "raw_score": 2.057373285293579,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9920109622180462,
+      "raw_score": -2.8688900470733643,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.994099800940603,
+      "raw_score": -3.0504767894744873,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9907600488513708,
+      "raw_score": -2.7815868854522705,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.05012106895446777,
+      "raw_score": 1.7504262924194336,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.9520844854414463,
+      "raw_score": -1.7785825729370117,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.00918644666671753,
+      "raw_score": 2.7850706577301025,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9906185744330287,
+      "raw_score": -2.772460699081421,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.99299883749336,
+      "raw_score": -2.9480185508728027,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.9828419722616673,
+      "raw_score": -2.4085493087768555,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.008463501930236816,
+      "raw_score": 2.834280252456665,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.9778782911598682,
+      "raw_score": -2.2543513774871826,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.009373664855957031,
+      "raw_score": 2.7729599475860596,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9917813837528229,
+      "raw_score": -2.8518948554992676,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9917312962934375,
+      "raw_score": -2.848249673843384,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9929137644357979,
+      "raw_score": -2.940781354904175,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9908322747796774,
+      "raw_score": -2.786299467086792,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.019996345043182373,
+      "raw_score": 2.3157436847686768,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9938860451802611,
+      "raw_score": -3.0291740894317627,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.8351679742336273,
+      "raw_score": -0.9655100107192993,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.011319518089294434,
+      "raw_score": 2.6595571041107178,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.009853780269622803,
+      "raw_score": 2.7429471015930176,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9900465998798609,
+      "raw_score": -2.736903429031372,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.0057944655418396,
+      "raw_score": 3.061290979385376,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.9385613016784191,
+      "raw_score": -1.6221535205841064,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9920731242746115,
+      "raw_score": -2.87357497215271,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9937661956064403,
+      "raw_score": -3.0175514221191406,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.990264754742384,
+      "raw_score": -2.750220775604248,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.033077359199523926,
+      "raw_score": 2.0082859992980957,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.8932088166475296,
+      "raw_score": -1.2637473344802856,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.00922858715057373,
+      "raw_score": 2.782325506210327,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9914090903475881,
+      "raw_score": -2.8253114223480225,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9924996341578662,
+      "raw_score": -2.906738519668579,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.9856889443472028,
+      "raw_score": -2.518223524093628,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.008424818515777588,
+      "raw_score": 2.837023973464966,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.9824066162109375,
+      "raw_score": -2.3933770656585693,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.01205819845199585,
+      "raw_score": 2.6214990615844727,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9914176147431135,
+      "raw_score": -2.8259072303771973,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9924793713726103,
+      "raw_score": -2.905121088027954,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9927312238141894,
+      "raw_score": -2.9255387783050537,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9904994638636708,
+      "raw_score": -2.7648823261260986,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.024213194847106934,
+      "raw_score": 2.199327230453491,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9946931865997612,
+      "raw_score": -3.113898515701294,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.9818782787770033,
+      "raw_score": -2.3754518032073975,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.013131320476531982,
+      "raw_score": 2.57012677192688,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.014517903327941895,
+      "raw_score": 2.5095598697662354,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.989577516913414,
+      "raw_score": -2.709221124649048,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.009700894355773926,
+      "raw_score": 2.752347707748413,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.02673625946044922,
+      "raw_score": 2.1388089656829834,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.991787863895297,
+      "raw_score": -2.852368116378784,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9942787988111377,
+      "raw_score": -3.0689141750335693,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9907107269391418,
+      "raw_score": -2.7783896923065186,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.13830506801605225,
+      "raw_score": 1.0885164737701416,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.6716886460781097,
+      "raw_score": -0.42592036724090576,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.011644840240478516,
+      "raw_score": 2.642500638961792,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9932804554700851,
+      "raw_score": -2.9726157188415527,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9943969156593084,
+      "raw_score": -3.081397294998169,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.30968642234802246,
+      "raw_score": 0.4769435226917267,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.010663270950317383,
+      "raw_score": 2.6954851150512695,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.9650279395282269,
+      "raw_score": -1.973976492881775,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.012329936027526855,
+      "raw_score": 2.6080751419067383,
+      "pred": "real"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.991271642036736,
+      "raw_score": -2.8157846927642822,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9926331881433725,
+      "raw_score": -2.917508840560913,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9933076947927475,
+      "raw_score": -2.975048780441284,
+      "pred": "ai"
+    },
+    {
+      "model": "wkaandemir_clip",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9902784079313278,
+      "raw_score": -2.751063823699951,
+      "pred": "ai"
+    }
+  ],
+  "seconds_total": 120.90743490000023
+}

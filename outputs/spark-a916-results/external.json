@@ -1,0 +1,211 @@
+{
+  "source": "openai/dalle3-eval-samples",
+  "source_revision": "d7c88c07b492ad7b9fd3003126d00719a2edabb1",
+  "source_license": "MIT repository license",
+  "scope": "synthetic recall only; no real comparator",
+  "results": {
+    "DALL-E 3": {
+      "n": 10,
+      "ai_recall": 1.0,
+      "mean_probability_ai": 0.9998940050601959,
+      "min_probability_ai": 0.9989858269691467,
+      "max_probability_ai": 0.9999992847442627
+    },
+    "Midjourney": {
+      "n": 10,
+      "ai_recall": 1.0,
+      "mean_probability_ai": 0.9999180972576142,
+      "min_probability_ai": 0.9995243549346924,
+      "max_probability_ai": 0.9999988079071045
+    },
+    "SDXL": {
+      "n": 10,
+      "ai_recall": 0.9,
+      "mean_probability_ai": 0.8998834810801781,
+      "min_probability_ai": 0.001313469954766333,
+      "max_probability_ai": 0.9999980926513672
+    }
+  },
+  "predictions": [
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "0_0",
+      "probability_ai": 0.9999982118606567,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "1_0",
+      "probability_ai": 0.9999984502792358,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "2_0",
+      "probability_ai": 0.9999924898147583,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "3_0",
+      "probability_ai": 0.9999806880950928,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "4_0",
+      "probability_ai": 0.9999901056289673,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "5_0",
+      "probability_ai": 0.9999992847442627,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "6_0",
+      "probability_ai": 0.9999990463256836,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "7_0",
+      "probability_ai": 0.9989858269691467,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "8_0",
+      "probability_ai": 0.9999973773956299,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "9_0",
+      "probability_ai": 0.9999985694885254,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "0_0",
+      "probability_ai": 0.9999969005584717,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "1_0",
+      "probability_ai": 0.999967098236084,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "2_0",
+      "probability_ai": 0.9999973773956299,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "3_0",
+      "probability_ai": 0.9999945163726807,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "4_0",
+      "probability_ai": 0.9995243549346924,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "5_0",
+      "probability_ai": 0.9999977350234985,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "6_0",
+      "probability_ai": 0.9999643564224243,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "7_0",
+      "probability_ai": 0.9997543692588806,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "8_0",
+      "probability_ai": 0.9999854564666748,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "9_0",
+      "probability_ai": 0.9999988079071045,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "0_0",
+      "probability_ai": 0.9999980926513672,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "1_0",
+      "probability_ai": 0.9998677968978882,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "2_0",
+      "probability_ai": 0.9999581575393677,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "3_0",
+      "probability_ai": 0.9998102784156799,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "4_0",
+      "probability_ai": 0.9999701976776123,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "5_0",
+      "probability_ai": 0.999872088432312,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "6_0",
+      "probability_ai": 0.9998244643211365,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "7_0",
+      "probability_ai": 0.001313469954766333,
+      "pred": "real"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "8_0",
+      "probability_ai": 0.9999681711196899,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "9_0",
+      "probability_ai": 0.9982520937919617,
+      "pred": "ai"
+    }
+  ]
+}

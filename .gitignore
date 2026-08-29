@@ -1,0 +1,25 @@
+# Python environments and caches
+.venv/
+venv/
+work/v/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Credentials and machine-local state
+.env
+.env.*
+work/ssh/
+known_hosts
+
+# Download caches and large binary artifacts
+work/hf-cache/
+work/model-cache/
+*.safetensors
+*.tar
+outputs/spark-a916-evaluation/results/
+outputs/spark-a916-evaluation/data/**/*.img
+outputs/spark-a916-evaluation/data/**/*.png
+outputs/spark-a916-evaluation/data/**/*.jpg
+outputs/spark-a916-evaluation/data/**/*.jpeg

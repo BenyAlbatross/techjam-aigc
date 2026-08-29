@@ -1,0 +1,458 @@
+{
+  "metrics": {
+    "square_aspect": {
+      "roc_auc": 0.9166666666666666,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "exact_1024_square": {
+      "roc_auc": 0.9166666666666666,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "metadata_ai_keyword": {
+      "roc_auc": 0.5,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "low_jpeg_blockiness": {
+      "roc_auc": 0.375,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "high_frequency_energy": {
+      "roc_auc": 0.4166666666666667,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    }
+  },
+  "predictions": [
+    {
+      "sample_id": "91995094dd129257",
+      "source_row": 0,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_00_91995094dd129257.jpg",
+      "width": 1024,
+      "height": 681,
+      "format": "JPEG",
+      "sha256": "df43fa560c5cd395a615076d62edf1d4dc8d7171b2f325a9919434af268966f4",
+      "scores": {
+        "square_aspect": -0.40790949944994065,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.0718088150024414,
+        "high_frequency_energy": 0.02334507182240486
+      }
+    },
+    {
+      "sample_id": "full_synthetic_004934",
+      "source_row": 2,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_00_full_synthetic_004934.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "ef14dec7d72033aa665156b156c1f45654ca59fe87ac3bad01a2ba73ee333600",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.07043254375457764,
+        "high_frequency_energy": 0.03177548944950104
+      }
+    },
+    {
+      "sample_id": "58c66c4583de8bf5",
+      "source_row": 3,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_01_58c66c4583de8bf5.jpg",
+      "width": 1024,
+      "height": 1024,
+      "format": "JPEG",
+      "sha256": "b8acd64e9fc0363e9c8bbfb513860a5fe42b0d0c057c9d2f7288265b4dfbca4e",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.09886312484741211,
+        "high_frequency_energy": 0.015099924989044666
+      }
+    },
+    {
+      "sample_id": "d953914a018b80ad",
+      "source_row": 7,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_02_d953914a018b80ad.jpg",
+      "width": 961,
+      "height": 1024,
+      "format": "JPEG",
+      "sha256": "466a7417e422b81d660011293c3ef095efba7070d91a4dcb9b3d7b80bfeb207a",
+      "scores": {
+        "square_aspect": -0.0634973966291606,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.0042612552642822266,
+        "high_frequency_energy": 0.031124236062169075
+      }
+    },
+    {
+      "sample_id": "9a99796dffaaa7d3",
+      "source_row": 8,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_03_9a99796dffaaa7d3.jpg",
+      "width": 1024,
+      "height": 732,
+      "format": "JPEG",
+      "sha256": "aa4de5dd6865f6cd5aced05b03f21fd046266a94552c673d6202dbad0d3e476e",
+      "scores": {
+        "square_aspect": -0.33569129163814154,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.01711714267730713,
+        "high_frequency_energy": 0.014722449705004692
+      }
+    },
+    {
+      "sample_id": "full_synthetic_002764",
+      "source_row": 9,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_01_full_synthetic_002764.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "bb3e5bff7984bd2dc60d12533786f9bff91ef8e4879c06b291775c6a076a9d21",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.12610626220703125,
+        "high_frequency_energy": 0.026074353605508804
+      }
+    },
+    {
+      "sample_id": "8bd5cae6314172b9",
+      "source_row": 10,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_04_8bd5cae6314172b9.jpg",
+      "width": 1024,
+      "height": 654,
+      "format": "JPEG",
+      "sha256": "985a3479675d25ac4d40ec99e99be3b84ee9131c63f5dceed7af03f512e6e516",
+      "scores": {
+        "square_aspect": -0.4483644541422544,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.16878271102905273,
+        "high_frequency_energy": 0.019611692056059837
+      }
+    },
+    {
+      "sample_id": "42e7a4cbf61fd493",
+      "source_row": 11,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_05_42e7a4cbf61fd493.jpg",
+      "width": 1024,
+      "height": 1024,
+      "format": "JPEG",
+      "sha256": "ec8a312f0ab224c8d8fe1794d9036b50fb360b74f496263f3719adf12080a485",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.032427430152893066,
+        "high_frequency_energy": 0.01008898951113224
+      }
+    },
+    {
+      "sample_id": "full_synthetic_007473",
+      "source_row": 12,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_02_full_synthetic_007473.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "8436d52532b133edd99107018ebd4834b6a135cadaa92994de2e609f016a11db",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.010028958320617676,
+        "high_frequency_energy": 0.008294910192489624
+      }
+    },
+    {
+      "sample_id": "full_synthetic_000702",
+      "source_row": 13,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_03_full_synthetic_000702.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "1ab26bd1b85661fbba923eda058b18bee40be2b89618a1f6d9e0fb054840cb56",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.11128318309783936,
+        "high_frequency_energy": 0.010954891331493855
+      }
+    },
+    {
+      "sample_id": "full_synthetic_001094",
+      "source_row": 14,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_04_full_synthetic_001094.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "d3c94f32d1caa8878823415f04f50800e692fb93105ff5300bcf2df4297fea68",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.05789995193481445,
+        "high_frequency_energy": 0.006329269148409367
+      }
+    },
+    {
+      "sample_id": "2220f1ab609f0843",
+      "source_row": 15,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_06_2220f1ab609f0843.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "JPEG",
+      "sha256": "8e4a898b9e02bd0e830fce9e1bd0445040168ffec50a120e6f72c971cec34003",
+      "scores": {
+        "square_aspect": -0.28768207245178085,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.07324552536010742,
+        "high_frequency_energy": 0.02638360485434532
+      }
+    },
+    {
+      "sample_id": "76bb9873db655e13",
+      "source_row": 17,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_07_76bb9873db655e13.jpg",
+      "width": 768,
+      "height": 1024,
+      "format": "JPEG",
+      "sha256": "952b5cb1704cad0e1c1c3556035b9685b5d69d88daf6bcd7e3eefab9f44f6e4b",
+      "scores": {
+        "square_aspect": -0.2876820724517809,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.1672060489654541,
+        "high_frequency_energy": 0.01351100206375122
+      }
+    },
+    {
+      "sample_id": "1034c6557e9fb8c1",
+      "source_row": 18,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_08_1034c6557e9fb8c1.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "JPEG",
+      "sha256": "d1795cdbd7e3f9db7df6660feabc14ea35e3e0e4f2a4aa5b4c8060d51ecb1414",
+      "scores": {
+        "square_aspect": -0.28768207245178085,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.11607027053833008,
+        "high_frequency_energy": 0.022409485653042793
+      }
+    },
+    {
+      "sample_id": "full_synthetic_004989",
+      "source_row": 20,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_05_full_synthetic_004989.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "5030a53c6f468a96a63a52aa708a5ccefbe6b0fee02a4a9d66b1bafa84cdec92",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.4929769039154053,
+        "high_frequency_energy": 0.018060991540551186
+      }
+    },
+    {
+      "sample_id": "full_synthetic_001311",
+      "source_row": 21,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_06_full_synthetic_001311.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "e763571ae487b288ea37651fd5335896095a180918ec8bd0075c942b15b6c5ef",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.14131522178649902,
+        "high_frequency_energy": 0.023774404078722
+      }
+    },
+    {
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "source_row": 22,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_09_f2b02fe7b2ddcb9c.jpg",
+      "width": 680,
+      "height": 1024,
+      "format": "JPEG",
+      "sha256": "cbe6094c1d9347d11a34511dcf910da8149482b4cdb177997d9c08be0696ebe8",
+      "scores": {
+        "square_aspect": -0.4093790074293007,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.01680886745452881,
+        "high_frequency_energy": 0.0049157654866576195
+      }
+    },
+    {
+      "sample_id": "full_synthetic_000008",
+      "source_row": 24,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_07_full_synthetic_000008.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "e5fca3a8bb3ebce3c6ed33b8aad4e15bc333a4eb3b047d007aed0bba819ccf90",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.20756050944328308,
+        "high_frequency_energy": 0.0024803499691188335
+      }
+    },
+    {
+      "sample_id": "9e65133332e72eb0",
+      "source_row": 25,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_10_9e65133332e72eb0.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "JPEG",
+      "sha256": "27c5f2fb09c5f3ce5613830e0e7f90d3b72b55f15ad8ae9679dcb5d8f2af42fa",
+      "scores": {
+        "square_aspect": -0.28768207245178085,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.45809483528137207,
+        "high_frequency_energy": 0.013963835313916206
+      }
+    },
+    {
+      "sample_id": "ed392911fea257be",
+      "source_row": 28,
+      "label": 0,
+      "truth": "real",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\0_11_ed392911fea257be.jpg",
+      "width": 768,
+      "height": 1024,
+      "format": "JPEG",
+      "sha256": "5ea942cd55c775bd1f8c7190157138bc60a0a251855f731b98fc32bc44a90bec",
+      "scores": {
+        "square_aspect": -0.2876820724517809,
+        "exact_1024_square": 0.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.0838322639465332,
+        "high_frequency_energy": 0.03420143201947212
+      }
+    },
+    {
+      "sample_id": "full_synthetic_000882",
+      "source_row": 29,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_08_full_synthetic_000882.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "9e2d2f868f77c068fb739437889afa0786648820be75c72d6a5b3a69f7c81f3e",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.016492366790771484,
+        "high_frequency_energy": 0.014696091413497925
+      }
+    },
+    {
+      "sample_id": "full_synthetic_001209",
+      "source_row": 31,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_09_full_synthetic_001209.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "2ed4bfdc714cf2b860eb8bbbfb25e3787fef200861d404581d0ab9d480d94118",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.08836174011230469,
+        "high_frequency_energy": 0.01887495256960392
+      }
+    },
+    {
+      "sample_id": "full_synthetic_007794",
+      "source_row": 33,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_10_full_synthetic_007794.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "ae536ca52cd8b56571b37ebccce9ad0cecfff6dea8a07c3046f7f8e9b806bb4a",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": 0.26291680335998535,
+        "high_frequency_energy": 0.027153894305229187
+      }
+    },
+    {
+      "sample_id": "full_synthetic_008801",
+      "source_row": 35,
+      "label": 1,
+      "truth": "ai",
+      "path": "C:\\Users\\Teh Xu An\\Documents\\Codex\\2026-08-29\\new-chat\\work\\baseline-spike\\data\\sid_validation\\1_11_full_synthetic_008801.png",
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "sha256": "a329afa65aa3ab5b087d4d1c3c900fefafa547aaa9ce444650b3ac13f2788c08",
+      "scores": {
+        "square_aspect": -0.0,
+        "exact_1024_square": 1.0,
+        "metadata_ai_keyword": 0.0,
+        "low_jpeg_blockiness": -0.12544536590576172,
+        "high_frequency_energy": 0.005399818532168865
+      }
+    }
+  ]
+}

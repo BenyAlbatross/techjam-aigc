@@ -1,0 +1,1338 @@
+{
+  "ensembles": {
+    "mean_steganograph_capcheck": {
+      "clean": {
+        "dataset": "mean_steganograph_capcheck:clean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.916667,
+        "balanced_accuracy": 0.916667,
+        "precision": 0.857143,
+        "recall": 1.0,
+        "f1": 0.923077,
+        "roc_auc": 0.930556,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 10,
+          "false_positive": 2,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.780577,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "jpeg_q30": {
+        "dataset": "mean_steganograph_capcheck:jpeg_q30",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 1.0,
+        "recall": 0.916667,
+        "f1": 0.956522,
+        "roc_auc": 0.965278,
+        "confusion": {
+          "true_positive": 11,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 1
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.511674,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.956522,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "blur_sigma2": {
+        "dataset": "mean_steganograph_capcheck:blur_sigma2",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.791667,
+        "balanced_accuracy": 0.791667,
+        "precision": 0.705882,
+        "recall": 1.0,
+        "f1": 0.827586,
+        "roc_auc": 0.881944,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 7,
+          "false_positive": 5,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.788431,
+          "best_accuracy": 0.833333,
+          "best_balanced_accuracy": 0.833333,
+          "best_f1": 0.857143,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "resize_0.25": {
+        "dataset": "mean_steganograph_capcheck:resize_0.25",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "roc_auc": 0.875,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.79419,
+          "best_accuracy": 0.833333,
+          "best_balanced_accuracy": 0.833333,
+          "best_f1": 0.857143,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "noise_sigma0.10": {
+        "dataset": "mean_steganograph_capcheck:noise_sigma0.10",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.875,
+        "recall": 0.583333,
+        "f1": 0.7,
+        "roc_auc": 0.888889,
+        "confusion": {
+          "true_positive": 7,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 5
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.493499,
+          "best_accuracy": 0.875,
+          "best_balanced_accuracy": 0.875,
+          "best_f1": 0.869565,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "color_jitter_20": {
+        "dataset": "mean_steganograph_capcheck:color_jitter_20",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.888889,
+        "roc_auc": 0.965278,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 9,
+          "false_positive": 3,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.830471,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "center_crop_80": {
+        "dataset": "mean_steganograph_capcheck:center_crop_80",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.972222,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.777017,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    },
+    "mean_steganograph_univfd": {
+      "clean": {
+        "dataset": "mean_steganograph_univfd:clean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.923611,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.624915,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "jpeg_q30": {
+        "dataset": "mean_steganograph_univfd:jpeg_q30",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.857143,
+        "roc_auc": 0.965278,
+        "confusion": {
+          "true_positive": 9,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 3
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.191863,
+          "best_accuracy": 0.916667,
+          "best_balanced_accuracy": 0.916667,
+          "best_f1": 0.916667,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "blur_sigma2": {
+        "dataset": "mean_steganograph_univfd:blur_sigma2",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.791667,
+        "balanced_accuracy": 0.791667,
+        "precision": 0.705882,
+        "recall": 1.0,
+        "f1": 0.827586,
+        "roc_auc": 0.701389,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 7,
+          "false_positive": 5,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.630557,
+          "best_accuracy": 0.833333,
+          "best_balanced_accuracy": 0.833333,
+          "best_f1": 0.857143,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "resize_0.25": {
+        "dataset": "mean_steganograph_univfd:resize_0.25",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "roc_auc": 0.736111,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.631223,
+          "best_accuracy": 0.833333,
+          "best_balanced_accuracy": 0.833333,
+          "best_f1": 0.857143,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "noise_sigma0.10": {
+        "dataset": "mean_steganograph_univfd:noise_sigma0.10",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.583333,
+        "balanced_accuracy": 0.583333,
+        "precision": 0.75,
+        "recall": 0.25,
+        "f1": 0.375,
+        "roc_auc": 0.666667,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 9
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.224286,
+          "best_accuracy": 0.708333,
+          "best_balanced_accuracy": 0.708333,
+          "best_f1": 0.631579,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "color_jitter_20": {
+        "dataset": "mean_steganograph_univfd:color_jitter_20",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.916667,
+        "balanced_accuracy": 0.916667,
+        "precision": 0.857143,
+        "recall": 1.0,
+        "f1": 0.923077,
+        "roc_auc": 0.847222,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 10,
+          "false_positive": 2,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.615306,
+          "best_accuracy": 0.916667,
+          "best_balanced_accuracy": 0.916667,
+          "best_f1": 0.923077,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "center_crop_80": {
+        "dataset": "mean_steganograph_univfd:center_crop_80",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.923611,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.623396,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    },
+    "mean_capcheck_univfd": {
+      "clean": {
+        "dataset": "mean_capcheck_univfd:clean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.6875,
+        "recall": 0.916667,
+        "f1": 0.785714,
+        "roc_auc": 0.784722,
+        "confusion": {
+          "true_positive": 11,
+          "true_negative": 7,
+          "false_positive": 5,
+          "false_negative": 1
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.510978,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.814815,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "jpeg_q30": {
+        "dataset": "mean_capcheck_univfd:jpeg_q30",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.666667,
+        "balanced_accuracy": 0.666667,
+        "precision": 0.625,
+        "recall": 0.833333,
+        "f1": 0.714286,
+        "roc_auc": 0.777778,
+        "confusion": {
+          "true_positive": 10,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 2
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.591291,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.782609,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "blur_sigma2": {
+        "dataset": "mean_capcheck_univfd:blur_sigma2",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.708333,
+        "balanced_accuracy": 0.708333,
+        "precision": 0.647059,
+        "recall": 0.916667,
+        "f1": 0.758621,
+        "roc_auc": 0.756944,
+        "confusion": {
+          "true_positive": 11,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 1
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.606263,
+          "best_accuracy": 0.75,
+          "best_balanced_accuracy": 0.75,
+          "best_f1": 0.75,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "resize_0.25": {
+        "dataset": "mean_capcheck_univfd:resize_0.25",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.708333,
+        "balanced_accuracy": 0.708333,
+        "precision": 0.647059,
+        "recall": 0.916667,
+        "f1": 0.758621,
+        "roc_auc": 0.770833,
+        "confusion": {
+          "true_positive": 11,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 1
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.612506,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.782609,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "noise_sigma0.10": {
+        "dataset": "mean_capcheck_univfd:noise_sigma0.10",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.708333,
+        "balanced_accuracy": 0.708333,
+        "precision": 0.647059,
+        "recall": 0.916667,
+        "f1": 0.758621,
+        "roc_auc": 0.756944,
+        "confusion": {
+          "true_positive": 11,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 1
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.602513,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.782609,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "color_jitter_20": {
+        "dataset": "mean_capcheck_univfd:color_jitter_20",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.708333,
+        "balanced_accuracy": 0.708333,
+        "precision": 0.647059,
+        "recall": 0.916667,
+        "f1": 0.758621,
+        "roc_auc": 0.736111,
+        "confusion": {
+          "true_positive": 11,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 1
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.489523,
+          "best_accuracy": 0.75,
+          "best_balanced_accuracy": 0.75,
+          "best_f1": 0.8,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "center_crop_80": {
+        "dataset": "mean_capcheck_univfd:center_crop_80",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.708333,
+        "balanced_accuracy": 0.708333,
+        "precision": 0.692308,
+        "recall": 0.75,
+        "f1": 0.72,
+        "roc_auc": 0.8125,
+        "confusion": {
+          "true_positive": 9,
+          "true_negative": 8,
+          "false_positive": 4,
+          "false_negative": 3
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.616323,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.736842,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    },
+    "mean_steganograph_capcheck_univfd": {
+      "clean": {
+        "dataset": "mean_steganograph_capcheck_univfd:clean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.916667,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.612121,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "jpeg_q30": {
+        "dataset": "mean_steganograph_capcheck_univfd:jpeg_q30",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.857143,
+        "roc_auc": 0.965278,
+        "confusion": {
+          "true_positive": 9,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 3
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.44702,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.956522,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "blur_sigma2": {
+        "dataset": "mean_steganograph_capcheck_univfd:blur_sigma2",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.791667,
+        "balanced_accuracy": 0.791667,
+        "precision": 0.705882,
+        "recall": 1.0,
+        "f1": 0.827586,
+        "roc_auc": 0.840278,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 7,
+          "false_positive": 5,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.620329,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.827586,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "resize_0.25": {
+        "dataset": "mean_steganograph_capcheck_univfd:resize_0.25",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "roc_auc": 0.847222,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.741669,
+          "best_accuracy": 0.833333,
+          "best_balanced_accuracy": 0.833333,
+          "best_f1": 0.818182,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "noise_sigma0.10": {
+        "dataset": "mean_steganograph_capcheck_univfd:noise_sigma0.10",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.666667,
+        "balanced_accuracy": 0.666667,
+        "precision": 0.833333,
+        "recall": 0.416667,
+        "f1": 0.555556,
+        "roc_auc": 0.8125,
+        "confusion": {
+          "true_positive": 5,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 7
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.417239,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.8,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "color_jitter_20": {
+        "dataset": "mean_steganograph_capcheck_univfd:color_jitter_20",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.916667,
+        "balanced_accuracy": 0.916667,
+        "precision": 0.857143,
+        "recall": 1.0,
+        "f1": 0.923077,
+        "roc_auc": 0.916667,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 10,
+          "false_positive": 2,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.659679,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "center_crop_80": {
+        "dataset": "mean_steganograph_capcheck_univfd:center_crop_80",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.965278,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.612117,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    },
+    "majority_vote_all3": {
+      "clean": {
+        "dataset": "majority_vote_all3:clean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.958333,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "jpeg_q30": {
+        "dataset": "majority_vote_all3:jpeg_q30",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.857143,
+        "roc_auc": 0.885417,
+        "confusion": {
+          "true_positive": 9,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 3
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.875,
+          "best_balanced_accuracy": 0.875,
+          "best_f1": 0.857143,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "blur_sigma2": {
+        "dataset": "majority_vote_all3:blur_sigma2",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.791667,
+        "balanced_accuracy": 0.791667,
+        "precision": 0.705882,
+        "recall": 1.0,
+        "f1": 0.827586,
+        "roc_auc": 0.791667,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 7,
+          "false_positive": 5,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.827586,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "resize_0.25": {
+        "dataset": "majority_vote_all3:resize_0.25",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "roc_auc": 0.75,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.75,
+          "best_balanced_accuracy": 0.75,
+          "best_f1": 0.8,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "noise_sigma0.10": {
+        "dataset": "majority_vote_all3:noise_sigma0.10",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.583333,
+        "balanced_accuracy": 0.583333,
+        "precision": 0.75,
+        "recall": 0.25,
+        "f1": 0.375,
+        "roc_auc": 0.614583,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 9
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.583333,
+          "best_balanced_accuracy": 0.583333,
+          "best_f1": 0.375,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "color_jitter_20": {
+        "dataset": "majority_vote_all3:color_jitter_20",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.916667,
+        "balanced_accuracy": 0.916667,
+        "precision": 0.857143,
+        "recall": 1.0,
+        "f1": 0.923077,
+        "roc_auc": 0.916667,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 10,
+          "false_positive": 2,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.916667,
+          "best_balanced_accuracy": 0.916667,
+          "best_f1": 0.923077,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "center_crop_80": {
+        "dataset": "majority_vote_all3:center_crop_80",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.958333,
+        "balanced_accuracy": 0.958333,
+        "precision": 0.923077,
+        "recall": 1.0,
+        "f1": 0.96,
+        "roc_auc": 0.958333,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 11,
+          "false_positive": 1,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.666667,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    }
+  },
+  "transform_aggregation": {
+    "steganograph": {
+      "mean": {
+        "dataset": "transform_aggregation:steganograph:mean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.916667,
+        "balanced_accuracy": 0.916667,
+        "precision": 0.857143,
+        "recall": 1.0,
+        "f1": 0.923077,
+        "roc_auc": 1.0,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 10,
+          "false_positive": 2,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.717242,
+          "best_accuracy": 1.0,
+          "best_balanced_accuracy": 1.0,
+          "best_f1": 1.0,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "median": {
+        "dataset": "transform_aggregation:steganograph:median",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.916667,
+        "balanced_accuracy": 0.916667,
+        "precision": 0.857143,
+        "recall": 1.0,
+        "f1": 0.923077,
+        "roc_auc": 0.972222,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 10,
+          "false_positive": 2,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.996724,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "min": {
+        "dataset": "transform_aggregation:steganograph:min",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.625,
+        "balanced_accuracy": 0.625,
+        "precision": 1.0,
+        "recall": 0.25,
+        "f1": 0.4,
+        "roc_auc": 0.9375,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 9
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.003359,
+          "best_accuracy": 0.916667,
+          "best_balanced_accuracy": 0.916667,
+          "best_f1": 0.916667,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "max": {
+        "dataset": "transform_aggregation:steganograph:max",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.75,
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "roc_auc": 0.972222,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 6,
+          "false_positive": 6,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.999502,
+          "best_accuracy": 0.958333,
+          "best_balanced_accuracy": 0.958333,
+          "best_f1": 0.96,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    },
+    "capcheck": {
+      "mean": {
+        "dataset": "transform_aggregation:capcheck:mean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.666667,
+        "roc_auc": 0.847222,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 0,
+          "false_positive": 12,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.974105,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.736842,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "median": {
+        "dataset": "transform_aggregation:capcheck:median",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.666667,
+        "roc_auc": 0.819444,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 0,
+          "false_positive": 12,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.909916,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.782609,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "min": {
+        "dataset": "transform_aggregation:capcheck:min",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.666667,
+        "balanced_accuracy": 0.666667,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "roc_auc": 0.826389,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 4,
+          "false_positive": 8,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.866935,
+          "best_accuracy": 0.833333,
+          "best_balanced_accuracy": 0.833333,
+          "best_f1": 0.8,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "max": {
+        "dataset": "transform_aggregation:capcheck:max",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.666667,
+        "roc_auc": 0.840278,
+        "confusion": {
+          "true_positive": 12,
+          "true_negative": 0,
+          "false_positive": 12,
+          "false_negative": 0
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.740804,
+          "best_accuracy": 0.791667,
+          "best_balanced_accuracy": 0.791667,
+          "best_f1": 0.827586,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    },
+    "univfd": {
+      "mean": {
+        "dataset": "transform_aggregation:univfd:mean",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.444444,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 12
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.256494,
+          "best_accuracy": 0.541667,
+          "best_balanced_accuracy": 0.541667,
+          "best_f1": 0.685714,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "median": {
+        "dataset": "transform_aggregation:univfd:median",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.451389,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 12
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.258557,
+          "best_accuracy": 0.583333,
+          "best_balanced_accuracy": 0.583333,
+          "best_f1": 0.705882,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "min": {
+        "dataset": "transform_aggregation:univfd:min",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.451389,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 12
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.259233,
+          "best_accuracy": 0.541667,
+          "best_balanced_accuracy": 0.541667,
+          "best_f1": 0.62069,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      },
+      "max": {
+        "dataset": "transform_aggregation:univfd:max",
+        "n_samples": 24,
+        "n_real": 12,
+        "n_ai": 12,
+        "threshold": 0.5,
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.409722,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 12,
+          "false_positive": 0,
+          "false_negative": 12
+        },
+        "seconds": 0.0,
+        "images_per_second": 0.0,
+        "threshold_sweep": {
+          "best_threshold": 0.26754,
+          "best_accuracy": 0.541667,
+          "best_balanced_accuracy": 0.541667,
+          "best_f1": 0.685714,
+          "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+        }
+      }
+    }
+  }
+}

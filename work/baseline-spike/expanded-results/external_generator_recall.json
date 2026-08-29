@@ -1,0 +1,242 @@
+{
+  "model": "ateeqq_siglip",
+  "source": "openai/dalle3-eval-samples",
+  "source_license": "MIT repository license",
+  "scope": "synthetic recall only; no real comparator",
+  "fine_tuning": false,
+  "results": {
+    "DALL-E 3": {
+      "n": 10,
+      "ai_recall_at_published_threshold": 1.0,
+      "mean_probability_ai": 0.9998940050601959,
+      "min_probability_ai": 0.9989858269691467,
+      "max_probability_ai": 0.9999992847442627
+    },
+    "Midjourney": {
+      "n": 10,
+      "ai_recall_at_published_threshold": 1.0,
+      "mean_probability_ai": 0.9999180972576142,
+      "min_probability_ai": 0.9995243549346924,
+      "max_probability_ai": 0.9999988079071045
+    },
+    "SDXL": {
+      "n": 10,
+      "ai_recall_at_published_threshold": 0.9,
+      "mean_probability_ai": 0.8998834808822721,
+      "min_probability_ai": 0.001313467975705862,
+      "max_probability_ai": 0.9999980926513672
+    }
+  },
+  "predictions": [
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "0_0",
+      "probability_ai": 0.9999982118606567,
+      "raw_score": 7.083924770355225,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "1_0",
+      "probability_ai": 0.9999984502792358,
+      "raw_score": 6.940968990325928,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "2_0",
+      "probability_ai": 0.9999924898147583,
+      "raw_score": 6.692341327667236,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "3_0",
+      "probability_ai": 0.9999806880950928,
+      "raw_score": 6.459624767303467,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "4_0",
+      "probability_ai": 0.9999901056289673,
+      "raw_score": 6.492053508758545,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "5_0",
+      "probability_ai": 0.9999992847442627,
+      "raw_score": 7.3581719398498535,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "6_0",
+      "probability_ai": 0.9999990463256836,
+      "raw_score": 7.176407337188721,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "7_0",
+      "probability_ai": 0.9989858269691467,
+      "raw_score": 4.98344612121582,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "8_0",
+      "probability_ai": 0.9999973773956299,
+      "raw_score": 7.2085185050964355,
+      "pred": "ai"
+    },
+    {
+      "generator": "DALL-E 3",
+      "sample_id": "9_0",
+      "probability_ai": 0.9999985694885254,
+      "raw_score": 7.20775842666626,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "0_0",
+      "probability_ai": 0.9999969005584717,
+      "raw_score": 6.959306716918945,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "1_0",
+      "probability_ai": 0.999967098236084,
+      "raw_score": 6.044103145599365,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "2_0",
+      "probability_ai": 0.9999973773956299,
+      "raw_score": 7.041679859161377,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "3_0",
+      "probability_ai": 0.9999945163726807,
+      "raw_score": 6.990611553192139,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "4_0",
+      "probability_ai": 0.9995243549346924,
+      "raw_score": 5.333723545074463,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "5_0",
+      "probability_ai": 0.9999977350234985,
+      "raw_score": 6.857002258300781,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "6_0",
+      "probability_ai": 0.9999643564224243,
+      "raw_score": 6.010097026824951,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "7_0",
+      "probability_ai": 0.9997543692588806,
+      "raw_score": 5.345648765563965,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "8_0",
+      "probability_ai": 0.9999854564666748,
+      "raw_score": 6.627523422241211,
+      "pred": "ai"
+    },
+    {
+      "generator": "Midjourney",
+      "sample_id": "9_0",
+      "probability_ai": 0.9999988079071045,
+      "raw_score": 7.193514347076416,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "0_0",
+      "probability_ai": 0.9999980926513672,
+      "raw_score": 6.984776020050049,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "1_0",
+      "probability_ai": 0.9998677968978882,
+      "raw_score": 5.549554824829102,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "2_0",
+      "probability_ai": 0.9999581575393677,
+      "raw_score": 6.069504261016846,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "3_0",
+      "probability_ai": 0.9998102784156799,
+      "raw_score": 5.7146315574646,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "4_0",
+      "probability_ai": 0.9999701976776123,
+      "raw_score": 6.139340400695801,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "5_0",
+      "probability_ai": 0.999872088432312,
+      "raw_score": 5.592703342437744,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "6_0",
+      "probability_ai": 0.9998244643211365,
+      "raw_score": 5.489268779754639,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "7_0",
+      "probability_ai": 0.001313467975705862,
+      "raw_score": -2.5468742847442627,
+      "pred": "real"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "8_0",
+      "probability_ai": 0.9999681711196899,
+      "raw_score": 6.37240743637085,
+      "pred": "ai"
+    },
+    {
+      "generator": "SDXL",
+      "sample_id": "9_0",
+      "probability_ai": 0.9982520937919617,
+      "raw_score": 4.5328803062438965,
+      "pred": "ai"
+    }
+  ]
+}

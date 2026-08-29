@@ -1,0 +1,1727 @@
+{
+  "model": "frontier_community_forensics",
+  "model_info": {
+    "model_id": "Thermostatic/community-forensics-frontier-detector-2026-08",
+    "kind": "timm_single_ai_logit",
+    "threshold": 0.7956581000631541,
+    "license": "MIT; organizer suitability requires confirmation",
+    "parameters": 21811969,
+    "id2label": null,
+    "resolved_commit": null
+  },
+  "sample_count": 24,
+  "fine_tuning": false,
+  "conditions": {
+    "clean": {
+      "dataset": "SID_Set validation gate:clean",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "true_positive": 12,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "seconds": 13.360689,
+      "images_per_second": 1.796315,
+      "threshold_sweep": {
+        "best_threshold": 0.999977,
+        "best_accuracy": 1.0,
+        "best_balanced_accuracy": 1.0,
+        "best_f1": 1.0,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "jpeg_q30": {
+      "dataset": "SID_Set validation gate:jpeg_q30",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "true_positive": 12,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "seconds": 14.350276,
+      "images_per_second": 1.672442,
+      "threshold_sweep": {
+        "best_threshold": 0.991406,
+        "best_accuracy": 1.0,
+        "best_balanced_accuracy": 1.0,
+        "best_f1": 1.0,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "blur_sigma2": {
+      "dataset": "SID_Set validation gate:blur_sigma2",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "true_positive": 12,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "seconds": 12.750366,
+      "images_per_second": 1.882299,
+      "threshold_sweep": {
+        "best_threshold": 0.999213,
+        "best_accuracy": 1.0,
+        "best_balanced_accuracy": 1.0,
+        "best_f1": 1.0,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "resize_0.25": {
+      "dataset": "SID_Set validation gate:resize_0.25",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "true_positive": 12,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "seconds": 12.101647,
+      "images_per_second": 1.983201,
+      "threshold_sweep": {
+        "best_threshold": 0.996875,
+        "best_accuracy": 1.0,
+        "best_balanced_accuracy": 1.0,
+        "best_f1": 1.0,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "noise_sigma0.10": {
+      "dataset": "SID_Set validation gate:noise_sigma0.10",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 0.666667,
+      "balanced_accuracy": 0.666667,
+      "precision": 1.0,
+      "recall": 0.333333,
+      "f1": 0.5,
+      "roc_auc": 0.993056,
+      "confusion": {
+        "true_positive": 4,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 8
+      },
+      "seconds": 16.462006,
+      "images_per_second": 1.457902,
+      "threshold_sweep": {
+        "best_threshold": 0.000257,
+        "best_accuracy": 0.958333,
+        "best_balanced_accuracy": 0.958333,
+        "best_f1": 0.96,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "color_jitter_20": {
+      "dataset": "SID_Set validation gate:color_jitter_20",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "true_positive": 12,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "seconds": 11.372414,
+      "images_per_second": 2.11037,
+      "threshold_sweep": {
+        "best_threshold": 0.999998,
+        "best_accuracy": 1.0,
+        "best_balanced_accuracy": 1.0,
+        "best_f1": 1.0,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "center_crop_80": {
+      "dataset": "SID_Set validation gate:center_crop_80",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.7956581000631541,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "true_positive": 12,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "seconds": 10.328992,
+      "images_per_second": 2.323557,
+      "threshold_sweep": {
+        "best_threshold": 0.999997,
+        "best_accuracy": 1.0,
+        "best_balanced_accuracy": 1.0,
+        "best_f1": 1.0,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    }
+  },
+  "predictions": [
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 7.332109817070886e-05,
+      "raw_score": -9.520588874816895,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.977086067199707,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 2.232196493423544e-05,
+      "raw_score": -10.709917068481445,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.002392354654148221,
+      "raw_score": -6.033082008361816,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 2.536066313041374e-05,
+      "raw_score": -10.58228588104248,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.339554786682129,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.0001352371764369309,
+      "raw_score": -8.908345222473145,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 1.688441102487559e-06,
+      "raw_score": -13.291703224182129,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 16.339868545532227,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 16.105363845825195,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 16.18178367614746,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.5141956806182861,
+      "raw_score": 0.05679798498749733,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.0009251226438209414,
+      "raw_score": -6.984658718109131,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.0042912960052490234,
+      "raw_score": -5.446866035461426,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 15.014199256896973,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.09705924987793,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 5.767793481936678e-05,
+      "raw_score": -9.760578155517578,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.9999769926071167,
+      "raw_score": 10.67781925201416,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.005487637594342232,
+      "raw_score": -5.19975471496582,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.0015440351562574506,
+      "raw_score": -6.471810817718506,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.793030738830566,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.609077453613281,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.486712455749512,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "clean",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.612793922424316,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.0002089603804051876,
+      "raw_score": -8.473156929016113,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9999986886978149,
+      "raw_score": 13.556105613708496,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.00013791213859803975,
+      "raw_score": -8.888755798339844,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.0019138138741254807,
+      "raw_score": -6.256741523742676,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.0006532263359986246,
+      "raw_score": -7.33293342590332,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9999992847442627,
+      "raw_score": 14.168896675109863,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.0009402744472026825,
+      "raw_score": -6.968398094177246,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 1.9296726350148674e-06,
+      "raw_score": -13.158158302307129,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9999994039535522,
+      "raw_score": 14.24744701385498,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.44282054901123,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9999980926513672,
+      "raw_score": 13.154086112976074,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.7901255488395691,
+      "raw_score": 1.3256824016571045,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.0034017928410321474,
+      "raw_score": -5.680045127868652,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.0032992500346153975,
+      "raw_score": -5.710755348205566,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9999916553497314,
+      "raw_score": 11.695784568786621,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999992847442627,
+      "raw_score": 14.093688011169434,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.005565919913351536,
+      "raw_score": -5.185511589050293,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.9914064407348633,
+      "raw_score": 4.748113632202148,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.0053818076848983765,
+      "raw_score": -5.219334602355957,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.0024578915908932686,
+      "raw_score": -6.005990505218506,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9999991655349731,
+      "raw_score": 13.96141529083252,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9999991655349731,
+      "raw_score": 14.065705299377441,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9999749660491943,
+      "raw_score": 10.59479808807373,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9999902248382568,
+      "raw_score": 11.532546043395996,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.0065697673708200455,
+      "raw_score": -5.018685340881348,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.483757972717285,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 1.6375972336390987e-05,
+      "raw_score": -11.019679069519043,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.001520106801763177,
+      "raw_score": -6.487453460693359,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 9.45876381592825e-05,
+      "raw_score": -9.265889167785645,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.83962345123291,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 6.394465162884444e-05,
+      "raw_score": -9.657428741455078,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 1.3445379636323196e-06,
+      "raw_score": -13.519458770751953,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 16.209789276123047,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.797686576843262,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.997488975524902,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.20036278665065765,
+      "raw_score": -1.384028434753418,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.00045461830450221896,
+      "raw_score": -7.6955976486206055,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.00010963364911731333,
+      "raw_score": -9.118256568908691,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.957648277282715,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.250940322875977,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.000264181406237185,
+      "raw_score": -8.23861026763916,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.9992127418518066,
+      "raw_score": 7.146156311035156,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.002908605383709073,
+      "raw_score": -5.8371686935424805,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.0005747774266637862,
+      "raw_score": -7.4609527587890625,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.721721649169922,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.79535961151123,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9999994039535522,
+      "raw_score": 14.27912712097168,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.461949348449707,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.00012727158900815994,
+      "raw_score": -8.969059944152832,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9999991655349731,
+      "raw_score": 14.054548263549805,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 3.766747113331803e-06,
+      "raw_score": -12.48929500579834,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.0010057627223432064,
+      "raw_score": -6.901002883911133,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 2.5205556084983982e-05,
+      "raw_score": -10.588420867919922,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9999994039535522,
+      "raw_score": 14.258082389831543,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 1.3879068319511134e-05,
+      "raw_score": -11.185114860534668,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 5.120577384332137e-07,
+      "raw_score": -14.484827995300293,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.865747451782227,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.512198448181152,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.803805351257324,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.001437250874005258,
+      "raw_score": -6.543584823608398,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 5.248653906164691e-05,
+      "raw_score": -9.854901313781738,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 1.678353874012828e-05,
+      "raw_score": -10.995095252990723,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9999994039535522,
+      "raw_score": 14.331787109375,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.792454719543457,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 4.156025897827931e-05,
+      "raw_score": -10.088324546813965,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.9968750476837158,
+      "raw_score": 5.765216827392578,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.0001272962399525568,
+      "raw_score": -8.968866348266602,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.00015029788482934237,
+      "raw_score": -8.802741050720215,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.590140342712402,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.55932903289795,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9999964237213135,
+      "raw_score": 12.535244941711426,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9999971389770508,
+      "raw_score": 12.782034873962402,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 3.92177353205625e-05,
+      "raw_score": -10.146342277526855,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9885257482528687,
+      "raw_score": 4.456107139587402,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 8.644390618428588e-06,
+      "raw_score": -11.658591270446777,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 5.1128914492437616e-05,
+      "raw_score": -9.881109237670898,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 6.563578790519387e-05,
+      "raw_score": -9.63132381439209,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.5374475121498108,
+      "raw_score": 0.15007105469703674,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 1.6346450138371438e-05,
+      "raw_score": -11.021483421325684,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 7.900962373241782e-07,
+      "raw_score": -14.05111026763916,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.39734846353530884,
+      "raw_score": -0.4165255129337311,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.7521530985832214,
+      "raw_score": 1.1101288795471191,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.7053094506263733,
+      "raw_score": 0.8727109432220459,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.0006902118329890072,
+      "raw_score": -7.2778215408325195,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.00010528901475481689,
+      "raw_score": -9.158696174621582,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 1.2986391993763391e-05,
+      "raw_score": -11.251595497131348,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.244641974568367,
+      "raw_score": -1.1273959875106812,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999573230743408,
+      "raw_score": 10.063218116760254,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 2.7971196686848998e-05,
+      "raw_score": -10.484307289123535,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.000256967730820179,
+      "raw_score": -8.266303062438965,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 3.5329689126228914e-05,
+      "raw_score": -10.250751495361328,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 3.0697599868290126e-05,
+      "raw_score": -10.391295433044434,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9256945848464966,
+      "raw_score": 2.5223608016967773,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9212976098060608,
+      "raw_score": 2.4601099491119385,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.003335632150992751,
+      "raw_score": -5.699751853942871,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.062026385217905045,
+      "raw_score": -2.7161619663238525,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 3.4134438465116546e-05,
+      "raw_score": -10.28516960144043,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.638833045959473,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 1.184992834168952e-05,
+      "raw_score": -11.34317684173584,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.000697681272868067,
+      "raw_score": -7.267050266265869,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 3.1424588087247685e-05,
+      "raw_score": -10.367888450622559,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.523560523986816,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.0007484054658561945,
+      "raw_score": -7.196816921234131,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 9.344075238004734e-07,
+      "raw_score": -13.883352279663086,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.572602272033691,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.886744499206543,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.724040031433105,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.26802149415016174,
+      "raw_score": -1.0046839714050293,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.015006999485194683,
+      "raw_score": -4.184117794036865,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.0016571111045777798,
+      "raw_score": -6.4010210037231445,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9999984502792358,
+      "raw_score": 13.376935005187988,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.896879196166992,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 2.260199653392192e-05,
+      "raw_score": -10.697449684143066,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.9999985694885254,
+      "raw_score": 13.430717468261719,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.1893972009420395,
+      "raw_score": -1.4539318084716797,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.0005852520698681474,
+      "raw_score": -7.442882537841797,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9999990463256836,
+      "raw_score": 13.84559154510498,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.45983600616455,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9999991655349731,
+      "raw_score": 13.982039451599121,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.499791145324707,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 2.293544457643293e-05,
+      "raw_score": -10.682804107666016,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.729668617248535,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 5.8202334912493825e-05,
+      "raw_score": -9.751526832580566,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.0012478597927838564,
+      "raw_score": -6.685076713562012,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 9.030438377521932e-06,
+      "raw_score": -11.614900588989258,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.693443298339844,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 5.5096472351578996e-05,
+      "raw_score": -9.80636978149414,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 1.4894168998580426e-05,
+      "raw_score": -11.11452579498291,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.817048072814941,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 16.462968826293945,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 16.33613395690918,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.0022886437363922596,
+      "raw_score": -6.077504634857178,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.00016504341328982264,
+      "raw_score": -8.709136962890625,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.0018359551904723048,
+      "raw_score": -6.2983527183532715,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.9999997615814209,
+      "raw_score": 15.480112075805664,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.628009796142578,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 3.068442674702965e-05,
+      "raw_score": -10.391724586486816,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.9999973773956299,
+      "raw_score": 12.8722562789917,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.00091475312365219,
+      "raw_score": -6.995941162109375,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.013992548920214176,
+      "raw_score": -4.255138874053955,
+      "pred": "real"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.9999996423721313,
+      "raw_score": 14.919111251831055,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.9999998807907104,
+      "raw_score": 15.842672348022461,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.9999994039535522,
+      "raw_score": 14.254737854003906,
+      "pred": "ai"
+    },
+    {
+      "model": "frontier_community_forensics",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.9999995231628418,
+      "raw_score": 14.475117683410645,
+      "pred": "ai"
+    }
+  ],
+  "seconds_total": 90.7346947999904
+}

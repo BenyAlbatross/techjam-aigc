@@ -1,0 +1,9 @@
+ai-image-detector @ git+https://github.com/lynote-ai/ai-image-detector.git@d3f4976d36c59974a25f55a0a7850b9866d3223b
+datasets==5.0.1
+numpy==2.5.2
+pillow==12.3.0
+safetensors==0.8.0
+timm==1.0.29
+torch==2.13.0
+torchvision==0.28.0
+transformers==5.16.1

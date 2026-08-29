@@ -1,0 +1,19 @@
+{
+  "conditions_compared": 15,
+  "aggregate_mismatches": [
+    {
+      "condition": "color_jitter_20",
+      "local_balanced_accuracy": 0.9375,
+      "spark_balanced_accuracy": 0.9375,
+      "local_roc_auc": 0.99,
+      "spark_roc_auc": 0.989375,
+      "confusion_counts_match": true
+    }
+  ],
+  "sid_predictions_compared": 1200,
+  "sid_label_mismatches": 0,
+  "sid_max_abs_probability_difference": 0.0009577497839927673,
+  "external_predictions_compared": 30,
+  "external_label_mismatches": 0,
+  "external_max_abs_probability_difference": 1.979060471057892e-9
+}

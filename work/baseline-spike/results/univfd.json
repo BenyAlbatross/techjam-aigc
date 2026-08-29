@@ -1,0 +1,1565 @@
+{
+  "model": "univfd",
+  "declared": {
+    "backend": "univfd",
+    "parameters": 428000000,
+    "license": "MIT"
+  },
+  "resolved": {
+    "backend": "univfd",
+    "model_name": "ViT-L-14",
+    "pretrained": "openai",
+    "head_repo": "siddharthksah/deepsafe-weights",
+    "head_file": "universalfakedetect/fc_weights.pth",
+    "device": "cpu",
+    "threshold": 0.5
+  },
+  "sample_count": 24,
+  "threshold": 0.5,
+  "fine_tuning": false,
+  "conditions": {
+    "clean": {
+      "dataset": "SID_Set validation spike:clean",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.430556,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 48.405151,
+      "images_per_second": 0.495815,
+      "threshold_sweep": {
+        "best_threshold": 0.261365,
+        "best_accuracy": 0.541667,
+        "best_balanced_accuracy": 0.541667,
+        "best_f1": 0.645161,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "jpeg_q30": {
+      "dataset": "SID_Set validation spike:jpeg_q30",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.444444,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 54.635993,
+      "images_per_second": 0.439271,
+      "threshold_sweep": {
+        "best_threshold": 0.303799,
+        "best_accuracy": 0.541667,
+        "best_balanced_accuracy": 0.541667,
+        "best_f1": 0.521739,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "blur_sigma2": {
+      "dataset": "SID_Set validation spike:blur_sigma2",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.409722,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 59.450905,
+      "images_per_second": 0.403694,
+      "threshold_sweep": {
+        "best_threshold": 0.261139,
+        "best_accuracy": 0.583333,
+        "best_balanced_accuracy": 0.583333,
+        "best_f1": 0.705882,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "resize_0.25": {
+      "dataset": "SID_Set validation spike:resize_0.25",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.430556,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 57.874589,
+      "images_per_second": 0.41469,
+      "threshold_sweep": {
+        "best_threshold": 0.262466,
+        "best_accuracy": 0.625,
+        "best_balanced_accuracy": 0.625,
+        "best_f1": 0.727273,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "noise_sigma0.10": {
+      "dataset": "SID_Set validation spike:noise_sigma0.10",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.368056,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 54.675845,
+      "images_per_second": 0.438951,
+      "threshold_sweep": {
+        "best_threshold": 0.421934,
+        "best_accuracy": 0.541667,
+        "best_balanced_accuracy": 0.541667,
+        "best_f1": 0.153846,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "color_jitter_20": {
+      "dataset": "SID_Set validation spike:color_jitter_20",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.458333,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 56.294913,
+      "images_per_second": 0.426326,
+      "threshold_sweep": {
+        "best_threshold": 0.287559,
+        "best_accuracy": 0.541667,
+        "best_balanced_accuracy": 0.541667,
+        "best_f1": 0.56,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    },
+    "center_crop_80": {
+      "dataset": "SID_Set validation spike:center_crop_80",
+      "n_samples": 24,
+      "n_real": 12,
+      "n_ai": 12,
+      "threshold": 0.5,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.4375,
+      "confusion": {
+        "true_positive": 0,
+        "true_negative": 12,
+        "false_positive": 0,
+        "false_negative": 12
+      },
+      "seconds": 52.638082,
+      "images_per_second": 0.455944,
+      "threshold_sweep": {
+        "best_threshold": 0.27362,
+        "best_accuracy": 0.541667,
+        "best_balanced_accuracy": 0.541667,
+        "best_f1": 0.592593,
+        "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+      }
+    }
+  },
+  "predictions": [
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.27660608291625977,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.2613648772239685,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.25575947761535645,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.3435373902320862,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.2894558310508728,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.2624044716358185,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.28902027010917664,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.23134452104568481,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.2908289432525635,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.37464556097984314,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.27574700117111206,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.2521117329597473,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.2799401581287384,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.37323296070098877,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.2743352949619293,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.3293111026287079,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.3485123813152313,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.30566322803497314,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.2855263650417328,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.34616726636886597,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.2752072513103485,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.24984155595302582,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.333321750164032,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "clean",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.25277087092399597,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.2854822874069214,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.2734256088733673,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.26559683680534363,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.3613056540489197,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.29497429728507996,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.2675396800041199,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.2779182195663452,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.2745009958744049,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.30379927158355713,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.382062703371048,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.3123595118522644,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.25423502922058105,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.28113657236099243,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.3545595407485962,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.2748258113861084,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.34506165981292725,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.3449587821960449,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.3177127540111542,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.322870671749115,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.34250420331954956,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.28260788321495056,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.25423306226730347,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.3185831308364868,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "jpeg_q30",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.27171483635902405,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.28589561581611633,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.2685994803905487,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.2557900547981262,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.3638671636581421,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.29338473081588745,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.2611386775970459,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.29614177346229553,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.2427964061498642,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.31183815002441406,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.3809288442134857,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.2822462022304535,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.263398677110672,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.2996027171611786,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.3835381269454956,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.2842656672000885,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.33221766352653503,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.35320791602134705,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.31588390469551086,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.3296324610710144,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.3451646566390991,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.2841250002384186,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.2679406404495239,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.327849417924881,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "blur_sigma2",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.2617761790752411,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.28652849793434143,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.271248459815979,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.261863648891449,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.3684278428554535,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.29796430468559265,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.2629198133945465,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.30558842420578003,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.24430418014526367,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.3077602684497833,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.3817763328552246,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.28347429633140564,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.2583393156528473,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.30037710070610046,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.38400065898895264,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.28526514768600464,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.33497294783592224,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.3568931818008423,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.3063091039657593,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.3258603811264038,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.3445616066455841,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.28092077374458313,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.26664167642593384,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.3360574543476105,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "resize_0.25",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.2624664604663849,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.2870369851589203,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.2592332065105438,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.2783907651901245,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.38542672991752625,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.31571486592292786,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.2663910686969757,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.30282336473464966,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.27057045698165894,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.3044229745864868,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.4219341278076172,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.3241644501686096,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.26364514231681824,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.325065553188324,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.36710888147354126,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.29725635051727295,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.32410845160484314,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.3757093846797943,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.3377642035484314,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.39193692803382874,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.3588467538356781,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.2814398407936096,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.2664692997932434,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.3578135371208191,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "noise_sigma0.10",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.2692524790763855,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.2766723334789276,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.27856290340423584,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.2581261396408081,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.3717036843299866,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.2877248525619507,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.25791406631469727,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.2789168953895569,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.2607126533985138,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.29507941007614136,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.3810465633869171,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.27119433879852295,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.25655052065849304,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.2700802683830261,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.3563762903213501,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.28755879402160645,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.30571800470352173,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.34772706031799316,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.30901455879211426,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.297751784324646,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.36729860305786133,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.2949334383010864,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.25074467062950134,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.33765295147895813,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "color_jitter_20",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.23063115775585175,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "91995094dd129257",
+      "truth": "real",
+      "probability_ai": 0.2939961552619934,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_004934",
+      "truth": "ai",
+      "probability_ai": 0.26091793179512024,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "58c66c4583de8bf5",
+      "truth": "real",
+      "probability_ai": 0.2614704966545105,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "d953914a018b80ad",
+      "truth": "real",
+      "probability_ai": 0.34487104415893555,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "9a99796dffaaa7d3",
+      "truth": "real",
+      "probability_ai": 0.2949891686439514,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_002764",
+      "truth": "ai",
+      "probability_ai": 0.24984687566757202,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "8bd5cae6314172b9",
+      "truth": "real",
+      "probability_ai": 0.26349082589149475,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "42e7a4cbf61fd493",
+      "truth": "real",
+      "probability_ai": 0.250161349773407,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_007473",
+      "truth": "ai",
+      "probability_ai": 0.3127118945121765,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000702",
+      "truth": "ai",
+      "probability_ai": 0.3816553056240082,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001094",
+      "truth": "ai",
+      "probability_ai": 0.27361974120140076,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "2220f1ab609f0843",
+      "truth": "real",
+      "probability_ai": 0.2586536407470703,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "76bb9873db655e13",
+      "truth": "real",
+      "probability_ai": 0.2583872377872467,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "1034c6557e9fb8c1",
+      "truth": "real",
+      "probability_ai": 0.33584949374198914,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_004989",
+      "truth": "ai",
+      "probability_ai": 0.2823185324668884,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001311",
+      "truth": "ai",
+      "probability_ai": 0.3432636260986328,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "f2b02fe7b2ddcb9c",
+      "truth": "real",
+      "probability_ai": 0.37013331055641174,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000008",
+      "truth": "ai",
+      "probability_ai": 0.28885239362716675,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "9e65133332e72eb0",
+      "truth": "real",
+      "probability_ai": 0.3322478234767914,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "ed392911fea257be",
+      "truth": "real",
+      "probability_ai": 0.33384495973587036,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_000882",
+      "truth": "ai",
+      "probability_ai": 0.3148658573627472,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_001209",
+      "truth": "ai",
+      "probability_ai": 0.25855714082717896,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_007794",
+      "truth": "ai",
+      "probability_ai": 0.3264878988265991,
+      "pred": "real"
+    },
+    {
+      "model": "univfd",
+      "condition": "center_crop_80",
+      "sample_id": "full_synthetic_008801",
+      "truth": "ai",
+      "probability_ai": 0.24684295058250427,
+      "pred": "real"
+    }
+  ],
+  "seconds_total": 579.4705687999958
+}

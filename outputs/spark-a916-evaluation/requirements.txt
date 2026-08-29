@@ -1,0 +1,4 @@
+transformers==5.16.1
+numpy==2.5.2
+pillow==12.3.0
+safetensors>=0.6

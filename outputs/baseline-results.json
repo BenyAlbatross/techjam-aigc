@@ -1,0 +1,4989 @@
+{
+  "scope": {
+    "purpose": "Disposable zero-training feasibility spike; not a leaderboard estimate",
+    "sample_size": 24,
+    "class_balance": {
+      "real": 12,
+      "ai": 12
+    },
+    "threshold": 0.5,
+    "fine_tuning": false,
+    "hardware": "CPU-only Torch 2.13.0",
+    "runner_commit": "d3f4976d36c59974a25f55a0a7850b9866d3223b"
+  },
+  "manifest": {
+    "dataset": "saberzl/SID_Set",
+    "dataset_revision_observed": "dc03ead57929879319ce30a82bfcfb8d317b10bd",
+    "split": "validation",
+    "license": "CC BY 4.0",
+    "selection": "first 12 label-0 and first 12 label-1 rows; label-2 excluded",
+    "seed": 20260829,
+    "samples": [
+      {
+        "sample_id": "91995094dd129257",
+        "source_row": 0,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 681,
+        "format": "JPEG",
+        "sha256": "df43fa560c5cd395a615076d62edf1d4dc8d7171b2f325a9919434af268966f4"
+      },
+      {
+        "sample_id": "full_synthetic_004934",
+        "source_row": 2,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "ef14dec7d72033aa665156b156c1f45654ca59fe87ac3bad01a2ba73ee333600"
+      },
+      {
+        "sample_id": "58c66c4583de8bf5",
+        "source_row": 3,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 1024,
+        "format": "JPEG",
+        "sha256": "b8acd64e9fc0363e9c8bbfb513860a5fe42b0d0c057c9d2f7288265b4dfbca4e"
+      },
+      {
+        "sample_id": "d953914a018b80ad",
+        "source_row": 7,
+        "label": 0,
+        "truth": "real",
+        "width": 961,
+        "height": 1024,
+        "format": "JPEG",
+        "sha256": "466a7417e422b81d660011293c3ef095efba7070d91a4dcb9b3d7b80bfeb207a"
+      },
+      {
+        "sample_id": "9a99796dffaaa7d3",
+        "source_row": 8,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 732,
+        "format": "JPEG",
+        "sha256": "aa4de5dd6865f6cd5aced05b03f21fd046266a94552c673d6202dbad0d3e476e"
+      },
+      {
+        "sample_id": "full_synthetic_002764",
+        "source_row": 9,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "bb3e5bff7984bd2dc60d12533786f9bff91ef8e4879c06b291775c6a076a9d21"
+      },
+      {
+        "sample_id": "8bd5cae6314172b9",
+        "source_row": 10,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 654,
+        "format": "JPEG",
+        "sha256": "985a3479675d25ac4d40ec99e99be3b84ee9131c63f5dceed7af03f512e6e516"
+      },
+      {
+        "sample_id": "42e7a4cbf61fd493",
+        "source_row": 11,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 1024,
+        "format": "JPEG",
+        "sha256": "ec8a312f0ab224c8d8fe1794d9036b50fb360b74f496263f3719adf12080a485"
+      },
+      {
+        "sample_id": "full_synthetic_007473",
+        "source_row": 12,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "8436d52532b133edd99107018ebd4834b6a135cadaa92994de2e609f016a11db"
+      },
+      {
+        "sample_id": "full_synthetic_000702",
+        "source_row": 13,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "1ab26bd1b85661fbba923eda058b18bee40be2b89618a1f6d9e0fb054840cb56"
+      },
+      {
+        "sample_id": "full_synthetic_001094",
+        "source_row": 14,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "d3c94f32d1caa8878823415f04f50800e692fb93105ff5300bcf2df4297fea68"
+      },
+      {
+        "sample_id": "2220f1ab609f0843",
+        "source_row": 15,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 768,
+        "format": "JPEG",
+        "sha256": "8e4a898b9e02bd0e830fce9e1bd0445040168ffec50a120e6f72c971cec34003"
+      },
+      {
+        "sample_id": "76bb9873db655e13",
+        "source_row": 17,
+        "label": 0,
+        "truth": "real",
+        "width": 768,
+        "height": 1024,
+        "format": "JPEG",
+        "sha256": "952b5cb1704cad0e1c1c3556035b9685b5d69d88daf6bcd7e3eefab9f44f6e4b"
+      },
+      {
+        "sample_id": "1034c6557e9fb8c1",
+        "source_row": 18,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 768,
+        "format": "JPEG",
+        "sha256": "d1795cdbd7e3f9db7df6660feabc14ea35e3e0e4f2a4aa5b4c8060d51ecb1414"
+      },
+      {
+        "sample_id": "full_synthetic_004989",
+        "source_row": 20,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "5030a53c6f468a96a63a52aa708a5ccefbe6b0fee02a4a9d66b1bafa84cdec92"
+      },
+      {
+        "sample_id": "full_synthetic_001311",
+        "source_row": 21,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "e763571ae487b288ea37651fd5335896095a180918ec8bd0075c942b15b6c5ef"
+      },
+      {
+        "sample_id": "f2b02fe7b2ddcb9c",
+        "source_row": 22,
+        "label": 0,
+        "truth": "real",
+        "width": 680,
+        "height": 1024,
+        "format": "JPEG",
+        "sha256": "cbe6094c1d9347d11a34511dcf910da8149482b4cdb177997d9c08be0696ebe8"
+      },
+      {
+        "sample_id": "full_synthetic_000008",
+        "source_row": 24,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "e5fca3a8bb3ebce3c6ed33b8aad4e15bc333a4eb3b047d007aed0bba819ccf90"
+      },
+      {
+        "sample_id": "9e65133332e72eb0",
+        "source_row": 25,
+        "label": 0,
+        "truth": "real",
+        "width": 1024,
+        "height": 768,
+        "format": "JPEG",
+        "sha256": "27c5f2fb09c5f3ce5613830e0e7f90d3b72b55f15ad8ae9679dcb5d8f2af42fa"
+      },
+      {
+        "sample_id": "ed392911fea257be",
+        "source_row": 28,
+        "label": 0,
+        "truth": "real",
+        "width": 768,
+        "height": 1024,
+        "format": "JPEG",
+        "sha256": "5ea942cd55c775bd1f8c7190157138bc60a0a251855f731b98fc32bc44a90bec"
+      },
+      {
+        "sample_id": "full_synthetic_000882",
+        "source_row": 29,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "9e2d2f868f77c068fb739437889afa0786648820be75c72d6a5b3a69f7c81f3e"
+      },
+      {
+        "sample_id": "full_synthetic_001209",
+        "source_row": 31,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "2ed4bfdc714cf2b860eb8bbbfb25e3787fef200861d404581d0ab9d480d94118"
+      },
+      {
+        "sample_id": "full_synthetic_007794",
+        "source_row": 33,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "ae536ca52cd8b56571b37ebccce9ad0cecfff6dea8a07c3046f7f8e9b806bb4a"
+      },
+      {
+        "sample_id": "full_synthetic_008801",
+        "source_row": 35,
+        "label": 1,
+        "truth": "ai",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "sha256": "a329afa65aa3ab5b087d4d1c3c900fefafa547aaa9ce444650b3ac13f2788c08"
+      }
+    ]
+  },
+  "heuristics": {
+    "square_aspect": {
+      "roc_auc": 0.9166666666666666,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "exact_1024_square": {
+      "roc_auc": 0.9166666666666666,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "metadata_ai_keyword": {
+      "roc_auc": 0.5,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "low_jpeg_blockiness": {
+      "roc_auc": 0.375,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    },
+    "high_frequency_energy": {
+      "roc_auc": 0.4166666666666667,
+      "note": "AUROC only is decision-relevant; threshold 0.5 is not calibrated for continuous heuristics."
+    }
+  },
+  "models": {
+    "steganograph": {
+      "model": "steganograph",
+      "declared": {
+        "backend": "hf",
+        "hf_model": "delpot/steganograph-ia-detector",
+        "parameters": 85800000,
+        "license": "MIT"
+      },
+      "resolved": {
+        "backend": "hf",
+        "model_id": "delpot/steganograph-ia-detector",
+        "device": "cpu",
+        "threshold": 0.5,
+        "id2label": {
+          "0": "real",
+          "1": "ai_generated"
+        },
+        "resolved_commit": "b395557b96de82e5aaf97206054af416d657655a"
+      },
+      "sample_count": 24,
+      "threshold": 0.5,
+      "fine_tuning": false,
+      "conditions": {
+        "clean": {
+          "dataset": "SID_Set validation spike:clean",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.958333,
+          "balanced_accuracy": 0.958333,
+          "precision": 0.923077,
+          "recall": 1.0,
+          "f1": 0.96,
+          "roc_auc": 0.979167,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 11,
+            "false_positive": 1,
+            "false_negative": 0
+          },
+          "seconds": 10.683045,
+          "images_per_second": 2.246551,
+          "threshold_sweep": {
+            "best_threshold": 0.996724,
+            "best_accuracy": 0.958333,
+            "best_balanced_accuracy": 0.958333,
+            "best_f1": 0.96,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "jpeg_q30": {
+          "dataset": "SID_Set validation spike:jpeg_q30",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.875,
+          "balanced_accuracy": 0.875,
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.857143,
+          "roc_auc": 0.979167,
+          "confusion": {
+            "true_positive": 9,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 3
+          },
+          "seconds": 11.289985,
+          "images_per_second": 2.125778,
+          "threshold_sweep": {
+            "best_threshold": 0.026808,
+            "best_accuracy": 0.958333,
+            "best_balanced_accuracy": 0.958333,
+            "best_f1": 0.96,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "blur_sigma2": {
+          "dataset": "SID_Set validation spike:blur_sigma2",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.791667,
+          "balanced_accuracy": 0.791667,
+          "precision": 0.705882,
+          "recall": 1.0,
+          "f1": 0.827586,
+          "roc_auc": 0.979167,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 7,
+            "false_positive": 5,
+            "false_negative": 0
+          },
+          "seconds": 13.085459,
+          "images_per_second": 1.834097,
+          "threshold_sweep": {
+            "best_threshold": 0.999422,
+            "best_accuracy": 0.958333,
+            "best_balanced_accuracy": 0.958333,
+            "best_f1": 0.96,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "resize_0.25": {
+          "dataset": "SID_Set validation spike:resize_0.25",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.75,
+          "balanced_accuracy": 0.75,
+          "precision": 0.666667,
+          "recall": 1.0,
+          "f1": 0.8,
+          "roc_auc": 0.972222,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 6,
+            "false_positive": 6,
+            "false_negative": 0
+          },
+          "seconds": 12.407553,
+          "images_per_second": 1.934306,
+          "threshold_sweep": {
+            "best_threshold": 0.999453,
+            "best_accuracy": 0.958333,
+            "best_balanced_accuracy": 0.958333,
+            "best_f1": 0.96,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "noise_sigma0.10": {
+          "dataset": "SID_Set validation spike:noise_sigma0.10",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.583333,
+          "balanced_accuracy": 0.583333,
+          "precision": 0.75,
+          "recall": 0.25,
+          "f1": 0.375,
+          "roc_auc": 0.916667,
+          "confusion": {
+            "true_positive": 3,
+            "true_negative": 11,
+            "false_positive": 1,
+            "false_negative": 9
+          },
+          "seconds": 15.597325,
+          "images_per_second": 1.538725,
+          "threshold_sweep": {
+            "best_threshold": 0.003359,
+            "best_accuracy": 0.916667,
+            "best_balanced_accuracy": 0.916667,
+            "best_f1": 0.916667,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "color_jitter_20": {
+          "dataset": "SID_Set validation spike:color_jitter_20",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.916667,
+          "balanced_accuracy": 0.916667,
+          "precision": 0.857143,
+          "recall": 1.0,
+          "f1": 0.923077,
+          "roc_auc": 0.986111,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 10,
+            "false_positive": 2,
+            "false_negative": 0
+          },
+          "seconds": 11.437095,
+          "images_per_second": 2.098435,
+          "threshold_sweep": {
+            "best_threshold": 0.992613,
+            "best_accuracy": 0.958333,
+            "best_balanced_accuracy": 0.958333,
+            "best_f1": 0.956522,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "center_crop_80": {
+          "dataset": "SID_Set validation spike:center_crop_80",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.958333,
+          "balanced_accuracy": 0.958333,
+          "precision": 0.923077,
+          "recall": 1.0,
+          "f1": 0.96,
+          "roc_auc": 0.979167,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 11,
+            "false_positive": 1,
+            "false_negative": 0
+          },
+          "seconds": 10.332101,
+          "images_per_second": 2.322858,
+          "threshold_sweep": {
+            "best_threshold": 0.998229,
+            "best_accuracy": 0.958333,
+            "best_balanced_accuracy": 0.958333,
+            "best_f1": 0.96,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        }
+      },
+      "predictions": [
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 8.205019184970297e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9999467134475708,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.014011741615831852,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.4712814688682556,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.0004493439046200365,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9997250437736511,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 1.0561452654656023e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.00011543378786882386,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9998077750205994,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9997758269309998,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9999703168869019,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.0011970230843871832,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 4.710612302005757e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 9.846128705248702e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9999920129776001,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.9999884366989136,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9995878338813782,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.999411940574646,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.0003818197001237422,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 6.738572119502351e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.9995449185371399,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9999877214431763,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.9967241883277893,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "clean",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.999970555305481,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 2.3674847398069687e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9749998450279236,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.005938102025538683,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.27709296345710754,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 1.0858479072339833e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9794710278511047,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 8.106807399599347e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 3.449182986514643e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.18167635798454285,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9992795586585999,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9465963244438171,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.001518764067441225,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 4.129290118726203e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 4.999178145226324e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9999343156814575,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.9999337196350098,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.0007351324311457574,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.026807595044374466,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 8.966148016043007e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 1.0064147318189498e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.8991647362709045,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9999423027038574,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.06514240056276321,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9299353361129761,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.009417970664799213,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9999834299087524,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.24914298951625824,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.983910083770752,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.11888870596885681,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9999749660491943,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.0026655851397663355,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.9966476559638977,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9999762773513794,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9999370574951172,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9999899864196777,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.004335880279541016,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 6.494679837487638e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.18324220180511475,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.999994158744812,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.9999915361404419,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9999439716339111,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9994217157363892,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.9977250695228577,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.9937025308609009,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.9999521970748901,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9999915361404419,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.9995021820068359,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9999785423278809,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.030809061601758003,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9999834299087524,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.30795979499816895,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.9303404092788696,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.38657745718955994,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9999643564224243,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.00014761982311028987,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.9989897608757019,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9999698400497437,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9999181032180786,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9999895095825195,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.003235987853258848,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.00027759632212109864,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.8727776408195496,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9999939203262329,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.9999915361404419,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9999616146087646,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9995774626731873,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.9892470240592957,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.9925392270088196,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.9999412298202515,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.999990701675415,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.9994532465934753,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9999796152114868,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 5.016389877710026e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.003996070008724928,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.0013534725876525044,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.6268071532249451,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 3.4458623758837348e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.015909211710095406,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 7.141689366108039e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 8.139894816849846e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.02253139764070511,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9712093472480774,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.21134474873542786,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.0008231526589952409,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 2.08358392228547e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 8.458813681500033e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.4952772855758667,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.989587664604187,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 7.386962533928454e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 5.38893582415767e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 4.93043035021401e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 3.221133738406934e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.1671329289674759,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9983365535736084,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.004164715763181448,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.0033591794781386852,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 5.725190021621529e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9999641180038452,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.3386589586734772,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.9713610410690308,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.00852293986827135,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9999215602874756,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 1.9592736862250604e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.00020279388991184533,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.999954342842102,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9984381794929504,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9998676776885986,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.0013589173322543502,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 2.0235360352671705e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 4.6677909267600626e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9999686479568481,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.9999892711639404,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9775272607803345,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9990130662918091,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.18400172889232635,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 2.1356883735279553e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.9926126003265381,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9999809265136719,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.9570507407188416,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9999805688858032,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 8.047095434449147e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9999868869781494,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.018117958679795265,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.07411551475524902,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.001461128587834537,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9998218417167664,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 1.537633579573594e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 3.1689629395259544e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9999146461486816,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9982287287712097,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9997991919517517,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.0013728465419262648,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 1.672861799306702e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 6.6014795265800785e-06,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9999897480010986,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.9999872446060181,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9996848106384277,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.999183714389801,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 5.963626244920306e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 4.640602128347382e-05,
+          "pred": "real"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.999908447265625,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9999898672103882,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.9986593723297119,
+          "pred": "ai"
+        },
+        {
+          "model": "steganograph",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9999489784240723,
+          "pred": "ai"
+        }
+      ],
+      "seconds_total": 153.38118490000488
+    },
+    "capcheck": {
+      "model": "capcheck",
+      "declared": {
+        "backend": "hf",
+        "hf_model": "capcheck/ai-image-detection",
+        "parameters": 85800000,
+        "license": "Apache-2.0"
+      },
+      "resolved": {
+        "backend": "hf",
+        "model_id": "capcheck/ai-image-detection",
+        "device": "cpu",
+        "threshold": 0.5,
+        "id2label": {
+          "0": "REAL",
+          "1": "FAKE"
+        },
+        "resolved_commit": "a6661e07d38f1a097bba07ca9415538819278f09"
+      },
+      "sample_count": 24,
+      "threshold": 0.5,
+      "fine_tuning": false,
+      "conditions": {
+        "clean": {
+          "dataset": "SID_Set validation spike:clean",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.541667,
+          "balanced_accuracy": 0.541667,
+          "precision": 0.521739,
+          "recall": 1.0,
+          "f1": 0.685714,
+          "roc_auc": 0.826389,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 1,
+            "false_positive": 11,
+            "false_negative": 0
+          },
+          "seconds": 13.094346,
+          "images_per_second": 1.832852,
+          "threshold_sweep": {
+            "best_threshold": 0.932543,
+            "best_accuracy": 0.791667,
+            "best_balanced_accuracy": 0.791667,
+            "best_f1": 0.782609,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "jpeg_q30": {
+          "dataset": "SID_Set validation spike:jpeg_q30",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.541667,
+          "balanced_accuracy": 0.541667,
+          "precision": 0.521739,
+          "recall": 1.0,
+          "f1": 0.685714,
+          "roc_auc": 0.798611,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 1,
+            "false_positive": 11,
+            "false_negative": 0
+          },
+          "seconds": 11.199386,
+          "images_per_second": 2.142975,
+          "threshold_sweep": {
+            "best_threshold": 0.866935,
+            "best_accuracy": 0.791667,
+            "best_balanced_accuracy": 0.791667,
+            "best_f1": 0.782609,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "blur_sigma2": {
+          "dataset": "SID_Set validation spike:blur_sigma2",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.541667,
+          "balanced_accuracy": 0.541667,
+          "precision": 0.521739,
+          "recall": 1.0,
+          "f1": 0.685714,
+          "roc_auc": 0.833333,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 1,
+            "false_positive": 11,
+            "false_negative": 0
+          },
+          "seconds": 13.510558,
+          "images_per_second": 1.776389,
+          "threshold_sweep": {
+            "best_threshold": 0.928261,
+            "best_accuracy": 0.791667,
+            "best_balanced_accuracy": 0.791667,
+            "best_f1": 0.782609,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "resize_0.25": {
+          "dataset": "SID_Set validation spike:resize_0.25",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.541667,
+          "balanced_accuracy": 0.541667,
+          "precision": 0.521739,
+          "recall": 1.0,
+          "f1": 0.685714,
+          "roc_auc": 0.826389,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 1,
+            "false_positive": 11,
+            "false_negative": 0
+          },
+          "seconds": 11.378989,
+          "images_per_second": 2.109151,
+          "threshold_sweep": {
+            "best_threshold": 0.939748,
+            "best_accuracy": 0.791667,
+            "best_balanced_accuracy": 0.791667,
+            "best_f1": 0.782609,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "noise_sigma0.10": {
+          "dataset": "SID_Set validation spike:noise_sigma0.10",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.541667,
+          "balanced_accuracy": 0.541667,
+          "precision": 0.521739,
+          "recall": 1.0,
+          "f1": 0.685714,
+          "roc_auc": 0.840278,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 1,
+            "false_positive": 11,
+            "false_negative": 0
+          },
+          "seconds": 13.623784,
+          "images_per_second": 1.761625,
+          "threshold_sweep": {
+            "best_threshold": 0.907769,
+            "best_accuracy": 0.791667,
+            "best_balanced_accuracy": 0.791667,
+            "best_f1": 0.782609,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "color_jitter_20": {
+          "dataset": "SID_Set validation spike:color_jitter_20",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.666667,
+          "roc_auc": 0.805556,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 0,
+            "false_positive": 12,
+            "false_negative": 0
+          },
+          "seconds": 14.159951,
+          "images_per_second": 1.694921,
+          "threshold_sweep": {
+            "best_threshold": 0.673328,
+            "best_accuracy": 0.75,
+            "best_balanced_accuracy": 0.75,
+            "best_f1": 0.8,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "center_crop_80": {
+          "dataset": "SID_Set validation spike:center_crop_80",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.583333,
+          "balanced_accuracy": 0.583333,
+          "precision": 0.545455,
+          "recall": 1.0,
+          "f1": 0.705882,
+          "roc_auc": 0.8125,
+          "confusion": {
+            "true_positive": 12,
+            "true_negative": 2,
+            "false_positive": 10,
+            "false_negative": 0
+          },
+          "seconds": 12.880743,
+          "images_per_second": 1.863247,
+          "threshold_sweep": {
+            "best_threshold": 0.94142,
+            "best_accuracy": 0.833333,
+            "best_balanced_accuracy": 0.833333,
+            "best_f1": 0.8,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        }
+      },
+      "predictions": [
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.5328375697135925,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9924038052558899,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6222397685050964,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5554010272026062,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.5074939727783203,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9906732439994812,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.45993468165397644,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.8854982852935791,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9919710159301758,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9550767540931702,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9887259602546692,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.5498375296592712,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.9739387035369873,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6265535354614258,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9325429201126099,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.7493155002593994,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9929094910621643,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9971455931663513,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.7199248671531677,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.8764334917068481,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.5616095066070557,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9837291836738586,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.688633382320404,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "clean",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9971482157707214,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.5214815139770508,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9919136762619019,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6053597331047058,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5573428273200989,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.47439202666282654,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9915364980697632,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.5474563241004944,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.8358224034309387,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9922324419021606,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.866934597492218,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9910082221031189,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.5547075271606445,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.9753406047821045,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6665487885475159,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9077564477920532,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.7080895304679871,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9931917786598206,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9965407252311707,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.7348488569259644,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.8204019069671631,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.5388607382774353,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9793400764465332,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.6757987141609192,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9966993927955627,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.5142292380332947,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9942649006843567,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6454997062683105,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5519968867301941,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.5322238802909851,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.991513192653656,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.3856179714202881,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.8853387832641602,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9945107698440552,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9543368816375732,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9898431897163391,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.5645543932914734,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.9830066561698914,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6646350622177124,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9282605648040771,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.7299314141273499,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9933825731277466,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9971844553947449,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.7967806458473206,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.8984803557395935,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.5769094824790955,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9877617359161377,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.7016279101371765,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9973533153533936,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.5180610418319702,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9933232665061951,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6295552253723145,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5548453330993652,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.5202915668487549,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9910097122192383,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.37545245885849,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.8819541335105896,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9939938187599182,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9544029235839844,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9894204139709473,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.5605373382568359,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.9831021428108215,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6449790000915527,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9397478103637695,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.7229788303375244,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9937886595726013,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9972526431083679,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.7614498734474182,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.8760107755661011,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.5884386897087097,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9866827726364136,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.6984968185424805,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9972366094589233,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.48512059450149536,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9884876608848572,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6280158162117004,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5670041441917419,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.5014580488204956,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9922574758529663,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.546120285987854,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.8813775777816772,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9866437315940857,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9172725677490234,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9859230518341064,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.5448297262191772,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.9779832363128662,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6841925978660583,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9077689051628113,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.7114687561988831,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9806622266769409,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9869434833526611,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.7204480767250061,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.7746291756629944,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.5515308380126953,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9532248973846436,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.740804135799408,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.995724081993103,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.5742076635360718,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.996032178401947,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6226102113723755,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5868847370147705,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.564686119556427,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9928892850875854,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.6381562352180481,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.9007829427719116,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9859097003936768,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.899414598941803,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9881715178489685,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.5440828800201416,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.9804993271827698,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6854545474052429,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.9099156856536865,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.6733283400535583,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.9948669672012329,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9935232400894165,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.9602785110473633,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.8877776861190796,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.7416351437568665,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9865759015083313,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.7038915157318115,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9971712231636047,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.5005200505256653,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.9717273116111755,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.6671000123023987,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.5546773672103882,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.4930676519870758,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.9915021657943726,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.6967813372612,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.9133379459381104,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.9794360399246216,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.9845506548881531,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.9741189479827881,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.47456520795822144,
+          "pred": "real"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.7170823216438293,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.6203973889350891,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.5540438890457153,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.7311506867408752,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.837620198726654,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.9935846924781799,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.7061912417411804,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.8728366494178772,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.5586326122283936,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.9414195418357849,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.6649723052978516,
+          "pred": "ai"
+        },
+        {
+          "model": "capcheck",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.9915640354156494,
+          "pred": "ai"
+        }
+      ],
+      "seconds_total": 158.01625229994534
+    },
+    "univfd": {
+      "model": "univfd",
+      "declared": {
+        "backend": "univfd",
+        "parameters": 428000000,
+        "license": "MIT"
+      },
+      "resolved": {
+        "backend": "univfd",
+        "model_name": "ViT-L-14",
+        "pretrained": "openai",
+        "head_repo": "siddharthksah/deepsafe-weights",
+        "head_file": "universalfakedetect/fc_weights.pth",
+        "device": "cpu",
+        "threshold": 0.5
+      },
+      "sample_count": 24,
+      "threshold": 0.5,
+      "fine_tuning": false,
+      "conditions": {
+        "clean": {
+          "dataset": "SID_Set validation spike:clean",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.430556,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 48.405151,
+          "images_per_second": 0.495815,
+          "threshold_sweep": {
+            "best_threshold": 0.261365,
+            "best_accuracy": 0.541667,
+            "best_balanced_accuracy": 0.541667,
+            "best_f1": 0.645161,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "jpeg_q30": {
+          "dataset": "SID_Set validation spike:jpeg_q30",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.444444,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 54.635993,
+          "images_per_second": 0.439271,
+          "threshold_sweep": {
+            "best_threshold": 0.303799,
+            "best_accuracy": 0.541667,
+            "best_balanced_accuracy": 0.541667,
+            "best_f1": 0.521739,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "blur_sigma2": {
+          "dataset": "SID_Set validation spike:blur_sigma2",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.409722,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 59.450905,
+          "images_per_second": 0.403694,
+          "threshold_sweep": {
+            "best_threshold": 0.261139,
+            "best_accuracy": 0.583333,
+            "best_balanced_accuracy": 0.583333,
+            "best_f1": 0.705882,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "resize_0.25": {
+          "dataset": "SID_Set validation spike:resize_0.25",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.430556,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 57.874589,
+          "images_per_second": 0.41469,
+          "threshold_sweep": {
+            "best_threshold": 0.262466,
+            "best_accuracy": 0.625,
+            "best_balanced_accuracy": 0.625,
+            "best_f1": 0.727273,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "noise_sigma0.10": {
+          "dataset": "SID_Set validation spike:noise_sigma0.10",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.368056,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 54.675845,
+          "images_per_second": 0.438951,
+          "threshold_sweep": {
+            "best_threshold": 0.421934,
+            "best_accuracy": 0.541667,
+            "best_balanced_accuracy": 0.541667,
+            "best_f1": 0.153846,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "color_jitter_20": {
+          "dataset": "SID_Set validation spike:color_jitter_20",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.458333,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 56.294913,
+          "images_per_second": 0.426326,
+          "threshold_sweep": {
+            "best_threshold": 0.287559,
+            "best_accuracy": 0.541667,
+            "best_balanced_accuracy": 0.541667,
+            "best_f1": 0.56,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        },
+        "center_crop_80": {
+          "dataset": "SID_Set validation spike:center_crop_80",
+          "n_samples": 24,
+          "n_real": 12,
+          "n_ai": 12,
+          "threshold": 0.5,
+          "accuracy": 0.5,
+          "balanced_accuracy": 0.5,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "roc_auc": 0.4375,
+          "confusion": {
+            "true_positive": 0,
+            "true_negative": 12,
+            "false_positive": 0,
+            "false_negative": 12
+          },
+          "seconds": 52.638082,
+          "images_per_second": 0.455944,
+          "threshold_sweep": {
+            "best_threshold": 0.27362,
+            "best_accuracy": 0.541667,
+            "best_balanced_accuracy": 0.541667,
+            "best_f1": 0.592593,
+            "note": "Diagnostic only: this threshold is selected on the evaluated sample."
+          }
+        }
+      },
+      "predictions": [
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.27660608291625977,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.2613648772239685,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.25575947761535645,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.3435373902320862,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.2894558310508728,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.2624044716358185,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.28902027010917664,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.23134452104568481,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.2908289432525635,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.37464556097984314,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.27574700117111206,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.2521117329597473,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.2799401581287384,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.37323296070098877,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.2743352949619293,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.3293111026287079,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.3485123813152313,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.30566322803497314,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.2855263650417328,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.34616726636886597,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.2752072513103485,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.24984155595302582,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.333321750164032,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "clean",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.25277087092399597,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.2854822874069214,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.2734256088733673,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.26559683680534363,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.3613056540489197,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.29497429728507996,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.2675396800041199,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.2779182195663452,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.2745009958744049,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.30379927158355713,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.382062703371048,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.3123595118522644,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.25423502922058105,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.28113657236099243,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.3545595407485962,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.2748258113861084,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.34506165981292725,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.3449587821960449,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.3177127540111542,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.322870671749115,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.34250420331954956,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.28260788321495056,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.25423306226730347,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.3185831308364868,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "jpeg_q30",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.27171483635902405,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.28589561581611633,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.2685994803905487,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.2557900547981262,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.3638671636581421,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.29338473081588745,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.2611386775970459,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.29614177346229553,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.2427964061498642,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.31183815002441406,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.3809288442134857,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.2822462022304535,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.263398677110672,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.2996027171611786,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.3835381269454956,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.2842656672000885,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.33221766352653503,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.35320791602134705,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.31588390469551086,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.3296324610710144,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.3451646566390991,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.2841250002384186,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.2679406404495239,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.327849417924881,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "blur_sigma2",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.2617761790752411,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.28652849793434143,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.271248459815979,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.261863648891449,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.3684278428554535,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.29796430468559265,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.2629198133945465,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.30558842420578003,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.24430418014526367,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.3077602684497833,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.3817763328552246,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.28347429633140564,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.2583393156528473,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.30037710070610046,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.38400065898895264,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.28526514768600464,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.33497294783592224,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.3568931818008423,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.3063091039657593,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.3258603811264038,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.3445616066455841,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.28092077374458313,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.26664167642593384,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.3360574543476105,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "resize_0.25",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.2624664604663849,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.2870369851589203,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.2592332065105438,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.2783907651901245,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.38542672991752625,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.31571486592292786,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.2663910686969757,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.30282336473464966,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.27057045698165894,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.3044229745864868,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.4219341278076172,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.3241644501686096,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.26364514231681824,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.325065553188324,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.36710888147354126,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.29725635051727295,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.32410845160484314,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.3757093846797943,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.3377642035484314,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.39193692803382874,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.3588467538356781,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.2814398407936096,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.2664692997932434,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.3578135371208191,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "noise_sigma0.10",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.2692524790763855,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.2766723334789276,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.27856290340423584,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.2581261396408081,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.3717036843299866,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.2877248525619507,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.25791406631469727,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.2789168953895569,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.2607126533985138,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.29507941007614136,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.3810465633869171,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.27119433879852295,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.25655052065849304,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.2700802683830261,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.3563762903213501,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.28755879402160645,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.30571800470352173,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.34772706031799316,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.30901455879211426,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.297751784324646,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.36729860305786133,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.2949334383010864,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.25074467062950134,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.33765295147895813,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "color_jitter_20",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.23063115775585175,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "91995094dd129257",
+          "truth": "real",
+          "probability_ai": 0.2939961552619934,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_004934",
+          "truth": "ai",
+          "probability_ai": 0.26091793179512024,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "58c66c4583de8bf5",
+          "truth": "real",
+          "probability_ai": 0.2614704966545105,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "d953914a018b80ad",
+          "truth": "real",
+          "probability_ai": 0.34487104415893555,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "9a99796dffaaa7d3",
+          "truth": "real",
+          "probability_ai": 0.2949891686439514,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_002764",
+          "truth": "ai",
+          "probability_ai": 0.24984687566757202,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "8bd5cae6314172b9",
+          "truth": "real",
+          "probability_ai": 0.26349082589149475,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "42e7a4cbf61fd493",
+          "truth": "real",
+          "probability_ai": 0.250161349773407,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_007473",
+          "truth": "ai",
+          "probability_ai": 0.3127118945121765,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000702",
+          "truth": "ai",
+          "probability_ai": 0.3816553056240082,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001094",
+          "truth": "ai",
+          "probability_ai": 0.27361974120140076,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "2220f1ab609f0843",
+          "truth": "real",
+          "probability_ai": 0.2586536407470703,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "76bb9873db655e13",
+          "truth": "real",
+          "probability_ai": 0.2583872377872467,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "1034c6557e9fb8c1",
+          "truth": "real",
+          "probability_ai": 0.33584949374198914,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_004989",
+          "truth": "ai",
+          "probability_ai": 0.2823185324668884,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001311",
+          "truth": "ai",
+          "probability_ai": 0.3432636260986328,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "f2b02fe7b2ddcb9c",
+          "truth": "real",
+          "probability_ai": 0.37013331055641174,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000008",
+          "truth": "ai",
+          "probability_ai": 0.28885239362716675,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "9e65133332e72eb0",
+          "truth": "real",
+          "probability_ai": 0.3322478234767914,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "ed392911fea257be",
+          "truth": "real",
+          "probability_ai": 0.33384495973587036,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_000882",
+          "truth": "ai",
+          "probability_ai": 0.3148658573627472,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_001209",
+          "truth": "ai",
+          "probability_ai": 0.25855714082717896,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_007794",
+          "truth": "ai",
+          "probability_ai": 0.3264878988265991,
+          "pred": "real"
+        },
+        {
+          "model": "univfd",
+          "condition": "center_crop_80",
+          "sample_id": "full_synthetic_008801",
+          "truth": "ai",
+          "probability_ai": 0.24684295058250427,
+          "pred": "real"
+        }
+      ],
+      "seconds_total": 579.4705687999958
+    }
+  }
+}
