@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Dataset downloads are large and must stay local.
+data/*
+!data/README.md
+
+# Marimo runtime state and caches.
+.marimo/
+__marimo__/
+
+data/

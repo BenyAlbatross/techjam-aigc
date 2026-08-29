@@ -1,0 +1,1023 @@
+                                                             AlignGemini: Generalizable AI-Generated Image Detection
+                                                                      Through Task-Model Alignment
+
+
+                                                                        Ruoxin Chen 1 Jiahui Gao 2 Kaiqing Lin 3 Keyue Zhang 1
+                                                                       Yandan Zhao 1 Isabel Guan 4 Taiping Yao 1 Shouhong Ding 1
+arXiv:2512.06746v2 [cs.CV] 30 Jan 2026
+
+
+
+
+                                         Figure 1. Top: Performance comparison on in-the-wild benchmarks. AlignGemini consistently outperforms existing detectors across
+                                         five datasets. Bottom: Comparison on the complexity of training dataset construction. AlignGemini relies on a substantially simpler
+                                         training corpus. Overall, AlignGemini achieves strong in-the-wild performance while significantly reducing training data complexity,
+                                         supporting the effectiveness of Task–Model Alignment principle for AIGI detection.
+
+                                                                  Abstract                                        versely, conventional vision models effectively
+                                                                                                                  capture low-level artifacts but exhibit insensitive
+                                              Vision Language Models (VLMs) are increas-                          to semantic inconsistencies compared to VLMs,
+                                              ingly adopted for AI-generated images (AIGI)                        highlighting that different models are suited to
+                                              detection. However, while converting VLMs into                      different subtasks. Motivated by this insight,
+                                              detectors requires substantial resource, the re-                    we first formalize AIGI detection as two orthogo-
+                                              sulting models often suffer from hallucination                      nal subtasks—semantic consistency checking and
+                                              and poor generalization. To probe the core is-                      pixel-artifact detection—and show that neglecting
+                                              sue, we conduct an empirical analysis and re-                       either induces systematic blind spots. We further
+                                              veal two characteristic behaviors: (i) fine-tuning                  propose the Task–Model Alignment principle and
+                                              VLMs with semantic supervision consistently                         instantiate it in a two-branch detector, AlignGem-
+                                              strengthens semantic discrimination and gener-                      ini, which combines a VLM trained with pure
+                                              alizes well to unseen data; (ii) fine-tuning VLMs                   semantic supervision and a pixel-artifact expert
+                                              with pixel-artifact supervision leads to weak gen-                  trained with pure artifact supervision. By enforc-
+                                              eralization. These observations indicate a fun-                     ing pure supervision and orthogonal specializa-
+                                              damental task–model misalignment: VLMs are                          tion, each branch captures non-overlapping
+                                              inherently optimized for semantic reasoning                         semantic or pixel cues, allowing AlignGem-
+                                              and lack inductive bias toward low-level pixel                      ini to maximize complementary discrimination
+                                              artifacts, which lie outside their strengths. Con-                  across the two dimensions. Experiments on in-
+                                            1
+                                              Tencent Youtu Lab 2 East China University of Science and
+                                                                                                                  the-wild benchmarks show that AlignGemini im-
+                                         Technology 3 Shenzhen University 4 Hong Kong University of Sci-          proves average accuracy by 9.5% with simplified
+                                         ence and Technology. Correspondence to: Ruoxin Chen <cus-                training data. These results highlight task–model
+                                         mochen@tencent.com>.                                                     alignment as an effective principle for generaliz-
+                                                                                                                  able AIGI detection.
+                                         Preprint. February 2, 2026.
+
+                                                                                                           1
+                                   Submission and Formatting Instructions for ICML 2026
+
+1. Introduction                                                      the behavior of different models on these two subtasks and
+                                                                     reveal a clear division of inductive strengths, which forms
+The rapid progress of generative models (Goodfellow et al.,          the empirical foundation of the proposed task–model align-
+2014; Ho et al., 2020; Van Den Oord et al., 2016; Yan et al.,        ment principle. 3) Guided by this, Section 4 introduces
+2025b) has fueled innovation across creative industries, but         AlignGemini, which is trained using a substantially simpli-
+the growing volume of AI-generated images has heightened             fied training corpus. Without relying on complex annota-
+misinformation risks, making detection essential. Recently,          tions, reinforcement learning, or carefully-designed COT
+VLMs have gained increasing attention, motivating their              supervision, AlignGemini nevertheless achieves superior in-
+adaptation for AIGI detection. Early works (Xu et al., 2025a;        the-wild detection performance. Collectively, these results
+Chen et al., 2024b) explore the potential of VLMs, and sub-          suggest generalization in AIGI detection does not neces-
+sequent studies enhance VLM-based detectors via prompt               sarily arise from scaling data volume or diversity, but
+engineering (Ji et al., 2025), reinforcement learning (Xu            rather from aligning training supervision with a model’s
+et al., 2025b; Zhou et al., 2025), curated datasets with fine-       inherent inductive strengths. Our contributions are:
+grained annotation (Xu et al., 2025b; Zhang et al., 2025;
+                                                                        • A Principle-Level Framework for AIGI Detection.
+Kang et al., 2025; Wen et al., 2025b), reasoning-oriented
+                                                                          We formulate Task–Model Alignment as a general de-
+mechanisms (Huang et al., 2025; Xia et al., 2025; Gao et al.,
+                                                                           sign principle for AIGI detection by decomposing the
+2025), and fusion with expert detectors (Chen et al., 2024b;
+                                                                           task into two complementary subtasks: semantic incon-
+Zhou et al., 2025; Peng et al., 2025; Tan et al., 2025).
+                                                                           sistency detection and pixel-artifact detection. Through
+However, recent studies show that VLMs face two                            controlled analysis, we show that different model fami-
+fundamental limitations when adapted to AIGI detec-                        lies exhibit systematically different inductive strengths
+tion (Gekhman et al., 2024; Lampinen et al., 2025; Yan                     on these subtasks. Instantiating this principle, we in-
+et al., 2025a): (i) VLM detectors are prone to hallucinations,             troduce AlignGemini and demonstrate that aligning
+often producing incorrect labels with spurious explanations;               supervision with model inductive bias leads to strong
+(ii) explanation-oriented supervision is inherently ill-posed              in-the-wild generalization, even under substantially
+for synthetic images, which may be semantically faithful                   simplified training supervision.
+yet lack localized or describable visual artifacts, making              • An Evaluation Benchmark for Disentangled De-
+artifact explanations ambiguous and unreliable. As a re-                   tector Analysis. We introduce AIGI-Now, a bench-
+sult, resource-intensive VLM-based approaches often fail to                mark designed to support fine-grained evaluation of
+achieve robust generalization.                                            AIGI detectors. AIGI-Now spans nine contemporary
+To investigate the core issue, we conduct an empirical anal-               image generators, including six commercial closed-
+ysis (Section 3) and identify two characteristic behaviors.                source models, and provides two disjoint subsets per
+(i) When fine-tuned with high-level semantic supervision,                  generator to disentangle semantic discrimination from
+the VLM exhibits a substantial improvement in semantic                     pixel-artifact discrimination. This benchmark enables
+discrimination and maintains strong generalization. (ii) In                systematic analysis of detector behaviors beyond ag-
+contrast, when fine-tuned on low-level pixel-artifact supervi-             gregate accuracy, facilitating principled diagnosis of
+sion, the VLM shows degraded generalization and frequent                   generalization strengths and failure modes.
+hallucinations. Conversely, conventional vision backbones
+achieve strong and stable performance in pixel-artifact detec-       2. Related Works
+tion. These findings suggest that model performance is               AIGI Detection via Conventional Vision Models.
+fundamentally governed by the alignment between task                 CNNSpot (Wang et al., 2020) shows that a vanilla CNN
+structure and the model’s inductive biases, which are                readily detects synthetic images from seen generators but
+shaped by its pretraining paradigm and architectural                 fails to generalize to unseen ones. UnivFD (Ojha et al.,
+design. When a model is forced to optimize objectives that           2023) improves cross-generator generalization by adopting
+are incongruent with its strength, this induces task–model           the VLM model CLIP as a backbone. Follow-up studies (Lin
+misalignment and leads to suboptimal performance.                    et al., 2025a; Tan et al., 2024a; Zheng et al., 2024; Yan et al.;
+In this paper, we articulate a high-level design principle for       Tan et al., 2024b; Chu et al., 2025; Li et al., 2024; Kara-
+AIGI detection through a series of coherent and systematic           georgiou et al., 2025; Zhou et al., 2023; Tan et al., 2024c)
+analyses, culminating in a detector that achieves strong in-         pursue generalization by redesigning architectures, refining
+the-wild performance: 1) In Section 3, we show that AIGI             fine-tuning protocols, and tailoring loss functions. Neverthe-
+detection inherently comprises two complementary sub-                less, these detectors predominantly rely on low-level pixel
+tasks: semantic inconsistency detection and pixel-artifact           artifacts, making them brittle under post-processing.
+detection. Both are indispensable, as neglecting either sub-         AIGI Detection via VLM. VLMs excel at image-text
+task leads to systematic detection blind spots. 2) We analyze        semantic understanding, a capability that remains reliable
+
+                                                                 2
+                                        Submission and Formatting Instructions for ICML 2026
+
+                                                                              branch. X2-DFD (Chen et al., 2024b) augments the LVLM
+                                                                              with expert detectors to recover pixel-level signals. AIGI-
+                                                                              Holmes (Li et al., 2025b) pairs an LVLM with CLIP and
+                                                                              NPR (Tan et al., 2024c) to integrate high- and low-level sig-
+                                                                              nals. AvatarShield (Xu et al., 2025b) similarly concatenates
+                                                                              an additional residual-based expert module. In summary,
+                                                                              external expert models are introduced to compensate for
+                                                                              the inherent limitations of VLMs in low-level perception.
+                                                                              However, in most existing approaches, these experts are
+                                                                              incorporated in an ad hoc manner. Above methods sepa-
+                                                                              rate semantics and pixels architecturally but overlook the
+                                                                              most important, data dimension: their training sets remain
+Figure 2. Illustration of systematic blind spots of semantic and              mixed—some are semantically non-discriminative, others
+pixel-artifact detectors. Top: semantically-faithful synthetic im-            pixel-non-discriminative—entangling supervisory signals
+ages evade semantic detectors despite clear pixel artifacts. Bottom:
+                                                                              and limiting branch specialization. In contrast, AlignGemini
+heavy degradations (e.g., compression, resizing) destroy the gener-
+ation pixel trace, greatly reducing pixel-artifact detectors’ detection       jointly considers model inductive biases and supervision de-
+rate by 16%+, even for evidently implausible synthetic images.                sign. Specifically, the VLM is trained on a purely semantic
+                                                                              corpus, while the expert model is trained on pixel-artifact
+under post-processing and helps distinguish semantically im-                  cues. We show that this aligned pairing of model choice and
+plausible fakes, making them attractive for AIGI detection.                   task-pure supervision yields stronger branch specialization
+Early work UnivFD (Ojha et al., 2023) employs the VLM                         and leads to robust generalization.
+model CLIP (Radford et al., 2021) as a backbone to improve
+generalizability, followed by methods (Liu et al., 2024; Tan                  3. Motivation
+et al., 2024a) that further adapt CLIP for AIGI detection.
+With the emergence of large VLMs, later studies increas-                      AIGI Detection as Two Sub-Tasks: Semantic and Pixel-
+ingly rely on scaling datasets and labels: FakeShield (Xu                     Artifact Detection. AIGI detection decomposes into two
+et al., 2025a) aggregates six datasets and, with GPT-4o-                      complementary subtasks: (i) semantic-consistency verifica-
+annotated defect regions and rationales; FakeVLM (Wen                         tion, which assesses whether image content is semantically
+et al., 2025b) builds FakeClue dataset from five sources                      plausible, and (ii) pixel-artifact detection, which identifies
+and employs three pretrained VLMs for aggregated annota-                      low-level traces introduced by the generation process. Each
+tion; IVY-Fake (Zhang et al., 2025), LEGION (Kang et al.,                     subtask can succeed in isolation but exhibits systematic
+2025), BusterX++ (Wen et al., 2025a), Forensic-Chat (Lin                      blind spots, as illustrated in Figure 2. Semantic detec-
+et al., 2025b), VLM-Defake (Ji et al., 2025), and AIGI-                       tors can be bypassed by content-faithful synthetic images,
+Holmes (Li et al., 2025b) further expand coverage across                      while pixel-based detectors are fragile under aggressive
+generators, datasets, and forgery types via expert annota-                    post-processing. Each subtask captures a distinct failure
+tions or cross-LLM validation. Overall, existing VLM-                         mode, and reliance on either in isolation inevitably leaves
+based detectors largely rely on large-scale datasets and                      systematic vulnerabilities.
+high-fidelity supervision, incurring substantial annota-
+tion costs and introducing the risk of benchmark in-                          A Practical Analysis of Task-Model Alignment. Having
+domaining, where overlapping or closely related genera-                       established AIGI detection decouposed into two subtasks,
+tors appear in both training and evaluation, potentially                      we examine how different models align with these two sub-
+overstating true generalization performance. In contrast,                     tasks. We construct three supervision regimes: (i) Pixel-
+AlignGemini demonstrates that, under the Task-Model Align-                    artifact set: a pixel-artifact set, where synthetic images are
+ment principle, large-scale training data and fine-grained                    generated via VAE reconstruction to preserve semantics
+annotation are not prerequisites for generalization.                          while altering pixel statistics; (ii) Semantically-implausible
+                                                                              set, where images contain semantic inconsistencies pro-
+AIGI Detection via VLM with Experts. Extensive                                duced by GPT-4o and are aggressively post-processed to
+work (Cheng et al., 2025; Jia et al., 2024; Yoon et al., 2025;                suppress low-level cues; (iii) a mixed set combining both.
+Grover et al., 2025) shows that VLMs are weak at pixel-                       We train a VLM (Qwen-VL) and a conventional vision
+level perception, and are therefore required for external                     model (DINOv2) under each regime and observe the fol-
+experts. AIDE (Yan et al., 2024) couples CLIP with a shal-                    lowing (Figure 3). VLMs consistently excel at semantic-
+low CNN to inject pixel-level cues. CO-SPY (Cheng et al.,                     flaw detection, and semantic supervision further strengthens
+2025) fuses CLIP semantic features with VAE reconstruc-                       this capability with strong cross-generator generalization.
+tion residuals to capture both semantic and pixel cues. Large                 However, they remain largely insensitive to pixel-level ar-
+VLMs (LVLMs) are adopted to strengthen the semantic                           tifacts, even under explicit pixel supervision. In contrast,
+
+                                                                          3
+                                      Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 3. Analysis of task–model alignment. “Semantic/Pixel Val” denotes images generated by the same generator used in training.
+“Semantic/Pixel Test” denotes images from unseen generators. Top: DINOv2 trained with semantic supervision generalizes poorly to
+unseen semantic inconsistencies, whereas pixel-artifact supervision yields strong generalization on pixel-artifact tests. Bottom: Qwen-VL
+trained with semantic supervision robustly detects semantic flaws from unseen generators, while pixel-artifact supervision fails to improve
+its sensitivity to low-level artifacts. Rightmost column: Mixed semantic–pixel supervision degrades each model’s inherent strengths.
+The results indicate that semantic and pixel subtasks align with different inductive biases. Joint supervision cannot reconcile this
+mismatch, whereas task–model alignment yields superior generalization.
+DINOv2 effectively captures pixel artifacts and generalizes             fine-tune the VLM and consists of 5,000 real images from
+well across generators, but performs poorly on semantic                 Unsplash (Unsplash, 2025) and 5,000 semantically implau-
+inconsistency detection. Notably, mixed semantic–pixel su-              sible synthetic images from Echo-4o (Ye et al., 2025).1 To
+pervision fails to produce a single model that performs well            prevent leakage of low-level cues, both real and synthetic
+on both subtasks, instead diluting each model’s strengths.              images undergo online randomized heavy post-processing
+                                                                        during training, including resolution downsampling, JPEG
+4. Methodology                                                          compression, noise injection, and upsampling to the orig-
+                                                                        inal size. This process perturbs pixel statistics, especially
+Figure 4 shows the overall pipeline of our method. With only            the downsampling–upsampling operation disrupts neigh-
+simplified data construction and lightweight fine-tuning,               borhood pixel relationship. For annotation, we adopt a
+AlignGemini achieves remarkable in-the-wild detection.                  Direct Preference Optimization (DPO) protocol by prepend-
+Purity-First Orthogonal Dataset Construction for Task-                  ing a fixed verdict prefix (“This is an AI-generated im-
+Model Alignment. The dataset construction of AlignGem-                  age.” / “This is an authentic image.”) and eliciting paired
+ini emphasizes purity and orthogonality. As semantic in-                responses from Qwen2.5-VL-72B (Bai et al., 2025) to form
+consistencies are reliably captured by VLMs, the curation               preferred–dispreferred samples. (ii) Pixel-artifact super-
+pipeline requires neither a VLM-as-judge nor human raters               vision set. This set consists of natural images paired with
+for label verification, mitigating label hallucination at its           their Stable Diffusion 2.1 VAE reconstructions, forming
+source. Accordingly, we construct two supervision sets in                  1
+                                                                             Echo-4o (Ye et al., 2025) is an open-source collection of GPT-
+which semantic and pixel-artifact cues are disjoint by de-              4o–conditioned surreal generations.
+sign. (i) Semantical supervision set. This set is used to
+
+                                                                    4
+                                     Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 4. Illustration of the pipeline. AlignGemini adopts a deliberately simple yet effective design by constructing two orthogonal
+supervision sets. For semantic supervision, a pretrained VLM generates DPO-style labels explicitly constrained to semantic cues. The
+VLM and the expert are then fine-tuned separately, aligning each model with its corresponding subtask to encourage complementary
+specialization. At inference, AlignGemini jointly evaluates semantic and pixel-level cues, resulting in complementary AIGI detection.
+
+
+
+
+Figure 5. Comparison between AIGI-Now and existing benchmarks. Top: Existing benchmarks mainly rely on pre-2023 open-source
+generators. By contrast, real-world usage is dominated by newer commercial, closed-source models, creating a clear gap between the
+existing benchmark data and real-world fakes. Bottom: Our proposed AIGI-Now is constructed from the latest generators (all released
+after 2024), including six commercial, closed-source models such as GPT-4o with unknown architectures, enabling rigorous evaluation of
+detectors’ cross-architecture generalization and making the benchmark substantially closer to real-world application scenarios.
+
+semantically matched pairs. This design removes semantic              Inference of AlignGemini. At inference time, AlignGem-
+bias and isolates low-level discrepancies for pixel-artifact          ini evaluates an input image using two complementary sig-
+supervision. By keeping the two supervision sets orthog-              nals: semantic consistency and pixel-level artifact evidence.
+onal, AlignGemini allows each branch to specialize in its             The underlying decision rule is conservative: since authentic
+respective subtask, thereby improving the effectiveness of            images are expected to be benign along both dimensions,
+the integrated detector. Section 6 verifies that such orthogo-        the presence of either semantic inconsistencies or pixel-
+nality is critical for achieving robust generalization.               level artifacts is sufficient to indicate synthesis. Accord-
+                                                                      ingly, AlignGemini adopts a logical OR fusion, classifying
+Training of AlignGemini. AlignGemini enforces                         an image as AI-generated if either the semantic or artifact
+task–model alignment by pairing each subtask with a model             branch produces a positive prediction. For semantically
+suited to its inductive strengths: a VLM (e.g., Qwen2.5-VL-           interpretable cues, the VLM branch provides linguistically
+7B (Bai et al., 2025)) for semantic discrimination and a              grounded reasoning. In contrast, pixel-level artifacts, which
+vision expert (e.g., DINOv2) for pixel-forensic detection.            are not readily expressible in natural language, are assessed
+The VLM branch is fine-tuned via Direct Preference                    via the expert model’s output logits.
+Optimization (DPO) on the semantically implausible
+supervision, while the expert branch is fine-tuned on the             5. Proposed Benchmark
+pixel-artifact supervision using strictly low-level cues.
+This design preserves supervision orthogonality, prevents             AIGI-Now: A Diagnostic Benchmark for Disentangled
+semantic leakage into the pixel expert, and maintains                 Evaluation of AI-Generated Image Detection. As illus-
+task–model alignment.                                                 trated in Figure 5, AIGI-Now covers nine representative
+
+                                                                  5
+                                                                          Submission and Formatting Instructions for ICML 2026
+
+                                                  Table 1. Overall comparison of balanced accuracy on five in-the-wild benchmarks.
+                                                                                       WildRF                                AIGI-Bench                                     CO-SPY-Bench/in-the-wild
+     Method                                                Chameleon                                                                                                                                                             BFree-Online             Avg.
+                                                                          Facebook Reddit Twitter Avg. CommunityUI SocialRF Avg. Civitai DALL·E 3 instavibe.ai Lexica Midjourney-v6 Avg.
+     NPR(CVPR’24) (Tan et al., 2024c)                         59.9          78.1      61.0      51.3    63.5          54.2             58.6      56.4      0.2       4.5           0.4        4.6            82.5        18.4         40.4             47.7 ± 16.6
+     UnivFD(CVPR’23) (Ojha et al., 2023)                      50.7          49.1      60.2      56.5    55.3          51.4             54.6      53.0      3.0      10.3            0.3       1.2            20.8         7.1         48.8             43.0 ± 18.1
+     FatFormer(CVPR’24) (Liu et al., 2024)                    51.2          54.1      68.1      54.4    58.9          51.9             55.4      53.7      0.0       1.7           0.0        2.8            32.2         7.3         50.0             44.2 ± 18.7
+     SAFE(KDD’25) (Li et al., 2024)                           59.9          50.9      74.1      37.5    57.2          54.5             58.4      56.4      0.3       0.6            0.2      0.0             93.4        18.9         50.5             48.6 ± 15.2
+     C2P-CLIP(AAAI’25) (Tan et al., 2024a)                    51.1          54.4      68.4      55.9    59.6          51.0             64.9      57.9      2.5      21.9            0.3      7.6             17.0         9.9         50.0             45.7 ± 18.3
+     AIDE(ICLR’25) (Yan et al., 2024)                         65.8          57.8      71.5      48.8    59.4          66.2             64.9      65.6     15.1      33.1            6.9      26.6            91.3        34.6         49.9             60.2 ± 13.1
+     DRCT(ICML’24) (Chen et al., 2024a)                       56.6          58.3      56.4      50.5    55.1          54.8             54.0      54.4     51.9      90.8           85.3      99.6            76.1        80.7         56.1             60.6 ± 10.1
+     AlignedForensics(ICLR’25) (Rajan et al., 2025)           71.0          91.6      70.9      80.6    81.0          75.6             73.0      74.3     97.8      68.0            8.0       0.5            96.4        54.1         67.7              69.6 ± 8.9
+     CO-SPY(CVPR’25) (Cheng et al., 2025)                     68.8          72.2      77.7      74.8    74.9          65.2             67.7      66.5     96.3      69.0           37.6      68.8            51.4        64.6         55.2              66.0 ± 6.4
+     Forensic-Chat (Qwen2.5-VL)(Lin et al., 2025b)             -            77.8      83.4      82.1    81.1          74.6             89.8      82.2       -         -              -         -              -            -           -                     -
+     BFree (CVPR’25) (Guillaro et al., 2024)                  75.1          94.7      85.5      97.9    92.7          79.1             84.8      81.9     98.7      96.4           14.3      50.5            98.4        71.7         90.3              82.3 ± 9.2
+     AlignGemini                                              85.5          92.2      90.9      95.5    92.9          91.9             85.6      88.8 100.0         99.6           75.0      96.8            99.9        94.3         97.5          91.8 ± 4.7 (+9.5)
+
+
+                                                  Table 2. Overall comparison of balanced accuracy on proposed AIGI-Now datasets.
+                                                            Nano Banana            GPT-4o        Jimeng           Kling           Minimax              Flux Pro     Flux Krea         Flux Dev       Flux Kontext                            Avg.
+       Method                                                Pix     Sem      Pix      Sem      Pix    Sem      Pix     Sem      Pix      Sem      Pix      Sem     Pix     Sem      Pix    Sem      Pix      Sem               Pix                       Sem
+       NPR (CVPR’24) (Tan et al., 2024c)                    84.4     49.9     91.2     50.1    41.9    49.9    88.3     49.9     52.1     50.0     42.7     50.0    52.3    50.0    89.3   50.0      79.2     49.9           69.0 ± 21.2              50.0 ± 0.1
+       UnivFD (CVPR’23) (Ojha et al., 2023)                 51.0     51.4     53.8     53.3    50.7    52.3    51.4     53.9     50.5     52.1     51.9     52.0    51.0    52.2    63.6   49.9      57.5     55.9           52.0 ± 2.3               52.6 ± 1.7
+       FatFormer (CVPR’24) (Liu et al., 2024)               53.4     49.9     49.9     49.8    48.4    49.9    54.8     50.0     49.1     50.0     48.4     50.0    49.5    50.0    52.4   50.0      63.6     49.9            52.1 ± 4.8              49.9 ± 0.1
+       SAFE (KDD’25) (Li et al., 2024)                      99.3     50.1     99.7     50.4    50.0    50.5    99.6     50.0     49.8     50.1     49.9     50.5    51.2    50.1    99.8   75.3      98.8     83.4           77.5 ± 25.9              56.7 ± 13.0
+       C2P-CLIP (AAAI’25) (Tan et al., 2024a)               50.0     50.0     49.8     50.0    49.8    50.0    50.7     49.9     50.3     50.0     52.0     50.0    50.1    50.0    52.6   50.0      60.7     50.0           51.7 ± 3.5               50.0 ± 0.0
+       AIDE (ICLR’25) (Yan et al., 2024)                    98.9     51.8     74.7     53.5    63.9    51.4    98.2     55.4     51.4     54.1     60.1     53.8    50.4    56.9    99.1   59.0      97.9     80.6           77.1 ± 21.4               57.4 ± 9.0
+       DRCT (ICML’24) (Chen et al., 2024a)                  68.9     57.7     75.0     57.0    89.3    57.7    66.9     56.8     78.4     57.1     83.0     58.2    91.6    58.2    86.5   58.6      86.9     55.5            80.7 ± 8.9               57.4 ± 0.9
+       AlignedForensics (ICLR’25) (Rajan et al., 2025)      88.0     50.3     50.8     50.8    82.1    50.0    69.6     50.2     56.7     50.3     65.5     49.9    59.5    50.1    78.6   50.2      65.0     50.0           68.4 ± 12.4              50.2 ± 0.2
+       CO-SPY (CVPR’25) (Cheng et al., 2025)                74.1     58.3     78.9     63.1    83.0    76.2    88.3     78.8     77.9     65.6     77.3     72.7    89.1    74.0    88.5   74.9      65.1     66.0            80.2 ± 7.9               70.0 ± 6.9
+       BFree (CVPR’25) (Guillaro et al., 2024)              69.6     52.8     59.2     56.7    75.6    54.5    86.1     60.7     56.2     49.9     71.8     54.5    59.5    51.5    74.8   54.5      77.1     53.4           70.0 ± 9.9               54.3 ± 3.1
+       AlignGemini                                          96.0     95.6     96.8     95.7    96.2    95.6    97.3     94.9     91.3     89.8     89.9     93.2    83.0    92.6    96.6   95.3      86.6     88.0    92.6 ± 5.2 (+11.9)        93.4 ± 5.8 (+23.4)
+
+
+ Table 3. Overall comparison on three self-synthesized datasets.                                                                          Table 4. Comparison with baseline methods under the same train-
+Method                                            GenImage     DRCT-2M       AIGCDetectBenchmark                 Avg.                     ing set as AlignGemini, isolating the effect of data advantage.
+NPR (CVPR’24) (Tan et al., 2024c)                   51.5           37.3                 53.1                  47.3 ± 7.1                      Method               Chameleon    WildRF     AIGI-Bench       CO-SPY-Bench/in-the-wild       BFree-Online            Avg.
+UnivFD (CVPR’23) (Ojha et al., 2023)                64.1           61.8                 72.5                   66.1 ± 4.6
+                                                                                                                                              UnivFD                 52.0          63.2       58.2                    18.9                     49.8             55.8 ± 17.3
+FatFormer (CVPR’24) (Liu et al., 2024)              62.8           52.2                 85.0                  66.7 ± 13.7
+                                                                                                                                              AIDE                   64.2          61.3       63.2                    44.2                     50.2              56.6 ± 8.9
+SAFE (KDD’25) (Li et al., 2024)                     50.3           59.3                 50.3                  53.3 ± 4.2
+                                                                                                                                              CO-SPY                 66.7          70.2       65.4                    52.6                     53.0             61.2 ± 8.0
+C2P-CLIP (AAAI’25) (Tan et al., 2024a)              74.4           59.2                 81.4                  71.7 ± 9.3                      NPR                    58.3          56.9       54.2                    12.3                     48.9             46.1 ± 19.2
+AIDE (ICLR’25) (Yan et al., 2024)                   61.2           64.6                 63.6                   63.1 ± 1.4                     SAFE                   61.2          62.4       55.3                    21.7                     52.6             50.6 ± 16.7
+DRCT (ICML’24) (Chen et al., 2024a)                 84.7           90.5                 81.4                   85.5 ± 3.8                     DINOv2-ViT-L-14        51.7          57.8       57.8                    13.4                     49.2             54.1 ± 18.6
+AlignedForensics (ICLR’25) (Rajan et al., 2025)     79.0           95.5                 66.6                  80.4 ± 11.8                     Qwen2.5-VL-7B          65.7          86.3       80.4                    67.6                     82.9             76.6 ± 9.3
+CO-SPY (CVPR’25) (Cheng et al., 2025)               76.3           83.1                 72.5                   77.3 ± 5.4
+                                                                                                                                              AlignGemini            85.5          92.9       88.8                    94.3                     97.5        91.8 ± 4.7 (+15.2)
+BFree (CVPR’25) (Guillaro et al., 2024)             89.5           99.1                 88.2                  92.3 ± 6.0
+AlignGemini                                         91.7           98.1                 87.7              92.5 ± 5.2 (+0.2)
+
+
+
+image generators, including Nano Banana, GPT-4o, Jimeng,                                                                                  BFree-Online (Guillaro et al., 2024); (ii) AIGI-Now; and
+Kling, Minimax, Flux Pro, Flux Kera, Flux Kontext, and                                                                                    (iii) three self-synthesized benchmarks—GenImage (Zhu
+Flux Dev. For each generator, we sample 1,000 real images                                                                                 et al., 2023), DRCT-2M (Chen et al., 2024a), and AIGCDe-
+from the COCO test set (Lin et al., 2014) and extract their                                                                               tectBenchmark (Zhong et al., 2024). Implementation details
+captions. Using both the original captions and deliberately                                                                               are provided in Appendix A.
+constructed semantically perturbed variants, we synthesize
+paired images that are either semantically faithful or seman-                                                                             Evaluation Metrics and Comparative Methods. Bal-
+tically implausible. Based on this controlled construction,                                                                               anced accuracy is adopted as the primary metric, defined
+AIGI-Now is organized into two complementary diagnostic                                                                                   as the mean of the accuracies on real and synthetic im-
+subsets, explicitly disentangling semantic reasoning from                                                                                 ages. The competitive methods include NPR (Tan et al.,
+low-level forensic evidence. The semantic-discriminative                                                                                  2024c), FatFormer (Liu et al., 2024), UnivFD (Ojha et al.,
+subset consists of real images and semantically implausible                                                                               2023), SAFE (Li et al., 2024), AIDE (Yan et al., 2024),
+synthetic images, all subjected to aggressive post-processing                                                                             C2P-CLIP (Tan et al., 2024a), DRCT (Chen et al., 2024a),
+to disrupt pixel-level statistics while preserving semantic                                                                               AlignedForensics (Rajan et al., 2025), CO-SPY (Cheng
+inconsistency, thereby isolating semantic cues. In contrast,                                                                              et al., 2025), and BFree (Guillaro et al., 2024), Forensic-
+the pixel-artifact-discriminative subset includes real images                                                                             Chat (Lin et al., 2025b) 2 All baselines are evaluated using
+and semantically faithful synthetic images, minimizing se-                                                                                their officially released checkpoints, without per-benchmark
+mantic shortcuts and emphasizing reliance on pixel-level                                                                                  retuning. For AlignGemini, we consistently adopt a fine-
+forensic artifacts. More details are provided in Appendix.                                                                                tuned Qwen2.5-VL-7B as the VLM branch and a fine-tuned
+                                                                                                                                          DINOv2 as the expert branch across all benchmarks. We
+6. Experiments                                                                                                                            organize our experiments around five key questions:
+Experimental setup. We evaluate all methods on nine                                                                                           Q1. Does AlignGemini achieve stronger generalization?
+benchmarks, organized into three suites: (i) five in-the-
+wild benchmarks—Chameleon (Yan et al., 2024), Wil-                                                                                                2
+                                                                                                                                               Other VLM-based detectors are excluded because (i) the train-
+dRF (Cavia et al., 2024), AIGI-Bench (Li et al., 2025a),                                                                                  ing data overlap with some evaluation benchmarks, compromising
+Co-SPY-Bench (in-the-wild) (Cheng et al., 2025), and                                                                                      fairness, or (ii) the pretrained weights are not publicly available.
+
+                                                                                                                                  6
+                                       Submission and Formatting Instructions for ICML 2026
+
+
+
+
+    (a) AlignGemini                 (b) DRCT                    (c) UnivFD                  (d) CO-SPY                 (e) BFree
+
+Figure 6. Ablation on the effect of using two models across five in-the-wild benchmarks. Each subfigure reports the in-the-wild
+performance of a baseline method augmented with one branch of AlignGemini, resulting in capacity-matched two-model–to–two-model
+comparisons. AlignGemini consistently achieves non-trivial performance improvements, indicating that its gains are not solely
+attributable to the use of multiple models.
+
+
+
+
+  (a) JPEG compression                    (b) Double JPEG                          (c) Resizing                   (d) Double Resizing
+Figure 7. Robustness evaluation on AIGI-Now (pixel), which assesses robustness under common post-processing operations. Double
+JPEG compression applies the same JPEG quality factor twice in succession. Double resizing downsamples the image and then upsamples
+it back to the original resolution. Across all post-processing operations, AlignGemini consistently demonstrates superior robustness.
+
+Comparison on Five In-The-Wild Benchmarks. Table 1                         that prior detectors are largely insensitive to semantic cues,
+reports the performance on five in-the-wild benchmarks3 .                  while AlignGemini achieves strong generalization across
+These benchmarks consist of Internet-sourced images gen-                   both semantic and pixel-level subtasks.
+erated by unknown models and processed with unknown
+                                                                           Q2. Are AlignGemini’s performance gains attributable to
+pipelines, placing them out of distribution for all detectors              task–model alignment, rather than the data advantages or the
+and providing a faithful test of real-world generalization. In             use of two models?
+this challenging regime, most baselines achieve accuracies
+below 70, underscoring the difficulty. AlignGemini consis-                 Ablation on Data Advantage. A natural concern is that
+tently surpasses all baselines, improving accuracy by +9.5,                our gains might arise from using more data. We therefore re-
+demonstrating its superior generalization.                                 train all baselines on identical corpora comprising the same
+                                                                           semantic and pixel-artifact supervision sets. As shown in Ta-
+Comparison on AIGI-Now and Three Self-Synthesized                          ble 4, AlignGemini still yields a +15.2 improvement. These
+Benchmarks. Table 2 and Table 3 compare detectors on                       supports task–model alignment: semantic-only supervision
+AIGI-Now, GenImage, DRCT-2M, and AIGCDetectBench-                          trains the VLM, and pure pixel-artifact supervision trains
+mark. Results on AIGI-Now reveal that most existing detec-                 the expert. By contrast, forcing a single model to learn from
+tors exhibit limited pixel-level generalization to modern im-              mixed supervision dilutes both signals.
+age generators: only DRCT and CO-SPY achieve balanced
+accuracies above 80%. In contrast, AlignGemini improves                    Ablation on the Effect of Using Two Models. Figure 6
+pixel-level accuracy by +11.9, demonstrating substantially                 presents a capacity-matched two-model–to–two-model com-
+stronger generalization. For semantic detection, nearly all                parison. Across all benchmarks, AlignGemini consistently
+baselines fail to identify semantic inconsistencies, yield-                outperforms augmented baseline methods, with its two-
+ing average accuracies below 70%, whereas AlignGemini                      branch integration yielding improved accuracy on all five
+achieves a markedly higher accuracy of 93.4. AlignGem-                     in-the-wild benchmarks. These results suggest that the ob-
+ini also achieves the highest average accuracy across three                served gains are not attributable to merely employing multi-
+self-synthesized benchmarks. Overall, these results indicate               ple models—since augmenting baselines with either branch
+    3                                                                      alone fails to achieve comparable performance—but instead
+      Results on CO-SPY-Bench/in-the-wild may differ from those
+reported in the original papers because the full in-the-wild set is        arise from principled task–model alignment, specifically
+not publicly available due to licensing restrictions; our evaluation       orthogonal supervision and subtask specialization that
+is conducted on the subset provided by the CO-SPY authors.                 promote effective complementarity.
+
+                                                                       7
+                                                          Submission and Formatting Instructions for ICML 2026
+
+
+
+
+         (a) VLM (pure) + Expert (pure) (b) VLM (pure) + Expert (mix) (c) VLM (mix) + Expert (pure) (d) VLM (mix) + Expert (mix)
+
+Figure 8. Performance on AIGI-Now under different supervision settings for the two branches. “Pure” denotes semantic-only supervision
+for the VLM branch and artifact-only supervision for the Expert branch, while “mix” applies combined semantic and pixel-level
+supervision. Pure supervision encourages stronger branch specialization and more effective complementarity, whereas mixed supervision
+dilutes specialization and results in degraded detection performance.
+
+Table 5. Evaluate the in-the-wild accuracies and FLUX-specific accuracies of AlignGemini when upgrading the VLM backbone and the
+pixel experts. SD/FLUX denote experts trained on SD2/FLUX VAE-reconstructed images, respectively. SD+FLUX uses both experts
+jointly. The results show that performance consistently improves with stronger backbones and additional experts.
+                          Method                                                            In-the-wild benchmarks                                                                      AIGI-Now
+                                                          Chameleon   WildRF   AIGI-Bench   CO-SPY-Bench/in-the-wild   BFree-Online         Avg.           Flux Pro.   Flux Kera.   Flux Dev   Flux Kontext.         Avg.
+                  Qwen2.5-VL-7B (Untrained)   -             59.1       83.8       75.7                57.4                 77.6          74.1 ± 11.8         69.6        67.7         73.3         66.9           69.4 ± 2.9
+    Baseline      CO-SPY                      -             68.8       74.9       66.5                64.6                 55.2          66.0 ± 6.4          75.0        81.5         81.7         65.6           75.9 ± 7.6
+                  BFree                       -             75.1       92.7       81.9                71.7                 90.3          82.3 ± 9.2          63.1        55.5         64.6         65.3           62.1 ± 4.5
+                  Qwen2.5-VL-7B               SD            85.5       92.9       88.8                94.3                 97.5        91.8 ± 4.7 (+9.5)     91.5        87.7         95.9         87.3        90.6 ± 4.0 (+14.7)
+                  Qwen2.5-VL-7B               SD + FLUX     85.6       93.1       88.9                94.3                 97.5        91.9 ± 4.7 (+9.6)     91.5        92.1         96.5         89.2        92.3 ± 3.1 (+16.4)
+                  Qwen3-VL-32B                SD            87.9       93.9       90.4                96.0                 95.3       92.7 ± 3.4 (+10.4)     89.7        83.6         95.5         87.1        88.9 ± 5.0 (+13.0)
+    AlignGemini   Qwen3-VL-32B                SD + FLUX     88.4       94.4       90.8                96.3                 95.6       93.1 ± 3.4 (+10.8)     89.8        90.5         96.4         89.1        91.4 ± 3.4 (+15.5)
+                  Qwen3-VL-235B               SD            89.8       94.0       91.2                97.2                 97.8       94.0 ± 3.5 (+11.7)     93.1        89.9         97.0         87.8        92.0 ± 4.0 (+16.1)
+                  Qwen3-VL-235B               SD + FLUX     90.3       94.5       91.6                97.5                 98.2       94.4 ± 3.5 (+12.1)     93.2        94.0         97.6         89.8        93.7 ± 3.2 (+17.8)
+
+
+
+
+Q3. Does AlignGemini exhibit higher robustness?                                                                  we examine two complementary extension directions for
+                                                                                                                 AlignGemini. VLM branch: Scaling the backbone from
+Comparison on Robustness. Figure 7 evaluates ro-
+                                                                                                                 Qwen2.5-VL-7B to Qwen3-VL-235B improves accuracy
+bustness under four post-processing operations. Pixel-
+                                                                                                                 on Chameleon from 85.5 to 90.3, indicating that stronger
+artifact–based detectors exhibit substantial performance
+                                                                                                                 VLM backbones offer an effective scaling path. Expert
+degradation, particularly under double resizing with a scale
+                                                                                                                 branch: Adding an additional expert trained on FLUX
+factor of 0.4. In contrast, detectors that incorporate semantic
+                                                                                                                 VAE reconstructions further enhances performance, partic-
+features (e.g., CO-SPY) show improved stability. Notably,
+                                                                                                                 ularly on FLUX-generated images. Overall, these results
+AlignGemini performs best across all evaluated settings.
+                                                                                                                 demonstrate that AlignGemini is readily extensible and that
+Q4. How does task-specific supervision affect detection perfor-                                                  its performance scales naturally along both branches.
+mance?
+Ablation on Task-Specific Supervision. Figure 8 com-                                                             7. Conclusion
+pares AlignGemini under task-pure supervision and mixed                                                          We propose the Task–Model Alignment principle to enhance
+supervision. Results show that task-pure supervision consis-                                                     the generalization of AI-generated image detection. Guided
+tently yields higher accuracy than mixed supervision. Mixed                                                      by this principle, we instantiate a practical framework,
+supervision dilutes branch-specific learning by encouraging                                                      AlignGemini, demonstrating that even with simplified train-
+each branch to model signals outside its inductive strengths,                                                    ing corpora, effectively leveraging pretrained models’ in-
+thereby weakening task specialization. In contrast, task-                                                        herent strengths can yield strong in-the-wild performance.
+pure supervision enables stronger subtask specialization and                                                     Extensive experiments further validate the improved gen-
+more effective complementary behavior between branches,                                                          eralization, robustness, and extensibility of our approach.
+which is critical for improved generalization.                                                                   In addition, we release AIGI-Now, the first benchmark
+                                                                                                                 designed for disentangled evaluation of semantic and pixel-
+Q5. Is AlignGemini extensible?
+                                                                                                                 level discrimination capabilities.
+Extensibility of AlignGemini. We emphasize that, our
+core contribution is a general design principle rather than                                                      8. Broader Impact
+a specific detector instantiation. Accordingly, AlignGem-                                                        This work improves the generalization of AI-generated im-
+ini is intentionally implemented as a lightweight proof of                                                       age detection, helping reduce risks associated with the mis-
+concept, with simplified data construction and fine-tuning                                                       use of generative models. In practice, our AlignGemini
+strategies. Even under this constrained setting, AlignGemini                                                     could be integrated into online platforms to assist in detect-
+exhibits improved generalization when scaled with stronger                                                       ing AI-generated content and provide transparency to users,
+backbones or additional training data. As shown in Table 5,                                                      supporting more informed content consumption.
+
+                                                                                                             8
+                                   Submission and Formatting Instructions for ICML 2026
+
+References                                                          Ji, Y., Hong, Y., Zhan, J., Chen, H., Zhu, H., Wang, W.,
+                                                                       Zhang, L., Zhang, J., et al. Towards explainable fake
+Bai, S., Chen, K., Liu, X., Wang, J., Ge, W., Song, S., Dang,
+                                                                       image detection with multi-modal large language models.
+  K., Wang, P., Wang, S., Tang, J., et al. Qwen2. 5-vl
+                                                                       arXiv preprint arXiv:2504.14245, 2025.
+  technical report. arXiv preprint arXiv:2502.13923, 2025.
+Cavia, B., Horwitz, E., Reiss, T., and Hoshen, Y. Real-             Jia, S., Lyu, R., Zhao, K., Chen, Y., Yan, Z., Ju, Y., Hu, C.,
+  time deepfake detection in the real-world. arXiv preprint            Li, X., Wu, B., and Lyu, S. Can chatgpt detect deepfakes?
+  arXiv:2406.09398, 2024.                                              a study of using multimodal large language models for
+                                                                       media forensics. In Proceedings of the IEEE/CVF Con-
+Chen, B., Zeng, J., Yang, J., and Yang, R. Drct: Diffu-                ference on Computer Vision and Pattern Recognition, pp.
+  sion reconstruction contrastive training towards universal           4324–4333, 2024.
+  detection of diffusion generated images. In Forty-first
+  International Conference on Machine Learning, 2024a.              Kang, H., Wen, S., Wen, Z., Ye, J., Li, W., Feng, P., Zhou, B.,
+                                                                      Wang, B., Lin, D., Zhang, L., et al. Legion: Learning to
+Chen, Y., Yan, Z., Cheng, G., Zhao, K., Lyu, S., and Wu,              ground and explain for synthetic image detection. arXiv
+  B. X2-dfd: A framework for explainable and extendable               preprint arXiv:2503.15264, 2025.
+  deepfake detection. arXiv preprint arXiv:2410.06126,
+  2024b.                                                            Karageorgiou, D., Papadopoulos, S., Kompatsiaris, I., and
+                                                                      Gavves, E. Any-resolution ai-generated image detection
+Cheng, S., Lyu, L., Wang, Z., Zhang, X., and Sehwag, V.
+                                                                      by spectral learning. In CVPR, 2025.
+  Co-spy: Combining semantic and pixel features to detect
+  synthetic images by ai. In Proceedings of the Computer            Lampinen, A. K., Chaudhry, A., Chan, S. C., Wild, C., Wan,
+  Vision and Pattern Recognition Conference, pp. 13455–               D., Ku, A., Bornschein, J., Pascanu, R., Shanahan, M.,
+ 13465, 2025.                                                         and McClelland, J. L. On the generalization of language
+Chu, B., Xu, X., Wang, X., Zhang, Y., You, W., and Zhou, L.           models from in-context learning and finetuning: a con-
+  Fire: Robust detection of diffusion-generated images via            trolled study. arXiv preprint arXiv:2505.00661, 2025.
+  frequency-guided reconstruction error. In CVPR, 2025.             Li, O., Cai, J., Hao, Y., Jiang, X., Hu, Y., and Feng, F. Im-
+Gao, Y., Chang, D., Yu, B., Qin, H., Chen, L., Liang, K., and         proving synthetic image detection towards generalization:
+  Ma, Z. Fakereasoning: Towards generalizable forgery de-             An image transformation perspective. arXiv preprint
+  tection and reasoning. arXiv preprint arXiv:2503.21210,             arXiv:2408.06741, 2024.
+  2025.
+                                                                    Li, Z., Yan, J., He, Z., Zeng, K., Jiang, W., Xiong, L., and
+Gekhman, Z., Yona, G., Aharoni, R., Eyal, M., Feder, A.,              Fu, Z. Is artificial intelligence generated image detection
+  Reichart, R., and Herzig, J. Does fine-tuning llms on               a solved problem? arXiv preprint arXiv:2505.12335,
+  new knowledge encourage hallucinations? arXiv preprint              2025a.
+  arXiv:2405.05904, 2024.
+                                                                    Li, Z., Yan, J., He, Z., et al. Is artificial intelligence gener-
+Goodfellow, I. J. et al. Generative adversarial nets. In Ad-          ated image detection a solved problem? arXiv preprint
+  vances in Neural Information Processing Systems, 2014.              arXiv:2505.12335, 2025b.
+Grover, R., Tamarapalli, J. S., Yerramilli, S., and Pande,          Lin, K., Lin, Y., Li, W., Yao, T., and Li, B. Standing on
+  N. Huemanity: Probing fine-grained visual perception in             the shoulders of giants: Reprogramming visual-language
+  mllms. arXiv preprint arXiv:2506.03194, 2025.                       model for general deepfake detection. In Proceedings
+Guillaro, F., Zingarini, G., Usman, B., Sud, A., Cozzolino,           of the AAAI Conference on Artificial Intelligence, vol-
+  D., and Verdoliva, L. A bias-free training paradigm                 ume 39, pp. 5262–5270, 2025a.
+  for more general ai-generated image detection. arXiv              Lin, K., Yan, Z., Chen, R., Ye, J., Zhang, K.-Y., Zhou, Y., Jin,
+  preprint arXiv:2412.17671, 2024.                                    P., Li, B., Yao, T., and Ding, S. Seeing before reasoning:
+Ho, J. et al. Denoising diffusion probabilistic models. Ad-           A unified framework for generalizable and explainable
+  vances in Neural Information Processing Systems, 33:                fake image detection. arXiv preprint arXiv:2509.25502,
+  6840–6851, 2020.                                                    2025b.
+
+Huang, T.-M., Lin, W.-T., Hua, K.-L., Cheng, W.-H., Ya-             Lin, T.-Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ra-
+  magishi, J., and Chen, J.-C. Thinkfake: Reasoning in                manan, D., Dollár, P., and Zitnick, C. L. Microsoft coco:
+  multimodal large language models for ai-generated image             Common objects in context. In European conference on
+  detection. arXiv preprint arXiv:2509.19841, 2025.                   computer vision, pp. 740–755. Springer, 2014.
+
+                                                                9
+                                   Submission and Formatting Instructions for ICML 2026
+
+Liu, H., Tan, Z., Tan, C., Wei, Y., Wang, J., and Zhao, Y.              Conference on Computer Vision and Pattern Recognition,
+  Forgery-aware adaptive transformer for generalizable syn-             pp. 8695–8704, 2020.
+  thetic image detection. In Proceedings of the IEEE/CVF
+  Conference on Computer Vision and Pattern Recognition,              Wen, H., Li, T., Huang, Z., He, Y., and Cheng, G. Busterx++:
+  pp. 10770–10780, 2024.                                               Towards unified cross-modal ai-generated content de-
+                                                                       tection and explanation with mllm. arXiv preprint
+Ojha, U. et al. Towards universal fake image detectors                 arXiv:2507.14632, 2025a.
+  that generalize across generative models. In Proceedings
+  of the IEEE/CVF Conference on Computer Vision and                   Wen, S., Ye, J., Feng, P., Kang, H., Wen, Z., Chen, Y., Wu,
+  Pattern Recognition, pp. 24480–24489, 2023.                          J., Wu, W., He, C., and Li, W. Spot the fake: Large
+                                                                       multimodal model-based synthetic image detection with
+Peng, S., Wang, Z., Gao, L., Zhu, X., Zhang, T., Liu, A.,              artifact explanation. arXiv preprint arXiv:2503.14905,
+  Zhang, H., and Lei, Z. Mllm-enhanced face forgery detec-             2025b.
+  tion: A vision-language fusion solution. arXiv preprint
+  arXiv:2505.02013, 2025.                                             Xia, C., Lin, M., Tan, J., Du, X., Qiu, Y., Zheng, J.,
+                                                                        Kong, X., Jiang, Y., and Zheng, B. Mirage: Towards
+Radford, A. et al. Learning transferable visual models from             ai-generated image detection in the wild. arXiv preprint
+  natural language supervision. In International Conference             arXiv:2508.13223, 2025.
+  on Machine Learning, pp. 8748–8763. PMLR, 2021.
+                                                                      Xu, Z., Zhang, X., Li, R., Tang, Z., Huang, Q., and Zhang,
+Rajan, A. S., Ojha, U., Schloesser, J., and Lee, Y. J. Aligned         J. Fakeshield: Explainable image forgery detection and
+  datasets improve detection of latent diffusion-generated              localization via multi-modal large language models. In
+  images, 2025. URL https://arxiv.org/abs/                             The Thirteenth International Conference on Learning
+  2410.11835.                                                          Representations, 2025a.
+
+Tan, C., Tao, R., Liu, H., Gu, G., Wu, B., Zhao, Y., and Wei,         Xu, Z., Zhang, X., Zhou, X., and Zhang, J. Avatarshield:
+  Y. C2p-clip: Injecting category common prompt in clip to             Visual reinforcement learning for human-centric video
+  enhance generalization in deepfake detection. In Proceed-             forgery detection. arXiv preprint arXiv:2505.15173,
+  ings of the AAAI Conference on Artificial Intelligence,               2025b.
+  2024a.
+                                                                      Yan, H., Zheng, H., Wang, H., Yin, L., Liu, X., Cao, Z., Su,
+Tan, C., Zhao, Y., Wei, S., Gu, G., Liu, P., and Wei, Y.                X., Chen, Z., Wu, J., Liao, M., et al. Visuriddles: Fine-
+  Frequency-aware deepfake detection: Improving gener-                  grained perception is a primary bottleneck for multimodal
+  alizability through frequency space domain learning. In               large language models in abstract visual reasoning. arXiv
+  Proceedings of the AAAI Conference on Artificial Intelli-             preprint arXiv:2506.02537, 2025a.
+  gence, volume 38, pp. 5052–5060, 2024b.
+                                                                      Yan, S., Li, O., Cai, J., Hao, Y., Jiang, X., Hu, Y., and
+Tan, C., Zhao, Y., Wei, S., Gu, G., Liu, P., and Wei, Y.                Xie, W. A sanity check for ai-generated image detection.
+  Rethinking the up-sampling operations in cnn-based gen-               arXiv preprint arXiv:2406.19435, 2024.
+  erative network for generalizable deepfake detection. In
+  Proceedings of the IEEE/CVF Conference on Computer                  Yan, Z., Wang, J., Jin, P., Zhang, K.-Y., Liu, C., Chen,
+  Vision and Pattern Recognition, pp. 28130–28139, 2024c.               S., Yao, T., Ding, S., Wu, B., and Yuan, L. Orthogonal
+                                                                        subspace decomposition for generalizable ai-generated
+Tan, C., Wang, J., Ming, X., Tao, R., Wei, Y., Zhao, Y., and            image detection. In Forty-second International Confer-
+  Lu, Y. Forenx: Towards explainable ai-generated image                 ence on Machine Learning.
+  detection with multimodal large language models. arXiv
+  preprint arXiv:2508.01402, 2025.                                    Yan, Z., Lin, K., Li, Z., Ye, J., Han, H., Wang, Z., Liu, H.,
+                                                                        Lin, B., Li, H., Xu, X., et al. Can understanding and
+Unsplash. Unsplash. https://unsplash.com/data,                          generation truly benefit together–or just coexist? arXiv
+  2025.                                                                 preprint arXiv:2509.09666, 2025b.
+
+Van Den Oord, A., Kalchbrenner, N., and Kavukcuoglu,                  Ye, J., Jiang, D., Wang, Z., Zhu, L., Hu, Z., Huang, Z., He,
+  K. Pixel recurrent neural networks. In International                  J., Yan, Z., Yu, J., Li, H., et al. Echo-4o: Harnessing
+  conference on machine learning, pp. 1747–1756. PMLR,                  the power of gpt-4o synthetic images for improved image
+  2016.                                                                 generation. arXiv preprint arXiv:2508.09987, 2025.
+
+Wang, S.-Y. et al. Cnn-generated images are surprisingly              Yoon, H., Jung, J., Kim, J., Choi, H., Shin, H., Lim, S., An,
+ easy to spot... for now. In Proceedings of the IEEE/CVF                H., Kim, C., Han, J., Kim, D., et al. Visual representation
+
+                                                                 10
+                                   Submission and Formatting Instructions for ICML 2026
+
+  alignment for multimodal large language models. arXiv
+  preprint arXiv:2509.07979, 2025.
+Zhang, W., Jiang, C., Zhang, Z., Si, C., Yu, F., and Peng,
+  W. Ivy-fake: A unified explainable framework and bench-
+  mark for image and video aigc detection. arXiv preprint
+  arXiv:2506.00979, 2025.
+
+Zheng, C., Lin, C., Zhao, Z., Wang, H., Guo, X., Liu, S.,
+  and Shen, C. Breaking semantic artifacts for general-
+  ized ai-generated image detection. Advances in Neural
+  Information Processing Systems, 37:59570–59596, 2024.
+Zhong, N., Xu, Y., Li, S., Qian, Z., and Zhang, X. Patchcraft:
+  Exploring texture patch for efficient ai-generated image
+  detection. arXiv preprint arXiv:2311.12397, pp. 1–18,
+  2024.
+Zhou, Y., Fan, B., K. Atrey, P., and Ding, F. Exposing
+  deepfakes using dual-channel network with multi-axis
+  attention and frequency analysis. In Proceedings of the
+  2023 ACM Workshop on Information Hiding and Multi-
+  media Security, pp. 169–174, 2023.
+Zhou, Z., Luo, Y., Wu, Y., Sun, K., Ji, J., Yan, K., Ding,
+  S., Sun, X., Wu, Y., and Ji, R. Aigi-holmes: Towards ex-
+  plainable and generalizable ai-generated image detection
+  via multimodal large language models. arXiv preprint
+  arXiv:2507.02664, 2025.
+Zhu, M., Chen, H., Yan, Q., Huang, X., Lin, G., Li, W.,
+  Tu, Z., Hu, H., Hu, J., and Wang, Y. Genimage: A
+  million-scale benchmark for detecting ai-generated image.
+  Advances in Neural Information Processing Systems, 36:
+  77771–77782, 2023.
+
+
+
+
+                                                                 11
+                                               Submission and Formatting Instructions for ICML 2026
+
+In this appendix, we provide additional technical and evaluative details:
+
+   • Section A presents implementation details and detailed comparison results on three self-synthesized benchmarks:
+     GenImage, AIGCDetectBenchmark, and DRCT-2M.
+   • Section B compares the training and inference computational overhead of AlignGemini with other VLM-based detectors,
+     highlighting the benefits of our simplified training corpus and lightweight system prompt.
+   • Section C describes the construction of our proposed AIGI-Now benchmark, including its data sources, generation
+     protocol, and semantic/pixel-discriminative subsets.
+   • Section D visualizes AlignGemini’s outputs.
+
+A. Implementation Details and Detailed Results of the Proposed AlignGemini
+Implementation Details. (i) VLM: Qwen2.5-VL-7B (Bai et al., 2025) is used as the VLM backbone. During the DPO
+fine-tuning, we apply LoRA (rank =16, α=32), using learning rate 1×10−6 , batch size 8, and DPO coefficient β=0.05 for
+one epoch. (ii) Expert branch: we adopt a DINOv2 backbone with a classification head, fine-tuned using LoRA (rank =8,
+α=1.0) with learning rate 1×10−4 and batch size 16 on a pure pixel-artifact corpus constructed from VAE reconstructions:
+11,8 k COCO training data paired with reconstructed counterparts. At inference, an image is classified as real only if both
+the VLM and the expert predict real; otherwise, it is synthetic.
+
+Per-Benchmark Comparison Results. Beyond the results in Tables 3, we supplemented the detailed results of the
+individual subsets within each benchmark. These detailed results are reported in Tables 6–8. GenImage and DRCT-2M
+are dominated by diffusion-based images, while AIGCDetectBenchmark primarily consists of GAN-generated images.
+Comparisons of balanced accuracy on GenImage dataset are reported in Table 6. Following BFree (Guillaro et al., 2024),
+in order to align images’ format, we conduct JPEG-compression on synthetic images. Most methods suffer a significant
+decline when evaluated on these aligned images. Particularly, DRCT (Chen et al., 2024a) exhibits competitive performance
+on specific subsets such as Midjourney, SDv1.4, SDv1.5 and Wukong, but its performance degrades sharply on generators
+including ADM, GLIDE, and BigGAN. In contrast, our AlignGemini demonstrate better generalization across diverse
+generators, achieving an overall balanced accuracy of 91.7%. Comparisons of balanced accuracy on DRCT-2M dataset are
+reported in Table 7. AlignGemini achieves strong and stable performance across all DRCT-2M subsets, indicating robust
+generalization to a wide of diffusion generators. Specifically, our method consistently attains high balanced accuracy on
+both standard diffusion families and more challenging variants involving refinement, acceleration, and control mechanisms.
+Overall, AlignGemini reaches an average balanced accuracy of 98.1%. Across all benchmarks, AlignGemini achieves
+consistently strong performance and remains competitive with state-of-the-art methods. Notably, AlignGemini attains
+competitive performance on AIGCDetectBenchmark, despite not using any GAN-generated images during training. This
+result indicates strong cross-architecture generalization beyond the diffusion models seen during training.
+
+                            Table 6. Comparison on GenImage. Following BFree (Guillaro et al., 2024),
+                            synthetic images are JPEG-compressed to match real images’ format.
+                            Method                                            Midjourney   SDv1.4   SDv1.5   ADM    GLIDE   Wukong   VQDM   BigGAN         Avg.
+                            NPR (CVPR’24) (Tan et al., 2024c)                    53.4       55.1     55.0    43.8    41.2    57.4    48.4    57.7       51.5 ± 6.3
+                            UnivFD (CVPR’23) (Ojha et al., 2023)                 55.1       55.6     55.7    62.5    61.3    61.1    76.9    84.4      64.1 ± 10.8
+                            FatFormer (CVPR’24) (Liu et al., 2024)               52.1       53.6     53.8    61.4    65.5    60.9    72.5    82.2      62.8 ± 10.4
+                            SAFE (KDD’25) (Li et al., 2024)                      49.0       49.7     49.8    49.5    53.0    50.3    50.2    50.9      50.3 ± 1.2
+                            C2P-CLIP (AAAI’25) (Tan et al., 2024a)               56.6       77.5     76.9    71.6    73.5    79.4    73.7    85.9      74.4 ± 8.4
+                            AIDE (ICLR’25) (Yan et al., 2024)                    58.2       77.2     77.4    50.4    54.6    70.5    50.8    50.6      61.2 ± 11.9
+                            DRCT (ICML’24) (Chen et al., 2024a)                  82.4       88.3     88.2    76.9    86.1    87.9    85.4    87.0       84.7 ± 2.7
+                            AlignedForensics (ICLR’25) (Rajan et al., 2025)      97.5       99.7     99.6    52.4    57.6    99.6    75.0    50.6      79.0 ± 22.7
+                            CO-SPY (CVPR’25) (Cheng et al., 2025)                58.5       63.1     69.8    72.5    81.6    92.5    82.2    90.3      76.3 ± 11.4
+                            BFree (CVPR’25) (Guillaro et al., 2024)              79.3       70.4     93.4    89.7    86.8    98.8    98.8    98.8      89.5 ± 9.3
+                            AlignGemini                                          89.3       89.6     95.6    77.2    90.3    98.3    98.1    98.4    91.7 ± 7.5 (+2.2)
+
+
+
+
+B. Overhead Comparison
+Indirect Comparison of Overall Pipeline Overhead. A practical consideration for VLM-based detectors is the end-to-
+end pipeline overhead, including data construction, training, and inference. Table 9 reports indirect statistics for VLM-based
+detectors; because some official implementations are not publicly available, we compare them qualitatively rather than
+via unified wall-clock measurements4 The results highlight three advantages of AlignGemini-VLM: (i) its VLM branch
+   4
+       The average tokens of IVY-FAKE and FakeVLM are obtained by referring to the IVY-FAKE (Zhang et al., 2025) paper.
+
+                                                                                                    12
+                                                                          Submission and Formatting Instructions for ICML 2026
+
+                                                                           Table 7. Comparison of balanced accuracy on DRCT-2M.
+                                                                                                                    SDXL-           SD-     SDXL-      LCM-        LCM-          SDv1-   SDv2-     SDXL-      SDv1-      SDv2-         SDXL-
+        Method                                                    LDM      SDv1.4   SDv1.5       SDv2     SDXL                                                                                                                                          Avg.
+                                                                                                                    Refiner        Turbo    Turbo      SDv1.5      SDXL           Ctrl    Ctrl      Ctrl       DR         DR            DR
+        NPR (CVPR’24) (Tan et al., 2024c)                         33.0      29.1     29.0        35.1     33.2       28.4          27.9       27.9       29.4          30.2      28.4     28.3      34.7      67.9       67.4           66.1        37.3 ± 15.0
+        UnivFD (CVPR’23) (Ojha et al., 2023)                      85.4      56.8     56.4        58.2     63.2       55.0          56.5       53.0       54.5          65.9      68.0     65.4      75.9      64.6       56.2           53.9         61.8 ± 8.9
+        FatFormer (CVPR’24) (Liu et al., 2024)                    55.9      48.2     48.2        48.2     48.2       48.3          48.2       48.2       48.3          50.6      49.7     49.9      59.8      66.3       60.6           56.0         52.2 ± 5.7
+        SAFE (KDD’25) (Li et al., 2024)                           50.3      50.1     50.0        50.0     49.9       50.1          50.0       50.0       50.1          50.0      49.9     50.0      54.7      98.2       98.5           97.3        59.3 ± 19.2
+        C2P-CLIP (AAAI’25) (Tan et al., 2024a)                    83.0      51.7     51.7        52.9     51.9       64.6          51.7       50.6       52.0          66.1      56.9     54.7      77.8      67.2       57.1           56.7         59.2 ± 9.9
+        AIDE (ICLR’25) (Yan et al., 2024)                         64.4      74.9     75.1        58.5     53.5       66.3          52.8       52.8       70.0          54.3      65.9     53.6      53.9      95.3       73.3           69.0        64.6 ± 11.8
+        DRCT (ICML’24) (Chen et al., 2024a)                       96.7      96.3     96.3        94.9     96.2       93.5          93.4       92.9       91.2          95.0      95.6     92.7      92.0      94.1       69.6           57.4         90.5 ± 7.4
+        AlignedForensics (ICLR’25) (Rajan et al., 2025)           99.9      99.9     99.9        99.6     90.2       81.3          99.7       89.4       99.7          90.0      99.9     99.2      87.6      99.9       99.8           92.6         95.5 ± 6.1
+        CO-SPY (CVPR’25) (Cheng et al., 2025)                     72.2      99.4     82.4        99.3     73.7       96.7          70.9       97.2       94.8          51.0      51.5     99.4      99.4      50.7       83.9           91.1        83.1 ± 16.7
+        BFree (CVPR’25) (Guillaro et al., 2024)                   99.5      99.3     99.3        99.4     99.5       99.0          99.5       98.0       99.4          99.4      99.4     99.5      99.4      96.4       99.9           99.2         99.1 ± 0.8
+        Ours                                                      99.1      98.7     98.8        98.2     98.0       98.9          97.7       94.6       96.4          98.3      98.6     99.0      99.2      98.9       99.2           96.2      98.1 ± 1.3 (-1.0)
+
+
+                                                                 Table 8. Comparison of balanced accuracy on AIGCDetectBenchmark.
+        Method                                            ADM     DALLE2    GLIDE   Midjourney    VQDM     BigGAN      CycleGAN        GauGAN        ProGAN     SDXL     SD14     SD15   StarGAN   StyleGAN    StyleGAN2    WFR          Wukong     Avg.
+        NPR (CVPR’24) (Tan et al., 2024c)                 43.8     20.0      41.2      53.4        48.4      53.1           76.6           42.2       58.7      59.6      55.1    55.0    67.4       57.9         54.6          58.8      57.4      53.1 ± 12.2
+        UnivFD (CVPR’23) (Ojha et al., 2023)              62.5     50.0      61.3      55.1        76.9      87.5           96.9           98.8       99.4      58.2      55.6    55.7    95.1       80.0         69.4          69.2      61.1      72.5 ± 17.3
+        FatFormer (CVPR’24) (Liu et al., 2024)            80.2     68.5      91.1      54.4        88.0      99.2           99.5           99.1       98.5      71.7      67.5    67.2    99.4       98.0         98.8          88.3      75.6      85.0 ± 14.9
+        SAFE (KDD’25) (Li et al., 2024)                   49.5     49.5      53.0      49.0        50.2      52.2           51.9           50.0       50.0      49.8      49.7    49.8    50.1       50.0         50.0          49.8      50.3      50.3 ± 1.1
+        C2P-CLIP (AAAI’25) (Tan et al., 2024a)            71.6     52.3      73.5      56.6        73.7      98.4           96.8           98.8       99.3      62.3      77.5    76.9    99.6       93.1         79.4          94.8      79.4      81.4 ± 15.6
+        AIDE (ICLR’25) (Yan et al., 2024)                 52.9     51.1      60.2      49.8        69.3      70.1           93.6           60.6       89.0      49.6      51.6    51.0    72.1       66.5         59.0          80.6      54.5      63.6 ± 13.9
+        DRCT (ICML’24) (Chen et al., 2024a)               79.9     89.2      89.2      85.5        88.6      81.4           91.0           93.8       71.1      88.3      91.4    91.0    53.0       62.7         63.8          73.9      90.8      81.4 ± 12.2
+        AlignedForensics (ICLR’25) (Rajan et al., 2025)   51.6     52.0      55.6      96.2        72.1      51.2           49.5           50.8       50.7      95.1      99.7    99.6    53.8       52.7         51.6          50.0      99.6      66.6 ± 21.6
+        CO-SPY (CVPR’25) (Cheng et al., 2025)             58.5     84.9      81.7      69.8        72.6      70.5           53.5           68.1       74.0      81.4      92.5    92.2    62.8       60.0         60.1          60.9      90.2      72.5 ± 12.6
+        BFree (CVPR’25) (Guillaro et al., 2024)           79.3     85.8      86.8      93.4        89.7      91.9           76.8           97.0       95.9      99.3      98.8    98.8    86.1       82.1         78.0          60.5      98.8      88.2 ± 10.5
+        AlignGemini                                       89.3     94.9      90.3      95.6        77.2      90.4           74.4           92.5       91.0      99.1      98.3    98.1    72.9       86.6         89.2          52.6      98.4      87.7 ± 12.2(-0.5)
+
+
+
+
+is trained with fewer samples than competing VLM-based detectors, reducing training overhead; (ii) it does not require
+manual annotation checking, since semantically implausible images can be reliably labeled by the model itself; and (iii) it
+adopts a concise system prompt that forces the VLM to focus exclusively on identifying semantic flaws, while delegating
+the pixel-artifact detection task—which is particularly difficult for VLMs and prone to hallucinations—to a dedicated expert
+model. As a result, the VLM branch exploits its inherent semantic perception capabilities to detect high-level semantic
+inconsistencies ”at a glance”. Moreover, the overhead of AlignGemini’s expert branch, which mainly consists of VAE
+reconstruction and LoRA fine-tuning of DINOv2, is negligible compared with that of the VLM branch.
+
+                                                   Table 9. Comparison of training data and inference cost for VLM-based detectors.
+                                                                                                                                             Training                                                                                   Inference
+  Method                                              Backbone                              Training samples                          Annotation type                            Annotation check           Avg. tokens ↓              Sec. / token         Sec. / Ans. ↓
+  IVY-FAKE (Zhang et al., 2025)                       Ivy-VL-LLaVA                                 150K                  Automated by Gemini 2.5 pro                                 LLM                         530                      0.0424                  22.47
+  FakeVLM (Wen et al., 2025b)                         LLaVA-v1.5-7B                                 95K                    Automated by 3 MLLMs                                      LLM                         120                      0.0128                   1.54
+  AIGI-Holmes (Li et al., 2025b)                      LLaVA-v1.6-Mistral-7B                        69K                     Automated by 4 MLLMs                                   LLM + Human                    181                      0.0057                   1.03
+  Forensic-Chat (Lin et al., 2025b)                   Qwen2.5-VL-7B                                 61K                  Automated by Gemini 2.5 pro                                 None                        307                      0.0062                   1.90
+  AlignGemini-VLM                                     Qwen2.5-VL-7B                                 10K                Automated by Qwen2.5-VL-7B                                        None                     97                      0.0062                   0.60
+
+
+
+
+C. Design of the AIGI-Now Benchmark
+Overview of Employed Generative Models. AIGI-Now covers widely used modern generators, including nine generative
+models:
+
+   • Nano Banana5 (Google Gemini 2.5 Flash Image): a state-of-the-art commercial image generation and editing model
+     from Google Gemini.
+
+   • GPT-4o6 : OpenAI’s integrated text-to-image model with strong prompt adherence and text rendering.
+
+   • Jimeng7 (jimeng-t2i-v30): a multimodal commercial model from ByteDance supporting high-quality text-to-image
+     generation.
+
+   • Kling8 (kling-v2): a commercial model developed by Kuaishou for high-quality image and video generation.
+
+   • Minimax9 (image-01): MiniMax’s flagship text-to-image model optimized for realistic, prompt-faithful imagery.
+   5
+     https://deepmind.google/models/gemini/image/
+   6
+     https://openai.com/index/introducing-4o-image-generation/
+   7
+     https://jimeng.jianying.com/
+   8
+     https://app.klingai.com/
+   9
+     https://minimaxi.com/
+
+                                                                                                                                    13
+                                    Submission and Formatting Instructions for ICML 2026
+
+   • Flux Pro10 (flux1.1-pro): a text-to-image model from Black Forest Labs combining high visual quality with fast
+     inference.
+   • Flux Dev11 : a general-purpose FLUX.1 model for high-quality text-to-image generation.
+   • Flux Krea12 : a FLUX.1 variant tailored for creative and stylized image generation.
+   • Flux Kontext13 : a FLUX.1 model for image generation and editing that can preserve contextual details and text–image
+     consistency.
+
+
+
+
+                               Figure 9. Overall pipeline for constructing the AIGI-Now benchmark.
+
+
+Overall Pipeline of Constructing AIGI-Now. Figure 9 illustrates the overall pipeline for constructing AIGI-Now. For
+each generative model, the construction proceeds in four stages: (i) we randomly sample real images from the COCO
+test split; (ii) starting from the associated captions, we construct two types of prompts, namely semantically faithful
+prompts (for pixel-artifact subsets) and semantically implausible prompts (for semantic subsets), as described above; (iii) we
+employ generative model to synthesize images conditioned on these prompts; and (iv) we form pixel-artifact and semantic
+subsets with targeted pre- and post-processing. For the pixel-artifact subsets, which consist of real images and semantically
+faithful synthetic images, we align the formats of synthetic samples with their real counterparts by applying the same
+JPEG compression settings, thereby mitigating format bias. For the semantic subsets, which consist of real images and
+semantically implausible synthetic images, we apply a suite of heavy post-processing operations to both real and synthetic
+images to prevent detectors from exploiting low-level artifacts. Specifically, each image undergoes the following operations:
+(i) it is first downsampled to 40% of its original resolution; (ii) Gaussian noise with a standard deviation of 0.1 is injected;
+(iii) a Gaussian blur with a radius of 0.20 is applied; (iv) the image is re-encoded using JPEG compression with a quality
+factor of 80; and (v) the degraded image is upsampled back to its original resolution. These transformations substantially
+distort low-level statistics while preserving high-level semantics, forcing detectors to rely on robust forensic cues rather than
+brittle artifacts.
+
+Prompt Design. AIGI-Now uses the widely adopted COCO dataset as the source of real images. Starting from COCO
+captions, we design two types of prompts. (i) Semantically faithful prompts, used to construct pixel-artifact subsets: we
+directly adopt the original COCO captions to synthesize images whose semantic content roughly matches the corresponding
+real images. (ii) Semantically implausible prompts, used to construct semantic subsets: we leverage LLM to inject physically
+impossible, surreal, or logically contradictory attributes into the original COCO captions while preserving the main entities.
+Representative examples of semantically implausible prompts are shown in the prompt box in Figure 10.
+
+Visualization of the AIGI-Now Benchmark. Figures 11 and 12 illustrate the semantic and pixel-artifact subsets of
+AIGI-Now, spanning nine different generative models. These examples provide an intuitive view of high-quality synthetic
+images produced by recent generative models and highlight the challenges they pose to AIGI detectors.
+
+
+  10
+     https://bfl.ai/models/flux-pro
+  11
+     https://huggingface.co/black-forest-labs/FLUX.1-dev
+  12
+     https://huggingface.co/black-forest-labs/FLUX.1-Krea-dev
+  13
+     https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev
+
+                                                               14
+                                    Submission and Formatting Instructions for ICML 2026
+
+
+
+
+                                                Semantically Implausible Prompts
+ 1. A woman sitting at a table in front of a pile of glowing luggage.
+ 2. A pile of melting luggage in a room with two women nearby.
+ 3. The man stands holding a surfboard as he looks out at a sea of stars.
+ 4. A couple celebrating a birthday in a kitchen underwater.
+ 5. Lots of skiers standing atop a hill of giant crystals.
+ 6. Skiers and snowboarders standing on a mountain of giant clocks.
+ 7. a young boy standing in front of a ball made of stars.
+ 8. A man with fruit made of glass on the back of a pickup truck.
+ 9. A group of skiers gather on a hill made of clouds.
+10. A man holding a clock-shaped object in his hand.
+11. A man playing tennis on clouds.
+12. A living room with a floating TV and a glowing wheel.
+13. A bathroom overlooking an upside-down ocean.
+14. A city intersection where traffic lights rain upward.
+15. A horse in a snowy pasture with a neon-lit fence.
+16. Man at market with glowing blue bananas.
+17. A boy jumping on a skateboard with wings.
+18. A farmer’s market filled with giant bananas and shadowless people.
+19. A group beside a glowing bench with transparent frisbees.
+20. Breakfast and juice served on a cloud.
+21. A bench on a beach on the moon.
+22. An empty street with floating buildings and upside-down cars.
+23. A black and white image of an old person melting into shadows.
+24. A city intersection sign made of ice in front of a building of clouds.
+25. A bus stopped on the side of a road that melts into a river.
+26. A white dog made of clouds standing on a floating wooden bench.
+27. Stop sign with a tree branch made of liquid metal touching it.
+28. A man sitting on a bench with an ocean of liquid glass behind him.
+29. A giant clock on the very top of a building growing like a tree.
+30. A kitchen with a glowing refrigerator and floating counter chairs.
+31. A bunch of bikes with wings lined up on a cloud curb.
+32. A highway made of glass filled with traffic and golden buses.
+    ......
+
+
+                                         Figure 10. Illustrative prompts used in AIGI-Now.
+
+
+
+
+                                                                   15
+                                     Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 11. Representative AIGI-Now examples synthesized by Flux-Kera, Flux-Kontext, and Flux-Dev, illustrating the high visual fidelity
+and stylistic diversity of recent Flux generators.
+
+
+
+
+                                                                  16
+                                    Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 12. Representative AIGI-Now examples generated by six recent closed-source models, showcasing diverse scenes and styles that
+increase the difficulty of robust AI-generated image detection.
+
+
+                                                                17
+                                     Submission and Formatting Instructions for ICML 2026
+
+D. Visualization of AlignGemini Outputs
+System Prompt of AlignGemini’s VLM. Figure 13 illustrates the system prompt used for AlignGemini’s VLM detector.
+Unlike prior VLM detectors (e.g., AIGI-Holmes), whose system prompts exhaustively enumerate possible visual artifacts
+and require the model to check them one by one, our prompt explicitly instructs the VLM to (i) focus strictly on semantic
+and logical reasoning and (ii) provide concise, evidence-based rationales in fewer than 120 words. This design steers the
+model toward detecting semantic inconsistencies rather than low-level pixel artifacts, reduces inference cost by generating
+substantially fewer tokens, and alleviates hallucinations by deliberately avoiding instructions to attend to fine-grained visual
+artifacts.
+
+
+   System Prompt
+   Role: AI visual assistant.
+   You are an AI visual assistant that analyzes a single image to determine whether it is authentic or AI-generated.
+   Tasks
+    1. <rationale> section:
+         • Provide concise, evidence-based reasoning in fewer than 120 words.
+         • Focus strictly on semantic or logical reasoning.
+
+    2. <answer> section:
+         • If real: only output “This is an authentic image.”
+         • If AI-generated: only output “This is an AI-generated image.”
+
+    Output Structure (must match exactly):
+    <rationale></rationale>
+    <answer></answer>
+
+                                                     Figure 13. System prompt.
+
+AlignGemini preserves general capabilities of the VLM. Table 10 quantitatively compares different VLM-based
+detectors in terms of their general multimodal understanding capabilities. The results show that AlignGemini preserves
+substantially more of the VLM’s general capabilities than other detectors, mainly due to two factors: (i) our training strategy
+that reinforces the VLM’s inherent strengths and (ii) preference-guided DPO fine-tuning. Specifically, AlignGemini does
+not force the VLM to learn misaligned skills such as explicit pixel-artifact identification, and it avoids supervised fine-tuning
+on curated ”hard” samples that typically damage general multimodal understanding. Figure 14 provides qualitative visual
+examples. These examples show that, despite being adapted for AIGI detection, the VLM still preserves strong general
+multimodal capabilities, because our training strategy maintains its inherent strengths rather than pushing it to learn tasks
+misaligned with those strengths.
+
+Table 10. Comparison of AlignGemini and baseline VLM-based detectors on general multimodal understanding benchmarks. Results are
+referred from (Lin et al., 2025b).
+
+                                   Method           BLINK     RealWorldVQA    MME     MMT-BenchVAL
+                                   General MLLM
+                                   Qwen-2.5-VL-3B    0.4750      0.6588       1590        0.6025
+                                   Qwen-2.5-VL-7B    0.5481      0.6758       1677        0.5948
+                                   LLaVA-1.5-7B      0.4171      0.5424       1436        0.4713
+                                   MLLM-based AIGI detector
+                                   FakeVLM           0.3761      0.5385       1221        0.4445
+                                   Forensic-Chat     0.5139      0.6745       1625        0.5849
+                                   AlignGemini       0.5321      0.6759       1643        0.5911
+
+
+
+Visualization of AlignGemini’s outputs. Figures 15–20 present qualitative examples of AlignGemini on various bench-
+marks. AlignGemini’s final decision is obtained by applying an OR rule on the fake predictions of the expert branch and
+the VLM branch: an image is classified as real only if both branches predict it as real. The visualizations show that the
+two branches provide complementary signals, with the expert model focusing more on pixel-level artifacts and the VLM
+emphasizing semantic inconsistencies, leading to more robust and generalizable discrimination.
+
+                                                                  18
+                                     Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 14. Examples of general multimodal conversations. It indicates that the general capabilities of AlignGemini are largely preserved
+after adaptation for AIGI detection.
+
+
+
+
+                                                                  19
+                            Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 15. Qualitative examples of AlignGemini’s predictions on AI-generated images from the AIGI-Now benchmark.
+
+
+
+
+                                                      20
+                     Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 16. Qualitative examples of AlignGemini’s predictions on images from the Chameleon benchmark.
+
+
+
+
+                                                21
+                       Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 17. Qualitative examples of AlignGemini’s predictions on images from the BFree-Online benchmark.
+
+
+
+
+                                                  22
+                              Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 18. Qualitative examples of AlignGemini’s predictions on images from the CO-SPY-Bench (in-the-wild) benchmark.
+
+
+
+
+                                                         23
+                    Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 19. Qualitative examples of AlignGemini’s predictions on images from the WildRF benchmark.
+
+
+
+
+                                               24
+                      Submission and Formatting Instructions for ICML 2026
+
+
+
+
+Figure 20. Qualitative examples of AlignGemini’s predictions on images from the AIGI-Bench benchmark.
+
+
+
+
+                                                 25
+

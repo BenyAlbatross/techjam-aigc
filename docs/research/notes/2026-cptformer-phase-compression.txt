@@ -1,0 +1,616 @@
+                    This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                 Except for this watermark, it is identical to the accepted version;
+                           the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+   Detecting Compressed AI-Generated Images via Phase Spectrum Robustness
+
+                             Kai Li1     Wenqi Ren1,2,3 * Wei Wang1 Xiaochun Cao1,3
+                                     1
+                                       Shenzhen Campus of Sun Yat-sen University
+                           2
+                             Guangdong Key Laboratory of Information Security Technology
+                            3
+                              Shenzhen Key Laboratory of Adversarial Artificial Intelligence
+           likai63@mail2.sysu.edu.cn              {renwq3, wangwei29, caoxiaochun}@mail.sysu.edu.cn
+
+
+
+                            Abstract                              integrity and digital trust. Malicious actors can exploit AI-
+                                                                  generated content to conduct sophisticated disinformation
+This paper aims to present a robust AI-generated image de-        campaigns, financial fraud, and targeted harassment. As a
+tection framework designed to address performance degra-          result, the development of robust and automated detection
+dation caused by image compression in online social net-          methods [3, 8, 15, 30, 31, 38] has become not only a tech-
+works. The key challenges are twofold: 1) compression de-         nical necessity but also a critical social imperative in com-
+stroys fragile artifacts that are crucial to existing methods,    bating the growing misuse of synthetic media.
+and 2) it introduces new compression artifacts that inter-            Although satisfactory performance is achieved in the
+fere with detection. Existing methods typically enhance the       known experiment setting, most existing detectors [10, 19,
+compression robustness by collecting original-compression         20, 39] suffer a sharp performance decline when deployed
+pairs and compression labels. However, the collection and         in real-world environments. This vulnerability primar-
+annotation process is highly resource-intensive. To address       ily stems from their inability to deal with common post-
+these issues, we propose a Compression-Robust Phase-              processing operations, particularly the aggressive com-
+Harmonized Transformer, motivated by the observation that         pression prevalently applied by Online Social Networks
+phase spectrum remains stable under compression. The              (OSNs) [27, 28]. The image compression poses a two-fold
+framework consists of a phase-harmonized cross-modal in-          challenge for detection models. First, it removes the subtle,
+teraction module that leverages phase spectrum informa-           high-frequency forgery artifacts that are crucial for existing
+tion for feature fusion, enhancing compression robustness,        models. As shown in Figure 1 (c), the energy change before
+and a multi-domain modulation adapter that further re-            and after the compression is mainly reflected in the high-
+fines fused features while enabling parameter-efficient fine-     frequency part. Second, it introduces new compression ar-
+tuning. In particular, the framework operates without re-         tifacts that act as misleading signals. These artifacts can
+quiring compression-original data pairs and compression           confuse the detector, leading to incorrect classifications and
+labels. When limited compression labels are available, we         a severe performance drop. As a result, the detector failures
+introduce a difficulty-aware consistency loss to maximize         occur not only due to the absence of informative forgery
+their utility by prioritizing hard compressed samples dur-        cues, but also due to interference from irrelevant patterns,
+ing training, further boosting robustness. Extensive exper-       rendering current detectors unreliable in practical settings.
+iments demonstrate that our method significantly outper-              To address these issues, recent approaches [12, 13, 32]
+forms state-of-the-art approaches, exhibiting superior ro-        have explored training models on compressed data. How-
+bustness against image compression.                               ever, they share a critical limitation: a heavy reliance on
+                                                                  large-scale original-compression paired datasets and com-
+                                                                  pression labels. However, in practice, it is often infeasible to
+1. Introduction                                                   obtain both the original, high-quality image and its OSNs-
+Out-of-the-box generative tools [23, 24, 26] have enabled         compressed version. Even collecting compression labels is
+the creation of hyper-realistic synthetic images, increas-        also non-trivial. Consequently, detectors often have access
+ingly blurring the boundary between authentic and artificial      to only a limited number of original-compressed pairs. To
+visual content. Although these technologies offer creative        this end, this paper aims to develop a compression-robust
+potential, they also pose a profound threat to information        forgery detection framework that requires neither paired
+                                                                  data nor compression labels. Moreover, when limited com-
+  * Corresponding author                                          pression labels are available, we also investigate how to
+
+
+
+                                                             35427
+      (a) Image-Ori         (b) Image-Com              (c) Radial Energy                    (d) Spectral-Diff         (e) Phase-Diff-Angle-Hist
+
+
+
+
+    (f) Magnitude-Ori    (g) Magnitude-Com      (h) Magnitude-Diff          (i) Phase-Ori             (j) Phase-Com           (k) Phase-Diff
+
+Figure 1. Visualization of the impact of compression on the frequency domain. (a) An original image and (b) its compressed version.
+(f)–(k) display the amplitude and phase spectra extracted from these images. The “-Diff” denotes the difference between the original and
+compressed versions. (c) The radial energy distribution plot confirms that energy loss from compression occurs predominantly in the high-
+frequency regions. (d) The spectral difference distribution reveals that the magnitude of change is significantly larger for the amplitude
+spectrum than for the phase spectrum. (e) The histogram of phase angle differences shows that for the majority of frequency components,
+the phase remains unchanged, with differences clustering tightly around zero.
+
+
+fully leverage limited compression labels to further enhance               compressed samples uniformly, without prioritizing those
+the compression robustness.                                                most susceptible to compression artifacts. Consequently,
+    We begin with a foundational analysis of the compres-                  the detector fails to identify and eliminate the most salient
+sion pipeline (detailed in section Method). Theoretically,                 compression distortions. In contrast, the proposed loss
+an image’s phase spectrum is significantly more resilient                  function operates dynamically by identifying and prioritiz-
+to compression artifacts compared to its highly fragile                    ing the most challenging compressed samples, thereby di-
+magnitude spectrum. We empirically validate this hypoth-                   recting the model’s learning capacity toward these critical
+esis in Figure 1, where the visualization results confirm that             samples. These compressed samples are most likely to be
+compression-induced distortions predominantly affect the                   misclassified. Our approach enables the detector to learn
+magnitude spectrum, while the phase information remains                    robust features even with limited supervision.
+largely preserved. Building on this critical insight, we pro-
+pose the Compression-Robust Phase-Harmonized Trans-                           Our main contributions can be summarized as follows:
+former (CPTFormer), which is designed to exploit this sta-
+ble phase information as a guiding signal. Specifically, a                 • We propose the Compression-Robust Phase-Harmonized
+phase-harmonized cross-modal interaction module (PHCI)                       Transformer (CPTFormer), a novel architecture that, for
+enables the robust phase features to guide and fuse the spa-                 the first time, systematically exploits the inherent robust-
+tial representation learning from the primary RGB stream.                    ness of the phase spectrum for AI-generated image detec-
+To further refine the fused features and adapt the rich visual               tion. This fundamental principle facilitates the learning
+knowledge embedded in the pre-trained backbone, we in-                       of features that are robust to compression perturbations.
+troduce a multi-domain modulation adapter (MDMA), en-                      • We design the Difficulty-Aware Consistency Loss
+abling parameter-efficient fine-tuning without compromis-                    (DACL), maximizing the utility of limited paired data.
+ing the model’s rich knowledge. A key advantage of this                      Rather than treating all samples uniformly, DACL dy-
+phase-driven design is its ability to learn generalizable and                namically prioritizes challenging samples, focusing the
+compression-robust representations using only forgery la-                    model’s learning on the most informative samples.
+bels. This contrasts with previous methods, which highly                   • We conduct extensive experiments to demonstrate that
+rely on compression labels and paired data.                                  our proposed framework establishes a new state-of-the-
+   Despite the label efficiency of our framework, we also in-                art, significantly outperforming existing methods in real-
+troduce a complementary difficulty-aware consistency loss                    istic, compressed environments and effectively bridging
+(DACL) to maximally exploit the limited number of avail-                     the performance gap between ideal experimental settings
+able paired samples. Previous methods [13, 32] treat all                     and real-world applications.
+
+
+
+                                                                 35428
+            Compression-Aware Phase-Harmonized Transformer                                     PHCI                  Encoder Block          MDMA
+
+         Conv             Phase-Harmonized               MLP           Fake
+         Block          Cross-Modal Interaction          Head          Real            MLP            MLP
+                                                                                                                               MLP     𝛼𝑠                 𝛼𝑓
+
+
+
+
+                                                                                                                      MDMA
+                                                                                        Gelu          Gelu
+        Phase                                                                                                                            Conv    IDWT
+                                         Transformer Encoder                                                                   Norm
+      Extraction                                                                       MLP            MLP
+
+                                                                                       Norm           Norm                               Relu        CA
+  Patch + Position          *
+    Embedding           0       1    2    3    4    5    6     7   8    9                                               Multi-Head
+                                                                                       Cross       Cross                                 Conv    DWT
+      Extra learnable
+                                                                                      Attention   Attention             Attention
+    {class} Embedding
+                                    Linear Projection of Flattened Patches             Norm           Norm                   Norm           ReShape
+
+                                                                                                                       Embedding
+                                                                                       RGB            Phase                                  RGB
+                                                                                                                         Patch
+
+         MDMA : Multi-Domain Modulation Adapter                    CA : Channel Attention             𝛼𝑠 /𝛼𝑓 : Spatial/Frequency Balance Parameter
+
+Figure 2. The illustration of the proposed method. Our model employs a dual-branch architecture that integrates standard RGB features
+from a ViT backbone with robust cues extracted from the phase spectrum. These features are fused via a Phase-Harmonized Cross-Modal
+Interaction module. For efficient adaptation of the pre-trained model, we introduce a Multi-Domain Modulation Adapter (MDMA), which
+uniquely refines features in both spatial and wavelet-based frequency domains.
+
+
+2. Related Works                                                                   works [12, 13, 32] attempt to improve detector robustness to
+                                                                                   compression by leveraging paired data. However, it is often
+Initial AI-generated image detection methods focus on spa-                         infeasible to obtain both the original image and its OSN-
+tial [14, 17, 36] or frequency domain [6, 9, 31] statisti-                         processed counterpart. To address this issue, we introduce
+cal discrepancies. A pivotal work [35] demonstrate that                            the compression-robust phase spectrum as an auxiliary map
+CNN-based generators may exhibit shared systematic flaws.                          to construct a robust forgery representation.
+Frequency-domain approaches [4, 6] gain attention due to
+the widespread use of upsampling operations in genera-
+tive models, which introduce characteristic spectral arti-                         3. Method
+facts. Methods such as FreqNet [31] and F3Net [20] ex-
+ploit local frequency statistics or high-frequency compo-                          3.1. Problem Formulation
+nents as discriminative cues. AIDE [37] introduces a hybrid                        This paper aims to learn a synthesis detector that is robust
+expert strategy that combines high-level semantic features                         against compression perturbation, trained on a supervised
+extracted by CLIP [18, 22] and low-level pixel statistical                         dataset Dtrain . This training set includes 80% pristine un-
+features [5, 21] based on high and low frequency blocks,                           paired images (Dunpaired ) and 20% paired subset. The paired
+attempting to build a more robust defense line from multi-                         subset includes pristine images Dpaired and their compressed
+ple dimensions. Tan et al. [30] introduces the concept of                          versions Dcompressed = {C(x) | x ∈ Dpaired }, where C(·) de-
+Neighboring Pixel Relationships, highlighting that upsam-                          notes a fixed compression operator. The final training set is
+pling operations induce unnatural relationships between ad-                        Dtrain = Dunpaired ∪ Dpaired ∪ Dcompressed .
+jacent pixels in local regions. Some methods [15, 19, 29]
+attempt to map images into an unbiased feature space to re-
+duce overfitting to specific artifacts.                                            3.2. Motivation
+   Despite significant progress in generalizing to unseen                          The widely used JPEG compression [34] algorithm first
+generators, a critical gap remains between performance on                          transforms 8 × 8 pixel blocks into the frequency domain
+clean, academic benchmarks and performance in real-world                           using the Discrete Cosine Transform (DCT) [2]. This trans-
+detection scenarios. This discrepancy is largely attributed to                     formation maps spatial pixel values f (i, j) to a set of fre-
+image degradation introduced by Online Social Networks                             quency coefficients F (u, v), where (u, v) denotes the verti-
+(OSNs). AS the primary distribution channel for synthetic                          cal and horizontal spatial frequencies. The information loss
+media, OSNs routinely apply JPEG compression to all up-                            primarily comes from subsequent quantization in the com-
+loaded images [27, 28]. These operations can severely de-                          pression pipeline. In this step, each frequency coefficient
+grade the subtle artifacts that detectors rely on. Recent                          F (u, v) is divided by a corresponding value from the quan-
+
+
+
+                                                                              35429
+tization table Q(u, v) and then rounded:                                  To construct a unified representation, each feature map
+                                                                    Cl is first projected to the target embedding dimension D
+                                      F (u, v)                        via a level-specific 1 × 1 convolution ϕl . The resulting map
+              Fquant (u, v) = round              .          (1)
+                                      Q(u, v)                         is then flattened into a sequence of tokens. Crucially, to
+                                                                      preserve the vital hierarchical context of each token, we
+The quantization table Q(u, v) is designed with small                 add a learnable level embedding el ∈ R1×D to tokens
+values for low-frequency components and substantially                 from the same scale. The generation of level-aware tokens
+larger values for high-frequency components. As a result,             pl ∈ RNl ×D where Nl = hl × wl can be formulated as:
+high-frequency coefficients are aggressively attenuated.
+These coefficients often contain subtle artifacts that are crit-                       pl = Flatten(ϕl (Cl )) + el .             (4)
+ical for many forgery detection methods.
+   To further examine the implications of this process,                The final phase representation, p ∈ RNp ×D , is formed
+we decompose each complex frequency coefficient F (u, v)               by concatenating the token sequences from all three scales,
+into its magnitude |F (u, v)| and phase ∠F (u, v):                     providing a comprehensive summary of the phase informa-
+                                                                       tion for the following cross-modal fusion:
+              F (u, v) = |F (u, v)| · ek∠F (u,v) .          (2)
+                                                                                        p = Concat(p1 , p2 , p3 ),               (5)
+From this perspective, it becomes clear that the quantization
+                                                                                      P3
+operation directly affects the magnitude component of the              where Np = l=1 Nl is the total number of phase tokens.
+coefficient, as below:                                                 This process yields a representation that is not only rich in
+                                                                       detail but also explicitly aware of the scale from which each
+                                     |F (u, v)|
+                 |Fquant (u, v)| ≈              .           (3)        feature originates.
+                                      Q(u, v)
+
+In contrast, the phase component ∠F (u, v) remains unaf-               Phase-Harmonized Cross-Modal Interaction. Having
+fected by the division, provided the resulting coefficient             extracted token-based representations from both the RGB
+Fquant (u, v) is non-zero. In such cases, the original phase is        image (l ∈ RNl ×D ) and its phase spectrum (p ∈ RNp ×D ),
+preserved: ∠Fquant (u, v) = ∠F (u, v). Phase information               the central challenge lies in effectively fusing these two
+is only lost when the corresponding magnitude is quan-                 modalities. To model their complex and complementary
+tized to zero. This scenario primarily occurs in the high-             relationship, we propose a phase-harmonized cross-modal
+est frequency bands, where Q(u, v) values are largest.                 interaction module (PHCI). This module enables a harmo-
+    This analysis leads to our foundational insight: the phase         nized fusion process, where the robust phase features guide
+spectrum is inherently more robust to JPEG compression                 the refinement of RGB features. Then, the refined RGB fea-
+than the magnitude spectrum. While magnitude-based fea-                tures, in turn, enhance the phase representation.
+tures are prone to distortion or elimination, a large portion             Specifically, the RGB features are enhanced with
+of phase information survives compression, offering a more             compression-robust cues from the phase representation.
+stable and reliable signal for detecting forgery artifacts. Our        This enhancement is achieved through a cross-attention
+framework is therefore designed to systematically exploit              mechanism, in which the RGB tokens ‘l’ act as queries,
+this robust phase information, forming the foundation of our           while the phase tokens ‘p’ serve as keys and values. The
+approach to compression-robust forgery detection.                      resulting enhanced RGB representation x′ is computed as:
+
+3.3. CPTformer                                                                   lcross = CrossAttn(Norm(l), Norm(p)),           (6)
+The proposed Compression-Robust Phase-Harmonized
+Transformer (CPTFormer) is comprised of a hierarchi-                           l′ = l + γi · (lcross + MLP(Norm(lcross ))),      (7)
+cal phase feature extractor, a phase-harmonized cross-                 where CrossAttn denotes the standard multi-head attention
+modal interaction module, and is trained with a specialized            operation, Norm is Layer Normalization, and γl is a learn-
+difficulty-aware consistency loss, as depicted in Figure 2.            able gating scalar. This operation allows each RGB token to
+                                                                       effectively query the entire set of phase tokens and integrate
+Hierarchical Phase Feature Extractor. The extractor is                 the most salient compression-robust information before be-
+a lightweight convolutional pyramid network that generates             ing processed by the main backbone.
+a feature pyramid {Cl }3l=1 at three distinct spatial scales,              After the phase-enhanced RGB tokens l′ are processed
+corresponding to 1/8, 1/16 and 1/32 of the input image                 through the stack of ViT blocks, they contain contextual se-
+resolution. Each feature map Cl ∈hl ×wl ×dl captures phase             mantic features. We denote these fully processed tokens as
+characteristics at a specific level of detail.                         lViT . Subsequently, this rich semantic information in lViT is
+
+
+
+                                                                  35430
+utilized to refine the phase representation itself. This is ac-         Then, the reconstructed feature map is flattened back into
+complished through another cross-attention mechanism, in             a sequence of patch tokens. A zero vector is prepended to
+which the phase tokens ‘p’ act as queries and attend to the          align with the class token position, yielding the frequency-
+processed RGB tokens lViT . The refined phase representa-            domain update ∆Ffreq . The outputs of the two branches
+tion p′ is formulated as follows:                                    are combined via a gated summation to produce the final
+                                                                     residual update for the ViT block:
+        pcross = CrossAttn(Norm(p), Norm(lViT )),          (8)
+                                                                                  ∆F = αs · ∆Fspatial + αf · ∆Ffreq ,           (12)
+       p′ = p + γe · (pcross + MLP(Norm(pcross ))),        (9)
+                                                                      where αs and αf are two learnable parameters that balance
+where γp is a learnable gating scalar. This step enables the          the contributions of the spatial and frequency domains.
+model to identify the most discriminative phase features in
+the context of the final detection task, effectively leveraging
+                                                                      Difficulty-aware Consistency Loss. While our method
+the global semantic understanding from the RGB stream to
+                                                                      is designed to learn robust representations without requir-
+enhance the local phase cues. This bidirectional interaction
+                                                                      ing paired data and compression labels, we still introduce
+ensures that both modalities are mutually refined, resulting
+                                                                      a difficulty-aware consistency loss (DACL) to efficiently
+in a more robust and coherent representation.
+                                                                      exploit them when such resources exist. The core idea is
+                                                                      to up-weight the contribution of the most informative sam-
+Multi-Domain Modulation Adapter. The multi-domain                     ples, which are the most challenging for the detector. This
+modulation adapter (MDMA) consists of two parallel                    component, combined with contrastive learning to enforce
+branches: a spatial adaptation branch and a frequency en-             intra-class consistency, constitutes the difficulty-aware con-
+hancement branch. This spatial adaptation branch follows              sistency loss.
+the conventional adapter design, employing a bottleneck                   Let fθ (·) be the model’s classification head. The cross-
+structure to learn specialized feature refinements in the spa-        entropy loss for the compressed image is LCE (fθ (xc ), y). A
+tial domain. Given features F processed through multiple              high cross-entropy loss signifies a challenging sample. We
+stacked interaction modules and ViT blocks, this branch               use this to compute a sample-specific difficulty weight ω:
+first projects the features down to a smaller bottleneck di-
+mension db , and applies a non-linear activation function.                             ω = exp(LCE (fθ (xc ), y)).              (13)
+Then, we project them back up to the original dimension
+D. The spatial update ∆Fspatial is formulated as:                     Crucially, the gradient is not back-propagated through the
+                                                                      calculation of ω. The weight serves purely as a modulating
+           ∆Fspatial = MLPup (σ(MLPdown (F))),            (10)        factor on the learning signal, not as a target for optimization
+                                                                      itself. The weight grows exponentially with the difficulty,
+where MLPdown : RD → Rdb and MLPup : Rdb → RD are                     ensuring that challenging samples receive more attention.
+linear projections and σ is a ReLU activation function.               The difficulty-aware loss can be formulated as below:
+   The frequency enhancement branch is designed to ex-
+plicitly recalibrate artifacts in the frequency domain. First,             LDAL = ωLCE (fθ (xc ), y) + LCE (fθ (xo ), y),       (14)
+the input tokens (excluding the class token) are first re-
+shaped into a 2D feature map, X ∈ RH×W ×D . We then                   where xo is uncompressed sample. To further enhance the
+apply a 2D Discrete Wavelet Transform (DWT), decom-                   intra-class consistency and inter-class separability of the
+posing the feature map into four frequency sub-bands: one             learned representations, we employ a contrastive loss. It
+low-frequency approximation band (XLL ) and three high-               can be formulated as follow:
+frequency detail bands corresponding to horizontal (XLH ),                                P
+vertical (XHL ), and diagonal (XHH ) details. To amplify                      (i)           p∈P(i) exp(sim(zi , zp )/τ )
+                                                                            Lcon = − log P                               ,   (15)
+these cues within different frequency sub-bands, we apply                                     j̸=i exp(sim(zi , zj )/τ )
+a channel attention S(·) to each sub-band independently,
+which is based on the Squeeze-and-Excitation block [7]:              where sim(·, ·) is the cosine similarity, and τ is a tempera-
+                                                                     ture hyperparameter. P(i) is the set of indices of all other
+                 ′                                                   samples in the mini-batch that belong to the same class as
+                Xband = Xband ⊙ S(Xband ),                (11)
+                                                                     sample i (positives). The input of classification head is de-
+where ⊙ denotes channel-wise multiplication and the band             fined as z. The difficulty-aware consistency loss LDACL can
+belongs to {LL, LH, HL, HH}. The four recalibrated sub-              be written as:
+           ′     ′      ′      ′
+bands {XLL   , XLH  , XHL   , XHH  } are used to reconstruct
+                   ′
+the feature map, Xrec , via an Inverse DWT (IDWT).                                    LDACL = LDAL + λcon Lcon ,                (16)
+
+
+
+                                                                 35431
+Table 1. The quality-aware experimental results on GANs under the 2-class (top) and 4-class (bottom) training data setting. Bold and
+underline represent the best and second-best performance. Most comparison results are cited from ODDN [32].
+
+              InfoMax- BE- Cramer- Att- MMD- Rel- S3- SNG- STG- Pro- Style- Style- Big- Cycle- Star- Gau- Deep- Mean
+   Method
+                GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN2 GAN GAN GAN GAN fake Acc
+ MesoNet [1]     50.5  50.6 50.0 50.5 50.2 50.4 49.3 50.2 50.9 51.4 51.5 54.2 52.0 53.4 50.6 53.4 50.0 51.2
+  FF++ [25]      74.4  30.6 75.5 64.2 76.3 61.5 54.9 71.8 82.2 90.4 60.4 65.2 60.5 80.0 74.4 72.3 51.0 67.3
+  F3Net [20]     65.9  42.6 68.9 55.9 63.7 56.3 53.1 62.1 74.9 84.1 56.7 60.4 56.1 77.8 71.2 68.6 50.4 63.2
+  MAT [39]       54.5  49.8 59.7 50.1 57.8 50.8 52.8 52.8 56.7 85.7 52.4 53.1 52.9 72.2 57.6 67.6 51.1 57.7
+   SBIs [10]     56.6  51.9 63.4 50.1 59.3 50.6 62.2 52.1 53.0 88.4 51.2 52.4 55.4 74.8 53.6 78.3 51.1 59.3
+  ADD [12]       52.0  51.0 59.0 50.7 57.2 52.7 44.7 52.3 53.1 70.9 48.0 48.4 51.7 72.4 55.7 64.7 51.3 55.2
+  QAD [13]       74.8  53.7 79.6 60.1 78.3 66.5 56.0 76.3 80.4 86.3 55.4 57.2 59.1 77.1 79.9 65.8 55.8 69.2
+ FreqNet [31]    47.7  50.0 50.5 52.6 50.5 47.8 49.1 50.6 51.7 50.1 53.3 55.8 51.6 52.3 51.0 52.1 48.1 50.9
+   NPR [30]      57.2  53.4 51.8 50.9 50.7 51.8 50.4 49.7 50.8 53.1 52.6 52.3 51.7 55.4 54.3 52.4 49.7 52.2
+Fatformer [15] 64.9    53.0 64.5 50.7 61.0 51.7 72.6 55.4 57.9 91.3 54.8 57.7 67.0 87.3 65.1 87.1 51.8 64.3
+ ODDN [32]       73.1  42.3 76.1 71.2 75.9 72.5 60.5 75.5 85.0 91.3 64.5 69.4 64.3 80.8 78.0 77.3 54.3 71.4
+  CPTformer      85.8  73.7 87.9 58.6 88.1 61.2 75.3 79.2 80.6 93.2 60.8 60.7 77.7 96.9 86.9 91.3 56.7 77.4
+ MesoNet[1]      49.5  46.2 52.6 51.3 53.0 53.8 50.4 51.8 54.2 53.3 49.6 53.9 55.1 50.9 52.3 51.7 45.0 51.4
+  FF++[25]       69.5  26.9 80.3 66.8 79.2 69.9 56.2 75.1 84.4 93.6 62.5 60.8 58.5 80.9 78.5 71.00 52.8 68.7
+  F3Net[20]      61.0  41.9 65.8 52.9 63.8 55.5 53.8 59.6 71.5 92.2 76.0 59.1 55.9 57.9 71.8 66.0 52.1 62.4
+   MAT[39]       57.9  46.9 64.2 50.8 63.4 52.4 52.1 56.2 61.8 90.8 54.2 53.9 52.4 73.1 61.4 64.8 51.2 59.5
+   SBIs [10]     60.2  55.7 74.4 50.2 67.1 54.6 61.4 53.0 57.2 96.0 57.4 53.0 55.4 77.6 60.1 74.9 50.6 62.5
+  ADD [12]       51.7  50.7 57.3 51.3 55.9 52.4 45.2 51.2 52.4 73.5 49.9 50.1 52.2 70.7 54.4 66.4 51.2 55.3
+  QAD [13]       79.9  37.5 79.5 67.4 76.8 71.7 58.0 79.0 83.5 92.7 64.7 68.7 64.0 81.8 80.3 66.3 52.9 70.9
+ FreqNet [31]    49.6  50.0 50.9 51.8 49.9 48.6 48.1 50.4 51.6 49.9 56.8 54.7 52.0 49.2 50.3 55.1 49.2 54.2
+   NPR [30]      57.8  43.2 53.6 65.1 53.9 66.5 53.1 55.7 55.2 73.7 60.2 64.7 60.2 71.2 60.1 59.8 50.8 59.1
+Fatformer [15] 70.7    57.9 73.0 51.9 68.5 52.4 73.5 61.7 61.3 98.3 74.2 65.3 67.6 84.2 69.9 87.5 56.9 69.1
+ ODDN [32]       80.6  38.6 80.7 65.8 78.8 71.1 60.5 76.7 85.8 94.0 67.7 69.9 66.7 84.9 80.5 75.2 54.2 72.6
+  CPTformer      85.6  74.3 87.4 56.3 86.5 59.5 79.4 77.3 78.3 98.5 76.5 74.9 81.7 94.2 85.8 94.7 56.7 79.3
+
+Table 2. The quality-aware experimental results on DMs under the 2-class training data setting. The first eight models (from ADM to
+SDv2) are from the DiffusionForensics dataset [36], and the remaining models are from the diffusion test set of Ojha [19].
+
+                                                                                Glide- Glide- Glide-     LDM- LDM- LDM- Mean
+   Method     ADM DDPM IDDPM LDM PNDM VQDM SDv1 SDv2 DALLE                                           ADM
+                                                                                100-10 100-27 50-27       100  200 200-cfg Acc
+ MesoNet[1] 54.7      56.5   48.2   50.1   52.6   53.2   43.2   49.3     52.3    56.6   51.4 49.7 52.9 53.5 59.8    51.4 52.2
+  FF++[25]     62.4   63.8   52.2   50.8   54.4   71.6   58.6   72.8     65.3    61.0   61.7 65.3 59.3 67.6 66.5    64.2 62.3
+  F3Net[20] 58.5      63.8   50.9   50.4   52.1   50.7   47.8   54.9     64.8    51.8   52.7 52.6 55.8 54.0 53.5    53.9 54.3
+   MAT[39]     60.7   62.3   49.7   52.6   61.4   60.9   53.3   65.1     67.0    57.5   56.8 58.4 53.1 66.3 66.8    64.0 59.7
+   SBIs [10]   60.2   65.4   51.8   55.7   56.3   62.0   51.6   59.0     59.7    59.9   59.2 60.9 55.7 68.0 68.3    63.8 59.8
+  ADD [12] 54.9       57.9   47.3   49.6   50.4   57.9   44.3   55.4     54.3    54.6   54.7 64.4 55.3 58.2 57.7    55.9 54.1
+  QAD [13] 66.8       68.4   57.9   56.5   61.3   58.9   54.3   57.6     63.0    60.4   59.4 62.1 59.7 65.7 66.2    64.6 61.4
+ FreqNet [31] 55.6    62.1   58.0   49.1   54.6   52.3   47.4   61.4     42.6    46.1   46.5 48.9 56.7 42.8 41.7    42.2 50.5
+   NPR [30]    55.0   61.8   57.2   67.5   50.8   66.4   52.1   70.9     61.7    62.4   61.9 64.4 50.1 54.1 54.1    57.7 59.3
+Fatformer [15] 56.6   70.3   59.9   50.0   72.3   50.8   35.6   50.0     58.9    58.0   57.7 59.4 57.6 70.9 71.7    53.7 58.3
+ ODDN [32] 58.7       62.5   52.6   51.4   49.5   63.3   45.2   74.1     50.2    57.0   56.5 57.6 59.8 53.3 53.0    52.7 56.1
+  CPTformer 62.7      74.2   66.7   50.7   78.0   60.4   45.0   51.7     78.9    63.1   63.6 65.6 62.5 83.8 83.5    63.2 65.9
+
+
+where λcon is a scalar hyperparameter that balances the con-           in problem formulation, the training set is partitioned into
+tributions of the different loss terms. This composite objec-          two parts: a majority (80%) of pristine, unpaired data and a
+tive guides the model not only to classify correctly but also          remaining 20% forming a paired subset, in which each im-
+to learn a well-structured and robust feature space.                   age is paired with a corresponding JPEG-compressed ver-
+                                                                       sion at a quality factor of 40. For model test, we conduct
+4. Experiments                                                         experiments on four diverse test benchmarks: the Foren-
+                                                                       Synths [35] dataset and the GANGen-Detection dataset [30]
+4.1. Settings                                                          for GANs evaluation, the DiffusionForensics [36] and the
+Dataset. For model training, our model is trained on im-               diffusion test set of Ojha [19] for DMs evaluation. Two
+ages generated by ProGAN [11], sourced from the Foren-                 compression evaluation scenarios are employed: quality-
+Synths dataset [35]. To ensure a fair comparison, we follow            aware, where the compression ratio is fixed, and quality-
+the data protocol established in ODDN [32]. As mentioned               agnostic, where the compression ratio is randomly selected,
+
+
+
+                                                                35432
+    Table 3. The quality-agnostic experimental results on GANs under the 2-class (top) and 4-class (bottom) training data setting.
+
+              InfoMax- BE- Cramer- Att- MMD- Rel- S3- SNG- STG- Pro- Style- Style- Big- Cycle- Star- Gau- Deep- Mean
+   Method
+                GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN2 GAN GAN GAN GAN fake Acc
+ MesoNet[1]      46.3  44.3 59.7 60.0 59.8 58.7 47.8 56.3 69.1 55.0 51.0 49.9 53.9 60.5 64.8 49.9 51.1 53.3
+  FF++[25]       66.9  37.7 79.4 56.6 77.1 60.5 55.0 69.2 79.8 87.8 55.1 59.8 57.1 79.9 75.6 71.6 52.0 66.0
+  F3Net[20]      58.0  48.8 61.9 51.5 59.3 53.2 52.0 54.9 61.1 83.4 52.7 54.9 55.0 73.7 65.9 66.7 52.4 59.3
+   MAT[39]       54.2  49.9 59.6 50.5 57.6 51.2 52.1 52.7 57.8 86.1 52.3 53.0 52.7 70.3 58.2 68.0 51.3 57.7
+   SBIs [10]     56.6  51.9 63.4 50.1 59.3 50.6 62.2 52.1 53.0 88.6 51.3 52.4 55.7 76.0 53.9 78.1 51.2 59.4
+  ADD [12]       51.8  50.9 59.0 50.7 57.1 52.8 45.0 52.3 52.9 70.2 48.0 48.7 51.8 71.9 55.5 65.1 51.3 57.9
+  QAD [13]       72.3  55.2 80.0 61.5 78.3 65.5 54.5 76.5 79.2 86.4 56.4 58.0 57.4 82.6 77.8 63.5 56.5 68.3
+ FreqNet [31]    49.4  59.5 48.8 51.6 49.3 48.5 47.1 50.6 50.6 50.9 55.9 62.3 53.4 51.2 50.0 53.4 48.7 51.8
+   NPR [30]      58.7  54.8 52.1 53.3 51.8 53.3 50.8 50.2 51.3 53.5 53.8 54.0 53.4 50.8 54.7 52.7 49.7 52.9
+Fatformer [15] 65.6    53.4 65.2 50.9 62.1 51.8 74.5 56.0 58.1 92.0 55.3 58.0 67.7 90.0 65.9 87.5 52.0 65.1
+ ODDN [32]       72.1  44.1 76.8 68.1 76.5 73.3 58.0 75.6 83.5 90.8 61.1 65.9 63.9 83.5 77.0 72.9 55.0 70.7
+  CPTformer      85.8  71.9 87.6 57.8 87.3 60.8 73.9 79.4 79.9 92.4 59.1 58.5 75.9 95.8 85.8 90.7 55.5 76.3
+ MesoNet[1]      58.7  45.4 63.5 62.9 62.0 50.2 48.7 58.4 64.1 55.4 52.0 48.1 53.7 63.2 62.0 49.6 51.8 54.3
+  FF++[25]       68.9  29.9 82.0 63.3 80.4 67.2 55.5 75.4 82.0 93.0 61.1 59.8 57.9 80.1 78.6 67.3 51.9 67.9
+  F3Net[20]      62.0  43.4 65.8 53.2 64.1 56.7 55.4 58.8 67.7 92.5 76.6 62.3 56.8 60.5 71.0 71.3 51.1 63.4
+   MAT[39]       52.2  49.3 62.5 50.6 60.3 51.7 53.3 53.9 58.6 92.2 54.4 54.9 54.0 76.5 59.4 68.4 51.0 59.4
+   SBIs [10]     61.3  57.4 74.8 50.3 67.5 54.6 61.5 53.2 57.1 95.9 57.2 52.9 55.4 78.3 59.3 74.6 50.7 62.6
+  ADD [12]       51.0  50.2 54.4 50.3 53.4 50.7 46.2 50.5 50.9 75.8 51.4 51.6 52.7 72.6 52.3 66.4 50.7 55.0
+  QAD [13]       76.7  46.4 79.6 68.5 77.1 73.6 58.3 76.3 81.0 90.2 65.3 71.3 64.6 81.8 77.1 66.7 55.1 71.0
+ FreqNet [31]    49.0  60.4 49.2 51.0 49.8 48.5 46.4 50.2 50.6 50.5 55.6 62.2 53.4 50.0 50.7 53.1 49.3 51.8
+   NPR [30]      56.6  45.2 52.1 61.9 53.1 67.9 52.9 54.2 53.3 72.8 60.3 65.2 60.3 64.6 60.5 60.8 51.8 58.4
+Fatformer [15] 70.6    58.3 71.7 51.6 67.7 52.3 72.8 61.2 61.6 98.2 72.8 64.9 67.3 86.5 69.6 87.2 56.5 68.9
+ ODDN [32]       80.4  35.1 81.0 68.7 78.2 74.5 62.2 77.5 81.7 91.7 69.2 70.4 68.0 78.8 73.4 73.8 55.3 72.1
+  CPTformer      84.2  71.7 86.4 54.7 84.6 57.1 78.2 75.9 77.9 98.6 70.9 69.3 79.5 93.5 83.9 94.4 54.5 77.4
+
+                      Table 4. The quality-agnostic experimental results on DMs under the 2-class training data setting.
+
+                                                                                      Glide- Glide- Glide-     LDM- LDM- LDM- Mean
+   Method     ADM DDPM IDDPM LDM PNDM VQDM SDv1 SDv2 DALLE                                                 ADM
+                                                                                      100-10 100-27 50-27       100  200 200-cfg Acc
+ MesoNet[1] 53.3        60.1     50.6   40.0   48.9    47.7   46.4   52.5      53.8    55.0   48.6 50.9 50.1 49.5 55.8    49.6 50.8
+  FF++[25]     62.1     66.3     53.8   50.0   55.7    55.1   54.2   66.8      65.2    57.1   56.5 57.0 58.3 60.2 58.9    58.3 58.5
+  F3Net[20] 54.5        64.3     50.7   49.8   50.4    49.8   40.7   51.3      59.4    51.3   51.8 52.3 52.6 51.8 52.3    51.7 52.2
+   MAT[39]     59.8     65.5     51.9   54.9   58.1    69.4   50.9   67.4      57.6    55.3   55.1 55.6 57.5 58.1 57.4    60.4 58.4
+   SBIs [10]   55.2     65.9     53.6   53.0   54.4    53.2   42.4   53.2      56.6    55.5   56.9 56.2 54.7 56.8 57.4    57.2 55.1
+  ADD [12] 52.8         63.6     50.9   52.6   53.5    50.8   41.5   50.6      53.3    50.1   50.0 50.4 51.3 54.3 54.6    56.0 52.3
+  QAD [13] 60.4         63.7     54.5   56.1   56.2    54.3   52.7   51.9      58.2    58.8   54.6 53.3 52.7 53.7 54.4    62.5 57.4
+ FreqNet [31] 55.6      62.5     56.7   45.8   52.7    50.4   48.6   60.3      36.8    42.8   42.2 48.2 57.2 34.4 34.3    36.2 47.8
+   NPR [30]    55.8     65.1     54.2   49.5   68.8    42.5   51.4   54.2      68.6    54.9   55.9 57.0 53.8 61.0 61.3    57.8 56.9
+Fatformer [15] 57.9     68.8     58.2   50.0   73.7    50.8   35.8   50.0      60.0    58.9   59.0 60.0 58.7 70.7 70.9    53.5 58.6
+ ODDN [32] 56.3         63.6     53.3   43.6   51.6    52.7   39.3   61.5      52.6    57.2   56.7 58.8 57.8 52.9 51.6    50.0 53.7
+  CPTformer 60.9        71.6     62.2   52.0   79.3    56.2   43.9   52.2      78.3    59.8   60.6 60.2 60.6 78.8 78.5    61.1 63.5
+
+
+representing a more realistic and challenging scenario.                     ison with existing methods, classification accuracy (Acc) is
+                                                                            used as the primary evaluation metric. The hyperparameter
+                                                                            λcon in Equation 16 is set to 0.01.
+Implementation details. Our framework adopts the pre-
+trained CLIP-ViT [22] as the backbone architecture. In-
+                                                                             4.2. Quality-Aware Evaluation
+put images are processed through a standard preprocessing
+pipeline: first resized to 256×256 pixels, then cropped to                   Based on the ProGAN-generated image of ForenSynths
+224×224 dimensions. To enhance model robustness, ran-                        dataset [35], we conduct experiments under two training
+dom cropping is employed as a data augmentation strategy                     data settings: a 2-class setting (chair, horse) and a 4-class
+during training, while inference is performed using a fixed                  setting (car, cat, chair, horse). Table 1 summarizes the re-
+center crop. The model is trained for a total of 20 epochs.                  sults on datasets generated by GANs. Our method achieves
+Optimization is conducted using the AdamW [16] optimizer                     a new state-of-the-art performance with an average accu-
+with an initial learning rate of 2e-5 and a mini-batch size of               racy of 77.4% and 79.3%, marking a significant improve-
+32. To evaluate model performance and enable fair compar-                    ment of 6% and 6.7% over the previous best-performing
+
+
+
+                                                                     35433
+                   Table 5. Ablation experiments for the proposed method under the 2-class quality-aware setting.
+
+          InfoMax- BE- Cramer- Att- MMD- Rel- S3- SNG- STG- Pro- Style- Style- Big- Cycle- Star- Gau- Deep- Mean
+ Method
+            GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN GAN2 GAN GAN GAN GAN fake Acc
+ Baseline    60.0  52.5 64.3 54.7 61.6 58.3 66.5 57.5 60.4 86.4 60.2 60.8 64.8 79.2 71.6 80.7 58.8 64.6
+ + PHCI      82.8  72.6 85.8 58.5 84.9 62.7 68.1 78.9 81.2 88.7 56.9 56.3 70.3 89.5 87.4 85.4 60.7 74.7
++ MDMA 85.7        71.3 88.1 56.6 87.0 60.4 74.4 78.1 79.7 91.8 59.6 58.3 75.2 93.1 86.1 90.7 56.1 76.0
+ + DACL      85.8  73.7 87.9 58.6 88.1 61.2 75.3 79.2 80.6 93.2 60.8 60.7 77.7 96.9 86.9 91.3 56.7 77.4
+
+
+method. This highlights the strong adaptability of our                                            Real                         Real
+                                                                                                  Fake                         Fake
+framework to diverse GAN’s architectures.
+    The experiment results on diffusion models are presented
+in Table 2. Our framework achieves superior performance,
+reaching the highest mean accuracy of 65.9% and exceeding
+the previous state-of-the-art by 3.6%. This result highlights
+its strong capability for identifying subtle forgery artifacts
+across diverse generative strategies. The consistent perfor-                     (a) Baseline                       (b) Ours
+mance advantage over all competing methods confirms that
+the robustness of our approach is not confined to GAN-                                Figure 3. The t-SNE visualization.
+based artifacts but effectively extends to more complex and
+realistic forgery detection scenarios.                                The progressive improvements at each step clearly demon-
+                                                                      strate that all components work synergistically to achieve
+4.3. Quality-Agnostic Evaluation                                      the overall state-of-the-art performance of the final model.
+Under the quality-agnostic setting, all test images are com-          4.5. Visualzation
+pressed using a randomly selected compression ratio. This
+setup closely mimics real-world detection scenarios. Ta-              To provide an intuitive understanding of why our pro-
+bles 3 and 4 present the results on GANs and DMs, respec-             posed model achieves superior performance, we visual-
+tively. In the 2-class setting, our model achieves a mean             ize the learned feature distributions using the t-SNE tech-
+accuracy of 76.3% on GANs, outperforming the previous                 nique [33], as shown in Figure 3. It can be observed that the
+state-of-the-art method by 5.6%. This performance ad-                 baseline model (CLIP-ViT) produces a feature space where
+vantage is further reinforced in the 4-class training setting,        the embeddings for real and fake images are severely en-
+where our method achieves an average accuracy of 77.4%,               tangled. The lack of a clear separation boundary indicates
+demonstrating improved scalability under increased classi-            that the model struggles to learn discriminative features, of-
+fication complexity. This consistent performance again vali-          ten confusing real and fake samples. In contrast, the fea-
+dates the strong generalization ability enabled by our phase-         ture space learned by our model exhibits a remarkably well-
+centric design.                                                       structured distribution. The real and fake embeddings form
+                                                                      two distinct, compact, and widely separated clusters. This
+4.4. Ablation Study                                                   clear margin demonstrates that our method has successfully
+                                                                      learned highly discriminative and robust representations.
+To evaluate the contribution of each key component in our
+proposed method, we perform a comprehensive ablation                  5. Conclusion and Limitation
+study. Starting from a baseline model, we gradually in-
+corporate the proposed modules and measure the perfor-                In this work, we address the critical challenge of robust
+mance improvement at each stage. The results are summa-               detection of AI-generated images, where the performance
+rized in Table 5. The baseline model establishes a reference          of existing detectors is significantly degraded by compres-
+performance level with a mean accuracy of 64.6%. Then,                sion artifacts introduced by Online Social Networks. Our
+the introduction of the phase-harmonized cross-modal in-              approach is based on a key observation: the phase spec-
+teraction module (PHCI) allows the model to integrate fea-            trum of an image exhibits inherent robustness to com-
+tures from the RGB stream with robust phase information,              pression distortions. To exploit this property, we pro-
+improving the mean accuracy to 74.7%. Next, we intro-                 pose the Compression-Robust Phase-Harmonized Trans-
+duce the multi-domain modulation adapter (MDMA) for                   former, a novel framework specifically designed to integrate
+parameter-efficient fine-tuning. This leads to a further per-         and harmonize information from both RGB and phase-
+formance gain, with the accuracy increasing to 76.0%. Fi-             domain representations. Extensive experiments show that
+nally, the inclusion of the difficulty-aware consistency loss         our method substantially outperforms existing state-of-the-
+(DACL) during training brings the mean accuracy to 77.4%.             art approaches.
+
+
+
+                                                              35434
+6. Acknowledgements                                                    [14] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and
+                                                                            Xinbo Gao. Detecting generated images by real images. In
+This research was supported by the National Natu-                           ECCV, pages 95–110, 2022. 3
+ral Science Foundation of China (No.     U24B20175,                    [15] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,
+No.62322216),     Shenzhen Science and Technol-                             Jingdong Wang, and Yao Zhao. Forgery-aware adaptive
+ogy Program (No.       JCYJ20241202125904007, No.                           transformer for generalizable synthetic image detection. In
+RCYX20221008092849068), the Foundation of Key                               CVPR, pages 10770–10780, 2024. 1, 3, 6, 7
+Laboratory of Education Informatization for Nation-                    [16] Ilya Loshchilov and Frank Hutter. Decoupled weight decay
+alities (Yunnan Normal University), Ministry of Edu-                        regularization. In ICLR, 2019. 7
+cation (No. EIN2024B001), the Open Fund of Key                         [17] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.
+Laboratory of the Ministry of Education on Artificial                       Lareˆ2: Latent reconstruction error based method for
+Intelligence in Equipment (No. 2024-AAIE-KF04-01).                          diffusion-generated image detection. In CVPR, 2024. 3
+                                                                       [18] Meng Lyu, Yifei Li, and Xiong Chen. Kl-clip: a k-means
+                                                                            learning model for zero-shot anomaly segmentation: Kl-clip:
+References                                                                  a k-means learning model for zero-shot anomaly segmenta-
+ [1] Darius Afchar, Vincent Nozick, Junichi Yamagishi, and Isao             tion. 31(4), 2025. 3
+     Echizen. Mesonet: a compact facial video forgery detection        [19] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+     network. In WIFS, pages 1–7, 2018. 6, 7                                versal fake image detectors that generalize across generative
+ [2] Nasir Ahmed, T. Natarajan, and K. R. Rao. Discrete cosine              models. In CVPR, pages 24480–24489, 2023. 1, 3, 6
+     transform. IEEE Transactions on Computers, 23(1):90–93,           [20] Yuyang Qian, Guojun Yin, Lu Sheng, Zixuan Chen, and Jing
+     1974. 3                                                                Shao. Thinking in frequency: Face forgery detection by min-
+ [3] Yingjian Chen, Lei Zhang, and Yakun Niu. Forgelens: Data-              ing frequency-aware clues. In ECCV, pages 86–103, 2020.
+     efficient forgery focus for generalizable forgery image detec-         1, 3, 6, 7
+     tion. In ICCV, pages 16270–16280, 2025. 1                         [21] Xinran Qin, Zhixin Wang, Fan Li, Haoyu Chen, RenJing Pei,
+ [4] Ricard Durall, Margret Keuper, and Janis Keuper. Watch                 WenBo Li, and XiaoChun Cao. Camedit: Continuous cam-
+     your up-convolution: CNN based generative deep neural                  era parameter control for photorealistic image editing. In
+     networks are failing to reproduce spectral distributions. In           NIPS, 2025. 3
+     CVPR, pages 7887–7896, 2020. 3                                    [22] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+ [5] Yiqing Fan, Chaoqun Hong, Guanghui Zeng, and Lijuan Liu.               Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+     A deep convolutional encoder–decoder–restorer architecture             Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen
+     for image deblurring. Neural Processing Letters, 56(1):27,             Krueger, and Ilya Sutskever. Learning transferable visual
+     2024. 3                                                                models from natural language supervision. In ICML, pages
+ [6] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-             8748–8763, 2021. 3, 7
+     cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-        [23] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott Gray,
+     quency analysis for deep fake image recognition. In ICML,              Chelsea Voss, Alec Radford, Mark Chen, and Ilya Sutskever.
+     pages 3247–3258, 2020. 3                                               Zero-shot text-to-image generation. In ICML, pages 8821–
+ [7] Jie Hu, Li Shen, and Gang Sun. Squeeze-and-excitation net-             8831, 2021. 1
+     works. In CVPR, pages 7132–7141, 2018. 5                          [24] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+ [8] Yonghyun Jeong, Doyeon Kim, Seungjai Min, Seongho Joe,                 Patrick Esser, and Björn Ommer. High-resolution image syn-
+     Youngjune Gwon, and Jongwon Choi. Bihpf: Bilateral high-               thesis with latent diffusion models. In CVPR, pages 10674–
+     pass filters for robust deepfake detection. In WACV, pages             10685, 2022. 1
+     2878–2887, 2022. 1                                                [25] Andreas Rössler, Davide Cozzolino, Luisa Verdoliva, Chris-
+ [9] Yonghyun Jeong, Doyeon Kim, Youngmin Ro, and Jongwon                   tian Riess, Justus Thies, and Matthias Nießner. Faceforen-
+     Choi. Frepgan: Robust deepfake detection using frequency-              sics++: Learning to detect manipulated facial images. In
+     level perturbations. In AAAI, pages 1060–1068, 2022. 3                 ICCV, pages 1–11, 2019. 6, 7
+[10] Shiohara Kaede and Yamasaki Toshihiko. Detecting deep-            [26] Chitwan Saharia, William Chan, Saurabh Saxena, Lala
+     fakes with self-blended images. In CVPR, pages 18720–                  Li, Jay Whang, Emily L. Denton, Seyed Kamyar Seyed
+     18729, 2022. 1, 6, 7                                                   Ghasemipour, Raphael Gontijo Lopes, Burcu Karagol Ayan,
+[11] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.             Tim Salimans, Jonathan Ho, David J. Fleet, and Mohammad
+     Progressive growing of gans for improved quality, stability,           Norouzi. Photorealistic text-to-image diffusion models with
+     and variation. In ICLR, 2018. 6                                        deep language understanding. In NIPS, 2022. 1
+[12] Binh Minh Le and Simon S. Woo. ADD: frequency attention           [27] Weiwei Sun, Jiantao Zhou, Ran Lyu, and Shuyuan Zhu.
+     and multi-view based knowledge distillation to detect low-             Processing-aware privacy-preserving photo sharing over on-
+     quality compressed deepfake images. In AAAI, 2022. 1, 3, 6,            line social networks. In ACMMM, pages 581–585, 2016. 1,
+     7                                                                      3
+[13] Binh Minh Le and Simon S. Woo. Quality-agnostic deepfake          [28] Weiwei Sun, Jiantao Zhou, Li Dong, Jinyu Tian, and Jun Liu.
+     detection with intra-model collaborative learning. In ICCV,            Optimal pre-filtering for improving facebook shared images.
+     pages 22321–22332, 2023. 1, 2, 3, 6, 7                                 IEEE Trans. Image Process., 30:6292–6306, 2021. 1, 3
+
+
+
+
+                                                                  35435
+[29] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     and Yunchao Wei. Learning on gradients: Generalized arti-
+     facts representation for gan-generated images detection. In
+     CVPR, pages 12105–12114, 2023. 3
+[30] Chuangchuang Tan, Huan Liu, Yao Zhao, Shikui Wei,
+     Guanghua Gu, Ping Liu, and Yunchao Wei. Rethinking the
+     up-sampling operations in cnn-based generative network for
+     generalizable deepfake detection. In CVPR, pages 28130–
+     28139, 2024. 1, 3, 6, 7
+[31] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-
+     tection: Improving generalizability through frequency space
+     domain learning. In AAAI, pages 5052–5060, 2024. 1, 3, 6,
+     7
+[32] Renshuai Tao, Manyi Le, Chuangchuang Tan, Huan Liu,
+     Haotong Qin, and Yao Zhao. ODDN: addressing unpaired
+     data challenges in open-world deepfake detection on online
+     social networks. In AAAI, pages 799–807, 2025. 1, 2, 3, 6, 7
+[33] Laurens van der Maaten and Geoffrey Hinton. Visualizing
+     data using t-sne. JMLR, 9(86):2579–2605, 2008. 8
+[34] Gregory K. Wallace. The JPEG still picture compression
+     standard. Commun. ACM, 34(4):30–44, 1991. 3
+[35] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Owens, and Alexei A. Efros. Cnn-generated images are sur-
+     prisingly easy to spot... for now. In CVPR, pages 8692–8701,
+     2020. 3, 6, 7
+[36] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. DIRE for
+     diffusion-generated image detection. In ICCV, pages 22388–
+     22398, 2023. 3, 6
+[37] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong
+     Jiang, Yao Hu, and Weidi Xie. A sanity check for ai-
+     generated image detection. In ICLR, 2025. 3
+[38] Ning Yu, Larry Davis, and Mario Fritz. Attributing fake im-
+     ages to gans: Learning and analyzing GAN fingerprints. In
+     ICCV, pages 7555–7565, 2019. 1
+[39] Hanqing Zhao, Wenbo Zhou, Dongdong Chen, Tianyi Wei,
+     Weiming Zhang, and Nenghai Yu. Multi-attentional deep-
+     fake detection. In CVPR, pages 2185–2194, 2021. 1, 6, 7
+
+
+
+
+                                                                35436
+

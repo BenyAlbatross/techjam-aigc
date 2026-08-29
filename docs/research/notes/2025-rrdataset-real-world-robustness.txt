@@ -1,0 +1,575 @@
+                                               Bridging the Gap Between Ideal and Real-world Evaluation: Benchmarking
+                                                         AI-Generated Image Detection in Challenging Scenarios
+
+                                                                         Chunxiao Li1 * Xiaoxiao Wang2,* Meiling Li3 Boming Miao1
+                                                                            Peng Sun4 Yunjian Zhang5 Xiangyang Ji5 Yao Zhu5†
+                                          1
+                                              Beijing Normal University, Beijing, China 2 University of Chinese Academy of Sciences, Beijing, China
+                                               3
+                                                 Fudan University, Shanghai, China 4 Central University of Finance and Economics, Beijing, China
+arXiv:2509.09172v1 [cs.CV] 11 Sep 2025
+
+
+
+
+                                                                               5
+                                                                                 Tsinghua University, Beijing, China
+                                                                               chunxiaoli@mail.bnu.edu.cn, ee zhuy@zju.edu.cn
+
+
+
+                                                                        Abstract                       1. Introduction
+
+                                         With the rapid advancement of generative models, highly       With the emergence of powerful generative models [24,
+                                         realistic image synthesis has posed new challenges to digi-   40, 44, 45], AI-generated images are increasingly diffi-
+                                         tal security and media credibility. Although AI-generated     cult to distinguish from real ones. Such indistinguishable
+                                         image detection methods have partially addressed these        AI-generated images pose risks to society, including the
+                                         concerns, a substantial research gap remains in evaluat-      spread of misinformation and misleading visual cues. Con-
+                                         ing their performance under complex real-world condi-         sequently, the identification of AI-generated images has be-
+                                         tions. This paper introduces the Real-World Robustness        come a critical task with profound real-world implications.
+                                         Dataset (RRDataset) for comprehensive evaluation of de-           An increasing number of studies explore various detec-
+                                         tection models across three dimensions: 1) Scenario Gen-      tion methods based on different features, including image
+                                         eralization – RRDataset encompasses high-quality images       texture [33], gradients [48], patch-level features [6, 9, 35],
+                                         from seven major scenarios (War & Conflict, Disasters &       frequency-domain characteristics [12, 13, 15, 59], fine-
+                                         Accidents, Political & Social Events, Medical & Public        grained image details [20, 46], and reconstruction loss
+                                         Health, Culture & Religion, Labor & Production, and ev-       [43, 54]. Vision-language models (VLMs) have also been
+                                         eryday life), addressing existing dataset gaps from a con-    adapted for detection tasks [25, 26, 38, 47]. Although
+                                         tent perspective. 2) Internet Transmission Robustness –       conventional benchmarks such as GenImage [62], Fake2M
+                                         examining detector performance on images that have un-        [34], WildFake [18], and Chameleon [56] offer sizeable
+                                         dergone multiple rounds of sharing across various social      collections of generative images, they share two signifi-
+                                         media platforms. 3) Re-digitization Robustness – assessing    cant limitations. First, they primarily consist of everyday-
+                                         model effectiveness on images altered through four distinct   life images, making it hard to assess whether the detection
+                                         re-digitization methods.                                      methods can effectively generalize to other scenarios. Sec-
+                                             We benchmarked 17 detectors and 10 vision-language        ond, they fail to account for the influence of internet so-
+                                         models (VLMs) on RRDataset and conducted a large-             cial media transmissions or re-digitization processes, thus
+                                         scale human study involving 192 participants to investi-      inflating detection performance relative to the complexities
+                                         gate human few-shot learning capabilities in detecting AI-    of real-world conditions.
+                                         generated images. The benchmarking results reveal the lim-        To address these gaps, we introduce RRDataset, the
+                                         itations of current AI detection methods under real-world     first benchmark designed explicitly to evaluate detec-
+                                         conditions and underscore the importance of drawing on        tors’ robustness in practical contexts. RRDataset encom-
+                                         human adaptability to develop more robust detection al-       passes images from seven diverse and challenging scenar-
+                                         gorithms. Our dataset is publicly available at: https:        ios—including War & Conflict, Disasters & Accidents, Po-
+                                         //zenodo.org/records/14963880.                                litical & Social Events, Medical & Public Health, Culture
+                                                                                                       & Religion, and Labor & Production—thereby filling cru-
+                                                                                                       cial content gaps in existing benchmarks. Moreover, it sys-
+                                              * Equal contribution.                                    tematically includes internet transmission and four distinct
+                                              † Corresponding author.                                  re-digitization processes, enabling a deeper assessment of
+Figure 1. Real-Robust Bench overview, featuring a wide range of scenarios and real-world robustness incorporating four re-digitization
+methods and internet transmission processes. Additionally, we introduce the largest human benchmark to date, with 192 participants from
+diverse backgrounds and 240 test images.
+
+
+how these factors degrade detector performance in realis-             DE-FAKE [47]—have shifted toward diffusion-based ap-
+tic use cases. We benchmark 17 detection methods and                  proaches, yielding more realistic synthetic images.
+10 VLMs on RRDataset, finding substantial performance                     Large-scale datasets such as GenImage [62], WildFake
+declines under both transmission and re-digitization condi-           [18], Fake2M [34], Chameleon [56], and PatchCraft [61]
+tions—shortcomings that have largely been overlooked in               have pushed the boundaries of size and diversity, reaching
+previous evaluations. We further establish a large-scale hu-          millions of synthetic samples from multiple model archi-
+man benchmark, involving 192 participants and 240 test im-            tectures. Some datasets like Chameleon [56], emphasize
+ages, to investigate how human observers adapt in similar             high-quality human-curated images to expose blind spots in
+conditions. Although human accuracy also decreases when               current detectors. However, most of these datasets concen-
+confronted with altered images, it improves significantly af-         trate on everyday scenarios drawn from sources like Ima-
+ter a few-shot learning phase, highlighting a capacity for            geNet [11] or COCO [31], neglecting critical contexts such
+rapid adaptation that may inspire future detection algorithm          as war, disasters, or public health, where misinformation
+design. The main contributions are summarized as follows:             can be particularly damaging.
+• We propose RRDataset, the first dataset incorporating six               Several recent works also explore robustness under data
+   critical high-risk scenarios and aspects of daily life. To         augmentation or online transmission. SEMI-TRUTHS [39]
+   enhance its realism and applicability, the images within           investigates how different augmentations affect detection
+   this dataset have been transmitted over the internet and           performance, whereas WildRF [5] and FOSID [21] collect a
+   re-digitized, thereby simulating real-world image degra-           limited amount of web-transmitted data to examine detector
+   dation as shown in Fig. 1.                                         robustness. However, their choice of platforms and overall
+• We conduct RRBench, a comprehensive benchmark eval-                 scale remains narrow, rendering the results less representa-
+   uating 17 detection methods and 10 VLMs, revealing that            tive of the broader impact of social media transmission.
+   current detection strategies suffer notable performance                RRDataset addresses these gaps by covering diverse
+   drops under transmission and re-digitization.                      high-impact scenarios while also modeling multiple rounds
+• Our RRBench also constructs the largest human AI-                   of online transmission and various re-digitization processes.
+   Generated image benchmark to date, involving 192 par-              This approach enables a more faithful assessment of de-
+   ticipants and 240 test images. Our analysis uncovers the           tection performance in scenarios that closely mirror actual
+   remarkable few-shot adaptation capabilities of human ob-           practices and challenges.
+   servers.                                                           Human Benchmark for AI Image Detection: HPBench
+                                                                      [34] is the first to collect data from 50 participants on 100
+2. Related work                                                       test images, along with insights into why participants iden-
+                                                                      tified certain images as AI-generated. However, this study
+AI-Generated Image Datasets: With the rapid evolu-                    used images exclusively generated by Midjourney, which
+tion of generative models, AI-generated image detection               may introduce bias due to reliance on a single generator,
+datasets have undergone substantial changes. Early ef-                and its limited sample size and question set constrain the
+forts, such as CNNSpot [53], primarily employed Pro-                  scope of its findings. While FakeBench [30] uses images
+GAN [22]-produced images to evaluate detection perfor-                from multiple generators, it does not account for the ef-
+mance. More recent works—including CiFAKE [4] and                     fects of image transmission or re-digitization and includes
+Figure 2. Special-scenario image generation pipeline, illustrating scenario definition, theme expansion, prompt refinement, and final image
+filtering.
+
+
+only 34 participants. This paper establish the largest human            uated on content closely mirroring real-world usage. 2)
+benchmark to date, addressing these limitations by incor-               Internet transmission robustness: Images routinely un-
+porating 192 participants and 240 test images, encompass-               dergo repeated sharing and compression on various social
+ing original, transmitted, and re-digitized images. We con-             media platforms. We expect a reliable detector to main-
+ducted a detailed analysis of how AIGC and photography                  tain accuracy despite these transmission-induced degrada-
+backgrounds impact detection accuracy. Additionally, we                 tions. 3) Re-digitization robustness: Re-digitization—via
+explored human few-shot learning capabilities in detecting              scanning, re-photographing, or similar methods—is a piv-
+AI-generated images.                                                    otal yet underexplored challenge. Many practical scenarios
+AI-Generated Image Detectors: With the continuous de-                   lack direct digital files (e.g., PNG, JPG), such as verifying
+velopment of generative models, numerous detection meth-                images in newspapers, presentation slides, or street adver-
+ods [6, 8–10, 20, 27, 29, 33, 35, 38, 43, 46, 49, 51, 54, 56]           tisements. In RRDataset, an image’s label (Real vs. AI) is
+have emerged. While these methods achieve impressive                    determined solely by its original source, underscoring the
+accuracy on their respective test sets, robust evaluation re-           need for detectors to withstand transformations introduced
+mains largely unaddressed. Existing methods typically limit             by re-digitization.
+robustness evaluation to resizing, JPEG compression and                     By encompassing these three dimensions, RRDataset
+Gaussian blur, with some studies using only JPEG compres-               aims to provide a comprehensive and realistic evaluation
+sion at a quality level of 90, which does not closely simulate          framework that addresses the often-overlooked factors lim-
+real-world conditions. Therefore, it is essential to evaluate           iting current detection methods in existing assessments.
+these detectors’ performance in realistic scenarios. A more
+comprehensive overview of AI-generated image detection                  3.2. Data Collection
+methods can be found in App. A.
+                                                                        3.2.1. Special-Scenario Image Collection
+3. Dataset Construction                                                 To capture diverse and critical contexts, RRDataset includes
+                                                                        six specialized scenarios: War & Conflict, Disasters &
+Sec. 3.1 describes the problem setting and design rationale.            Accidents, Political & Social Events, Medical & Public
+Sec. 3.2 outlines our collection and creation process, and              Health, Culture & Religion, and Labor & Production. First,
+Sec. 3.3 explains internet transmission and re-digitization.            each scenario is expanded into 10 manually defined theme
+Additional examples are included in App. G.                             (e.g., traffic accidents, floods, earthquakes, wildfires, and
+                                                                        plane crashes under Disasters & Accidents). Next, we use
+3.1. Dataset Rationale
+                                                                        Qwen2.57b-instruct [57] to further enrich these sub-topics
+The primary goal of RRDataset is to comprehensively                     into prompts, adding location details and additional descrip-
+benchmark AI-generated image detectors under real-world                 tive elements. This process yields 24,000 prompts, which
+conditions, focusing on three critical dimensions: 1) Multi-            are then used by SD 3.5 Large [44] and Flux.1 [28] to gener-
+scenario detection capability: We incorporate a broad                   ate 48,000 images at various resolutions. We filter the gen-
+range of image contexts, including rarely encountered or                erated images using CLIP-score [41] (removing those be-
+sensitive scenarios, to ensure that detection models are eval-          low 0.27) and an NSFW safety checker, discarding any that
+exhibit low text-image alignment or contain unsafe content.          Trans-Times Percentage Platforms Self-Trans-Limit
+After filtering, we retain 6,000 high-quality AI-generated
+                                                                           2          10%          1–2             2
+images (1,000 per scenario), the complete image genera-                    3          25%          2–3             2
+tion workflow is illustrated in Fig. 2 .For real images, we                4          25%          2–4             3
+collect an additional 6,000 samples from openly licensed                   5          25%          3–5             3
+news photography websites, including Reuters Pictures, As-                 6          15%          4–6             3
+sociated Press Images, BBC News In Pictures, UN Photo,
+and the International Committee of the Red Cross, ensuring      Table 1. Cross-platform multi-transmission workflow, simulat-
+consistent coverage of the same six domains.                    ing three levels of information sharing: direct private messag-
+                                                                ing, limited-scale forwarding, and repeated forwarding of trending
+3.2.2. Everyday Life-Scenario Image Collection                  news.
+We then gather 4,000 real-life images from COCO [31],
+CC3M-val [7], and the publicly licensed photography plat-
+form Unsplash. To generate AI counterparts, we use cap-         ing it on a screen—and then converting it back into digital
+tions from COCO [31] and CC3M-val [7] as prompts for            form, for instance, via scanning or photography. This pro-
+various generative models (SD 3.5 Large [44], Flux.1 [28],      cess inevitably affects image quality, particularly in reso-
+DALL-E3 [42], SDv1.4 [44], SDv1.5 [44], and Midjourney          lution and color fidelity, and may also introduce geometric
+[36]). To match the high-resolution photographic works,         distortions, adding another layer of complexity for detec-
+we also randomly selected a portion of AI-generated im-         tion. We employ four common re-digitization methods:
+ages from the Chameleon dataset [56].                           • Scanning a color printout.
+   Since real-world images include both high-resolution         • Photographing a color printout.
+and low-resolution examples [14], we also incorporate a         • Photographing an image displayed on a screen using var-
+portion of lower-resolution images generated by StyleGAN           ious camera devices.
+[23] and ProGAN [22] into RRDataset to better capture this      • Photographing a projected digital image with different
+characteristic. This step ensures that RRDataset more ac-          camera devices.
+curately reflects the real-world variations in image quality.   Each method is applied with equal probability to 10,000 real
+Ultimately, we obtained a dataset of 4,000 images repre-        images and 10,000 AI-generated images. The resulting re-
+senting everyday scenes.                                        digitized images—both real and AI-generated—are then in-
+                                                                corporated into RRDataset.
+3.3. Data transformation
+In this section, we describe how internet transmission and      4. RRBench: Benchmarking Model Perfor-
+re-digitization are applied to our dataset. We also provide a      mance under Real-World Scenarios
+detailed discussion in App. B on why these transformations
+are critical for AI-generated image detection and how they      4.1. Benchmark Setting
+manifest in real-world scenarios.
+                                                                Detector Setup: We evaluated 17 detection methods, in-
+3.3.1. Internet Transmission                                    cluding the latest state-of-the-art (SOTA) algorithms intro-
+Social media platforms typically compress images, causing       duced at KDD 2025, AAAI 2025, and ICLR 2025. Specif-
+reductions in resolution, compression artifacts, and detail     ically, our benchmarks incorporate CNNSpot [53], F3Net
+loss. To evaluate detector robustness under realistic trans-    [55], GramNet [33], DIRE [54], UnivFD [38], LNP [32],
+mission conditions, we subjected all 10,000 real images and     LGard [48], AIDE [56], SSP [9], Fusing [20], Fredect [15],
+10,000 AI-generated images from RRDataset to multiple           DNF [60], NPR [51], Freq-Net [50], SAFE [29], DRCT [8],
+rounds of sending through popular messaging and social          and C2P-clip [49].
+platforms—Telegram, WeChat, Facebook, QQ, WhatsApp,             VLM Setup: To further assess detection capabilities, we
+X, Instagram, and Tinder. As summarized in Tab. 1, each         tested 10 contemporary vision-language models— gpt-4o-
+image underwent 2 to 6 transmission cycles, covering both       latest [1], Claude-3-7-sonnet [2], Gemini-1-5 pro [52] ,
+cross-platform and single-platform settings. The resulting      Gemini-2 flash [52] , GLM-4v-plus [16], Grok-2-vision
+images were then added to the RRDataset test set, enabling      [17], Qwen2.5-VL-72B [3] , YI-vision [58], Moonshot-
+a more faithful assessment of detector performance in real-     preview-vision-128k[37], and Hunyuan-vision [19], using
+world scenarios.                                                the prompt in App. D.2:
+                                                                   Each model was prompted to provide a JSON-based
+3.3.2. Re-digitization                                          prediction—“AI-generated” or “Real”—based on its visual
+Re-digitization refers to the process of converting a digital   analysis. By including these vision-language systems, we
+image into a physical format—such as printing or display-       aim to capture cutting-edge approaches to AI-generated im-
+age detection, enabling a broader comparison of perfor-          knowledge becomes a liability when images degrade in
+mance across multiple methodological paradigms.                  quality or exhibit color distortion.
+Metric Setup: We use accuracy on real images and accu-           Based on our findings, we can draw the following conclu-
+racy on AI-generated images as our primary evaluation met-       sions:
+rics. Since the dataset is balanced across classes, recall and   • Diffusion-based methods are often robust to internet
+precision are straightforward to compute.                          transmission, with models like DRCT-ConvB [8], DNF
+Training Setup:        Following the setup outlined in             [60], and DIRE [54] showing nearly unchanged perfor-
+Chameleon [56] and GenImage [62], we pretrain the de-              mance against internet transmission.
+tectors on GenImage-SD v1.4 and fine-tune them using             • A hybrid strategy may contribute to the robustness of
+RRDataset-subset. Training details and additional results          detection methods across different scenarios, as demon-
+are provided in App. C and App. D.                                 strated by AIDE [56], which combines multiple expert
+                                                                   models and uses hybrid features for detection, exhibiting
+4.2. Results and Analysis                                          the best robustness on RRBench, and by DRCT-ConvB
+                                                                   [8], which incorporates diffusion image reconstruction
+As shown in Tab. 2, none of the 17 detection meth-
+                                                                   and contrastive training strategies, exhibiting the highest
+ods achieve saturated performance on RRDataset, with the
+                                                                   overall performance on RRBench.
+best accuracy reaching only 89.59%. This highlights both
+                                                                 • Vision-language models show considerable potential in
+the ongoing complexity of AI-generated image detection
+                                                                   AI-generated image detection, a promising yet over-
+and the crucial role of RRDataset in examining real-world
+                                                                   looked aspect in existing detection research.
+challenges. Network transmission and re-digitization sig-
+nificantly degrade detection performance, underlining the
+                                                                 5. Benchmarking Human Performance under
+dataset’s ability to reveal limitations overlooked by conven-
+tional evaluations.                                                  Real-World Scenarios
+Impact of Internet Transmission:                For internet-    In this section, we conduct a comprehensive analysis of hu-
+transmitted images, 14 detectors exhibit reduced fake ac-        man performance on the RRDataset. Sec. 5.1 introduces the
+curacy, suggesting that compression artifacts, lower res-        evaluation system and process. Sec. 5.2 presents a detailed
+olution, and color distortion lead to misclassification of       analysis of human evaluation results.
+AI-generated images as real. In particular, Freq-Net [50],
+Fusing [20], and SAFE [29] experience accuracy drops             5.1. Human Benchmark Evaluation System
+of 71.61%, 79.86%, and 97.41%, respectively, underscor-          Our human benchmark evaluation system consists of four
+ing their lack of robustness. By contrast, DNF [60] and          steps, as shown in Fig. 3. A total of 192 participants
+DIRE [54], which rely on diffusion-based denoising fea-          were randomly assigned to either a special-scenario group
+tures, show only minor performance fluctuations under the        or an everyday-scenario group. The special-scenario group
+same conditions. DRCT-ConvB [8], which employs diffu-            viewed images from six high-impact categories: War &
+sion for image redrawing, similarly demonstrates strong re-      Conflict, Disasters & Accidents, Political & Social Events,
+sistance to transmission artifacts. Methods such as Gram-        Medical & Public Health, Culture & Religion, and Labor &
+Net [33] and AIDE [56], which focus on visual artifacts and      Production. To ensure reliability, there was no time limit,
+noise patterns, also maintain relatively stable results when     the test was conducted in a quiet environment on a stan-
+confronted with network-induced degradation.                     dardized 4K display, and participants worked independently
+Impact of Re-digitization: Re-digitization proves even           without any electronic aids or internet access.
+more challenging: 16 of the 17 detection methods suffer          Phase One Testing. To facilitate direct comparisons with
+decreases in fake accuracy. Notably, the diffusion-based         RRBench, we selected 20 real and 20 AI-generated images
+DIRE [54] and DNF [60] drop by 88.30% and 90.57%, re-            from each of three categories—original, transmitted, and
+spectively. In contrast, AIDE [56] exhibits remarkable ro-       re-digitized—yielding 120 test images per participant. For
+bustness, with only 1.89% reduction in fake accuracy and         each image, participants answered two questions:
+a 4.19% increase in real accuracy—likely owing to its re-        1. Is this image AI-generated or real? If participants clas-
+liance on CLIP-extracted semantic and contextual informa-        sified the image as AI-generated, they selected one of 14
+tion, which remains largely intact after re-digitization.        reasons—five low-level criteria (texture, edge, clarity, dis-
+Vision-Language Models Performance: Vision-language              tortion, overall hue), five mid-level criteria (light & shadow,
+models demonstrate strong zero-shot classification capabil-      shape, content deficiency, symmetry, reflection), and four
+ities, with GPT-4o [1] even surpassing 16 specialized de-        high-level visual criteria (layout, perspective, theme, irreal-
+tectors on the original data. However, their performance         ity), consistent with FakeBench [30].
+declines substantially under network transmission and re-        2. How confident are you in this judgment? Responses were
+digitization, indicating that reliance on internal model         provided on a five-point Likert scale.
+Table 2. Performance Comparison of 17 Detectors and 10 VLMs on RRDataset. All values are presented as percentages and represent
+the average results from three trials. “Fake” denotes the accuracy on AI-generated images, while “Real” represents the accuracy on real
+images. Note: Since C2P-clip[49] has not released its training code, we evaluate the model using its pre-trained weights.
+
+                                 Original                    Transmission                          Re-digitization              Overall
+         Model
+                            Fake(%) Real(%)             Fake(%)        Real(%)                Fake(%)          Real(%)          ACC(%)
+                               Detectors (Train on GenImage-SDv1.4 & fine-tune on RRDataset)
+   DRCT-ConvB[8]             93.52     95.52      92.82(-0.70)  95.09(-0.43)   64.34(-29.18)  96.22(+0.70)                        89.59
+      DIRE[54]               89.72     98.25      90.34(+0.62)  97.87(-0.38)    1.42(-88.30)  98.89(+0.64)                        79.42
+      DNF[60]                90.62     99.05      90.98(+0.36)  94.45(-4.60)    0.05(-90.57)  99.98(+0.93)                        79.19
+      AIDE[56]               78.95     78.94      74.72(-4.23)  78.75(-0.19)    76.04(-2.91)  83.13(+4.19)                        78.42
+    GramNet[33]              81.34     74.65      79.49(-1.85)  75.69(+1.04)    79.45(-1.89) 62.02(-12.63)                        75.44
+    CNNSpot[53]              72.42     89.09      65.72(-6.70)  88.78(-0.31)   43.12(-29.30)  86.72(-2.37)                        74.31
+       LNP[32]               83.14     89.26     38.23(-44.91)  89.30(+0.04)   31.91(-51.23)  91.05(+1.79)                        70.48
+     Fredect[15]             79.60     75.93     58.13(-21.47)  82.11(+6.18)   46.34(-33.26)  69.95(-5.98)                        68.68
+      NPR[51]                49.21     96.18     28.08(-21.13)  97.13(+0.95)   38.65(-10.56)  92.42(-3.76)                        66.95
+     Fusing[20]              87.24     92.46      7.38(-79.86)  99.04(+6.58)   30.79(-56.45) 73.97(-18.49)                        65.15
+      SAFE[29]               98.29     88.22      0.88(-97.41) 98.85(+10.63)    2.29(-96.00) 98.82(+10.60)                        64.56
+    Freq-Net[50]             76.08     82.18      4.47(-71.61) 98.64(+16.46) 37.48(-38.60)    77.99(-4.19)                        62.81
+      F3Net[55]              65.82     71.35     52.18(-13.64)  75.49(+4.14)   31.16(-34.66)  74.85(+3.50)                        61.81
+     UnivFD[38]              64.79     64.90     44.61(-20.18)  70.80(+5.90)   36.15(-28.64) 75.69(+10.79)                        59.49
+    C2P-CLIP[49]             17.21     97.54     28.82(+11.61) 99.58(+2.04)     18.01(+0.80)  90.29(-7.25)                        58.58
+        SSP[9]               61.29     64.54     40.62(-20.67)  70.33(+5.79)   32.58(-28.71) 79.94(+15.40)                        58.22
+     LGrad[48]               51.00     81.29     18.86(-32.14) 92.54(+11.25) 14.71(-36.29)    88.27(+6.98)                        57.78
+                                                          VLMs (Zero-shot)
+   GPT-4o-latest[1]          96.30        92.68      79.41(-16.89) 90.01(-2.67)           69.23(-27.07)       76.92(-15.76)       84.09
+ Claude-3.7-sonnet[2]        85.12        94.57      71.26(-13.86) 96.17(+1.60)           62.34(-22.78)        85.41(-9.16)       82.48
+  Gemini-2-flash[52]         72.10        98.43      52.19(-19.91) 97.41(-1.02)           46.11(-25.99)        97.41(-1.02)       77.28
+  Grok-2-vision[17]          46.15        91.84      52.12(+5.97)  94.03(+2.19)            48.01(+1.86)       81.63(-10.21)       68.96
+ Gemini-1.5-pro[52]          36.12        97.78      36.36(+0.24)  95.83(-1.95)           22.22(-13.90)        88.64(-9.14)       62.83
+   Qwen2vl-72B[3]            31.14        88.74      22.87(-8.27)  89.95(+1.21)            26.99(-4.15)       92.55(+3.81)        58.71
+   GLM4v-plus[16]            22.16        90.57      30.21(+8.05)  86.01(-4.56)           38.16(+16.00)        82.14(-8.43)       58.21
+ Moonshot-vision[37]         14.68        99.72      16.24(+1.56)  94.75(-4.97)            24.37(+9.69)        96.84(-2.88)       57.77
+ Hunyuan-vision[19]          28.57        91.84      20.13(-8.44)  86.06(-5.78)            32.14(+3.57)       81.63(-10.21)       56.73
+    YI-vision[58]            22.73        89.13      20.45(-2.28)  81.81(-7.32)            28.89(+6.16)       78.26(-10.87)       53.55
+
+
+
+
+                                           Figure 3. Human Benckmark Evaluation System.
+
+
+Few-Shot Learning Phase. Each participant viewed two                  procedure to evaluate whether 2-shot learning affected per-
+additional images (original, transmitted, and re-digitized)           formance.
+drawn from RRDataset, ensuring no overlap with the main
+test set.                                                             Comprehensive Inquiry . Finally, two additional questions
+                                                                      were posed: 1. When uncertain, do you tend to judge an
+Phase Two Testing. Phase Two replicated the Phase One                 image as AI-generated or real? 2. Please highlight the area
+you focus on most. For the second question, participants
+were split into three subgroups of 32, each viewing six AI-
+generated images. Subgroup 1 viewed the original images,
+Subgroup 2 the transmitted versions, and Subgroup 3 the
+re-digitized versions. Each participant had 10 seconds to
+mark the region they found most telling, using a freeform
+drawing tool based on their immediate impression.
+
+5.2. Analysis of Human Evaluation Results
+Overall Human Discrimination Ability: As shown in
+Tab. 3, the everyday life-scenario test group achieved an                   Figure 4. Trust Crisis Across Everyday Scenarios & Special Sce-
+overall accuracy of 69.17%, while the special-scenario test                 narios.
+group reached 59.52%, suggesting that humans are gener-
+ally more adept at discerning AI-generated images in every-
+day contexts. For real images, the everyday life-scenario
+group achieved an average accuracy of 80.05%, while the
+special-scenario group reached 79.40%, indicating a negli-
+gible gap. However, for AI-generated images, the every-
+day life-scenario group attained 58.29% accuracy, whereas
+the special-scenario group managed only 39.64%. This dif-
+ference indicates that in more sensitive, high-stakes con-
+texts, humans are significantly less adept at identifying AI-
+generated images than they are in everyday life-scenarios.
+In both groups, internet transmission and re-digitization led               Figure 5. Uncertainty Levels across original images, transmission
+to a significant, consistent drop in detection accuracy. Dur-               images and re-digital images where 1, 2, 3, 4, and 5 correspond to
+ing the first testing phase, these two factors reduced accu-                “Very Uncertain,” “Somewhat Uncertain,” “Ambiguous,” “Some-
+racy by 14.01% and 14.29%, respectively.                                    what Certain,” and “Very Certain,” respectively.
+
+Table 3. Human Benchmark Testing Accuracy Results. The nu-
+merical values in the table indicate accuracy (ACC). Values below           somewhat certain, and very certain—we found that trans-
+50% are highlighted in red.                                                 mission and re-digitization significantly decreased partici-
+                                                                            pants’ confidence in their judgments as shown in Fig. 5.
+                      Original        Trans.        Re-digit.     Overall
+     Group
+                    Fake    Real   Fake    Real   Fake    Real     ACC      For original images, the combined proportion of “somewhat
+                                Pre-learning                                certain” and “very certain” responses was 51.8%, which
+  Everyday Life     64.87   81.65 46.93 71.63     41.98   83.5    65.09     dropped to 38.3% for transmitted images and 22.7% for
+ Special-Scenario   46.21   84.21 23.26 79.10     29.17   65.15   54.52
+                                Post-learning
+                                                                            re-digitized images. This indicates that transmission and
+  Everyday Life     66.42   85.30 66.31 78.53     63.24   79.70   73.25     re-digitization greatly impacted participants’ confidence in
+ Special-Scenario   58.61   79.63 42.15 81.55     38.42   86.76   64.52     their judgments.
+                                                                            Trust Crisis Emerged in AIGC Era: In the final part of the
+Analysis of Human Few-Shot Learning Ability: We                             testing system, we asked all participants, “When you can-
+compare the results of the first-stage and second-stage tests.              not decide whether an image is AI-generated or real, which
+Tab. 3 highlights humans’ remarkable few-shot learn-                        type are you more inclined to choose?” Surprisingly, in Fig.
+ing ability. For both the everyday-scenario group and the                   4, 70.21% of the everyday-scenario group assumed the im-
+special-scenario group, accuracy for transmitted images in-                 age was AI-generated, while this figure rose to 89.31% in
+creased by 13.14% and 10.67%, respectively, while accu-                     the special-scenario group. These findings indicate a signif-
+racy for re-digitalized images rose by 8.73% and 15.43%.                    icant crisis of trust in images’ origins, driven by the rapid
+Overall, these improvements show that few-shot learning                     advancement of AIGC technologies. The impact is espe-
+significantly boosts AI image recognition accuracy—from                     cially severe for highly sensitive topics—such as War &
+42.07% to 55.86%, an increase of 13.79%—and also raises                     Conflict, Disasters & Accidents, Political & Social Events,
+accuracy for real images from 77.54% to 81.92%, a gain of                   Medical & Public Health, Culture & Religion, and Labor &
+4.37%.                                                                      Production—where genuine news may be met with unwar-
+Confidence Analysis: For the five confidence levels pro-                    ranted skepticism, negatively influencing the broader infor-
+vided—very uncertain, somewhat uncertain, ambiguous,                        mation ecosystem. We therefore urge the community to de-
+                      Figure 6. Comparison of Image Attributes Across Original, Transmission and Re-digital.
+
+
+velop more accurate, real-world-aligned detection methods           Table 4.     Performance Comparison for Human-Inspired
+to help mitigate this growing crisis of trust.                      Robustness-Oriented In-Context Learning.
+Analysis of Judgemental Attribution:           As shown in
+                                                                                           Original     Transmission    Redigital
+Fig. 6, for the 14 possible reasons provided, transmis-                                         Zero-shot
+sion significantly increased the proportion of responses               GPT-4o-latest        94.49           84.71         73.08
+citing texture, edge, and clarity, rising from 25.78% to               Claude-3.7-sonnet    89.85           83.72         73.87
+52.42%. Re-digitization notably increased the propor-                  Gemini-2-flash       85.27           74.80         71.76
+                                                                       Grok-2-vision        68.99           73.08         64.82
+tion citing light&shadow, reflection, and overall hue, from                      Robustness-Oriented In-Context Learning
+24.08% to 42.33%. This suggests that the effects of trans-             GPT-4o-latest     95.67(+1.18) 88.17(+3.46) 78.58(+5.50)
+mission and re-digitization altered participants’ judgment             Claude-3.7-sonnet 92.26(+2.41) 84.97(+1.25) 77.76(+3.79)
+criteria: transmission impacts are more related to reduced             Gemini-2-flash    88.38(+3.11) 74.99(+0.19) 75.78(+4.02)
+                                                                       Grok-2-vision     72.86(+3.87)    71.52(-1.56)  71.43(+6.61)
+image quality, such as compression artifacts and detail loss,
+while re-digitization effects are more associated with color
+changes and loss of light and shadow details.
+                                                                    date. These findings underscore the potential of VLMs in
+5.3. Human-Inspired In-Context Learning Ap-                         AI-generated image detection.
+     proch for VLM Detection
+Inspired by humans’ remarkable few-shot learning abili-
+ties—where participants rapidly improved their robustness           6. Conclusion
+against network transmission and re-digitization with only a
+small number of samples—as well as the factors influencing          In this paper, we introduced the RRDataset, rethinking the
+human decision-making under these conditions, we aim to             evaluation of AI-generated image detection from the per-
+harness the strong zero-shot capability of VLMs to further          spective of real-world robustness. Our RRBench includes
+enhance detection resilience.                                       17 detectors as well as comparisons with 10 VLMs, re-
+    Our in-context learning approach explicitly emphasizes          vealing a significant drop in accuracy for current detec-
+the impact of transmission and re-digitization artifacts,           tion methods under internet transmission and re-digitization
+guiding the VLM to focus on core image content while                conditions. Additionally, we developed the largest human
+disregarding irrelevant distortions. Additional comparisons         benchmark to date, with 192 participants and 240 test im-
+with other in-context learning strategies, as well as our           ages. We found that human accuracy dropped dramatically
+method, are presented in App.D.                                     when faced with transmitted and re-digitized images; how-
+    As shown in Tab. 4, our approach significantly enhances         ever, after few-shot learning, this effect of transmission and
+VLM robustness, particularly in re-digitization scenarios.          re-digitization was effectively mitigated. We hope this work
+Notably, on GPT-4o, our method achieves a 5.50% im-                 encourages researchers to focus on the robustness of AI-
+provement in re-digitization robustness and a 3.90% in-             generated image detection in real-world scenarios and to
+crease in overall accuracy, reaching an average accuracy of         draw inspiration from humans’ exceptional few-shot learn-
+87.47%. This performance is approaching that of DCRT-               ing abilities in developing more robust and effective detec-
+ConvB (89.59%), the strongest detector on RRBench to                tion methods.
+References                                                           [13] Tarik Dzanic, Karan Shah, and Freddie D. Witherden.
+                                                                          Fourier spectrum discrepancies in deep network generated
+ [1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ah-                images. In Advances in Neural Information Processing Sys-
+     mad, Ilge Akkaya, Florencia Leoni Aleman, Diogo Almeida,             tems 33: Annual Conference on Neural Information Process-
+     Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al.              ing Systems 2020, NeurIPS 2020, December 6-12, 2020, vir-
+     Gpt-4 technical report. arXiv preprint arXiv:2303.08774,             tual, 2020. 1
+     2023. 4, 5, 6
+                                                                     [14] Yuming Fan, Dongming Yang, Jiguang Zhang, Bang Yang,
+ [2] Anthropic. Introducing the next generation of claude.                and Yuexian Zou. Fake-gpt: Detecting fake image via large
+     https://www.anthropic.com/news/claude-3-                             language model. In Chinese Conference on Pattern Recogni-
+     family, 2024. 4, 6                                                   tion and Computer Vision (PRCV), pages 122–136. Springer,
+ [3] Jinze Bai, Shuai Bai, Shusheng Yang, Shijie Wang, Sinan              2024. 4
+     Tan, Peng Wang, Junyang Lin, Chang Zhou, and Jingren            [15] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+     Zhou. Qwen-vl: A versatile vision-language model for un-             cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+     derstanding, localization, text reading, and beyond. arXiv           quency analysis for deep fake image recognition. In Pro-
+     preprint arXiv:2308.12966, 1(2):3, 2023. 4, 6                        ceedings of the 37th International Conference on Machine
+ [4] Jordan J Bird and Ahmad Lotfi. Cifake: Image classifica-             Learning, ICML 2020, 13-18 July 2020, Virtual Event, pages
+     tion and explainable identification of ai-generated synthetic        3247–3258. PMLR, 2020. 1, 4, 6
+     images. IEEE Access, 2024. 2                                    [16] Team GLM, Aohan Zeng, Bin Xu, Bowen Wang, Chenhui
+ [5] Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen.              Zhang, Da Yin, Diego Rojas, Guanyu Feng, Hanlin Zhao,
+     Real-time deepfake detection in the real-world, 2024. 2              Hanyu Lai, et al. Chatglm: A family of large language
+ [6] Lucy Chai, David Bau, Ser-Nam Lim, and Phillip Isola.                models from glm-130b to glm-4 all tools. arXiv preprint
+     What makes fake images detectable? understanding proper-             arXiv:2406.12793, 2024. 4, 6
+     ties that generalize. In Computer Vision–ECCV 2020: 16th        [17] grok. grok-2. https://x.ai/blog/grok-2, 2025. 4,
+     European Conference, Glasgow, UK, August 23–28, 2020,                6
+     Proceedings, Part XXVI 16, pages 103–120. Springer, 2020.       [18] Yan Hong and Jianfu Zhang. Wildfake: A large-scale chal-
+     1, 3                                                                 lenging dataset for ai-generated images detection. arXiv
+ [7] Soravit Changpinyo, Piyush Sharma, Nan Ding, and Radu                preprint arXiv:2402.11843, 2024. 1, 2
+     Soricut. Conceptual 12m: Pushing web-scale image-text pre-      [19] hunyuan.         hunyuan-vision.      https : / / hunyuan .
+     training to recognize long-tail visual concepts. In Proceed-         tencent.com/, 2025. 4, 6
+     ings of the IEEE/CVF conference on computer vision and          [20] Yan Ju, Shan Jia, Lipeng Ke, Hongfei Xue, Koki Nagano,
+     pattern recognition, pages 3558–3568, 2021. 4                        and Siwei Lyu. Fusing global and local features for gen-
+ [8] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.              eralized ai-synthesized image detection. In 2022 IEEE In-
+     DRCT: diffusion reconstruction contrastive training towards          ternational Conference on Image Processing, ICIP 2022,
+     universal detection of diffusion generated images. In Forty-         Bordeaux, France, 16-19 October 2022, pages 3465–3469.
+     first International Conference on Machine Learning, ICML             IEEE, 2022. 1, 3, 4, 5, 6
+     2024, Vienna, Austria, July 21-27, 2024. OpenReview.net,        [21] Dimitrios Karageorgiou, Quentin Bammey, Valentin Por-
+     2024. 3, 4, 5, 6                                                     cellini, Bertrand Goupil, Denis Teyssou, and Symeon Pa-
+ [9] Jiaxuan Chen, Jieteng Yao, and Li Niu. A single simple               padopoulos. Evolution of detection performance through-
+     patch is all you need for ai-generated image detection. arXiv        out the online lifespan of synthetic images. arXiv preprint
+     preprint arXiv:2402.01123, 2024. 1, 4, 6                             arXiv:2408.11541, 2024. 2
+[10] Riccardo Corvi, Davide Cozzolino, Giada Zingarini, Gio-         [22] Tero Karras. Progressive growing of gans for improved qual-
+     vanni Poggi, Koki Nagano, and Luisa Verdoliva. On the                ity, stability, and variation. arXiv preprint arXiv:1710.10196,
+     detection of synthetic images generated by diffusion mod-            2017. 2, 4
+     els. In ICASSP 2023-2023 IEEE International Conference          [23] Tero Karras, Samuli Laine, and Timo Aila. A style-based
+     on Acoustics, Speech and Signal Processing (ICASSP), pages           generator architecture for generative adversarial networks.
+     1–5. IEEE, 2023. 3                                                   In Proceedings of the IEEE/CVF conference on computer vi-
+[11] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,               sion and pattern recognition, pages 4401–4410, 2019. 4
+     and Li Fei-Fei. Imagenet: A large-scale hierarchical image      [24] Tero Karras, Miika Aittala, Timo Aila, and Samuli Laine.
+     database. In 2009 IEEE conference on computer vision and             Elucidating the design space of diffusion-based generative
+     pattern recognition, pages 248–255. Ieee, 2009. 2                    models. Advances in neural information processing systems,
+[12] Ricard Durall, Margret Keuper, and Janis Keuper. Watch               35:26565–26577, 2022. 1
+     your up-convolution: CNN based generative deep neural           [25] Mamadou Keita, Wassim Hamidouche, Hassen Bougueffa,
+     networks are failing to reproduce spectral distributions. In         Abdenour Hadid, and Abdelmalik Taleb-Ahmed. Harness-
+     2020 IEEE/CVF Conference on Computer Vision and Pat-                 ing the power of large vision language models for synthetic
+     tern Recognition, CVPR 2020, Seattle, WA, USA, June 13-              image detection. arXiv preprint arXiv:2404.02726, 2024. 1
+     19, 2020, pages 7887–7896. Computer Vision Foundation /         [26] Sohail Ahmed Khan and Duc-Tien Dang-Nguyen. Clip-
+     IEEE, 2020. 1                                                        ping the deception: Adapting vision-language models for
+     universal deepfake detection. In Proceedings of the 2024             for evaluating robustness of ai-generated image detectors.
+     International Conference on Multimedia Retrieval, ICMR               Advances in Neural Information Processing Systems, 37:
+     2024, Phuket, Thailand, June 10-14, 2024, pages 1006–                118025–118051, 2025. 2
+     1015. ACM, 2024. 1                                              [40] William Peebles and Saining Xie. Scalable diffusion models
+[27] Christos Koutlis and Symeon Papadopoulos. Leveraging rep-            with transformers. In Proceedings of the IEEE/CVF Inter-
+     resentations from intermediate encoder-blocks for synthetic          national Conference on Computer Vision, pages 4195–4205,
+     image detection. In European Conference on Computer Vi-              2023. 1
+     sion, pages 394–411. Springer, 2024. 3                          [41] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+[28] Black Forest Labs. Flux. https://github.com/                         Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+     black-forest-labs/flux, 2024. 3, 4                                   Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning
+[29] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao              transferable visual models from natural language supervi-
+     Hu, and Fuli Feng. Improving synthetic image detection to-           sion. In International conference on machine learning, pages
+     wards generalization: An image transformation perspective.           8748–8763. PmLR, 2021. 3
+     arXiv preprint arXiv:2408.06741, 2024. 3, 4, 5, 6               [42] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu,
+[30] Yixuan Li, Xuelin Liu, Xiaoyang Wang, Shiqi Wang, and                and Mark Chen. Hierarchical text-conditional image gener-
+     Weisi Lin. Fakebench: Uncover the achilles’ heels of                 ation with clip latents. arXiv preprint arXiv:2204.06125, 1
+     fake images with large multimodal models. arXiv preprint             (2):3, 2022. 4
+     arXiv:2404.13306, 2024. 2, 5                                    [43] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-
+[31] Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays,             oblade: Training-free detection of latent diffusion images
+     Pietro Perona, Deva Ramanan, Piotr Dollár, and C Lawrence           using autoencoder reconstruction error. In Proceedings of
+     Zitnick. Microsoft coco: Common objects in context. In               the IEEE/CVF Conference on Computer Vision and Pattern
+     Computer Vision–ECCV 2014: 13th European Conference,                 Recognition, pages 9130–9140, 2024. 1, 3
+     Zurich, Switzerland, September 6-12, 2014, Proceedings,         [44] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     Part V 13, pages 740–755. Springer, 2014. 2, 4                       Patrick Esser, and Björn Ommer. High-resolution image
+[32] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and               synthesis with latent diffusion models. In Proceedings of
+     Xinbo Gao. Detecting generated images by real images. In             the IEEE/CVF conference on computer vision and pattern
+     Computer Vision - ECCV 2022 - 17th European Conference,              recognition, pages 10684–10695, 2022. 1, 3, 4
+     Tel Aviv, Israel, October 23-27, 2022, Proceedings, Part XIV,   [45] Chitwan Saharia, William Chan, Saurabh Saxena, Lala
+     pages 95–110. Springer, 2022. 4, 6                                   Li, Jay Whang, Emily L Denton, Kamyar Ghasemipour,
+[33] Zhengzhe Liu, Xiaojuan Qi, and Philip H. S. Torr. Global             Raphael Gontijo Lopes, Burcu Karagol Ayan, Tim Salimans,
+     texture enhancement for fake face detection in the wild. In          et al. Photorealistic text-to-image diffusion models with deep
+     2020 IEEE/CVF Conference on Computer Vision and Pat-                 language understanding. Advances in neural information
+     tern Recognition, CVPR 2020, Seattle, WA, USA, June 13-              processing systems, 35:36479–36494, 2022. 1
+     19, 2020, pages 8057–8066. Computer Vision Foundation /         [46] Ayush Sarkar, Hanlin Mai, Amitabh Mahapatra, Svetlana
+     IEEE, 2020. 1, 3, 4, 5, 6                                            Lazebnik, David A. Forsyth, and Anand Bhattad. Shadows
+[34] Zeyu Lu, Di Huang, Lei Bai, Jingjing Qu, Chengyue Wu, Xi-            don’t lie and lines can’t bend! generative models don’t know
+     hui Liu, and Wanli Ouyang. Seeing is not always believing:           projective geometry...for now. CoRR, abs/2311.17138, 2023.
+     benchmarking human and model perception of ai-generated              1, 3
+     images. Advances in Neural Information Processing Sys-          [47] Zeyang Sha, Zheng Li, Ning Yu, and Yang Zhang. De-fake:
+     tems, 36, 2024. 1, 2                                                 Detection and attribution of fake images generated by text-
+[35] Sara Mandelli, Nicolò Bonettini, Paolo Bestagini, and Ste-          to-image generation models. In Proceedings of the 2023
+     fano Tubaro. Detecting gan-generated images by orthogonal            ACM SIGSAC Conference on Computer and Communica-
+     training of multiple cnns. In 2022 IEEE International Con-           tions Security, pages 3418–3432, 2023. 1, 2
+     ference on Image Processing, ICIP 2022, Bordeaux, France,       [48] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     16-19 October 2022, pages 3091–3095. IEEE, 2022. 1, 3                and Yunchao Wei. Learning on gradients: Generalized ar-
+[36] Midjourney. Midjourney, 2024. 4                                      tifacts representation for gan-generated images detection.
+[37] moonshoot. moonshot-preview-vision. https://www.                     In IEEE/CVF Conference on Computer Vision and Pattern
+     moonshot.cn/, 2025. 4, 6                                             Recognition, CVPR 2023, Vancouver, BC, Canada, June 17-
+[38] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-              24, 2023, pages 12105–12114. IEEE, 2023. 1, 4, 6
+     versal fake image detectors that generalize across generative   [49] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu,
+     models. In IEEE/CVF Conference on Computer Vision and                Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip: Inject-
+     Pattern Recognition, CVPR 2023, Vancouver, BC, Canada,               ing category common prompt in clip to enhance generaliza-
+     June 17-24, 2023, pages 24480–24489. IEEE, 2023. 1, 3, 4,            tion in deepfake detection. arXiv preprint arXiv:2408.09647,
+     6                                                                    2024. 3, 4, 6
+[39] Anisha Pal, Julia Kruk, Mansi Phute, Manognya Bhat-             [50] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     taram, Diyi Yang, Duen Horng Chau, and Judy Hoffman.                 Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-
+     Semi-truths: A large-scale dataset of ai-augmented images            tection: Improving generalizability through frequency space
+     domain learning. In Proceedings of the AAAI Conference on
+     Artificial Intelligence, pages 5052–5060, 2024. 4, 5, 6
+[51] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-
+     erations in cnn-based generative network for generalizable
+     deepfake detection. In Proceedings of the IEEE/CVF Con-
+     ference on Computer Vision and Pattern Recognition, pages
+     28130–28139, 2024. 3, 4, 6
+[52] Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-
+     Baptiste Alayrac, Jiahui Yu, Radu Soricut, Johan Schalkwyk,
+     Andrew M Dai, Anja Hauth, Katie Millican, et al. Gemini: a
+     family of highly capable multimodal models. arXiv preprint
+     arXiv:2312.11805, 2023. 4, 6
+[53] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Owens, and Alexei A. Efros. Cnn-generated images are sur-
+     prisingly easy to spot... for now. In 2020 IEEE/CVF Confer-
+     ence on Computer Vision and Pattern Recognition, CVPR
+     2020, Seattle, WA, USA, June 13-19, 2020, pages 8692–
+     8701. Computer Vision Foundation / IEEE, 2020. 2, 4, 6
+[54] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire
+     for diffusion-generated image detection. In Proceedings of
+     the IEEE/CVF international conference on computer vision,
+     pages 22445–22455, 2023. 1, 3, 4, 5, 6
+[55] Jun Wei, Shuhui Wang, and Qingming Huang. F3 net: fusion,
+     feedback and focus for salient object detection. In Proceed-
+     ings of the AAAI conference on artificial intelligence, pages
+     12321–12328, 2020. 4, 6
+[56] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xi-
+     aolong Jiang, Yao Hu, and Weidi Xie.                A sanity
+     check for ai-generated image detection. arXiv preprint
+     arXiv:2406.19435, 2024. 1, 2, 3, 4, 5, 6
+[57] An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo
+     Zheng, Bowen Yu, Chengyuan Li, Dayiheng Liu, Fei Huang,
+     Haoran Wei, et al. Qwen2. 5 technical report. arXiv preprint
+     arXiv:2412.15115, 2024. 3
+[58] Alex Young, Bei Chen, Chao Li, Chengen Huang, Ge Zhang,
+     Guanwei Zhang, Guoyin Wang, Heng Li, Jiangcheng Zhu,
+     Jianqun Chen, et al. Yi: Open foundation models by 01. ai.
+     arXiv preprint arXiv:2403.04652, 2024. 4, 6
+[59] Xu Zhang, Svebor Karaman, and Shih-Fu Chang. Detecting
+     and simulating artifacts in GAN fake images. In IEEE Inter-
+     national Workshop on Information Forensics and Security,
+     WIFS 2019, Delft, The Netherlands, December 9-12, 2019,
+     pages 1–6. IEEE, 2019. 1
+[60] Yichi Zhang and Xiaogang Xu. Diffusion noise feature: Ac-
+     curate and fast generated image detection. arXiv preprint
+     arXiv:2312.02625, 2023. 4, 5, 6
+[61] Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and Xin-
+     peng Zhang. Patchcraft: Exploring texture patch for efficient
+     ai-generated image detection, 2024. 2
+[62] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Yunhe Wang. Genimage: A million-scale benchmark for de-
+     tecting ai-generated image. Advances in Neural Information
+     Processing Systems, 36, 2024. 1, 2, 5
+

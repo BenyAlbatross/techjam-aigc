@@ -1,0 +1,796 @@
+                       This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                    Except for this watermark, it is identical to the accepted version;
+                              the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+        A Difference-in-Difference Approach to Detecting AI-Generated Images
+
+                               Xinyi Qi*                                           Kai Ye*                      Chengchun Shi
+                          Tsinghua University                                        LSE                              LSE
+                                China                                          United Kingdom                   United Kingdom
+                  qixy25@mails.tsinghua.edu.cn                                 k.ye1@lse.ac.uk                 c.shi7@lse.ac.uk
+
+            Ying Yang                                        Jin Zhu†                                             Hongyi Zhou†
+        Tsinghua University                         University of Birmingham                                   Tsinghua University
+              China                                     United Kingdom                                               China
+   yangying@tsinghua.edu.cn                              j.zhu.7@bham.ac.uk                          zhou-hy21@mails.tsinghua.edu.cn
+
+
+
+                              Abstract
+
+Diffusion models are able to produce AI-generated images
+that are almost indistinguishable from real ones. This raises
+concerns about their potential misuse and poses substan-
+tial challenges for detecting them. Many existing detectors
+rely on reconstruction error — the difference between the
+input image and its reconstructed version — as the basis
+for distinguishing real from fake images. However, these
+detectors become less effective as modern AI-generated im-
+ages become increasingly similar to real ones. To address
+this challenge, we propose a novel difference-in-difference
+method. Instead of directly using the reconstruction error (a
+first-order difference), we compute the difference in recon-
+struction error – a second-order difference – for variance
+reduction and improving detection accuracy. Extensive                               Figure 1. Left: The real image x and its distribution on the man-
+experiments demonstrate that our method achieves strong                             ifold M are shown in blue, whereas the synthetic image y and its
+                                                                                    distribution are shown in orange. Right: Reconstructions of the
+generalization performance, enabling reliable detection of
+                                                                                    real and synthetic images. ∆fake and ∆real denote the reconstruc-
+AI-generated images in the era of generative AI. Code is                            tion errors of synthetic and real images, respectively, and ΠM rep-
+available at https://github.com/Qixinyi1122-                                        resents the projection of the real image onto M. Top: The gener-
+lucky/DID.                                                                          ator is weak, resulting in a large discrepancy between the real and
+                                                                                    synthetic image distributions. Consequently, the reconstruction er-
+                                                                                    ror of the synthetic image, ∆fake (y), is much larger than that of the
+1. Introduction                                                                     real image, ∆real (x), making detection easier. Bottom: The gen-
+                                                                                    erator is strong, so the real and synthetic image distributions are
+The rapid evolution of large-scale generative models has led                        close. Here, ∆fake (y) is similar to ∆real (x), making AI-generated
+to groundbreaking progress in image generation in recent                            images difficult to detect.
+years [2, 4, 6, 9, 69] . Diffusion models, in particular, have
+become the foundation of modern image generation. How-
+ever, the proliferation of AI-generated images has raised
+substantial concerns about authenticity and public trust, cre-                         ating an urgent need for effective detectors that can distin-
+                                                                                       guish AI-generated images from real ones. There is a grow-
+    * Xinyi Qi and Kai Ye contributed equally to this work and are listed in
+                                                                                       ing literature on detecting AI-generated images; see Section
+alphabetical order.
+    † Corresponding authors:       Jin Zhu and Hongyi Zhou are
+                                                                                       2 for a detailed review. Early detection algorithms were tai-
+listed in alphabetical order.      Emails: j.zhu.7@bham.ac.uk, zhou-                   lored for specific models and exploited model-based arti-
+hy21@mails.tsinghua.edu.cn                                                             facts — such as inconsistencies in the frequency domain,
+
+
+
+                                                                               42964
+                                                                       based methods and develop more effective algorithms capa-
+                                                                       ble of detecting subtler differences between real and AI-
+                                                                       generated content.
+                                                                           This paper proposes a new algorithm, termed difference-
+                                                                       in-differences (DID), for detecting AI-generated content.
+                                                                       Instead of relying solely on the reconstruction error – which
+                                                                       can be viewed as a first-order difference between the input
+                                                                       image and its reconstruction – we compute a second-order
+                                                                       difference by taking the difference between the reconstruc-
+                                                                       tion error of the input image and the reconstruction error
+                                                                       of its reconstructed version. Our analytical analysis in Sec-
+Figure 2. Visualizations of our DID detector. ∆ denotes the differ-    tion 3 shows that this second-order differencing can effec-
+encing operator that computes the pixel-wise difference between        tively remove fluctuations introduced during synthetic im-
+two images.                                                            age generation, thus amplifying the detection signal partic-
+                                                                       ularly when it is weak. We next employ both first-order and
+                                                                       second-order differences as the basis for detection (see Fig-
+irregularities in color filter responses, or statistical traces        ure 2 for an illustration of our proposal). Empirically, our
+introduced by up-sampling layers [20, 27, 94]. Although                extensive numerical experiments demonstrate that DID con-
+these methods achieved strong performance in detecting im-             sistently outperforms existing detectors across diverse com-
+ages from specific generators, they lacked robustness across           binations of image datasets and generative models, achiev-
+different models.                                                      ing improvements around 20% - 30% over the strongest
+    More recently, reconstruction-based algorithms have                baseline. Moreover, our findings shed light on the effective-
+emerged as a promising class of detectors that are both con-           ness of DID: in simpler settings where AI-generated images
+ceptually intuitive and practically effective. As suggested            are sufficiently different from real ones, first-order differ-
+by their name, these methods (a) reconstruct the image                 ences alone are adequate for detection; however, in more
+to be detected using a generative model (e.g., a diffusion             complex experimental settings, employing the second-order
+model), (b) compute the reconstruction error as the differ-            difference substantially improves the detection accuracy.
+ence between the original and reconstructed images, and (c)            These observations are consistent with our analytical in-
+classify the image as real or synthetic based on that error.           sights. By leveraging both orders of differences, our method
+Their core idea is straightforward: given a particular gen-            generalizes robustly across a wide range of detection tasks.
+erative model for reconstruction, synthetic images that lie
+on or near the model manifold should be reconstructed with
+                                                                       2. Related Works
+smaller residual errors than real images, which reside out-            This section is organized as follows. We begin by re-
+side that manifold (see the upper panel of Figure 1 for an             viewing various diffusion models used for image genera-
+illustration). This line of work, represented by DIRE [80]             tion. We then review existing algorithms for AI-image de-
+and its variants LaRE2 and FIRE [18, 49], has generalized              tection. Finally, we introduce the difference-in-difference
+well across different generative models, while maintaining             (DID) method from econometrics, which is conceptually re-
+a transparent interpretation.                                          lated to our proposal but fundamentally different in terms of
+    However, the effectiveness of existing reconstruction-             its problem setting and application.
+based algorithms relies on a sufficiently large gap between
+real and AI-generated images to be detectable. As gener-               2.1. Diffusion Models
+ative models advance rapidly, this assumption becomes in-              Diffusion models have become a cornerstone of modern
+creasingly invalid. Meanwhile, images found on the inter-              image generation and multimodal large language models
+net are often post-processed, through resizing, compression,           [MLLMs, 35, 89], powering a wide range of tasks such
+or partial AI editing (where only specific regions are syn-            as text-to-image, text-to-3D generation, and text-to-video
+thesized), which further confounds detection signals. Re-              generation [22, 30, 33, 43, 55, 59, 62, 63, 66, 67, 88, 91].
+cent studies have empirically observed that as the quality of          They constitute an important family of probabilistic gen-
+the image generator improves or under adversarial scenarios            erative models that progressively perturb data with noise
+(e.g., with partial AI edits), reconstruction-based algorithms         and learn a reverse process to generate synthetic sam-
+struggle to detect AI-generated content effectively [18, 79].          ples [86]. Broadly speaking, these models can be catego-
+See also, the bottom panel of Figure 1 for an illustration.            rized into three main types: denoising diffusion probabilis-
+Therefore, as high-fidelity diffusion models become preva-             tic models [32, 70], score-based generative models [72, 73],
+lent, it is necessary to move beyond existing reconstruction-          and stochastic differential equation (SDE)-based models
+
+
+
+                                                                  42965
+[74, 75]. Building on the three types of models described          cesses. Other variants, such as DRCT [17], modify the
+above, each can be further decomposed into two subtypes:           objective function by employing a contrastive loss to train
+unconditional and conditional diffusion models. For un-            the classifier based on the reconstruction error. One poten-
+conditional diffusion models, prior research has focused on        tial limitation of DIRE is its computational time required
+three directions: (i) accelerating the sampling process [25,       to obtain the reconstruction, as the forward diffusion and
+38, 72, 81, 92, 93], (ii) tightening the variational lower         reverse denoising processes involve multiple steps and can
+bound on the data log-likelihood [7, 39, 48, 56, 71], and          be time-consuming. To address this, LaRE2 [49] projects
+(iii) extending the model to accommodate new data modal-           the image into a latent space and applies the forward and
+ities [12, 34, 37, 57, 77]. By contrast, research on condi-        reverse procedures only once, computing the reconstruc-
+tional diffusion models has focused on guiding the genera-         tion error in the latent space to speed up the computation.
+tion process to produce content that aligns with users’ de-        AEROBLADE [64] adopts a training-free strategy: instead
+sired specifications. For instance, ADM uses an auxiliary          of training a classifier with the reconstruction error, it re-
+classifier to improve the quality of generated samples [24].       lies on simple statistical measures derived from the recon-
+ImageReward [84] and Diffusion-DPO [78] leverage rein-             struction error for detection. FakeInversion [16] inverts an
+forcement learning from human feedback to align diffusion          open-source stable diffusion process model to compute the
+models with human preferences. Scalable diffusion mod-             reconstruction error. Finally, FIRE additionally leverages
+els [60] replace standard layer normalization in transform-        frequency-domain information to compute reconstruction
+ers with adaptive layer normalization to more effectively en-      errors, which enhances the detector’s robustness in adver-
+code conditioning variables. DiffuSeq [28], unCLIP [63],           sarial settings and across different generative models [18].
+ConPreDif [85], and RPG [87] focus on guiding diffusion
+models with textual inputs.                                        2.3. Difference-in-Differences
+2.2. AI-Generated Image Detection                                  Our proposal is conceptually similar to the difference-in-
+                                                                   difference approach for causal inference, which estimates
+With the rapid advancement of AI image generators, there
+                                                                   the treatment effect of a particular policy. DID originated
+is an urgent need to detect AI-generated images; see [45]
+                                                                   in social science research on quasi-experimental designs
+for a recent review of detection algorithms.
+                                                                   [14, 36] and was later systematized and popularized in the
+    Early works leverage physical [11, 26, 51, 52] and phys-       econometrics literature for analyzing panel data with multi-
+iological features [19] in the images, such as inconsisten-        ple subjects observed over time [3, 10, 15].
+cies in color, perspective, shadows, reflections or human
+                                                                      In the typical DID setting, some subjects are continu-
+anatomy for detection. These methods rely on the assump-
+                                                                   ously exposed to a control policy, while others switch from
+tion that AI-generated images often fail to adhere to real-
+                                                                   the control to a new policy at a certain time point. For
+world physical and physiological constraints. Later ap-
+                                                                   the latter group, one can compute a first-order difference in
+proaches employ spatial-domain features, such as the image
+                                                                   their average outcomes before and after the policy change.
+texture to build classifiers [47, 54, 95]. However, such clas-
+                                                                   However, this difference captures not only the effect of the
+sifiers often fail to capture frequency-domain artifacts [82].
+                                                                   policy but also any time-related effects. To remove the con-
+To overcome this limitation, several methods have been pro-
+                                                                   founding effect of time, a corresponding first-order differ-
+posed that combine spatial- and frequency-domain features
+                                                                   ence is computed for the control group, and a second-order
+for detection [5, 40, 82, 83]. Other approaches leverage al-
+                                                                   difference between the two first-order differences is then
+ternative features, such as the negative log-likelihood of the
+                                                                   taken to isolate the treatment effect. For more details, re-
+input image [21], or directly fine-tune an MLLM [44] for
+                                                                   fer to [1, 13, 29, 76].
+detection.
+    Different from the aforementioned approaches, our pro-            Despite sharing the same name and similar conceptual
+posal is most closely related to reconstruction-based detec-       ideas, our proposal is designed for a fundamentally different
+tion algorithms. As discussed in the introduction, a rep-          application of AI-generated image detection, as opposed to
+resentative example is DIRE [80], which employs a diffu-           causal inference.
+sion model with a forward diffusion process and a reverse
+denoising process to obtain the reconstruction, computes           3. Methodology
+the difference from the original image as the reconstruc-
+tion error, and trains the classifier using this reconstruction    This section first provides background on diffusion models
+error. SeDID [50] extends this approach by considering not         (Section 3.1), then discusses the intuition and limitations of
+only the final reconstruction error between the reconstructed      existing reconstruction-based methods (Section 3.2), which
+and input image, but also the intermediate errors accumu-          motivates our use of DID (Section 3.3). Finally, we detail
+lated along the forward diffusion and reverse denoising pro-       our proposal (Section 3.4).
+
+
+
+                                                              42966
+3.1. Background on Diffusion Models                                                                                                                                                     where the absolute value is taken elementwise. In contrast,
+                                                                                                                                                                                        for a real image x ∈ X , its reconstruction error is given by
+Image generation via diffusion models typically consists of
+two processes: a forward diffusion process that gradually
+                                                                                                                                                                                                      \label {eqn:real} \Delta _{\text {real}}(x) = |x - \Pi _{\mathcal {M}}(x) - \delta (x)|.    (3)
+corrupts data with Gaussian noise, and a reverse denoising
+process that reconstructs the underlying image signal from                                                                                                                                 When the generative model is weak, the discrepancy be-
+noise. Specifically, in the forward process, an image x0 is                                                                                                                             tween M and X is large, so |x − ΠM (x)| dominates the
+progressively transformed into a sequence of noisy images                                                                                                                               reconstruction error. As a result, the real image achieves
+{xt }Tt=1 according to                                                                                                                                                                  a much larger reconstruction error than the synthetic im-
+                                                                                                                                                                                        age (see the upper panel of Figure 1 for an illustration),
+                                             x_t = \sqrt {\alpha _t}x_{t-1} + \sqrt {1-\bar {\alpha }_t}\,\epsilon _t, 
+                                                                                                                                                                                        and we classify an image as synthetic if its reconstruction
+for t = 1, . . . , T , where                                                                                                                                                            error is small. This explains the rationale behind existing
+                       Qt xt denotes the noisy image at                                                                                                                                 reconstruction-based methods. When the generative model
+timestep t, and ᾱt = i=1 αi for a sequence of pre-defined
+weights {αt }t that controls the signal-to-noise ratio and                                                                                                                              is strong, however, the real and synthetic image distribu-
+ϵt ∼ N (0, I) is the Gaussian noise.                                                                                                                                                    tions are closely aligned, so the signal |x − ΠM (x)| be-
+                                                                                                                                                                                        comes small. Consequently, the reconstruction errors of
+    In contrast, during the reverse process, the model learns
+                                                                                                                                                                                        both real and synthetic images are dominated by the per-
+to iteratively denoise xt back to a clean sample using a pa-
+                                                                                                                                                                                        turbation and become similar (see the bottom panel of Fig-
+rameterized neural network ϵθ (xt , t) that takes xt and t as
+                                                                                                                                                                                        ure 1), and existing reconstruction-based methods struggle
+input and aims to predict the added noise ϵt . This process
+                                                                                                                                                                                        to distinguish real from synthetic images.
+can be mathematically represented by
+                                                                                                                                                                                           In summary, existing reconstruction-based methods are
+                                                                                                                                                                                        limited in settings where synthetic images closely resem-
+  x_{t-1} = \frac {1}{\sqrt {\alpha _t}}\left (x_t - \frac {1-\alpha _t}{\sqrt {1-\bar {\alpha }_t}}\,\epsilon _\theta (x_t, t)\right ) + \sqrt {1-\alpha _{t-1}}\,\epsilon _t,         ble real ones, due to the strong capacity of modern gen-
+                                                                                                                                                                                        erative models. This indicates that relying solely on first-
+for t = T, . . . , 1, where ϵθ (xt , t) is trained to minimize the                                                                                                                      order differences is insufficient in such challenging scenar-
+prediction error between the true and the predicted noise.                                                                                                                              ios, which motivates our difference-in-difference approach
+                                                                                                                                                                                        that seeks higher-order differences to remove perturbation
+3.2. Intuition and Limitations in Reconstruction-                                                                                                                                       errors while amplifying the weak signal. We will demon-
+      Based Detection                                                                                                                                                                   strate how DID addresses this challenge in the next section.
+Let X ⊆ R3×256×256 denote the space of all natural im-                                                                                                                                  3.3. Difference-In-Differences
+ages, and M represent the manifold of images generated by
+a given pre-trained diffusion model. In general, M does not                                                                                                                             Unlike existing methods which conduct reconstruction only
+coincide with X , as the model’s learned distribution can-                                                                                                                              once, DID performs two consecutive reconstructions using
+not perfectly align with the true image distribution. How-                                                                                                                              the same pre-trained diffusion model:
+ever, as generative models become increasingly expressive,
+M tends to approximate X more closely, forming a high-                                                                                                                                                         x'=\mathcal {R}(x), \quad x''=\mathcal {R}(x'), 
+fidelity submanifold near the real image space.
+   The reconstruction can thus be interpreted as a projec-                                                                                                                              where R(•) is the reconstruction operator defined in (1),
+tion of an input image x onto the generative manifold M,                                                                                                                                x′ denotes the reconstruction of the input image x and x′′
+followed by a stochastic perturbation1 :                                                                                                                                                denotes the reconstruction of the reconstructed image.
+                                                                                                                                                                                            Taking the difference between x′ and x yields the first-
+                                                   \label {eq:reconstruction-operator} \mathcal {R}(x) = \Pi _{\mathcal {M}}(x) + \delta (x),                          (1)              order reconstruction error, ∆(x) = |x−R(x)|, which forms
+                                                                                                                                                                                        the basis of existing reconstruction-based detectors for clas-
+where R(•) denotes the reconstruction operator, ΠM (x)                                                                                                                                  sification. However, as discussed in the previous section,
+denotes the projection of x onto M, and δ(x) is a perturba-                                                                                                                             relying solely on the first-order reconstruction error is lim-
+tion term capturing the randomness introduced during the                                                                                                                                ited when the signal |x − ΠM (x)| for a real image is small,
+reconstruction.                                                                                                                                                                         causing the reconstruction error to be dominated by the per-
+   Consequently, for a synthetic image x ∈ M, its projec-                                                                                                                               turbation δ(x). To address this limitation, DID computes
+tion onto M equals x itself, resulting in a reconstruction                                                                                                                              the second-order difference between the two reconstruction
+error of                                                                                                                                                                                errors:
+                      \label {eqn:fake} \Delta _{\text {fake}}(x) = |\delta (x)|,  (2)                                                                                                                   \Delta ^{2}(x)=|x-x'|-|x'-x''|.            (4)
+   1 Similar interpretations have been proposed in the context of LLM-                                                                                                                  To illustrate the intuition behind DID, note that, similar to
+generated text detection [97].                                                                                                                                                          (2) and (3), one can derive that for a synthetic image x, the
+
+
+
+                                                                                                                                                                                   42967
+second-order reconstruction error is given by
+
+
+
+
+                                                                                                                                                                          Real
+                                          \label {eqn:secondorderfake} \Delta _{\text {fake}}^{2}(x) = |\delta (x)| - |\delta (x')|,                   (5)
+whereas for a real image, it is
+
+
+
+
+                                                                                                                                                                         kandinsky3
+                      \label {eqn:secondorderreal} \Delta _{\text {real}}^{2}(x) = |x - \Pi _{\mathcal {M}}(x) - \delta (x)| - |\delta (x')|.          (6)
+    When the signal is weak, x is close to x′ . In this case,
+if the perturbation error δ is highly correlated across space,
+then δ(x) ≈ δ(x′ ). As a result, the two perturbations cancel
+
+
+
+
+                                                                                                                                                                          SDXL
+out, and (5) and (6) simplify to
+                                                                 \label {eqn:secondorderfake2} \Delta _{\text {fake}}^{2}(x) \approx 0,                (7)
+
+
+
+
+                                                                                                                                                                         playground-25
+and
+ \label {eqn:secondorderreal2} |\Delta _{\text {real}}^{2}(x)| = |x - \Pi _{\mathcal {M}}(x) - \delta (x) + \delta (x')| \approx |x - \Pi _{\mathcal {M}}(x)|, 
+                                                                                                                                                       (8)
+where the first equality holds because the weak signal
+
+
+
+
+                                                                                                                                                                        LSUN-B
+                                                                                                                                                                        w. ADM
+makes the magnitude of |x − ΠM (x)| much smaller than
+that of |δ(x)|, so that the sign of x − ΠM (x) − δ(x) is dom-
+inated by that of −δ(x).
+        Comparing (7) and (8) with (2) and (3), it becomes
+
+
+                                                                                                                                                                       ImageNet
+                                                                                                                                                                        w. SDv1
+clear that, unlike the first-order difference, the second-
+order difference is no longer confounded by the perturba-
+tion error and depends only on the signal, even when it is
+weak. This highlights the advantage of DID over existing                                                                                                                                 (a) x   (b) ∆(x)   (c) ∆(x′ )   (d) ∆2 (x)
+reconstruction-based algorithms: by taking a second-order                                                                                                         Figure 3. Visualizations of (a) input image x; (b) its first-order re-
+difference, it effectively removes the perturbation noise and                                                                                                     construction error ∆(x); (c) the reconstruction error of the recon-
+uncovers the subtle signal.                                                                                                                                       structed image x′ ; and (d) the second-order reconstruction error
+                                                                                                                                                                  ∆2 (x). Compared to the first-order error ∆(x), the second-order
+3.4. Our Proposal
+                                                                                                                                                                  error ∆2 (x) better distinguishes real from fake images: real im-
+We present the details of our proposed method in this sec-                                                                                                        ages produce more stable and brighter responses, while fake im-
+tion. Based on the aforementioned analysis, the first-order                                                                                                       ages exhibit noticeably weaker signals, resulting in a larger gap
+reconstruction error ∆(x) = |x − x′ | is effective for dis-                                                                                                       between the two categories.
+tinguishing real from synthetic images when their discrep-
+ancy is large, whereas the second-order reconstruction er-
+ror ∆2 (x) = |x − x′ | − |x′ − x′′ | remains reliable when                                                                                                        4. Experiments
+real and synthetic images are highly similar. To handle both                                                                                                      In this section, we conduct extensive numerical experiments
+cases simultaneously, our detector integrates both first- and                                                                                                     to investigate the finite-sample performance of the proposed
+second-order reconstruction errors for robust detection; see                                                                                                      detector. We begin by describing the experimental setting
+Figure 3 and Section D for visualizations of these errors.                                                                                                        in Section 4.1. We next compare our detector against ex-
+   Specifically, we train two classifiers independently based                                                                                                     isting state-of-the-art detectors in Section 4.2. Finally, we
+on ∆(x) and ∆2 (x), respectively, using the standard cross-                                                                                                       conduct a sensitivity analysis and an ablation study to ex-
+entropy loss:                                                                                                                                                     amine the robustness of our detector and the contribution of
+                                                                                                                                                                  the second-order difference in Sections 4.3 and 4.4, respec-
+          \mathcal {L} = - \frac {1}{N} \sum _{i=1}^{N} \big [y_i \log (y'_i) + (1 - y_i) \log (1 - y'_i)\big ],                                       (9)        tively.
+
+where yi denotes the ground-truth label indicating whether
+                                                                                                                                                                  4.1. Experimental Setup
+the image is real or synthetic, yi′ is the predicted probability                                                                                                  To comprehensively evaluate the effectiveness of each de-
+produced by the classifier, and N is the number of training                                                                                                       tector, we consider a variety of datasets and generative mod-
+samples.                                                                                                                                                          els. Our evaluation benchmark closely follows those used in
+   Each classifier outputs a numerical probability score and                                                                                                      DIRE [80], FIRE [18], and FakeInversion [16]. Specifically,
+predicts an image as real if the score is smaller than a pre-                                                                                                     we use two datasets – ImageNet [23] and LAION [68] – to
+defined threshold c. Finally, an image is classified as real                                                                                                      train the classifier for each detector, with one large-scale
+only when both classifiers identify it as real.                                                                                                                   training set (40k real and 40k synthetic images) and one
+
+
+
+                                                                                                                                                              42968
+Table 1. Accuracy (%) of different detectors when trained on ImageNet & ADM. The best results are highlighted in bold, while the second
+best results are underlined. All averages are computed from the raw values and then rounded to two decimals.
+
+               Train set & Gen. model                                         ImageNet & ADM
+          Eval set           Gen. model                DID           DIRE           LaRE2            AERO.           UFD
+                             ADM                       99.5           99.5           50.0             52.3            63.9
+                             PNDM                      97.6           97.6           55.4             49.5            91.8
+          LSUN-B             DDPM                      99.5           99.8           56.6             56.7            76.5
+                             iDDPM                     99.4           99.6           50.0             50.3            85.1
+                             SDv1                      99.7           99.9            100              50.6           94.5
+                             Avg.                      99.12         99.25           62.39            51.87          82.36
+                             ADM                        100           100             100              51.0           85.8
+          ImageNet           SDv1                      99.3           98.9           99.2              37.0           79.9
+                             Avg.                      99.64         99.44           99.60            43.99          82.80
+                             Kan.3                     99.5           99.3            64.5             66.7          72.6
+                             SDXL                      99.6           99.4            66.4             55.5          69.5
+          LAION              Vega                      99.7           99.5            66.4             52.2          68.6
+                             Playground v2.5           99.8           99.8           66.0             53.1            82.8
+                             Stable Cascade            99.6           99.4            66.3             73.4          81.4
+                             Avg.                      99.60         99.45           65.89            60.14          75.95
+          Total average                                99.41         99.37           70.05            54.00          79.35
+
+
+smaller set (10k real and 10k synthetic images). For Ima-             so that its overall false positive rate matches that of using
+geNet, we randomly sample 40,000 real images and 40,000               a single classifier with a threshold of 0.5. Accuracy (ACC)
+synthetic images generated by ADM [24]. For LAION, we                 is reported as the primary evaluation metric. All our exper-
+randomly sample 10,000 real images and generate 10,000                iments are run on NVIDIA H800 GPUs ; the computation
+synthetic images using open-source text-to-image models               and memory cost is reported in Section C.3.
+such as Kandinsky 3.0 [2] and SDXL [62], with prompts
+collected from Midjourney.                                            4.2. Comparision against Existing Baselines
+    For testing, it is crucial to evaluate each detector              In the main paper, we compare our proposal against the
+on unseen datasets in order to assess its generalization              following four state-of-the-art algorithms. These baseline
+ability. In the main paper, we report results on three                methods include four reconstruction-based algorithms – (i)
+test datasets—LAION [68], ImageNet [23], and LSUN-                    DIRE [80], (ii) LaRE2 [49], and (iii) AEROBLADE [64]
+Bedroom [90], the last of which is excluded from training.            (denoted as AERO.) – as well as (iv) a non–reconstruction-
+For these evaluations, synthetic images are generated us-             based approach, UniversalFakeDetect (denoted as UFD)
+ing a more diverse set of generative models than those used           [58], which leverages a feature space not explicitly trained
+during training, including ADM [24], PNDM [46], DDPM                  to distinguish real from synthetic images. Further details
+[32], iDDPM [56], SDv1 [65], Segmind Vega [31], Play-                 are provided in Section B; comparisons aganist additional
+ground v2.5 [41], and Stable Cascade [61]. In addition, Sec-          baseline algorithms are reported in Section C.2.
+tion C.2 includes further evaluations on additional datasets,         Performance with a Larger Training Dataset. When
+such as GenImage [100] and GenDet [99], as well as a                  trained on the ImageNet dataset with 40k real images and
+broader set of generative models. More details on dataset             40k synthetic images generated by ADM, we report the ac-
+construction and experimental setup are provided in Section           curacy of different detectors in Table 1. DID achieves per-
+A.                                                                    formance very similar to DIRE. This is expected for two
+    We use the ADM model pretrained on LSUN-Bedroom                   reasons. First, the training dataset contains a large num-
+to obtain the reconstructed image. After obtaining the two            ber of samples. Second, we also use ADM for reconstruc-
+reconstructions, both the first- and second-order differences         tion, so the generative model used to produce the synthetic
+are fed into a ResNet-50 classifier for detection. For all            training images aligns with the one used for reconstruction.
+baseline detectors, the classification threshold is fixed at the      Under this large-sample and well-aligned setting, the first-
+default level c = 0.5. Our method, however, uses two clas-            order reconstruction error is already highly discriminative
+sifiers and labels an input as real only when both classifiers        for distinguishing real from AI-generated images. As a re-
+predict it as real. To allow for a fair comparison,
+                                                √       we set        sult, both DID and DIRE achieve classification accuracy
+the threshold of each classifier in DID to 1 − 0.5 ≈ 0.29,            close to 100%. In contrast, other methods, such as AER-
+
+
+
+                                                                42969
+Table 2. Accuracy (%) of different detectors when trained on LAION & Kan.3 (left block) and LAION & SDXL (right block). The
+best results are highlighted in bold, while the second best results are underlined. All averages are computed from the raw values and then
+rounded to two decimals. The last column of each block reports the improvement of DID over the second-best baseline.
+
+  Train set & Gen. model                   LAION & Kan.3                    Imp.               LAION & SDXL
+                                                                                                Imp.
+                                                       2
+ Eval set Gen. model        DID DIRE LaRE AERO. UFD              DID DIRE LaRE2 AERO. UFD
+            ADM              90.7 88.1 50.3   50.0 50.8 21.85% 95.0 94.3 50.2       50.0 50.3 13.04%
+            PNDM             78.2 73.5 71.2   49.8 51.5 17.55% 81.7 74.6 51.6       49.8 50.9 27.95%
+            DDPM             88.7 85.2 56.5   56.4 51.5 24.05% 95.1 93.3 57.1       56.4 50.5 27.73%
+ LSUN-B iDDPM                80.1 77.5 50.0   49.8 54.2 11.33% 89.0 86.8 50.0       49.8 53.3 16.29%
+            SDv1             98.6 97.8 99.9   49.8 49.7      -    98.4 98.3 99.7   49.8 50.5      -
+            Avg.            87.25 84.41 65.56 51.13 51.52 18.23% 91.83 89.44 61.70 51.13 51.09 22.58%
+            ADM              99.1 96.7 89.5   50.7 58.7 74.03% 99.6 96.3 93.3       50.7 61.1 89.65%
+ ImageNet SDv1               99.2 97.7 94.4   35.0 65.4 65.33% 99.1 96.1 95.5       35.0 67.3 75.73%
+            Avg.            99.16 97.16 91.91 42.83 62.03 70.46% 99.34 96.22 94.40 42.83 64.18 82.47%
+            Kan.3            100 100     100  58.7 93.7      -    99.8 99.3 97.6    58.7 92.9 64.29%
+            SDXL             100 99.9 99.4    52.5 87.0 100% 99.9 99.9 99.9        52.5 92.3      -
+ LAION Vega                  100 99.4 95.5    51.0 79.9 100% 99.9 99.8 99.7         51.0 83.8 50.00%
+            Playground v2.5 100 100     97.9  51.1 93.2      -    99.9 99.9 99.4   51.1 93.3      -
+            Stable Cascade 100 100      99.6  64.7 95.7      -    99.8 99.5 99.5   64.7 95.4 54.55%
+            Avg.             100 99.84 98.45 55.57 89.87 100% 99.84 99.67 99.20 55.57 91.50 51.52%
+ Total average              94.55 92.96 83.66 51.60 69.25 22.52% 96.42 94.83 82.78 51.60 70.11 30.66%
+
+
+OBLADE, LaRE2 and UFD, may perform competitively on                     on images produced by generative adversarial networks
+certain datasets but are less robust across datasets, and their         (GANs). We consider three GAN models, namely Style-
+accuracy generally falls behind both DIRE and our DID.                  GAN, ProjectedGAN, and Diff-ProjectedGAN, and report
+Performance with a Smaller Training Dataset. We re-                     the ACC of each detector in Table 3. Although our model
+port the accuracy of various detectors trained on the LAION             is trained exclusively on diffusion-generated data from
+dataset in Table 2. This represents a more challenging set-             “Kan.3” or “SDXL,” it consistently achieves the highest
+ting for two reasons: (i) the sample size is smaller, with only         accuracy across all three GAN variants. In every setting,
+10k real and 10k synthetic images; (ii) the generators used             our method outperforms DIRE, with improvements of up
+to create the synthetic training datasets (Kan3 and SDXL)               to 20.90%. The performance gap becomes even more pro-
+differ from the ADM model used for reconstruction. In such              nounced when compared with LaRE2 , and AEROBLADE,
+cases, the first-order reconstruction discrepancy alone is              all of which fail to generalize to these GAN-generated dis-
+no longer sufficiently reliable. Consequently, DID benefits             tributions. UniversalFakeDetect also struggles in this sce-
+from its second-order reconstruction error and outperforms              nario. These results demonstrate that our detector – despite
+DIRE in almost all settings, particularly when evaluated on             being trained solely on diffusion-generated images – re-
+LSUN-B and ImageNet, where the test images differ from                  mains robust to synthetic images produced by substantially
+the training dataset LAION. Across these cases, our total               different generative mechanisms. We also conduct another
+improvement ranges from 20–30%. This demonstrates that                  sensitivity analysis across image formats in Section C.1.
+our second-order reconstruction error plays a crucial role
+in more complex tasks, especially when the sample size is               4.4. Ablation Study
+smaller or when the generator differs from the reconstruc-              In this section, we conduct an ablation study to compare
+tion model. Other baseline detectors, such as LaRE2 and                 our DID with a variant (denoted as ∆2 ) that uses only the
+UFD, perform well when the training and testing datasets                second-order reconstruction error and excludes the first-
+are the same, but their performance drops when the datasets             order term. For completeness, we also include DIRE as
+differ. This demonstrates their limited generalization abil-            a reference. To facilitate the computation, we train a
+ity. AERO. also fails in most cases.                                    lightweight model using only 10% of the LAION training
+                                                                        data and report the results in Table 4.
+4.3. Sensitivity Analysis
+                                                                           We make several observations. First, in most settings,
+In Section 4.2, all synthetic images were generated us-                 ∆2 outperforms DIRE, demonstrating that second-order
+ing diffusion models. In this section, we further eval-                 differences are more effective than first-order differences at
+uate each detector’s generalization ability by testing it               capturing subtle discrepancies between real and synthetic
+
+
+
+                                                                 42970
+Table 3. Detection accuracy (%) on GAN-generated images under different training settings. Best in bold, second best underlined. All
+averages are computed from the raw values and then rounded to two decimals. The last column reports the improvement of DID over the
+second-best baseline.
+
+                                                                                            Accuracy (%)
+  Train set & Gen. model         Eval set     Gen. model                                                                                        Imp.
+                                                                            DID     DIRE        LaRE2             AERO.              UFD
+                                              StyleGAN                      95.8    94.3           50.4              49.8            50.8      26.32%
+  LAION & Kan.3                  LSUN-B       ProjectedGAN                  93.4    91.0           51.2              49.8            50.7      26.52%
+                                              Diff-ProjectedGAN             92.7    90.2           51.9              49.8            51.1      25.51%
+                                              Avg.                          93.95   91.82         51.12             49.75           50.85      26.07%
+                                              StyleGAN                      96.8    96.3           50.7              49.8            50.9      12.16%
+  LAION & SDXL                   LSUN-B       ProjectedGAN                  94.8    93.8           52.8              49.8            50.9      16.13%
+                                              Diff-ProjectedGAN             93.1    92.1           53.6              49.8            50.9      12.66%
+                                              Avg.                          94.88   94.07         52.37             49.75           50.88      13.76%
+  Total average                                                             94.42   92.94         51.74             49.75           50.87      20.90%
+
+
+Table 4. Accuracy (%) on various evaluation datasets when trained       ages differ substantially, they often fail when the two ap-
+on LAION & Kan3.                                                        pear highly similar. To address this challenge, we propose
+                                                                        a difference-in-difference approach that utilizes a second-
+     Eval set      Gen. model          Accuracy (%)                     order difference. Our analysis in Section 3.3 shows that
+                                    DID     ∆2       DIRE               the second-order difference effectively removes perturba-
+                   ADM              86.5    69.0      84.0              tion noise and uncovers subtle discrepancies between real
+     LSUN-B        PNDM             83.0    81.5      67.5              and AI-generated images. We then integrate both first- and
+                   DDPM             82.0    78.0      71.5              second-order differences into our classifier to simultane-
+     ImageNet      ADM              98.9    98.4      91.0              ously handle both settings. Extensive experiments demon-
+                   SDv1             98.9    98.7      93.5
+                                                                        strate that our detector outperforms state-of-the-art algo-
+                   Kan.3            99.9    100       99.9              rithms (Section 4.2); a sensitivity analysis shows that its
+     LAION         SDXL             99.9    99.9      99.2
+                   Vega             99.9    99.9      98.8              performance is robust across different generative models
+                                                                        (Section 4.3); and an ablation study confirms the critical
+                                                                        role of the second-order difference (Section 4.4).
+images. Second, in settings where LSUN is used as the eval-                 We focus on using second-order differences for detec-
+uation dataset and synthetic images are generated by ADM,               tion, but our idea naturally extends to even higher-order dif-
+DIRE outperforms ∆2 . A closer inspection reveals that this             ferences. For example, one may define a third-order differ-
+corresponds to a simple scenario in which the synthetic im-             ence as
+ages are produced by the same model used for reconstruc-                                     \Delta ^3(x) = |\Delta ^2(x) - \Delta ^2(x')|,            (10)
+tion. This is consistent with our analysis in Section 3, which
+shows that first-order differences are sufficient in simpler            for an imput image x and its reconstruction x′ . In principle,
+settings. Finally, DID outperforms or performs compara-                 one could incorporate all higher-order differences into the
+bly to both ∆2 and DIRE across all settings, illustrating the           classifier to capture weak signals. However, computing a
+advantages of leveraging both first- and second-order dif-              Kth-order difference requires reconstructing the image K
+ferences for classification. Additional ablation studies are            times, which significantly increases the computation. Thus,
+reported in Section C.4.                                                there is an inherent trade-off: higher-order differences may
+                                                                        uncover more subtle discrepancies between real and AI-
+5. Discussion                                                           generated images, but at the cost of increased computation.
+                                                                        Determining the optimal order that balances detection per-
+This paper studies the detection of AI-generated images. A              formance and computational cost remains an open question
+popular approach is reconstruction-based, which relies on               for our future work.
+the first-order difference between an input image and its re-              Finally, although DID is proposed for image detection,
+construction as the basis for classification. Although these            the same principle can be readily generalized to the detec-
+algorithms perform well when real and AI-generated im-                  tion of LLM-generated text [see e.g., 8, 42, 53, 96, 98].
+
+
+
+                                                                    42971
+Acknowledgements                                                           [14] Donald T Campbell and Julian C Stanley. Experimental and
+                                                                                quasi-experimental designs for research. Ravenio books,
+Qi, Zhou, and Yang’s research was supported by the Na-                          2015. 3
+tional Natural Science Foundation of China (NSFC) under                    [15] David Card and Alan B Krueger. Minimum wages and em-
+Grant No. 12271286.                                                             ployment: A case study of the fast food industry in new
+                                                                                jersey and pennsylvania, 1993. 3
+References                                                                 [16] George Cazenavette, Avneesh Sud, Thomas Leung, and
+                                                                                Ben Usman. Fakeinversion: Learning to detect images from
+  [1] Joshua D Angrist and Jörn-Steffen Pischke. Mostly harm-                  unseen text-to-image models by inverting stable diffusion.
+      less econometrics: An empiricist’s companion. Princeton                   In Proceedings of the IEEE/CVF Conference on Computer
+      university press, 2009. 3                                                 Vision and Pattern Recognition, pages 10759–10769, 2024.
+  [2] Vladimir Arkhipkin, Andrei Filatov, Viacheslav Vasilev,                   3, 5
+      Anastasia Maltseva, Said Azizov, Igor Pavlov, Julia Aga-             [17] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.
+      fonova, Andrey Kuznetsov, and Denis Dimitrov. Kandin-                     Drct: Diffusion reconstruction contrastive training towards
+      sky 3.0 technical report. arXiv preprint arXiv:2312.03511,                universal detection of diffusion generated images. In Forty-
+      2023. 1, 6                                                                first International Conference on Machine Learning, 2024.
+  [3] Orley C Ashenfelter and David Card. Using the longitudi-                  3
+      nal structure of earnings to estimate the effect of training         [18] Beilin Chu, Xuan Xu, Xin Wang, Yufei Zhang, Weike
+      programs, 1984. 3                                                         You, and Linna Zhou. Fire: Robust detection of diffusion-
+  [4] Jason Baldridge, Jakob Bauer, Mukul Bhutani, Nicole                       generated images via frequency-guided reconstruction er-
+      Brichtova, Andrew Bunner, Lluis Castrejon, Kelvin Chan,                   ror. In Proceedings of the Computer Vision and Pattern
+      Yichang Chen, Sander Dieleman, Yuqing Du, et al. Imagen                   Recognition Conference, pages 12830–12839, 2025. 2, 3, 5
+      3. arXiv preprint arXiv:2408.07009, 2024. 1                          [19] Umur Aybars Ciftci, Ilke Demir, and Lijun Yin. Fake-
+  [5] Quentin Bammey. Synthbuster: Towards detection of diffu-                  catcher: Detection of synthetic portrait videos using bio-
+      sion model generated images. IEEE Open Journal of Signal                  logical signals. IEEE transactions on pattern analysis and
+      Processing, 5:1–9, 2023. 3                                                machine intelligence, 2020. 3
+  [6] Hmrishav Bandyopadhyay, Rahim Entezari, Jim Scott,                   [20] Roberto Corvi, Ruben Tolosana, Ruben Vera-Rodriguez,
+      Reshinth Adithyan, Yi-Zhe Song, and Varun Jampani. Sd3.                   Joshua Harvill, Ulrich Scherhag, and Naser Damer. In-
+      5-flash: Distribution-guided distillation of generative flows.            triguing properties of synthetic images: From generative
+      arXiv preprint arXiv:2509.21318, 2025. 1                                  adversarial networks to diffusion models. In IEEE/CVF
+  [7] Fan Bao, Chongxuan Li, Jun Zhu, and Bo Zhang. Analytic-                   Conference on Computer Vision and Pattern Recognition
+      dpm: an analytic estimate of the optimal reverse vari-                    Workshops (CVPRW), pages 4173–4182. IEEE, 2023. 2
+      ance in diffusion probabilistic models. arXiv preprint               [21] Davide Cozzolino, Giovanni Poggi, Matthias Nießner, and
+      arXiv:2201.06503, 2022. 3                                                 Luisa Verdoliva. Zero-shot detection of ai-generated im-
+  [8] Guangsheng Bao, Yanbin Zhao, Zhiyang Teng, Linyi Yang,                    ages. In European Conference on Computer Vision, pages
+      and Yue Zhang. Fast-detectgpt: Efficient zero-shot de-                    54–72. Springer, 2024. 3
+      tection of machine-generated text via conditional probabil-          [22] Katherine Crowson, Stella Biderman, Daniel Kornis,
+      ity curvature. In The Twelfth International Conference on                 Dashiell Stander, Eric Hallahan, Louis Castricato, and Ed-
+      Learning Representations, 2024. 8                                         ward Raff. Vqgan-clip: Open domain image generation and
+  [9] James Betker, Gabriel Goh, Li Jing, Tim Brooks, Jianfeng                  editing with natural language guidance. In European con-
+      Wang, Linjie Li, Long Ouyang, Juntang Zhuang, Joyce                       ference on computer vision, pages 88–105. Springer, 2022.
+      Lee, Yufei Guo, et al. Improving image generation with                    2
+      better captions. Computer Science. https://cdn. openai.              [23] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,
+      com/papers/dall-e-3. pdf, 2(3):8, 2023. 1                                 and Li Fei-Fei. Imagenet: A large-scale hierarchical im-
+ [10] Richard Blundell and Monica Costa Dias. Alternative ap-                   age database. In 2009 IEEE conference on computer vision
+      proaches to evaluation in empirical microeconomics. Jour-                 and pattern recognition, pages 248–255. Ieee, 2009. 5, 6
+      nal of human resources, 44(3):565–640, 2009. 3                       [24] Prafulla Dhariwal and Alexander Nichol. Diffusion models
+ [11] Ali Borji. Qualitative failures of image generation models                beat gans on image synthesis. Advances in neural informa-
+      and their application in detecting deepfakes. Image and Vi-               tion processing systems, 34:8780–8794, 2021. 3, 6
+      sion Computing, 137:104771, 2023. 3                                  [25] Tim Dockhorn, Arash Vahdat, and Karsten Kreis. Ge-
+ [12] Valentin De Bortoli, Emile Mathieu, Michael J. Hutchin-                   nie: Higher-order denoising diffusion solvers. Advances in
+      son, James Thornton, Yee Whye Teh, and A. Doucet.                         Neural Information Processing Systems, 35:30150–30166,
+      Riemannian score-based generative modeling.            ArXiv,             2022. 3
+      abs/2202.02763, 2022. 3                                              [26] Hany Farid. Perspective (in) consistency of paint by text.
+ [13] Brantly Callaway and Pedro HC Sant’Anna. Difference-in-                   arXiv preprint arXiv:2206.14617, 2022. 3
+      differences with multiple time periods. Journal of econo-            [27] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+      metrics, 225(2):200–230, 2021. 3                                          cher, Dorothea Kolossa, and Thorsten Holz. Leveraging
+
+
+
+
+                                                                   42972
+     frequency analysis for deep fake image recognition. In Pro-          [41] Daiqing Li, Aleks Kamko, Ehsan Akhgari, Ali Sabet, Lin-
+     ceedings of the 38th International Conference on Machine                  miao Xu, and Suhail Doshi. Playground v2. 5: Three in-
+     Learning (ICML), pages 3247–3258. PMLR, 2020. 2                           sights towards enhancing aesthetic quality in text-to-image
+[28] Shansan Gong, Mukai Li, Jiangtao Feng, Zhiyong Wu,                        generation. arXiv preprint arXiv:2402.17245, 2024. 6
+     and LingPeng Kong. Diffuseq: Sequence to sequence                    [42] Siyuan Li, Aodu Wulianghai, Xi Lin, Guangyan Li, Xiang
+     text generation with diffusion models. arXiv preprint                     Chen, Jun Wu, and Jianhua Li. Styledecipher: Robust and
+     arXiv:2210.08933, 2022. 3                                                 explainable detection of llm-generated texts with stylistic
+[29] Andrew Goodman-Bacon. Difference-in-differences with                      analysis. arXiv preprint arXiv:2510.12608, 2025. 8
+     variation in treatment timing. Journal of econometrics, 225          [43] Chen-Hsuan Lin, Jun Gao, Luming Tang, Towaki
+     (2):254–277, 2021. 3                                                      Takikawa, Xiaohui Zeng, Xun Huang, Karsten Kreis, Sanja
+[30] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo                          Fidler, Ming-Yu Liu, and Tsung-Yi Lin. Magic3d: High-
+     Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-                      resolution text-to-3d content creation. In Proceedings of
+     tor quantized diffusion model for text-to-image synthesis.                the IEEE/CVF conference on computer vision and pattern
+     In Proceedings of the IEEE/CVF conference on computer                     recognition, pages 300–309, 2023. 2
+     vision and pattern recognition, pages 10696–10706, 2022.             [44] Kaiqing Lin, Zhiyuan Yan, Ruoxin Chen, Junyan Ye, Ke-
+     2                                                                         Yue Zhang, Yue Zhou, Peng Jin, Bin Li, Taiping Yao, and
+[31] Yatharth Gupta, Vishnu V Jaddipal, Harish Prabhala, Sayak                 Shouhong Ding. Seeing before reasoning: A unified frame-
+     Paul, and Patrick Von Platen. Progressive knowledge dis-                  work for generalizable and explainable fake image detec-
+     tillation of stable diffusion xl using layer level loss. arXiv            tion. arXiv preprint arXiv:2509.25502, 2025. 3
+     preprint arXiv:2401.02677, 2024. 6                                   [45] Li Lin, Neeraj Gupta, Yue Zhang, Hainan Ren, Chun-Hao
+[32] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising dif-                 Liu, Feng Ding, Xin Wang, Xin Li, Luisa Verdoliva, and
+     fusion probabilistic models. Advances in neural informa-                  Shu Hu. Detecting multimedia generated by large ai mod-
+     tion processing systems, 33:6840–6851, 2020. 2, 6                         els: A survey. arXiv preprint arXiv:2402.00045, 2024. 3
+                                                                          [46] Luping Liu, Yi Ren, Zhijie Lin, and Zhou Zhao. Pseudo nu-
+[33] Jonathan Ho, William Chan, Chitwan Saharia, Jay Whang,
+                                                                               merical methods for diffusion models on manifolds. arXiv
+     Ruiqi Gao, Alexey Gritsenko, Diederik P Kingma, Ben
+                                                                               preprint arXiv:2202.09778, 2022. 6
+     Poole, Mohammad Norouzi, David J Fleet, et al. Ima-
+                                                                          [47] Peter Lorenz, Ricard L Durall, and Janis Keuper. Detecting
+     gen video: High definition video generation with diffusion
+                                                                               images generated by deep diffusion models using their local
+     models. arXiv preprint arXiv:2210.02303, 2022. 2
+                                                                               intrinsic dimensionality. In Proceedings of the IEEE/CVF
+[34] Chin-Wei Huang, Milad Aghajohari, Joey Bose, Prakash
+                                                                               International Conference on Computer Vision, pages 448–
+     Panangaden, and Aaron C Courville. Riemannian diffusion
+                                                                               459, 2023. 3
+     models. Advances in Neural Information Processing Sys-
+                                                                          [48] Cheng Lu, Kaiwen Zheng, Fan Bao, Jianfei Chen, Chongx-
+     tems, 35:2750–2761, 2022. 3
+                                                                               uan Li, and Jun Zhu. Maximum likelihood training for
+[35] Shaohan Huang, Li Dong, Wenhui Wang, Yaru Hao,                            score-based diffusion odes by high order denoising score
+     Saksham Singhal, Shuming Ma, Tengchao Lv, Lei Cui,                        matching. In International conference on machine learn-
+     Owais Khan Mohammed, Barun Patra, et al. Language is                      ing, pages 14429–14460. PMLR, 2022. 3
+     not all you need: Aligning perception with language mod-             [49] Yuhang Luo, Jing Du, Kaizhe Yan, and Shengyu Ding.
+     els. Advances in Neural Information Processing Systems,                   Lare2 : Latent reconstruction error based method for
+     36:72096–72109, 2023. 2                                                   diffusion-generated image detection. In Proceedings of
+[36] Ray Hyman. Quasi-experimentation: Design and analysis                     the IEEE/CVF Conference on Computer Vision and Pattern
+     issues for field settings (book). Journal of Personality As-              Recognition (CVPR), pages 17006–17015. IEEE, 2024. 2,
+     sessment, 46(1):96–97, 1982. 3                                            3, 6
+[37] Jaehyeong Jo, Seul Lee, and Sung Ju Hwang. Score-based               [50] Ruipeng Ma, Jinhao Duan, Fei Kong, Xiaoshuang Shi, and
+     generative modeling of graphs via the system of stochastic                Kaidi Xu. Exposing the fake: Effective diffusion-generated
+     differential equations. In International conference on ma-                images detection. arXiv preprint arXiv:2307.06272, 2023.
+     chine learning, pages 10362–10383. PMLR, 2022. 3                          3
+[38] Tero Karras, Miika Aittala, Timo Aila, and Samuli Laine.             [51] Scott McCloskey and Michael Albright. Detecting gan-
+     Elucidating the design space of diffusion-based generative                generated imagery using color cues.         arXiv preprint
+     models. Advances in neural information processing sys-                    arXiv:1812.08247, 2018. 3
+     tems, 35:26565–26577, 2022. 3                                        [52] Scott McCloskey and Michael Albright. Detecting gan-
+[39] Diederik Kingma, Tim Salimans, Ben Poole, and Jonathan                    generated imagery using saturation cues. In 2019 IEEE in-
+     Ho. Variational diffusion models. Advances in neural in-                  ternational conference on image processing (ICIP), pages
+     formation processing systems, 34:21696–21707, 2021. 3                     4584–4588. IEEE, 2019. 3
+[40] Romeo Lanzino, Federico Fontana, Anxhelo Diko,                       [53] Eric Mitchell, Yoonho Lee, Alexander Khazatsky, Christo-
+     Marco Raoul Marini, and Luigi Cinque. Faster than lies:                   pher D Manning, and Chelsea Finn. Detectgpt: Zero-shot
+     Real-time deepfake detection using binary neural networks.                machine-generated text detection using probability curva-
+     In Proceedings of the IEEE/CVF Conference on Computer                     ture. In International conference on machine learning,
+     Vision and Pattern Recognition, pages 3771–3780, 2024. 3                  pages 24950–24962. PMLR, 2023. 8
+
+
+
+
+                                                                  42973
+[54] Minh-Quang Nguyen, Khanh-Duy Ho, Hoang-Minh                             tuning text-to-image diffusion models for subject-driven
+     Nguyen, Canh-Minh Tu, Minh-Triet Tran, and Trong-Le                     generation. In Proceedings of the IEEE/CVF conference
+     Do. Unmasking the artist: Discriminating human-drawn                    on computer vision and pattern recognition, pages 22500–
+     and ai-generated human face art through facial feature                  22510, 2023. 2
+     analysis. In 2023 International Conference on Multime-             [67] Chitwan Saharia, William Chan, Saurabh Saxena, Lala
+     dia Analysis and Pattern Recognition (MAPR), pages 1–6.                 Li, Jay Whang, Emily L Denton, Kamyar Ghasemipour,
+     IEEE, 2023. 3                                                           Raphael Gontijo Lopes, Burcu Karagol Ayan, Tim Sali-
+[55] Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav                   mans, et al. Photorealistic text-to-image diffusion models
+     Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever, and                  with deep language understanding. Advances in neural in-
+     Mark Chen. Glide: Towards photorealistic image genera-                  formation processing systems, 35:36479–36494, 2022. 2
+     tion and editing with text-guided diffusion models. arXiv          [68] Christoph Schuhmann, Romain Beaumont, Richard Vencu,
+     preprint arXiv:2112.10741, 2021. 2                                      Cade Gordon, Ross Wightman, Mehdi Cherti, Theo
+[56] Alexander Quinn Nichol and Prafulla Dhariwal. Improved                  Coombes, Aarush Katta, Clayton Mullis, Mitchell Worts-
+     denoising diffusion probabilistic models. In International              man, et al. Laion-5b: An open large-scale dataset for train-
+     conference on machine learning, pages 8162–8171. PMLR,                  ing next generation image-text models. Advances in neural
+     2021. 3, 6                                                              information processing systems, 35:25278–25294, 2022. 5,
+[57] Chenhao Niu, Yang Song, Jiaming Song, Shengjia Zhao,                    6
+     Aditya Grover, and Stefano Ermon. Permutation invari-              [69] Shelly Sheynin, Adam Polyak, Uriel Singer, Yuval Kirstain,
+     ant graph generation via score-based generative modeling.               Amit Zohar, Oron Ashual, Devi Parikh, and Yaniv Taigman.
+     In International conference on artificial intelligence and              Emu edit: Precise image editing via recognition and gener-
+     statistics, pages 4474–4484. PMLR, 2020. 3                              ation tasks. In Proceedings of the IEEE/CVF Conference
+[58] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-                 on Computer Vision and Pattern Recognition, pages 8871–
+     versal fake image detectors that generalize across genera-              8879, 2024. 1
+     tive models, 2024. 6                                               [70] Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan,
+[59] OpenAI. Video generation models as world simula-                        and Surya Ganguli. Deep unsupervised learning using
+     tors.     https : / / openai . com / index / video -                    nonequilibrium thermodynamics. In International confer-
+     generation-models-as-world-simulators/,                                 ence on machine learning, pages 2256–2265. pmlr, 2015.
+     2024. Technical report. 2                                               2
+[60] William Peebles and Saining Xie. Scalable diffusion mod-           [71] Jiaming Song, Chenlin Meng, and Stefano Ermon.
+     els with transformers. In Proceedings of the IEEE/CVF                   Denoising diffusion implicit models.        arXiv preprint
+     international conference on computer vision, pages 4195–                arXiv:2010.02502, 2020. 3
+     4205, 2023. 3                                                      [72] Yang Song and Stefano Ermon. Generative modeling by
+[61] Pablo Pernias, Dominic Rampas, Mats L Richter, Christo-                 estimating gradients of the data distribution. Advances in
+     pher J Pal, and Marc Aubreville. Würstchen: An efficient               neural information processing systems, 32, 2019. 2, 3
+     architecture for large-scale text-to-image diffusion models.       [73] Yang Song and Stefano Ermon. Improved techniques for
+     arXiv preprint arXiv:2306.00637, 2023. 6                                training score-based generative models. Advances in neural
+[62] Dustin Podell, Zion English, Kyle Lacey, Andreas                        information processing systems, 33:12438–12448, 2020. 2
+     Blattmann, Tim Dockhorn, Jonas Müller, Joe Penna, and             [74] Yang Song, Jascha Sohl-Dickstein, Diederik P Kingma,
+     Robin Rombach. Sdxl: Improving latent diffusion mod-                    Abhishek Kumar, Stefano Ermon, and Ben Poole. Score-
+     els for high-resolution image synthesis. arXiv preprint                 based generative modeling through stochastic differential
+     arXiv:2307.01952, 2023. 2, 6                                            equations. arXiv preprint arXiv:2011.13456, 2020. 3
+[63] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey               [75] Yang Song, Conor Durkan, Iain Murray, and Stefano Er-
+     Chu, and Mark Chen.            Hierarchical text-conditional            mon. Maximum likelihood training of score-based diffu-
+     image generation with clip latents.          arXiv preprint             sion models. Advances in neural information processing
+     arXiv:2204.06125, 1(2):3, 2022. 2, 3                                    systems, 34:1415–1428, 2021. 3
+[64] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-             [76] Liyang Sun and Sarah Abraham. Estimating dynamic treat-
+     oblade: Training-free detection of latent diffusion images              ment effects in event studies with heterogeneous treatment
+     using autoencoder reconstruction error. In Proceedings of               effects. Journal of econometrics, 225(2):175–199, 2021. 3
+     the IEEE/CVF Conference on Computer Vision and Pattern             [77] Arash Vahdat, Karsten Kreis, and Jan Kautz. Score-based
+     Recognition, pages 9130–9140, 2024. 3, 6                                generative modeling in latent space. Advances in neural
+[65] Robin Rombach, Andreas Blattmann, Dominik Lorenz,                       information processing systems, 34:11287–11302, 2021. 3
+     Patrick Esser, and Björn Ommer. High-resolution image             [78] Bram Wallace, Meihua Dang, Rafael Rafailov, Linqi Zhou,
+     synthesis with latent diffusion models. In Proceedings of               Aaron Lou, Senthil Purushwalkam, Stefano Ermon, Caim-
+     the IEEE/CVF conference on computer vision and pattern                  ing Xiong, Shafiq Joty, and Nikhil Naik. Diffusion model
+     recognition, pages 10684–10695, 2022. 6                                 alignment using direct preference optimization. In Proceed-
+[66] Nataniel Ruiz, Yuanzhen Li, Varun Jampani, Yael Pritch,                 ings of the IEEE/CVF Conference on Computer Vision and
+     Michael Rubinstein, and Kfir Aberman. Dreambooth: Fine                  Pattern Recognition, pages 8228–8238, 2024. 3
+
+
+
+
+                                                                42974
+[79] Fei Wang, Xuecheng Wu, Zheng Zhang, Danlei Huang,                      fuse: Text-driven human motion generation with diffusion
+     Yuheng Huang, and Bo Wang. End4: End-to-end denois-                    model. IEEE transactions on pattern analysis and machine
+     ing diffusion for diffusion-based inpainting detection. arXiv          intelligence, 46(6):4115–4128, 2024. 2
+     preprint arXiv:2509.13214, 2025. Version v2, submitted 18         [92] Qinsheng Zhang and Yongxin Chen. Fast sampling of dif-
+     Sep 2025. 2                                                            fusion models with exponential integrator. arXiv preprint
+[80] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun                       arXiv:2204.13902, 2022. 3
+     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire:                [93] Qinsheng Zhang, Molei Tao, and Yongxin Chen. gddim:
+     Diffusion reconstruction error for diffusion-generated im-             Generalized denoising diffusion implicit models. arXiv
+     age detection. In Proceedings of the IEEE/CVF Inter-                   preprint arXiv:2206.05564, 2022. 3
+     national Conference on Computer Vision (ICCV), pages              [94] Xinran Zhang, Sertac Karaman, and Shih-Fu Chang. De-
+     22445–22455. IEEE, 2023. 2, 3, 5, 6                                    tecting gan-synthesized faces using saturation cues. In
+[81] Daniel Watson, William Chan, Jonathan Ho, and Moham-                   IEEE Conference on Computer Vision and Pattern Recogni-
+     mad Norouzi. Learning fast samplers for diffusion models               tion Workshops (CVPRW), pages 3701–3710. IEEE, 2019.
+     by differentiating through sample quality. In International            2
+     Conference on Learning Representations, 2021. 3                   [95] Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and
+[82] Moritz Wolter, Felix Blanke, Raoul Heese, and Jochen Gar-              Xinpeng Zhang. Patchcraft: Exploring texture patch for
+     cke. Wavelet-packets for deepfake image analysis and de-               efficient ai-generated image detection. arXiv preprint
+     tection. Machine Learning, 111(11):4295–4327, 2022. 3                  arXiv:2311.12397, 2023. 3
+[83] Ziyi Xi, Wenmin Huang, Kangkang Wei, Weiqi Luo, and               [96] Hongyi Zhou, Jin Zhu, Pingfan Su, Kai Ye, Ying Yang,
+     Peijia Zheng. Ai-generated image detection using a cross-              Shakeel Gavioli-Akilagun, and Chengchun Shi. Adadetect-
+     attention enhanced dual-stream network. In 2023 Asia Pa-               gpt: Adaptive detection of llm-generated text with statisti-
+     cific Signal and Information Processing Association Annual             cal guarantees. In The Thirty-ninth Annual Conference on
+     Summit and Conference (APSIPA ASC), pages 1463–1470.                   Neural Information Processing Systems, 2025. 8
+     IEEE, 2023. 3
+                                                                       [97] Hongyi Zhou, Jin Zhu, Erhan Xu, Kai Ye, Ying Yang,
+[84] Jiazheng Xu, Xiao Liu, Yuchen Wu, Yuxuan Tong, Qinkai                  and Chengchun Shi. Learn-to-distance: Distance learn-
+     Li, Ming Ding, Jie Tang, and Yuxiao Dong. Imagere-                     ing for detecting LLM-generated text. arXiv preprint
+     ward: Learning and evaluating human preferences for text-              arXiv:2601.21895, 2026. 4
+     to-image generation. Advances in Neural Information Pro-
+                                                                       [98] Hongyi Zhou, Jin Zhu, Ying Yang, and Chengchun Shi.
+     cessing Systems, 36:15903–15935, 2023. 3
+                                                                            Detecting llm-generated text with performance guarantees.
+[85] Ling Yang, Jingwei Liu, Shenda Hong, Zhilong Zhang,
+                                                                            arXiv preprint arXiv:2601.06586, 2026. 8
+     Zhilin Huang, Zheming Cai, Wentao Zhang, and Bin Cui.
+                                                                       [99] Ming Zhu, H. Chen, M. Huang, et al. Gendet: To-
+     Improving diffusion-based image synthesis with context
+                                                                            wards good generalizations for ai-generated image detec-
+     prediction. Advances in Neural Information Processing
+                                                                            tion. arXiv preprint arXiv:2312.08880, 2023. 6
+     Systems, 36:37636–37656, 2023. 3
+                                                                      [100] Ming Zhu, H. Chen, Q. Yan, et al. Genimage: A million-
+[86] Ling Yang, Zhilong Zhang, Yang Song, Shenda Hong, Run-
+                                                                            scale benchmark for detecting ai-generated image. Ad-
+     sheng Xu, Yue Zhao, Wentao Zhang, Bin Cui, and Ming-
+                                                                            vances in Neural Information Processing Systems, 36:
+     Hsuan Yang. Diffusion models: A comprehensive survey
+                                                                            77771–77782, 2023. 6
+     of methods and applications. ACM computing surveys, 56
+     (4):1–39, 2023. 2
+[87] Ling Yang, Zhaochen Yu, Chenlin Meng, Minkai Xu, Ste-
+     fano Ermon, and Bin Cui. Mastering text-to-image diffu-
+     sion: Recaptioning, planning, and generating with multi-
+     modal llms. In Forty-first International Conference on Ma-
+     chine Learning, 2024. 3
+[88] Ling Yang, Ye Tian, Bowen Li, Xinchen Zhang, Ke
+     Shen, Yunhai Tong, and Mengdi Wang. Mmada: Mul-
+     timodal large diffusion language models. arXiv preprint
+     arXiv:2505.15809, 2025. 2
+[89] Shukang Yin, Chaoyou Fu, Sirui Zhao, Ke Li, Xing Sun,
+     Tong Xu, and Enhong Chen. A survey on multimodal
+     large language models. National Science Review, 11(12):
+     nwae403, 2024. 2
+[90] Fisher Yu, Ari Seff, Yinda Zhang, Shuran Song, Thomas
+     Funkhouser, and Jianxiong Xiao. Lsun: Construction of a
+     large-scale image dataset using deep learning with humans
+     in the loop. arXiv preprint arXiv:1506.03365, 2015. 6
+[91] Mingyuan Zhang, Zhongang Cai, Liang Pan, Fangzhou
+     Hong, Xinying Guo, Lei Yang, and Ziwei Liu. Motiondif-
+
+
+
+
+                                                                 42975
+

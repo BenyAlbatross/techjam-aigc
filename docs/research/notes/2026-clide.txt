@@ -1,0 +1,784 @@
+                       This WACV paper is the Open Access version, provided by the Computer Vision Foundation.
+                                    Except for this watermark, it is identical to the accepted version;
+                              the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+    General and Domain-Specific Zero-shot Detection of Generated Images via
+                          Conditional Likelihood
+
+                      Roy Betser1,2 Omer Hofman2 Roman Vainshtein2 Guy Gilboa1
+                  1
+                      Technion - Israel Institute of Technology 2 Fujitsu Research of Europe
+                                                roy.betser@fujitsu.com
+
+
+
+                         Abstract                                             Full Embedding Space
+                                                                                                                              Real
+The rapid advancement of generative models, particularly
+diffusion-based methods, has significantly improved the re-
+alism of synthetic images. As new generative models contin-
+uously emerge, detecting generated images remains a crit-
+ical challenge. While fully supervised, and few-shot meth-                                                                 Generated
+
+ods have been proposed, maintaining an updated dataset is
+time-consuming and challenging. Consequently, zero-shot
+methods have gained increasing attention in recent years.
+We find that existing zero-shot methods often struggle to              Figure 1. Conditional likelihood illustration. Our adaptive im-
+adapt to specific image domains, such as artistic images,              age detection method. When conditioned by real images from a
+limiting their real-world applicability. In this work, we in-          specific domain (red dots), generated images become unlikely.
+troduce CLIDE, a novel zero-shot detection method based
+on conditional likelihood approximation. Our approach
+computes likelihoods conditioned on real images, enabling              on the quality and diversity of the training data, which in-
+adaptation across diverse image domains. We extensively                cludes both synthetic and real images [27]. However, as
+evaluate CLIDE, demonstrating SOTA performance on a                    novel generative models continue to emerge at a rapid pace,
+large-scale general dataset and significantly outperform               maintaining an updated synthetic training set becomes not
+existing methods in domain-specific cases. These results               only impractical but sometimes impossible. This is espe-
+demonstrate the robustness of our method and underscore                cially true in misinformation campaigns orchestrated by ac-
+the need of broad, domain-aware generalization for the                 tors who may develop or access entirely new generation
+AI-generated image detection task. Code is available at                techniques. This highlights the need for detection frame-
+https://tinyurl.com/clide-detector.                                    works that can adapt to unseen generative techniques with-
+                                                                       out relying on new data from every new model.
+                                                                           Zero-shot learning is well-suited for generated image de-
+1. Introduction                                                        tection as it eliminates the need for large training datasets,
+                                                                       prior knowledge of generative models, or continual mon-
+The rapid progression of generative methods, particularly              itoring of new techniques. In this context, as established
+diffusion models [25, 59], has made synthetic imagery re-              in [14, 21, 35, 65], zero-shot means distinguishing between
+markably realistic. These advancements boost creative and              real and generated images without any exposure to gener-
+practical applications. However, they also pose significant            ated content or task-specific training. While this line of
+risks in social media, journalism, and security, where ma-             work has enabled promising progress, existing zero-shot
+nipulated imagery can facilitate misinformation, imperson-             methods still exhibit limited robustness and sharp perfor-
+ation, and other forms of digital deception [60, 73]. Hence,           mance swings across generators [14].
+the development of reliable detection methods is crucial to                To meet real-world needs, we formalize domain-specific
+preserving public trust and ensuring digital integrity.                zero-shot detection: operate within a narrow target domain
+   Prior research on generated image detection includes                using only a set of real domain image, with no access to
+classification-based and semi-supervised approaches [5, 8,             generated samples and no task training (see Supp. Sec. I)
+19, 61]. The performance of these methods heavily depends              for task definition and discussion). This setting, analogous
+
+
+
+                                                                7809
+                   Real
+                   Generated
+
+
+
+
+           Low                                                                                                             High
+
+                                                              Log-likelihood
+
+Figure 2. General real and generated images. Real and generated images of general real-world imagery. A blurred real image is
+misclassified as generated. A realistic generated image of an elephant is misclassified as real. All other examples are correctly classified.
+
+
+to cross-task robustness in LLM-generated text detection                  2. Background and Related Work
+[80], reveals severe failures of existing image detectors on
+narrow domains. We introduce two practical benchmarks                     Generated image detection. Early work on detecting
+(damaged cars, invoices) and show that CLIDE sustains                     AI-generated images predominantly employed supervised
+high accuracy where prior methods degrade.                                methods, often training standard CNNs to distinguish real
+                                                                          and generated images [5, 8, 27, 74]. Subsequent studies re-
+    Our fundamental premise is that foundation models,                    fined these methods by focusing on key phenomenological
+trained on huge datasets of real images, capture well the                 cues to enhance separability [4, 17, 49, 71, 76, 85]. How-
+subtle attributes differentiating real images from generated              ever, they largely relied on comprehensive datasets from
+ones. However, accessing likelihood in such black-box                     known generative models, limiting their ability to manage
+models is a very complex task, and more broadly, comput-                  newly emerging generative techniques [54].
+ing likelihoods for images is a challenging task in computer                  To address the need for broader generalization, unsu-
+vision [28, 44]. Current computer vision models primarily                 pervised and semi-supervised techniques were explored
+rely on likelihood gradients or score functions, which con-               [19, 61, 83, 84], yet these methods required partial knowl-
+strain direct likelihood computation [37]. A recent study                 edge of the generative processes during training. Additional
+[7] proposed a simple method to estimate image likelihood                 works [20, 54, 69] leverage feature representations from
+based on Contrastive Language-Image Pre-training (CLIP)                   large pre-trained models to enhance performance in data-
+[62]. CLIP is a foundation model that is widely used across               limited settings. Still, some reliance on generated data or
+various computer vision tasks [19, 52]. We generalize this                familiarity with generative techniques persists.
+approach by introducing a conditional likelihood frame-                       Zero-shot detection strategies aim to identify generated
+work that enables domain adaptation and strengthens ro-                   images without prior exposure to any particular genera-
+bustness for zero-shot generated image detection.                         tive models or synthetic datasets. Existing zero-shot detec-
+Our main contributions are:                                               tion methods typically analyze an image’s robustness to a
+                                                                          specific transformation (e.g. denoising, compression), and
+1. We introduce a conditional likelihood approximation                    compare the original and transformed images to assess au-
+   model for images based on CLIP embeddings, and show                    thenticity. AEROBLADE [65] employs a pre-trained auto-
+   how the model can be validated through statistical tests.              encoder, using its reconstruction error as a detection cri-
+2. We propose CLIDE, a zero-shot generated image detec-                   terion, while RIGID [35] evaluates the similarity between
+   tion method applicable to both general images (Fig. 2)                 an image and its noise-perturbed counterpart. Other ap-
+   and domain-specific images (Fig. 1). CLIDE signifi-                    proaches explore alternative transformations: ZED [21] es-
+   cantly outperforms four state-of-the-art zero-shot detec-              timates pixel-wise probability distributions via lossless en-
+   tion baselines on a large-scale general image dataset.                 coding; Manifold-Bias [14] uses differential measures in the
+3. We demonstrate the domain adaptation capabilities of                   diffusion model’s probability space, this approach also gen-
+   CLIDE on three specific domains: artistic images, dam-                 eralizes to the memorization task [12, 13].
+   aged car images and invoice document images. Our                           While effective in a general setting, these approaches im-
+   method consistently maintains high performance, while                  plicitly rely on approximate probability functions that can
+   other methods experience a decrease in effectiveness in                be unstable and sensitive to variations in generative models.
+   domain-specific content.                                               Moreover, as shown in our experiments, their performance
+4. We present two new synthetic datasets of damaged cars                  degrades significantly in domain-specific scenarios, high-
+   (6K images) and invoice images (3K).                                   lighting a key shortcoming in generalization across real-
+
+
+
+                                                                   7810
+                                                                                                                         Sketch Images
+
+
+
+                        Painting
+                                                                                                                         Painting Images
+
+
+
+
+                                                     ℓ(𝒙|𝑿𝒑𝒂𝒊𝒏𝒕𝒊𝒏𝒈 )
+
+
+
+
+                                                                                                      Count
+
+
+
+
+                                                                                                                                                       Count
+                        Sketch
+
+
+
+
+                                                                            ℓ(𝒙|𝑿𝒔𝒌𝒆𝒕𝒄𝒉 )                                   ℓ(𝒙|𝑿𝒔𝒌𝒆𝒕𝒄𝒉 )                                                     ℓ(𝒙|𝑿𝒑𝒂𝒊𝒏𝒕𝒊𝒏𝒈 )
+                                                                               (a)                                             (b)                                                                (c)
+
+Figure 3. Conditional likelihood across domains. Despite semantic similarity, “sketch” and “painting” images from ImageNet-R yield
+separable distributions under our log-likelihood approximation. (a) 2D scatter plot of likelihoods conditioned on each domain. (b, c)
+Histograms show that each domain assigns higher likelihoods to its own images, with lower and more variable scores for the other.
+
+
+world image distributions. In contrast, our method explic-                                                              ues and  V  contains eigenvectors. The whitening matrix is
+itly models the distribution of real images and offers inher-                                                            W = \Lambda ^{-\frac {1}{2}} V^\top  . A vector  x  is whitened via  y = W \hat {x} , and
+ent flexibility to adapt across domains, resulting in a more                                                            the whitened matrix is  \mathbf {Y} = W \mathbf {\hat {X}} . The whitened vectors are
+robust and versatile zero-shot detection solution.                                                                      isotropic with zero mean and identity covariance.
+    Likelihood approximation for images. Estimating the                                                                        Likelihood Approximation: Prior work suggests
+likelihood of images is a fundamental problem with wide-                                                                CLIP’s image and text latent spaces are approximately
+ranging applications in computer vision [26, 32, 46, 72, 82].                                                           disjoint [45, 47], allowing each modality to be mod-
+The likelihood of an image refers to the probability density                                                            eled independently. When whitening statistics are esti-
+function that describes how probable a given image is un-                                                               mated on a broad real-image corpus (e.g., MS-COCO val),
+der a learned or assumed distribution of natural images. The                                                            the whitened CLIP embeddings have identity covariance
+early methods relied on assumptions about the smoothness                                                                by construction; empirical tests on MS-COCO (Ander-
+of natural images [30] and the statistical distribution of im-                                                          son–Darling [1], D’Agostino–Pearson [22]) further indicate
+age patches [88]. The advent of generative models, includ-                                                              that the whitened coordinates are approximately i.i.d. stan-
+ing GANs [31] and Diffusion Models [70], has significantly                                                              dard normal. The log-likelihood of a whitened vector  y  is:
+improved image synthesis by learning implicit representa-
+tions of the likelihood. However, these models do not pro-                                                                                    \ell (y) = -\frac {1}{2} \left ( d \log (2 \pi ) + |y|^2 \right ), \label {eq:isotropic_log_likelihood}    (1)
+vide direct access to the likelihood function itself. Recently,
+[7] proposed leveraging CLIP [62] to obtain a likelihood                                                                where  |y|^2 = y^\top y . Given an embedding  x , the whitened
+approximation through the whitening transform. Following                                                                vector  y = W \hat {x}  provides a direct likelihood approximation.
+this, we introduce a conditional likelihood approximation                                                                   Global likelihood gap. Contrastive training pulls se-
+and apply it to the task of generated image detection.                                                                  mantically similar images together and pushes dissimilar
+                                                                                                                        ones apart along directions in the embedding space [67].
+3. Conditional Likelihood Approximation                                                                                 The score in Eq. (1), however, depends only on the squared
+We follow [7], which introduced the use of whitened CLIP                                                                norm ∥W x̂∥2 , discarding directional information. As a re-
+(W-CLIP) for likelihood estimation. Here, we extend this                                                                sult, distinct domains that occupy different subspaces but
+general likelihood estimation framework to a conditional                                                                lie at comparable radii from the origin can appear similarly
+likelihood estimation.                                                                                                  likely under a global surrogate. This motivates condition-
+                                                                                                                        ing the covariance on domain evidence to assess domain-
+3.1. Global CLIP likelihood (recap)                                                                                     relevant directional structure.
+Notations: Let X = {x1 , . . . , xN } be N vectors in Rd ,
+and let X ∈ Rd×N P                              denote their column-stacked matrix,                                     3.2. Conditional likelihood
+                                                       N
+with mean µ = N1 i=1 xi . The centered vectors are                                                                      Building on the global likelihood model, we formulate
+x̂i = xi − µ, and let X̂ ∈ Rd×N be the column-stacked                                                                   a family of domain-conditional likelihoods by estimating
+matrix of centered vectors. The empirical covariance ma-                                                                whitening on domain-specific data and scoring within the
+trix is Σ = N1 X̂X̂⊤ .                                                                                                  domain’s dominant subspace. We also verify approximate
+    Whitening Transform: We compute a whitening ma-                                                                     normality on small (∼1K) domain sets, empirically justify-
+trix  W \in \mathbb {R}^{d \times d}  satisfying  W^\top W = \mathbf {\Sigma }^{-1}  . Using PCA, we                    ing the conditional likelihood estimation.
+diagonalize  \mathbf {\Sigma }  as  \mathbf {\Sigma } = V \Lambda V^\top  , where  \Lambda  contains eigenval-             Theory. Let the global likelihood follow Eq. (1), and
+
+
+
+                                                                                                                 7811
+                                Representative Set                                                       Subset of
+                                  of Real Images                                                      Similar Images
+                                                                                                                                                                                Whitening                   Likelihood
+                                                                                                                                                                                 Matrix                        Score Threshold
+                                                                                  CLIP                                                    Dim                       Whitening                 Likelihood
+                                                                                Similarity                                              Reduction                   Transform               Approximation             Decision
+
+                            Input
+                            Image
+                                                                                                                                                                                                     Denoising Real Generated
+
+Figure 4. Method flowchart. The input image is embedded using CLIP, followed by a selection of a subset k of similar image embeddings
+from the representative set (X). A whitening matrix (W ), with reduced dimensions (m), is computed using this subset (Xk ). The whitening
+matrix is then applied to calculate a likelihood score (Eq. (2)). The final decision is determined based on an empirical threshold.
+
+
+let y(j) denote the j-th coordinate of a whitened vector                                                                                                            Consequently, restricting the whitened space to a lower-
+y\in \mathbb {R}^d . Conditioning on a linear constraint (e.g., y(j)=c)                                                                                             dimensional subspace (top-m components) is essential.
+reduces the effective dimension by one and yields a stan-                                                                                                           Conditional vs. global. Whereas W-CLIP estimates a sin-
+dard normal on a d-1 dimensional subspace; more gener-                                                                                                              gle global surrogate on a broad real-image corpus, our for-
+ally, conditioning on l independent constraints restricts the                                                                                                       mulation provides a family of domain-conditional likeli-
+support to a (d−l)-dimensional subspace with standard nor-                                                                                                          hoods by using data limited to a specific domain. This shift
+mal coordinates on that subspace. In practice, domain evi-                                                                                                          is conceptually distinct and empirically necessary to avoid
+dence induces low variance along some directions; estimat-                                                                                                          global-surrogate failure modes, and it directly enables our
+ing the covariance on domain-specific data and restricting to                                                                                                       zero-shot detector (Sec. 4). Statistical checks (Supp. Sec B)
+the top-m eigenvectors (with m ≤ d) recovers an isotropic                                                                                                           and a side-by-side comparison of global vs. conditional
+model on the domain’s dominant subspace.                                                                                                                            models and performance are provided in Supp. Sec J.
+   Domain taxonomy. Each image can belong to multi-
+ple, possibly overlapping domains, i.e., sets of images shar-                                                                                                       4. Method: CLIDE
+ing characteristics (e.g., an image of a yellow bus in a city
+belongs to real-world, transportation, color, and urban do-                                                                                                         We introduce CLIDE (Conditional Lkelihood generated
+mains).                                                                                                                                                             Image DEtector), a zero-shot generated image detection
+   Model. Given a domain D occupies an (unknown) sub-                                                                                                               method based on the proposed conditional likelihood ap-
+space of m = d − l dominant dimensions, with the remain-                                                                                                            proximation, conditioning on real images to distinguish
+ing l directions exhibiting low variance. Given domain evi-                                                                                                         generated content. An overview is given in Fig. 4 and in
+dence X = {xi } ⊂ D, we compute the conditional whiten-                                                                                                             the high-level Algorithm 1. A detailed algorithm is in Supp.
+ing matrix W (X, m) ∈ Rm×d using the top-m eigenvec-                                                                                                                Sec. A. In the following, we outline the key components of
+tors. The conditional log-likelihood is then:                                                                                                                       our approach.
+
+                                                                                                                                                                    Algorithm 1 CLIDE - high level
+    \ell (x \mid X,m) \;=\; -\tfrac {1}{2}\!\left (m\log (2\pi )\;+\;\big \|\,W(X,m)\,\hat {x}\,\big \|^2\right ). \label {eq:conditioned_log_likelihood}           Inputs: I (input image), X (reference set), k (neighbors),
+                                                                                                                                                       (2)              m (components), th (threshold)
+                                                                                                                                                                    Outputs: Likelihood score ℓ(I | X, k, m), label C
+      Empirical validation. A necessary precondition for
+                                                                                                                                                                     1: Step 1: Embed the input image to obtain x, and com-
+conditional likelihood is that, after whitening on domain-
+                                                                                                                                                                        pute cosine similarities with the embeddings in X d×N .
+specific evidence, coordinates are approximately Gaussian
+                                                                                                                                                                     2: Step 2: Select the top-k most similar embeddings - Xk .
+on the domain’s dominant subspace. We validate this
+                                                                                                                                                                     3: Step 3: Compute mean vector µ(Xk ) and whitening
+on small (∼1K) ImageNet-R [36] domains (sketch, paint-
+                                                                                                                                                                        matrix W (Xk , m) using top-m eigenvectors.
+ing): normality tests on whitened coordinates pass clearly
+                                                                                                                                                                     4: Step 4: Compute likelihood ℓ(I | X, k, m) and com-
+(Supp. Sec. B), and cross-domain (e.g., Wsketch applied to
+                                                                                                                                                                        pare to threshold th to assign label C.
+painting and vice versa) preserves acceptable Gaussianity
+while inducing systematic likelihood shifts. As shown in
+Fig. 3, the 2D scatter and 1D histograms exhibit clear cross-                                                                                                       Motivation. CLIP embeddings encode semantic informa-
+domain separation, demonstrating robust distributional dis-                                                                                                         tion [62], which can bias likelihood estimates. For example,
+tinctions even between semantically similar images. As                                                                                                              zebras tend to have higher likelihoods than plates of food,
+shown in Supp. Sec. B, Fig. 3b, retaining all d dimen-                                                                                                              making a generated zebra potentially more likely than a real
+sions yields substantial inter-coordinate correlations, vio-                                                                                                        plate (Supp. Sec. C, Fig. 4). CLIP also captures domain-
+lating the isotropic/i.i.d. assumption underlying Eq. (2).                                                                                                          specific traits, as shown in Fig. 3, where conditioning shifts
+
+
+
+                                                                                                                                                             7812
+                        AEROBLADE [65]                     RIGID [35]                     ZED [21]                    Manifold Bias [14]                  CLIDE (ours)
+ Generative Model
+                     AUC ↑   AP ↑   F1 ↑   Acc ↑   AUC ↑   AP ↑   F1 ↑   Acc ↑   AUC ↑   AP ↑   F1 ↑   Acc ↑   AUC ↑     AP ↑    F1 ↑   Acc ↑     AUC ↑    AP ↑   F1 ↑   Acc ↑
+ ProGan [40]         0.54    0.49   0.65   0.54    0.45    0.46   0.16   0.48    0.74    0.75    0.7   0.64    0.96       0.97   0.88      0.88   0.95     0.96   0.87   0.88
+ StyleGan [41]       0.58    0.59   0.63   0.51    0.71    0.72   0.56   0.65    0.75    0.77   0.71   0.65    0.68       0.74   0.61      0.68   0.76     0.71   0.75   0.73
+ StyleGan2 [42]      0.74    0.76   0.68   0.61    0.52    0.54   0.31   0.53    0.75    0.8    0.68   0.61    0.62       0.66   0.48       0.6    0.8     0.82   0.73   0.68
+ BigGAN [10]         0.65    0.61   0.68    0.6    0.62    0.63   0.42   0.57    0.45    0.47   0.63    0.5     0.9        0.9   0.8       0.81   0.96     0.96   0.87   0.88
+ GauGan [57]         0.7     0.71   0.68    0.6    0.32    0.39    0.1   0.45    0.33    0.41    0.6   0.44    0.98       0.98   0.91       0.9   0.83     0.85   0.76   0.73
+ CycleGan [86]       0.76    0.73   0.73   0.69    0.34    0.39   0.05   0.43    0.22    0.38    0.6   0.43    0.97       0.97   0.89       0.9   0.98     0.98    0.9   0.91
+ CRN [18]            0.34    0.51   0.48   0.59    0.25    0.36   0.01   0.42    0.99    0.99   0.92   0.92    0.93        0.9   0.88      0.88   0.98     0.99   0.91   0.92
+ SD V1.4 [66]        0.47    0.47   0.63   0.51    0.79    0.77   0.63   0.69    0.62    0.65   0.65   0.54    0.71       0.62   0.4       0.57    0.9     0.91   0.82   0.82
+ SD V1.5 [66]        0.49    0.49   0.64   0.52    0.77    0.76   0.63   0.68    0.61    0.63   0.65   0.54    0.72       0.64   0.44      0.58    0.9     0.91   0.83   0.82
+ Guided DM [25]      0.55    0.49   0.66   0.57    0.51    0.51   0.25   0.5     0.58    0.55   0.68   0.59     0.8        0.8   0.66       0.7   0.87     0.87   0.79   0.78
+ LDM 100 [66]        0.48    0.48   0.62   0.48    0.51    0.51   0.25   0.5     0.52    0.56   0.63   0.49    0.84       0.88   0.78      0.79   0.92     0.93   0.84   0.85
+ LDM 200 [66]        0.47    0.48   0.62   0.48    0.51    0.51   0.25   0.5     0.53    0.56   0.63    0.5    0.85       0.88   0.79       0.8   0.92     0.93   0.85   0.85
+ Glide 50 27 [53]    0.06    0.32   0.59   0.42    0.51    0.51   0.25   0.5     0.98    0.98   0.91   0.92    0.93       0.94   0.86      0.86   0.91     0.92   0.84   0.84
+ Glide 100 27 [53]   0.08    0.32   0.6    0.43    0.51    0.51   0.25   0.5     0.98    0.98   0.91   0.92    0.92       0.93   0.84      0.84   0.91     0.92   0.83   0.83
+ Glide 100 10 [53]   0.04    0.31   0.59   0.42    0.51    0.51   0.25   0.5     0.98    0.98   0.92   0.92    0.93       0.93   0.85      0.85   0.91     0.92   0.83   0.83
+ ADM [25]            0.45    0.43   0.65   0.56    0.56    0.57   0.39   0.56    0.47    0.46   0.65   0.55    0.62       0.57   0.32      0.53   0.89     0.88   0.84   0.84
+ DALL·E 3 [6]        0.35    0.41   0.61   0.45    0.51    0.51   0.25   0.5     0.45    0.5    0.62   0.47    0.82       0.84   0.71      0.74   0.96     0.96   0.88   0.89
+ Midjourney [50]     0.29    0.37   0.6    0.43    0.65    0.66   0.48   0.6     0.92    0.93   0.84   0.84    0.56       0.53   0.27      0.51    0.9     0.84   0.85   0.85
+ VDQM [33]           0.51    0.47   0.66   0.57    0.53    0.54   0.32   0.53    0.46    0.46   0.63   0.49    0.83       0.83   0.7       0.73   0.92     0.93   0.84   0.84
+ Wukong [51]         0.48    0.47   0.62   0.49    0.63     0.6   0.37   0.55    0.39    0.45    0.6   0.44    0.73       0.69   0.5       0.62   0.95     0.96   0.88   0.88
+ All                 0.52    0.48   0.64   0.53    0.51    0.53   0.28   0.52    0.69    0.66   0.69   0.62    0.85       0.88   0.76      0.78   0.91     0.91   0.84   0.84
+
+
+Table 1. Evaluation of detection on general images. Our method achieves the highest overall performance across all models combined
+and outperforms competing methods on most generative models. The best result for each metric in each row is highlighted in bold.
+
+
+the distribution of similar images (e.g. birds on branches)                              • Real image likelihood. First method utilizing a likeli-
+across domains. To improve detection, we aim to minimize                                   hood estimation for the generated image detection task.
+semantic bias while enhancing domain-specific separation.                                • Domain adaptability. Using sample images for the con-
+Whitening Data Selection. Distinguishing real from high-                                   ditional likelihood enables a domain-adaptive approach.
+quality generated images is subtle. We address this with                                 • Explicit probabilistic computation. Other methods im-
+adaptive whitening. Given a set  X  of real images, we se-                                 plicitly try to find a probabilistic differentiation between
+lect the  k  most similar images to the input based on cosine                              real and generated images. Our method explicitly com-
+similarity of CLIP embeddings. The whitening matrix is                                     putes the probabilities, yielding a stable distinction.
+computed using this subset,  W(X_k, m) , enabling the con-
+ditioned likelihood to adapt to the local semantic subspace.                             5. Evaluation
+Dimensionality Reduction. Conditioned likelihood oper-                                   We evaluate in two setups. First, a general setting using
+ates in a subspace of the embedding space (Sec. 3.2), de-                                a diverse image benchmark to assess detection ability and
+fined by the selected samples for whitening. Additionally,                               compare against leading zero-shot methods. Second, we in-
+when using a small number of samples for whitening, some                                 troduce a domain-specific detection task that targets three
+eigenvalues approach zero, causing instability. Dimension-                               concrete domains-artistic images, damaged cars, and in-
+ality reduction mitigates these issues and enhances both per-                            voice documents. Both real and generated content come
+formance and efficiency (Supp. Sect. B, E, Figs. 3, 6).                                  from a narrow distribution. This setting is underexplored
+Domain-adaptation. Our method can target a specific do-                                  yet practically critical (e.g., fraud detection). Across these
+main and distinguish real from generated content within it.                              domains, all existing zero-shot detectors degrade sharply
+As in general domain adaptation methods, a small set of im-                              (often with AUC < 0.6 and flipped decisions; see Tabs. 2
+ages from the target domain is needed to support detection.                              and Fig. 5), whereas our conditional likelihood maintains
+This set serves as the representative set  X  for conditional                            high accuracy (AUC ≳ 0.9). We additionally provide
+likelihood estimation. In Sec. 5.3, we examine the method’s                              the first synthetic benchmarks for damaged cars and in-
+robustness to different choices of  X , showing many real-                               voices. This dual evaluation highlights both standard zero-
+world datasets yield similar results in the general case. For                            shot performance and, crucially, CLIDE’s unique strength
+domain specific detection, target samples must be included                               in domain-adaptive detection.
+in  X , but do not need to dominate it; mixed domain sets still                             Implementation Details. We set  k = 500  and  m = 400 
+support high detection performance across domains.                                       (real samples for whitening and dimensions) across all do-
+    By integrating these steps into the computation of the                               mains (see Sec. 5.3 for details). We use the CLIP ViT-L/14
+likelihood score, we can directly utilize it as a differen-                              model [62]. Our full code is provided in the Supplemen-
+tiation criterion between real and generated images. Our                                 tary Material. For AEROBLADE and Manifold Bias, we
+method has unique characteristics distinguishing it com-                                 use official implementations. As no official code exists for
+pared to existing zero-shot detection methods:                                           RIGID and ZED, we self-implement them. For RIGID, we
+
+
+
+                                                                                 7813
+                                AEROBLADE [65]                     RIGID [35]                          ZED [21]                      Manifold Bias [14]                  CLIDE (ours)
+ Generative Model
+                             AUC ↑   AP ↑   F1 ↑   Acc ↑   AUC ↑   AP ↑    F1 ↑       Acc ↑   AUC ↑   AP ↑     F1 ↑   Acc ↑   AUC ↑     AP ↑    F1 ↑   Acc ↑     AUC ↑    AP ↑   F1 ↑   Acc ↑
+                                                                                       Artistic Image Domain
+ StyleGan3 [43]              0.81    0.84   0.72   0.69    0.32    0.39     0.06      0.46    0.38    0.41     0.63   0.5     0.96       0.96    0.9       0.9   0.98     0.99   0.93   0.93
+ SD2.1 [66]                  0.57    0.6    0.61   0.48    0.77    0.75     0.52      0.64    0.17    0.34     0.61   0.44    0.91       0.9    0.83      0.84   0.98     0.98   0.92   0.93
+ SDXL [59]                   0.62    0.69    0.6   0.46    0.64     0.6      0.3      0.54    0.33    0.43     0.61   0.44    0.83       0.81   0.71      0.75   0.97     0.98   0.91   0.91
+ AnimagineXL [48]            0.66    0.75    0.6   0.47    0.39    0.42     0.08      0.46    0.45    0.59     0.61   0.44    0.28       0.37   0.02      0.44   0.76     0.83   0.66   0.55
+ All                         0.65    0.7    0.62   0.52    0.53    0.55     0.26      0.53    0.33    0.41     0.61   0.45    0.74       0.8    0.69      0.73   0.92     0.92   0.83   0.82
+                                                                                   Damaged cars Image Domain
+ Kandinsky2.1 [64]           0.29    0.38    0.6   0.43    0.3     0.38     0.06      0.44    0.68    0.66     0.68   0.61     0.6       0.64   0.48      0.61   0.97     0.98   0.93   0.93
+ SDXL [59]                   0.34    0.4    0.61   0.45    0.3     0.38     0.06      0.44    0.83    0.85     0.76   0.73    0.32       0.42   0.15      0.49   0.97     0.97   0.91   0.91
+ DALL·E 3 [6]                0.39    0.45    0.6   0.44    0.4     0.42     0.11      0.42    0.15    0.33     0.59   0.42    0.14       0.33   0.03      0.44   0.99     0.99   0.93   0.93
+ Midjourney [50]             0.46    0.47   0.62   0.47    0.51     0.5     0.23       0.5    0.78    0.75     0.74   0.71     0.4       0.44   0.13      0.48   0.93     0.94   0.87   0.86
+ UnCLIP [63]                 0.22    0.35    0.6   0.43    0.69    0.67     0.46       0.6    0.31    0.38     0.61   0.46    0.69       0.68   0.48      0.61   0.8       0.8   0.72   0.67
+ All                         0.33    0.4    0.61   0.44    0.45    0.48     0.21      0.49    0.61    0.54     0.68   0.61    0.47       0.53   0.3       0.53   0.92     0.92   0.85   0.84
+                                                                                       Invoice Image Domain
+ GPT-Image-1 [55]            0.53    0.62   0.56   0.47    0.57    0.67     0.12      0.53     0.6    0.56     0.65   0.54    0.61       0.58   0.55      0.62   0.91     0.92   0.82   0.82
+
+
+Table 2. Detection performance on domain-specific images. Our method consistently maintains high performance, while others show
+significant drops. It outperforms all baselines across all three domains - both per model and when tested on all models combined - using a
+single model for the invoice domain due to the lack of other high-quality sources. Best results per row are in bold.
+
+
+use the DINO model [16]; for ZED, we apply the lossless                                               commercial tools. A full list of the 20 generative models is
+compression method SReC [15]. ZED proposes four crite-                                                provided in Tab. 1. We use the real images from [54, 74],
+ria; we report the best-performing one in the general image                                           originally sourced from LAION [68]. As there are only
+domain ( D_0  ). Results for the other criteria are provided in                                       50K real images from LAION, we sample an additional
+Supp. Sec. H, Tabs. 2 and 3.                                                                          50K from the MS-COCO training set to form the 100K real
+    Metrics. We evaluate each detection method using four                                             subset used in the ”all” row of Tab. 1, totaling 200K im-
+metrics. To measure the separation between real and gener-                                            ages for evaluation. Each generative model contributes at
+ated image distributions, we use two standard metrics: Area                                           least 1K generated samples, which are evaluated against
+Under the Curve (AUC) and Average Precision (AP). Clas-                                               an equal number of randomly selected real images from
+sification performance is further assessed using F1 score                                             LAION, consistently applied across all detection methods.
+and accuracy. The binary classification threshold is set for                                          Following [7], we use 5K MS-COCO validation images for
+all methods as  th = \text {mean}(C_{th}) + \text {std}(C_{th}) , where  C_{th}  are                  threshold calibration for all methods, and as the representa-
+the criterion values of a set of real images.                                                         tive set for our method. An ablation appears in Sec. 5.3.
+                                                                                                          Results. The last row in Tab. 1 shows that our method
+                                                                          Real
+                                                                          Generated
+                                                                                                      outperforms all other zero-shot detection approaches. Our
+                                                                                                      method also achieves the best results per generative model
+                     Count
+
+
+
+
+   DALL·E 3
+    Images                                                                                            in most cases. While ZED or Manifold Bias surpass our ap-
+                                                                                                      proach for certain models, our results remain competitive.
+                                                                                                      Notably, our proposed method consistently yields high per-
+  Kandinsky2.1                                                                                        formance across all models, with AUC dropping below 0.8
+                     Count
+
+
+
+
+    Images                                                                                            only for StyleGAN (0.76). In contrast, all other detection
+                                                                                                      methods exhibit AUC values below 0.6 for certain genera-
+                     (a) ZED Criterion (b) M-B Criterion (c) Our Criterion
+                                                                                                      tive models. We recall that an AUC below 0.5 indicates a
+                                                                                                      complete failure for binary classification, where generated
+Figure 5. Inconsistent separation direction - “flipped classifica-                                    images are more likely to be classified as real ones. We refer
+tion”. ZED (a) and Manifold Bias (b) show inconsistent behavior                                       to this phenomenon as “flipped classification” and illustrate
+across generative models, with real and generated scores flipping.                                    it in Fig. 5. Since detection methods aim to maintain ro-
+Our method (c) yields consistent results, assigning higher likeli-                                    bustness across multiple models, this presents a significant
+hoods to real images. Example from the damaged cars domain.                                           limitation.
+
+5.1. General image detection                                                                          5.2. Domain specific detection
+Dataset. In the general image domain, we follow [14] and                                              While our method performs well in general image detec-
+combine three large-scale datasets [54, 74, 87], containing                                           tion, its key advantage is adaptability to new domains. To
+100K generated images from GANs, diffusion models, and                                                demonstrate this, we evaluate all methods across three spe-
+
+
+
+                                                                                              7814
+                              Artistic Images                                      Damaged Car Images                         Invoice Images
+
+
+
+
+                Real   StyleGan    SD2.1        SDXL   AnimaXL   Real   Midjourney DALL·E 3    KD 2.1   SDXL      UnCLIP     Real    GPT-Image
+                (a)       (b)       (c)          (d)     (e)      (f)       (g)      (h)        (i)      (j)        (k)       (l)       (m)
+
+
+
+Figure 6. Example images. Examples of real images (a [2, 79], f [75], m [78]) and images generated using different generative models
+from different domains. Artistic generated images (b-e) are taken from [9] and all other generated images are generated by us.
+
+
+cific domains. Existing approaches can only use domain-                         enhance realism and detection difficulty. Additional dataset
+specific data for threshold calibration, whereas our method                     details and samples are in Supp. Sec. F.1; the full dataset
+also leverages it for likelihood estimation. In each domain,                    will be released upon acceptance. Our method maintains
+we assume access to 1K real images (separate from the test                      high performance in this domain, comparable to results in
+set), used by all methods for calibration. Our method also                      general and artistic domains, while other methods degrade
+uses them as the representative set.                                            (see Tab. 2). A key issue is flipped classification (Fig. 5),
+    Artistic image domain. The generation of images in                          where ZED and Manifold Bias often misclassify generated
+specific artistic styles is a well-studied area in image synthe-                images as real. In contrast, our method remains stable, con-
+sis and style transfer [11, 29, 39, 77]. Given the diversity of                 sistently achieving AUC scores above 0.5 across all models.
+artistic styles across different artists, this is a broad and var-              While ZED performs well on some models, its overall zero-
+ied domain of images. We use images from ImagiNet [9], a                        shot reliability is limited by this failure mode.
+real and generated artistic image dataset. Synthetic images
+                                                                                  Rep. Set Composition         LAION       MS-COCO       Flickr   Combined
+are generated using four different generative models (see
+Tab. 2). Examples of real and generated images are shown                          MS-COCO                       0.92         0.92          0.89     0.91
+                                                                                  LAION                         0.9          0.86          0.85     0.87
+in Fig. 6. Detection results for all methods are summa-                           Flickr8k                      0.89         0.88          0.95      0.9
+rized in Tab. 2. In this domain, AnimaginXL [48] presents                         ImageNet                      0.73         0.75          0.77     0.75
+the most challenging generative model, as it is specifically                      MS-COCO + Flickr8k            0.91         0.92          0.93     0.93
+                                                                                  LAION + ImageNet              0.86         0.82          0.83     0.83
+fine-tuned for generating images in a distinct artistic style
+                                                                                  All Sources Combined          0.92         0.92          0.92     0.91
+(Anime). Our method outperforms all detection approaches
+across all generative models and in the combined evaluation                     Table 3. Real data sources. AUC values. Different representative
+(“all”). Furthermore, unlike competing methods, our per-                        set sources and test set sources of real images.
+formance remains consistent with the general image case
+(Tab. 1), whereas the strongest competitors in the general                      Invoice image domain Invoice images form a critical
+image domain ([21], [14]) exhibit a decline in performance.                     domain, particularly relevant to financial institutions, e-
+Damaged car image domain. Damaged car images form                               commerce platforms, and document verification systems.
+a niche but highly practical domain, relevant to insur-                         While prior work has focused on information extraction and
+ance, rental, and second-hand vehicle markets [75]. Prior                       document classification [3, 24, 81], little attention has been
+work has focused on damage detection and classification                         given to the detection of synthetically generated invoices.
+[34, 56, 58], but progress has been hindered by the lack                        Existing datasets typically contain only real invoices, with
+of public benchmarks, with early studies relying on private                     no public benchmark for synthetic invoice detection. The
+datasets. CarDD [75] addressed this by releasing 4K real                        generation of high-quality, text-rich invoice images was not
+damaged car images; We use the training set (2,816 images)                      feasible until the recent release of the GPT-Image-1 model
+for evaluation and sample 1K calibration images from the                        [55], which enables the creation of visually and semanti-
+validation and test splits. As no synthetic dataset exists for                  cally realistic document images. For this study, we use real
+this domain, we generate the first publicly available set of                    invoices from [78], selecting 3K images for evaluation and
+synthetic damaged car images (see Fig. 6). The data is pro-                     another 1K for calibration. Synthetic images are generated
+duced using two diffusion models, two commercial tools,                         using GPT-Image-1, each conditioned on a corresponding
+and UnCLIP [63], which is conditioned on real images to                         test image with slight random variations in elements such
+
+
+
+                                                                         7815
+as price, product name, or date. We rely exclusively on                      We analyze the effect of the number of whitening dimen-
+GPT-Image-1, as it is currently the only model capable of                    sions (m) and samples (k), finding optimal values around
+producing high-quality document images for this task (see                    m = 300-400 and k = m + 100. We also compare global
+examples with other models in Supp. Sec. F.2, Fig. 14). Ex-                  and per-image (local) whitening matrices, finding that lo-
+amples of real and generated invoices are shown in Fig. 6,                   cal sampling yields slightly better performance, while the
+and additional details are provided in Supp. Sec. F.2. Our                   global setting offers improved efficiency with minimal loss.
+method demonstrates high detection performance in this do-                   Overall, the method is robust to parameter selection, results
+main, while other methods suffer significant performance                     are shown in Supp. Sec. E, Figs. 6–8.
+drops (see Tab. 2). These results highlight the importance                      Robustness to image perturbations. We assess the ro-
+of domain adaptability and the limitations of existing zero-                 bustness of our method under common image degradations,
+shot detection methods in complex domains.                                   including JPEG compression, Gaussian blur, random resiz-
+                                                                             ing and cropping, noise injection, and color jittering. Per-
+5.3. Robustness and efficiency analysis
+                                                                             turbations are applied only to inference images, with the
+Representative set. We study the impact of the representa-                   representative set kept unchanged, isolating robustness to
+tive set’s composition in both settings: general and domain-                 input variation. Results (Supp. Sec. E.2, Figs. 9–11)
+specific image detection.                                                    show that our method maintains high accuracy (AUC >0.8)
+    General detection. We evaluate four real-world im-                       across all perturbations. Only under extreme distortions -
+age sources as representative sets: MS-COCO (5K im-                          such as noise with std = 0.5 or JPEG quality = 1% - does
+ages), LAION (10K, from [74]), Flickr8k [38] (8K), Im-                       performance drop below 0.8 AUC.
+ageNet [23] (50K), and their combinations. Evaluation is                        Efficiency Analysis. Our method operates efficiently,
+performed on four fixed test sets from different sources,                    achieving inference speeds comparable to ZED (0.25 sec-
+each containing 10K real and 10K generated images (ex-                       onds per image), while other methods, particularly AER-
+cept Flickr, with 3K each). As shown in Tab. 3, our method                   OBLADE, exhibit significantly higher latency (>4 seconds
+consistently achieves high AUC across all sources, except                    per image; see Supp. Sec. G, Tab. 4). In terms of memory
+for ImageNet (0.73), likely due to its object-centric nature.                consumption, our approach requires less RAM and GPU
+    Domain-specific detection. We evaluate three domains                     memory than most alternatives. A detailed analysis is pro-
+(Cars, Art, Invoices), using 2K real and 2K generated im-                    vided in Supp. Sec. G. Overall, our method is lightweight
+ages per domain, along with the general domain (10K each).                   and practical, making it well-suited for zero-shot detection.
+We compare three representative set types: general-only,
+domain-only (1K images), and combined. As shown in                           6. Conclusion
+Tab. 4, general-only sets yield lower AUC scores on spe-
+cific domains, while adding just 1K domain-specific sam-                     We introduced a novel conditional likelihood approach for
+ples raises AUC to 0.91–0.94. Combining general and                          zero-shot detection of generated images, leveraging CLIP
+domain-specific sources further improves robustness across                   embeddings and a whitening-based likelihood approxima-
+domains. Notably, multi-domain representative sets achieve                   tion conditioned on real images. Unlike existing methods,
+AUC > 0.9 for all domains and maintain strong general-                       our approach naturally adapts to domain-specific scenarios,
+domain performance. These results demonstrate that our                       where others often underperform. Through extensive exper-
+method is robust to representative set composition and                       iments on a large-scale dataset of over 200K real and gener-
+adapts well to new domains with minimal supervision.                         ated images, we showed that our method outperforms prior
+                                                                             zero-shot techniques in the general detection task. We fur-
+ Rep. Set Composition   General   Damaged Cars   Artistic   Invoice          ther validated its adaptability on three challenging domains:
+ General only            0.92         0.56        0.77       0.34            artistic images, damaged car images and invoice images.
+ Cars Only               0.53         0.93        0.57        0.8                To support domain-specific evaluation, we presented two
+ Art Only                0.82         0.55        0.94       0.27
+ Invoice Only            0.55         0.69         0.6       0.91
+                                                                             new synthetic datasets: over 6K damaged car images gen-
+ General + Cars           0.9         0.93        0.62        0.8            erated using five different models, and 3K invoice images
+ General + Invoice       0.92         0.56        0.79       0.91            generated using a single high-quality model. Our method is
+ Cars + Art + Invoice     0.8         0.93        0.95       0.91
+ All Domains Combined     0.9         0.93        0.93       0.91
+                                                                             also efficient and lightweight, achieving fast inference and
+                                                                             low memory usage. It is robust to input perturbations, pa-
+Table 4. Representative set domain combinations. AUC                         rameter choices, and representative set variations. These
+scores. Adding domain-specific samples improves in-domain per-               findings highlight the promise of likelihood-based zero-shot
+formance; combined sets perform well across all domains.                     detection and suggest that conditional likelihood estimation
+                                                                             may serve as a foundation for broader tasks in computer
+   Parameter Ablation study. We conduct ablation stud-                       vision such as out-of-distribution detection, and domain-
+ies to evaluate the impact of the parameters in our method.                  adaptive representation learning.
+
+
+
+                                                                      7816
+Acknowledgements                                                              [13] Jonathan Brokman, Amit Giloni, Omer Hofman, Roman
+                                                                                   Vainshtein, Hisashi Kojima, and Guy Gilboa. Identifying
+We would like to acknowledge support by the Israel Sci-                            memorization of diffusion models through p-laplace anal-
+ence Foundation (Grant 1472/23) and by the Ministry of                             ysis. In International Conference on Scale Space and
+Innovation, Science and Technology (Grants No. 5074/22,                            Variational Methods in Computer Vision, pages 295–307.
+8801/25). We thank Shani Weiss for her assistance with                             Springer, 2025. 2
+generating the synthetic datasets.                                            [14] Jonathan Brokman, Amit Giloni, Omer Hofman, Roman
+                                                                                   Vainshtein, Hisashi Kojima, and Guy Gilboa. Manifold in-
+References                                                                         duced biases for zero-shot and few-shot detection of gener-
+                                                                                   ated images. In International Conference on Learning Rep-
+ [1] Theodore W Anderson and Donald A Darling. A test of                           resentations, 2025. 1, 2, 5, 6, 7
+     goodness of fit. Journal of the American statistical asso-               [15] Sheng Cao, Chao-Yuan Wu, , and Philipp Krähenbühl. Loss-
+     ciation, 49(268):765–769, 1954. 3                                             less image compression through super-resolution. arXiv
+ [2] Anonymous, Danbooru community, and Gwern Branwen.                             preprint arXiv:2004.02872, 2020. 6
+     Danbooru2021: A large-scale crowdsourced and tagged                      [16] Mathilde Caron, Hugo Touvron, Ishan Misra, Hervé Jégou,
+     anime illustration dataset. https : / / gwern . net /                         Julien Mairal, Piotr Bojanowski, and Armand Joulin. Emerg-
+     danbooru2021, 2022. 7                                                         ing properties in self-supervised vision transformers. In
+ [3] Srikar Appalaraju, Bhavan Jasani, Bhargava Urala Kota,                        Proceedings of the IEEE/CVF International Conference on
+     Yusheng Xie, and R Manmatha. Docformer: End-to-end                            Computer Vision (ICCV), pages 9650–9660, 2021. 6
+     transformer for document understanding. In Proceedings of                [17] Jiaxuan Chen, Jieteng Yao, and Li Niu. A single simple
+     the IEEE/CVF international conference on computer vision,                     patch is all you need for ai-generated image detection. arXiv
+     pages 993–1003, 2021. 7                                                       preprint arXiv:2402.01123, 2024. 2
+ [4] Quentin Bammey. Synthbuster: Towards detection of diffu-                 [18] Qifeng Chen and Vladlen Koltun. Photographic image syn-
+     sion model generated images. IEEE Open Journal of Signal                      thesis with cascaded refinement networks. In Proceedings of
+     Processing, 2023. 2                                                           the IEEE international conference on computer vision, pages
+ [5] Samah S Baraheem and Tam V Nguyen. Ai vs. ai: Can ai                          1511–1520, 2017. 5
+     detect ai-generated images? Journal of Imaging, 9(10):199,               [19] Dario Cioni, Christos Tzelepis, Lorenzo Seidenari, and
+     2023. 1, 2                                                                    Ioannis Patras. Are clip features all you need for uni-
+ [6] James Betker, Gabriel Goh, Li Jing, Tim Brooks, Jianfeng                      versal synthetic image origin attribution? arXiv preprint
+     Wang, Linjie Li, Long Ouyang, Juntang Zhuang, Joyce                           arXiv:2408.09153, 2024. 1, 2
+     Lee, Yufei Guo, et al. Improving image generation with                   [20] Davide Cozzolino, Giovanni Poggi, Riccardo Corvi,
+     better captions. Computer Science. https://cdn. openai.                       Matthias Nießner, and Luisa Verdoliva. Raising the bar of
+     com/papers/dall-e-3. pdf, 2(3):8, 2023. 5, 6                                  ai-generated image detection with clip. In Proceedings of
+ [7] Roy Betser, Meir Yossef Levi, and Guy Gilboa. Whitened                        the IEEE/CVF Conference on Computer Vision and Pattern
+     clip as a likelihood surrogate of images and captions. In In-                 Recognition, pages 4356–4366, 2024. 2
+     ternational Conference on Machine Learning. PMLR, 2025.                  [21] Davide Cozzolino, Giovanni Poggi, Matthias Nießner, and
+     2, 3, 6                                                                       Luisa Verdoliva. Zero-shot detection of ai-generated images.
+ [8] Jordan J Bird and Ahmad Lotfi. Cifake: Image classifica-                      In European Conference on Computer Vision, pages 54–72.
+     tion and explainable identification of ai-generated synthetic                 Springer, 2024. 1, 2, 5, 6, 7
+     images. IEEE Access, 2024. 1, 2                                          [22] Ralph D’agostino and Egon S Pearson. Tests for departure
+ [9] Delyan Boychev and Radostin Cholakov. Imaginet: A multi-                      from√normality. empirical results for the distributions of b2
+     content benchmark for synthetic image detection. In Work-                     and b. Biometrika, 60(3):613–622, 1973. 3
+     shop on Datasets and Evaluators of AI Safety, 2025. 7                    [23] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,
+[10] Andrew Brock, Jeff Donahue, and Karen Simonyan. Large                         and Li Fei-Fei. Imagenet: A large-scale hierarchical image
+     scale gan training for high fidelity natural image synthesis.                 database. In 2009 IEEE conference on computer vision and
+     arXiv preprint arXiv:1809.11096, 2018. 5                                      pattern recognition, pages 248–255. Ieee, 2009. 8
+[11] Jonathan Brokman, Omer Hofman, Roman Vainshtein, Amit                    [24] Timo I Denk and Christian Reisswig. Bertgrid: Contextual-
+     Giloni, Toshiya Shimizu, Inderjeet Singh, Oren Rachmil,                       ized embedding for 2d document representation and under-
+     Alon Zolfi, Asaf Shabtai, Yuki Unno, et al. Montrage: Moni-                   standing. arXiv preprint arXiv:1909.04948, 2019. 7
+     toring training for attribution of generative diffusion models.          [25] Prafulla Dhariwal and Alexander Nichol. Diffusion models
+     In European Conference on Computer Vision, pages 1–17.                        beat gans on image synthesis. Advances in neural informa-
+     Springer, 2024. 7                                                             tion processing systems, 34:8780–8794, 2021. 1, 5
+[12] Jonathan Brokman, Itay Gershon, Omer Hofman, Guy                         [26] Omar Elharrouss, Noor Almaadeed, Somaya Al-Maadeed,
+     Gilboa, and Roman Vainshtein. Tracking memorization ge-                       and Younes Akbari. Image inpainting: A review. Neural
+     ometry throughout the diffusion model generative process.                     Processing Letters, 51:2007–2028, 2020. 3
+     In NeurIPS 2025 Workshop on Symmetry and Geometry in                     [27] David C Epstein, Ishan Jain, Oliver Wang, and Richard
+     Neural Representations, 2025. 2                                               Zhang. Online detection of ai-generated images. In Proceed-
+
+
+
+
+                                                                       7817
+     ings of the IEEE/CVF International Conference on Com-                     [41] Tero Karras, Samuli Laine, and Timo Aila. A style-based
+     puter Vision, pages 382–392, 2023. 1, 2                                        generator architecture for generative adversarial networks.
+[28] Sicheng Gao, Xuhui Liu, Bohan Zeng, Sheng Xu, Yan-                             In Proceedings of the IEEE/CVF conference on computer vi-
+     jing Li, Xiaoyan Luo, Jianzhuang Liu, Xiantong Zhen, and                       sion and pattern recognition, pages 4401–4410, 2019. 5
+     Baochang Zhang. Implicit diffusion models for continu-                    [42] Tero Karras, Samuli Laine, Miika Aittala, Janne Hellsten,
+     ous super-resolution. In Proceedings of the IEEE/CVF con-                      Jaakko Lehtinen, and Timo Aila. Analyzing and improv-
+     ference on computer vision and pattern recognition, pages                      ing the image quality of stylegan. In Proceedings of
+     10021–10030, 2023. 2                                                           the IEEE/CVF conference on computer vision and pattern
+[29] Leon A Gatys, Alexander S Ecker, and Matthias Bethge. Im-                      recognition, pages 8110–8119, 2020. 5
+     age style transfer using convolutional neural networks. In                [43] Tero Karras, Miika Aittala, Samuli Laine, Erik Härkönen,
+     Proceedings of the IEEE conference on computer vision and                      Janne Hellsten, Jaakko Lehtinen, and Timo Aila. Alias-free
+     pattern recognition, pages 2414–2423, 2016. 7                                  generative adversarial networks. Advances in neural infor-
+[30] Stuart Geman and Donald Geman. Stochastic relaxation,                          mation processing systems, 34:852–863, 2021. 6
+     gibbs distributions, and the bayesian restoration of images.              [44] Bahjat Kawar, Shiran Zada, Oran Lang, Omer Tov, Huiwen
+     IEEE Transactions on pattern analysis and machine intelli-                     Chang, Tali Dekel, Inbar Mosseri, and Michal Irani. Imagic:
+     gence, 6:721–741, 1984. 3                                                      Text-based real image editing with diffusion models. In Pro-
+[31] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing                          ceedings of the IEEE/CVF Conference on Computer Vision
+     Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and                    and Pattern Recognition, pages 6007–6017, 2023. 2
+     Yoshua Bengio. Generative adversarial networks. Commu-                    [45] Meir Yossef Levi and Guy Gilboa. The double-ellipsoid
+     nications of the ACM, 63(11):139–144, 2020. 3                                  geometry of clip. In International Conference on Machine
+[32] Bhawna Goyal, Ayush Dogra, Sunil Agrawal, Bal-                                 Learning. PMLR, 2025. 3
+     winder Singh Sohi, and Apoorav Sharma. Image denoising                    [46] Haoying Li, Yifan Yang, Meng Chang, Shiqi Chen, Huajun
+     review: From classical to state-of-the-art approaches. Infor-                  Feng, Zhihai Xu, Qi Li, and Yueting Chen. Srdiff: Single
+     mation fusion, 55:220–244, 2020. 3                                             image super-resolution with diffusion probabilistic models.
+[33] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo                               Neurocomputing, 479:47–59, 2022. 3
+     Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+                                                                               [47] Victor Weixin Liang, Yuhui Zhang, Yongchan Kwon, Ser-
+     tor quantized diffusion model for text-to-image synthesis. In
+                                                                                    ena Yeung, and James Y Zou. Mind the gap: Understanding
+     Proceedings of the IEEE/CVF conference on computer vi-
+                                                                                    the modality gap in multi-modal contrastive representation
+     sion and pattern recognition, pages 10696–10706, 2022. 5
+                                                                                    learning. Advances in Neural Information Processing Sys-
+[34] Md Jahid Hasan, Agustinus Nalwan, Kok-Leong Ong,
+                                                                                    tems, 35:17612–17625, 2022. 3
+     Hamed Jahani, Yee Ling Boo, Kha Cong Nguyen, and Mah-
+                                                                               [48] Furqanil Taqwa (Linaqruf). Animagine xl 2.0: High-
+     mudul Hasan. Groundingcardd: Text-guided multimodal
+                                                                                    resolution anime image generation. Hugging Face, 2023. 6,
+     phrase grounding for car damage detection. IEEE Access,
+                                                                                    7
+     2024. 7
+[35] Zhiyuan He, Pin-Yu Chen, and Tsung-Yi Ho. Rigid:                          [49] Fernando Martin-Rodriguez, Rocio Garcia-Mojon, and
+     A training-free and model-agnostic framework for ro-                           Monica Fernandez-Barciela. Detection of ai-created images
+     bust ai-generated image detection.              arXiv preprint                 using pixel-wise feature extraction and convolutional neural
+     arXiv:2405.20112, 2024. 1, 2, 5, 6                                             networks. Sensors, 23(22):9037, 2023. 2
+[36] Dan Hendrycks, Steven Basart, Norman Mu, Saurav Kada-                     [50] Midjourney. Midjourney: An independent research lab
+     vath, Frank Wang, Evan Dorundo, Rahul Desai, Tyler Zhu,                        exploring new mediums of thought. https://www.
+     Samyak Parajuli, Mike Guo, et al. The many faces of robust-                    midjourney.com/, 2024. Accessed: 2024-05-18. 5, 6
+     ness: A critical analysis of out-of-distribution generalization.          [51] MindSpore. Wukong: A Pre-trained Model for Chinese Text-
+     In Proceedings of the IEEE/CVF international conference on                     to-Image Generation. https://xihe.mindspore.
+     computer vision, pages 8340–8349, 2021. 4                                      cn/modelzoo/wukong, 2024. Accessed: 2024-05-18.
+[37] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising dif-                      5
+     fusion probabilistic models. Advances in neural information               [52] Ron Mokady, Amir Hertz, and Amit H Bermano. Clip-
+     processing systems, 33:6840–6851, 2020. 2                                      cap: Clip prefix for image captioning. arXiv preprint
+[38] Micah Hodosh, Peter Young, and Julia Hockenmaier. Fram-                        arXiv:2111.09734, 2021. 2
+     ing image description as a ranking task: Data, models and                 [53] Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav
+     evaluation metrics. Journal of Artificial Intelligence Re-                     Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever, and
+     search, 47:853–899, 2013. 8                                                    Mark Chen. Glide: Towards photorealistic image generation
+[39] Yongcheng Jing, Yezhou Yang, Zunlei Feng, Jingwen Ye,                          and editing with text-guided diffusion models. arXiv preprint
+     Yizhou Yu, and Mingli Song. Neural style transfer: A review.                   arXiv:2112.10741, 2021. 5
+     IEEE transactions on visualization and computer graphics,                 [54] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+     26(11):3365–3385, 2019. 7                                                      versal fake image detectors that generalize across genera-
+[40] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.                     tive models. In Proceedings of the IEEE/CVF Conference
+     Progressive growing of gans for improved quality, stability,                   on Computer Vision and Pattern Recognition, pages 24480–
+     and variation. arXiv preprint arXiv:1710.10196, 2017. 5                        24489, 2023. 2, 6
+
+
+
+
+                                                                        7818
+[55] OpenAI. GPT-Image-1: A multimodal image-generation                         synthesis with latent diffusion models. In Proceedings of
+     model. https://platform.openai.com/docs/                                   the IEEE/CVF conference on computer vision and pattern
+     models/gpt-image-1, 2025. Released Apr 2025. 6,                            recognition, pages 10684–10695, 2022. 5, 6
+     7                                                                     [67] Nikunj Saunshi, Orestis Plevrakis, Sanjeev Arora, Mikhail
+[56] Teerapong Panboonyuen, Naphat Nithisopa, Panin Pienroj,                    Khodak, and Hrishikesh Khandeparkar. A theoretical analy-
+     Laphonchai Jirachuphun, Chaiwasut Watthanasirikrit, and                    sis of contrastive unsupervised representation learning. In In-
+     Naruepon Pornwiriyakul. Mars: Mask attention refinement                    ternational Conference on Machine Learning, pages 5628–
+     with sequential quadtree nodes for car damage instance seg-                5637. PMLR, 2019. 3
+     mentation. In International Conference on Image Analysis              [68] Christoph Schuhmann, Richard Vencu, Romain Beaumont,
+     and Processing, pages 28–38. Springer, 2023. 7                             Robert Kaczmarczyk, Clayton Mullis, Aarush Katta, Theo
+[57] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-Yan                     Coombes, Jenia Jitsev, and Aran Komatsuzaki. Laion-400m:
+     Zhu. Semantic image synthesis with spatially-adaptive nor-                 Open dataset of clip-filtered 400 million image-text pairs.
+     malization. In Proceedings of the IEEE/CVF conference on                   arXiv preprint arXiv:2111.02114, 2021. 6
+     computer vision and pattern recognition, pages 2337–2346,             [69] Zeyang Sha, Zheng Li, Ning Yu, and Yang Zhang. De-fake:
+     2019. 5                                                                    Detection and attribution of fake images generated by text-
+[58] Kalpesh Patil, Mandar Kulkarni, Anand Sriraman, and                        to-image generation models. In Proceedings of the 2023
+     Shirish Karande. Deep learning based car damage classi-                    ACM SIGSAC Conference on Computer and Communica-
+     fication. In 2017 16th IEEE international conference on                    tions Security, pages 3418–3432, 2023. 2
+     machine learning and applications (ICMLA), pages 50–54.               [70] Jiaming Song, Chenlin Meng, and Stefano Ermon.
+     IEEE, 2017. 7                                                              Denoising diffusion implicit models.           arXiv preprint
+[59] Dustin Podell, Zion English, Kyle Lacey, Andreas                           arXiv:2010.02502, 2020. 3
+     Blattmann, Tim Dockhorn, Jonas Müller, Joe Penna, and                [71] Chuangchuang Tan, Ping Liu, RenShuai Tao, Huan Liu, Yao
+     Robin Rombach. Sdxl: Improving latent diffusion mod-                       Zhao, Baoyuan Wu, and Yunchao Wei. Data-independent
+     els for high-resolution image synthesis. arXiv preprint                    operator: A training-free artifact representation extrac-
+     arXiv:2307.01952, 2023. 1, 6                                               tor for generalizable deepfake detection. arXiv preprint
+                                                                                arXiv:2403.06803, 2024. 2
+[60] Politico.      Ai photography is here. so is the fight
+                                                                           [72] Chunwei Tian, Lunke Fei, Wenxian Zheng, Yong Xu, Wang-
+     against disinformation. https : / / www . politico .
+                                                                                meng Zuo, and Chia-Wen Lin. Deep learning on image
+     eu / article / ai - photography - machine -
+                                                                                denoising: An overview. Neural Networks, 131:251–275,
+     learning - technology - disinformation -
+                                                                                2020. 3
+     midjourney - dall - e3 - stable - diffusion/,
+     2023. Accessed: 2025-03-01. 1                                         [73] The Verge.         That ai pope image is a fake—and
+                                                                                an early glimpse of a new reality.               https : / /
+[61] Tong Qiao, Hang Shao, Shichuang Xie, and Ran Shi. Unsu-
+                                                                                www . theverge . com / 2023 / 3 / 27 / 23657927 /
+     pervised generative fake image detector. IEEE Transactions
+                                                                                ai-pope-image-fake-midjourney-computer-
+     on Circuits and Systems for Video Technology, 2024. 1, 2
+                                                                                generated-aesthetic, 2023. Accessed: 2025-03-01.
+[62] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya                         1
+     Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,                 [74] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning                 Owens, and Alexei A Efros. Cnn-generated images are
+     transferable visual models from natural language supervi-                  surprisingly easy to spot... for now. In Proceedings of
+     sion. In International conference on machine learning, pages               the IEEE/CVF conference on computer vision and pattern
+     8748–8763. PMLR, 2021. 2, 3, 4, 5                                          recognition, pages 8695–8704, 2020. 2, 6, 8
+[63] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu,             [75] Xinkuang Wang, Wenjing Li, and Zhongcheng Wu. Cardd:
+     and Mark Chen. Hierarchical text-conditional image gener-                  A new dataset for vision-based car damage detection. IEEE
+     ation with clip latents. arXiv preprint arXiv:2204.06125, 1                Transactions on Intelligent Transportation Systems, 24(7):
+     (2):3, 2022. 6, 7                                                          7202–7214, 2023. 7
+[64] Anton Razzhigaev, Arseniy Shakhmatov, Anastasia Malt-                 [76] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     seva, Vladimir Arkhipkin, Igor Pavlov, Ilya Ryabov, An-                    Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     gelina Kuts, Alexander Panchenko, Andrey Kuznetsov, and                    diffusion-generated image detection. In Proceedings of the
+     Denis Dimitrov. Kandinsky: an improved text-to-image syn-                  IEEE/CVF International Conference on Computer Vision,
+     thesis with image prior and latent diffusion. arXiv preprint               pages 22445–22455, 2023. 2
+     arXiv:2310.03502, 2023. 6                                             [77] Zhizhong Wang, Lei Zhao, and Wei Xing. Stylediffusion:
+[65] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-                     Controllable disentangled style transfer via diffusion models.
+     oblade: Training-free detection of latent diffusion images                 In Proceedings of the IEEE/CVF International Conference
+     using autoencoder reconstruction error. In Proceedings of                  on Computer Vision, pages 7677–7689, 2023. 7
+     the IEEE/CVF Conference on Computer Vision and Pattern                [78] wiF0n. invoiceXpert: A curated dataset of invoice images.
+     Recognition, pages 9130–9140, 2024. 1, 2, 5, 6                             https : / / huggingface . co / datasets / wiF0n /
+[66] Robin Rombach, Andreas Blattmann, Dominik Lorenz,                          invoiceXpert, 2025. Accessed June 2025; license:
+     Patrick Esser, and Björn Ommer. High-resolution image                     CC-BY-NC-4.0. 7
+
+
+
+
+                                                                    7819
+[79] WikiArt. Wikiart - visual art encyclopedia, 2024. 7
+[80] Junchao Wu, Shu Yang, Runzhe Zhan, Yulin Yuan,
+     Lidia Sam Chao, and Derek Fai Wong. A survey on llm-
+     generated text detection: Necessity, methods, and future di-
+     rections. Computational Linguistics, pages 1–66, 2025. 2
+[81] Yiheng Xu, Minghao Li, Lei Cui, Shaohan Huang, Furu Wei,
+     and Ming Zhou. Layoutlm: Pre-training of text and layout
+     for document image understanding. In Proceedings of the
+     26th ACM SIGKDD international conference on knowledge
+     discovery & data mining, pages 1192–1200, 2020. 7
+[82] Jiahui Yu, Zhe Lin, Jimei Yang, Xiaohui Shen, Xin Lu, and
+     Thomas S Huang. Generative image inpainting with con-
+     textual attention. In Proceedings of the IEEE conference on
+     computer vision and pattern recognition, pages 5505–5514,
+     2018. 3
+[83] Mingxu Zhang, Hongxia Wang, Peisong He, Asad Malik,
+     and Hanqing Liu. Exposing unseen gan-generated image us-
+     ing unsupervised domain adaptation. Knowledge-Based Sys-
+     tems, 257:109905, 2022. 2
+[84] Mingxu Zhang, Hongxia Wang, Peisong He, Asad Malik,
+     and Hanqing Liu. Improving gan-generated image detec-
+     tion generalization using unsupervised domain adaptation.
+     In 2022 IEEE International Conference on Multimedia and
+     Expo (ICME), pages 1–6. IEEE, 2022. 2
+[85] Nan Zhong, Yiran Xu, Zhenxing Qian, and Xinpeng Zhang.
+     Rich and poor texture contrast: A simple yet effective ap-
+     proach for ai-generated image detection. arXiv preprint
+     arXiv:2311.12397, 2023. 2
+[86] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A
+     Efros. Unpaired image-to-image translation using cycle-
+     consistent adversarial networks. In Proceedings of the IEEE
+     international conference on computer vision, pages 2223–
+     2232, 2017. 5
+[87] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Yunhe Wang. Genimage: A million-scale benchmark for de-
+     tecting ai-generated image, 2023. 6
+[88] Daniel Zoran and Yair Weiss. From learning models of nat-
+     ural image patches to whole image restoration. In 2011 in-
+     ternational conference on computer vision, pages 479–486.
+     IEEE, 2011. 3
+
+
+
+
+                                                                    7820
+

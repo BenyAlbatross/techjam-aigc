@@ -1,0 +1,762 @@
+                        This CVPR Findings paper is the Open Access version, provided by the Computer Vision
+                              Foundation. Except for this watermark, it is identical to the accepted version;
+                               the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+ Leveraging Arbitrary Data Sources for AI-Generated Image Detection Without
+                          Sacrificing Generalization
+
+        Qinghui He1, 2 , Haifeng Zhang1, 2 , Xiuli Bi1, 3 , Bo Liu * , 1, 3 , Chi-Man Pun4 , Bin Xiao1, 5
+ 1
+   Chongqing Key Laboratory of Image Cognition, Chongqing University of Posts and Telecommunications
+  2
+    School of Computer Science and Technology 3 School of Artificial Intelligence 4 University of Macau
+                           5
+                             Jinan Inspur Data Technology Co., Ltd., Jinan, China
+                                   D250201011@stu.cqupt.edu.cn                             boliu@cqupt.edu.cn
+
+
+
+                                                                           Seen Real Samples                                                                                                                      93.0
+                              Abstract                                     Seen Generated Samples
+                                                                                                                                           90                                                           85.8 91.7
+
+
+
+
+                                                                                                                 Overall Performance (%)
+                                                                           Unseen Generated Samples                                                 Trained on DM source
+                                                                                                                                                                                                83.0
+                                                                                  Previous methods                                                  Trained on GAN source               80.3                      Ours
+                                                                                                                                           80                                  77.8                   83.0
+The accelerating advancement of generative models has in-                                                                                                                                       80.5 VIB-Net
+                                                                                                                                                 FreDect
+                                                                                                                                                                72.2 73.2
+                                                                                                                                                ICML 20                                 76.5 CLIPingCVPR 25
+troduced new challenges for detecting AI-generated images,                                                                                 70 66.3 66.0
+                                                                                                                                                                                       NPR ICMR 24
+especially in real-world scenarios where novel generation                                                                                                       65.3           65.4
+                                                                                                                                                                                      CVPR 24
+
+                                                                          Narrow decision margins due to                                   60                             UnivFD
+techniques emerge rapidly. Existing learning paradigms                      overfiting on seen artifacts
+                                                                                                                                                      60.5 LGrad
+                                                                                                                                                            CVPR 23 57.2 CVPR 23
+                                                                                                                                                     CNNDect        DIRE
+are likely to make classifiers data-dependent, resulting in                         Our method                                             50   49.9 CVPR 20      ICCV 23
+
+narrow decision margins and, consequently, limited gener-                                                                                                                (b)
+                                                                                                                                                                                                                  90.2
+                                                                                                                                           90
+alization ability to unseen generative models. We observe                                                                                           Trained on DM source
+                                                                                                                                                                                       NPR              83.0
+                                                                                                                                                    Trained on GAN source                     81.6                87.5
+that both real and generated images intend to form clustered                                                                                                                          CVPR 24
+
+
+
+
+                                                                                                                 Generalization (%)
+                                                                                                                                                                                                                  Ours
+                                                                             Enlarged decision margins via                                 80                                           75.4
+                                                                                                                                                                              UnivFD
+low-dimensional manifolds within high-level feature spaces              real images-based attribution modeling
+                                                                                                                                                                              CVPR 23
+                                                                                                                                                                     LGrad
+extracted by pre-trained visual encoders. Building on this                                                                                 70          CNNDect     CVPR 23     66.2                   73.3
+                                                                                                                                                       CVPR 20
+                                                                                                                                                 FreDect       DIRE 60.9
+                                                                                                                                                                                                69.5 VIB-Net
+                                                                                                                                                                                        66.8
+observation, we propose a single-class attribution model-                                                                                  60
+                                                                                                                                                ICML 20      ICCV 23                            CLIPing
+                                                                                                                                                                                                        CVPR 25
+
+                                                                                                                                                 53.5      53.1 53.8           60.4            ICMR 24
+ing framework that first amplifies the intrinsic differences             Enlarged decision margins via any
+                                                                                                                                                                       54.9
+between real and generated images by constructing a com-                generator-based attribution modeling                               50 49.8 50.4 52.1
+                                                                                         (a)                                                                             (c)
+pact attribution space from any single-class training set, ei-
+ther composed of real images or generated ones, and then                Figure 1. (a) Previous methods overfit to training distributions
+establishes a more stable decision boundary upon the en-                with small margins, while our attribution space yields larger mar-
+larged separation. This process enhances class distinction              gins and stronger cross-model generalization. (b) The overall per-
+and mitigates the reliance on generator-specific artifacts,             formance of our method across the entire dataset compared to the
+thereby improving cross-model generalization. Extensive                 SOTA methods. (c) The cross-model generalization performance
+experiments show that our method generalizes well across                of our method compared to the SOTA methods.
+various unseen generative models, outperforming existing
+detectors by as much as 7.21% in accuracy and 7.20% in
+cross-model generalization.                                             potential abuse risks, including the spread of false informa-
+                                                                        tion, political manipulation, and public trust crises. There-
+                                                                        fore, there is an urgent need to develop efficient and reliable
+                                                                        methods for detecting generated images to ensure the au-
+1. Introduction                                                         thenticity and reliability of the image information.
+The rapid evolution of generative models, ranging from                      Previous methods focus on learning subtle real–fake dif-
+generative adversarial networks (GANs) to diffusion mod-                ferences from large datasets [6, 36] or on capturing anoma-
+els (DMs), has significantly lowered the threshold for cre-             lies in the frequency domain [3, 11, 19]. Some works [7,
+ating high-fidelity visual content than ever before, resulting          18, 25, 40] rely on pre-trained models such as CLIP [27]
+in an increasingly blurred line between real and generated              to extract semantic information, while others [2, 21, 37]
+visual content. While enjoying the rich visual experience of            use reconstruction mechanisms for forgery discrimination.
+generative models, users are also beginning to worry about              However, these methods generally overfit to artifacts tied
+                                                                        to specific generative architectures. Although effective un-
+     * Corresponding Author                                             der matched training and testing conditions, such methods
+
+
+
+                                                                 6748
+exhibit limited cross-model generalization when applied to               distribution and prone to mode collapse. Subsequently, au-
+unseen generated samples, domain shifts, or new image                    toregressive models [10, 28, 30] expanded generative capa-
+styles. This reliance on diverse generated data severely con-            bility but suffered from low efficiency or limited resolution.
+strains their practicality, especially in open-world detection           Recently, diffusion models [9, 12, 24, 32] have achieved
+scenarios where future techniques are unpredictable.                     breakthroughs in fidelity, diversity, and stability, becoming
+    In this work, we explore a fundamentally different per-              the dominant generation paradigm. Open-source models
+spective on AI-generated image detection. Instead of di-                 like Stable Diffusion and commercial tools such as Mid-
+rectly modeling the diversity of generated artifacts left by             journey have further popularized high-quality AI-generated
+generative models, we investigate whether it is possible to              images among non-professional users.
+construct a general attribution space that effectively dis-
+tinguishes real from generated images without overfitting                2.2. AI-Generated Image Detection
+to specific generated datasets. We observe that generated                2.2.1. Image- and Frequency-based Methods.
+and real images tend to form their own clustered low-
+                                                                         Early research focused on detecting images generated
+dimensional manifolds within high-level feature spaces ex-
+                                                                         by GAN and its variants, and effectively detecting low-
+tracted by pre-trained visual encoders. This insight moti-
+                                                                         quality generated images by mining visible generation
+vates our attribution consistency paradigm, which leverages
+                                                                         traces in generated images (such as incoherent textures,
+the intrinsic manifold of a single-class dataset to create a
+                                                                         high-frequency anomalies, etc.). [36] demonstrated that a
+representation space where attribution deviations from out-
+                                                                         simple CNN classifier can effectively improve the gener-
+of-distribution samples are naturally amplified. As shown in
+                                                                         alization of unseen generated images by training images
+Fig. 1(a), previous methods often suffer from narrow deci-
+                                                                         that have been post-processed, such as JPEG compression
+sion margins, leading to poor generalization to unseen gen-
+                                                                         and blurring. [11] started from the analysis of the frequency
+erated samples. In contrast, our method first amplifies the
+                                                                         domain and revealed the recognizable traces that are com-
+intrinsic discrepancies between real and generated images
+                                                                         monly found in GAN-generated images. [3] demonstrated
+by constructing a compact attribution space from a single-
+                                                                         the significant difference in spectral distribution between
+class dataset, either real or generated, and then establishes a
+                                                                         GAN-generated images and real images by studying the
+more stable decision boundary based on this enlarged sep-
+                                                                         upsampling mechanism of the generative model. [19] an-
+aration. Our method is highly flexible, as the attribution
+                                                                         alyzed different types of images and found that real images
+space can be constructed using images from a single gener-
+                                                                         are more consistent with generated images in the frequency
+ator or even real images.
+                                                                         domain. [6] found that the performance of detectors trained
+    Experimental results show that the proposed method
+                                                                         only on images generated by GANs drops sharply when
+achieves both strong detection capability and remarkable
+                                                                         generalized to images generated by diffusion models. This
+cross-model generalization, as illustrated in Fig. 1(b) and
+                                                                         prompted researchers to explore detection frameworks with
+Fig. 1(c), demonstrating its robust detection performance
+                                                                         more generalization capabilities.
+across a wide range of generative models. Our contribu-
+tions can be summarized as follows:                                      2.2.2. Pre-trained Model-based Methods.
+• We break the traditional paradigm of explicitly model-                 To address cross-model generalization, [25] showed that
+   ing diverse generative artifacts by strategically induc-              feature spaces not explicitly trained for generated image de-
+   ing controlled manifold-aligned overfitting toward a sta-             tection (e.g., CLIP) generalize better to unseen models. [38]
+   ble single-class manifold, transforming overfitting from a            combined CLIP’s text-image contrast learning mechanism
+   limitation into a robust generalization mechanism.                    to improve adaptability, while [7] systematically studied
+• By fitting any single-class distribution to construct the at-          the applicability of CLIP features in generated image de-
+   tribution space, our method amplifies the intrinsic separa-           tection task and proposed a detector requiring only limited
+   tion between in- and out-of-distribution samples, yielding            data. [18] and [35] achieved strong generalization by ad-
+   wider decision margins.                                               justing CLIP text embeddings; [40] achieved effective de-
+• Extensive experiments validate the effectiveness of our                tection by filtering irrelevant information and retaining rele-
+   method, surpassing the current SOTA by 7.20% in detec-                vant information. However, these methods still tend to over-
+   tion accuracy across a set of 15 generative models.                   fit to specific artifacts in the training set, resulting in poor
+                                                                         generalization. [15, 39] preserve a relatively high feature
+2. Related Work                                                          rank, thereby mitigating shortcut learning to some extent.
+                                                                             Since detectors have difficulty recognizing high-quality
+2.1. Types of Generated Images
+                                                                         images generated by diffusion models, researchers have
+Early GANs [1, 16, 17, 41] achieved impressive image syn-                proposed detectors specifically for diffusion methods that
+thesis through adversarial training but were limited by data             take advantage of the inherent properties of diffusion mod-
+
+
+
+                                                                  6749
+els. [37] showed that diffusion images can be reconstructed                                                                                                                                                                  Real
+
+more accurately than natural images but require a costly                                                                                                                                                                     BigGAN
+multistep inversion. [21] reduced this cost via single-step                                                                                                                                                                  ProGAN
+latent sampling. Similarly, [2] introduced inversion noise                                                                                                                                                                   StarGAN
+                                                                                                                                                                           r
+maps to enhance generalization. [31] demonstrated that                                                                                                                                                                       StyleGAN
+real images can be effectively distinguished from gener-
+                                                                                                                                     (a)                                                  (b)                                GauGAN
+ated images using only some components inside the dif-
+                                                                                                                                                                                                                             SD1.4
+fusion model. [4, 13, 14] focused on the classification of
+difficult samples by reconstructing the training dataset to                                                                                                                                                                  Glide
+
+enhance the generalization ability of detectors. Although                                                                                                                                                                    ADM
+these methods have the potential for generalization in cer-                                                                                                                                                                  Midj
+tain scenarios, they usually require access to a specific gen-                                                                                                g
+                                                                                                                                                                                                                             VQDM
+                                                                                                                                                                     0 1 2 3 4 5 0                   2      4       6
+eration pipeline and are limited to certain paradigms.                                                                                (c)                                                 (d)
+                                                                                                                      Inter-class distance↑                       Intra-class variance↓                     Fisher’s Ratio↑
+                                                                                                                                 15.06                            0.65                                              861.10
+3. Preliminaries                                                                                                       9.02                 11.76
+                                                                                                                                                                            0.28       0.25
+                                                                                                                                                                                                                               577.13
+                                                                                                                                                                                                         127.17
+
+3.1. Motivation                                                                                                       CLIP            r          g                CLIP          r         g              CLIP            r           g
+                                                                                                                                                                          (e)
+We argue that existing AI-generated image detection meth-
+ods often rely on artifacts or features associated with spe-                                                    Figure 2. Visualization of CLIP features and attribution devia-
+cific generative models, making them difficult to generalize                                                    tions. (a) UMAP visualization of CLIP features for real and gen-
+across diverse generators and generation mechanisms. As                                                         erated images. (b) UMAP visualization of attribution deviations
+                                                                                                                under Mr . (c) UMAP visualization of attribution deviations un-
+shown in Fig. 2(a), when features extracted by a pre-trained
+                                                                                                                der Mg . (d) Violin plots of attribution deviations using Mr (left)
+model (e.g., CLIP) are projected into a low-dimensional                                                         and Mg (right). (e) Quantitative comparison of class separability
+space, images generated by different models form distinct                                                       using inter-class distance, intra-class variance, and Fisher’s Ratio.
+clusters, revealing the diversity of generative traces. How-
+ever, the existing discriminative detectors tend to overfit to
+the generative cues seen during training and fail to recog-                                                     source are more likely to deviate from this manifold and
+nize unseen ones [25], especially when the architectures dif-                                                   produce measurable attribution shifts, formulated as:
+fer significantly.
+    From the dimensionality-reduction results, we further                                                          f(x_j) \notin \mathcal {M}_i, \quad \mathrm {Dis}(f(x_j), \mathcal {M}_i) \gg \mathrm {Dis}(f(x_i), \mathcal {M}_i).  (2)
+observe that different generative models introduce their own
+                                                                                                                where j ̸= i, i, j ∈ {r, g}, and Dis(·, ·) measures the dis-
+artifacts, leading to distinct clusters of generated images
+                                                                                                                tance between a sample and the manifold. The inherent
+in the feature space. Meanwhile, real images are gener-
+                                                                                                                discrepancy between real and generated images leads them
+ally concentrated in one region, though a few samples show
+                                                                                                                to form separable distributions in the attribution space, en-
+slight shifts. However, there remains a clear distributional
+                                                                                                                abling detection without reliance on specific datasets.
+gap between real and generated images. We marked these
+two regions with distance in Fig. 2(a) to illustrate their sep-                                                 3.2. Attribution Space Generalization Analysis
+aration in the feature space. This phenomenon suggests that
+                                                                                                                Based on the above hypothesis, we evaluate whether the at-
+real images share intrinsic semantic consistency, while gen-
+                                                                                                                tribution spaces Mr and Mg can effectively capture intra-
+erated images exhibit relatively uniform generative charac-
+                                                                                                                class consistency and enlarge the separation between real
+teristics. Based on this observation, we hypothesize that
+                                                                                                                and generated images. As shown in Fig. 2(b)(c), when the
+real and generated images can each form a compact man-
+                                                                                                                attribution space is constructed using a single class, samples
+ifold representation through their shared internal features:
+                                                                                                                from that class form compact and coherent clusters, while
+                                                                                                                samples from the opposite class are distributed farther apart,
+          f(x_i) \in \mathcal {M}_i, \quad \mathrm {dim}(\mathcal {M}_i) \ll D, i \in \{r, g\}.    (1)
+                                                                                                                indicating clear inter-class separation. Fig. 2(d) presents the
+where f (x) is the extracted feature, Mi is the manifold of                                                     deviation distributions in Mr (left) and Mg (right), where
+class i, D is the feature dimension, and r, g denote real and                                                   the horizontal axis denotes the magnitude of deviation. It
+generated classes, respectively.                                                                                can be observed that in both spaces, class-consistent sam-
+   To capture such intrinsic regularities, we propose a novel                                                   ples maintain low deviation values, whereas samples from
+detection perspective based on attribution space modeling.                                                      the other class exhibit significantly larger deviations. For
+The core idea is to construct an attribution space using only                                                   instance, in Mr , real images show substantially smaller de-
+single-class images, allowing the model to learn the inter-                                                     viations than any generated images, while in Mg , real im-
+nal common features of that class. Features from another                                                        ages exhibit much larger deviation magnitudes than gener-
+
+
+
+                                                                                                         6750
+     xr
+                                                           Pre-                Attribution
+                                                          Trained              Consistency                       .
+                                                                                                                 .
+                                                          Model                                                  .
+                                                                                Module
+     xg                                                      f                                                Classify
+
+
+                                                                 Attribution Consistency Module (ACM)
+    xr Real images
+                                        Embedding Space                                       Latent Space               Latent Space
+
+    xg Generated images                                                                   16.2546 mm
+          Frozen                            f ( xr )                                             ( f ( xr ))               ( f ( xg ))
+                                   or
+          Trainable                     Embedding Space                                       Latent Space               Latent Space
+
+
+          Real samples
+                                            f ( xg )                                            ( f ( xg ))                ( f ( xr ))
+          Generated samples
+
+Figure 3. Overview of the proposed framework. Given real images xr and generated images xg , a frozen pre-trained model f first extracts
+high-level semantic features. The proposed Attribution Consistency Module then constructs an attribution space A using samples from
+a single class (either real or generated) to learn class-consistent representations. Features from the opposite class that deviate from this
+learned manifold are treated as attribution shifts. A lightweight classifier C is finally applied to distinguish real and generated images based
+on their attribution-space representations.
+
+
+ated ones. Furthermore, as shown in Fig. 2(e), the mar-                     another source are projected into this space, they deviate
+gin metrics, including inter-class distance, intra-class vari-              from the learned manifold, resulting in measurable attribu-
+ance, and Fisher’s ratio, demonstrate that compared to the                  tion discrepancies that reflect semantic inconsistency. A
+original CLIP feature space, our attribution space main-                    lightweight classifier C finally identifies image authentic-
+tains intra-class compactness while substantially increas-                  ity based on these attribution-space representations. This
+ing class separation, Fisher’s ratio increasing by more than                framework enables generalized and model-agnostic detec-
+six times. Overall, these results verify that the proposed                  tion by transforming class-consistency learning into a ro-
+attribution-space modeling effectively learns the common                    bust discrimination mechanism. During training, we em-
+features within a single class and significantly enhances the               ploy an alternating optimization strategy between A and C.
+discriminative boundary between real and fake images.                       Specifically, we first freeze C and refine A with the attribu-
+                                                                            tion loss LA , then freeze A and update C using the classifi-
+4. Methodology                                                              cation loss Lclassify . This iterative process allows the ACM
+                                                                            to adaptively enhance feature separability and improve dis-
+This section elaborates on the proposed generated image de-                 crimination capability between real and generated images.
+tection framework, which is centered around the Attribution
+Consistency Module. We first outline the overall framework
+and then introduce the specific structure, training strategy,               4.2. Attribution Consistency Module
+and discrimination mechanism of each component.
+                                                                            We denote the training dataset as Ds = {(xi , y i )}N     i=1 ,
+4.1. Overall Framework                                                      where xi ∈ {xr , xg } represents real or generated images,
+Our method is built upon the key idea of learning class-                    and y i ∈ {0, 1} denotes their corresponding labels. Our
+consistent representations within a single-class attribution                method constructs the attribution manifold using samples
+space, rather than relying on cross-class discriminative                    from a single class, either only real images xr or only gener-
+training. As illustrated in Fig. 3, real and generated im-                  ated images xg , enabling the model to learn class-consistent
+ages (xr and xg ) are first encoded into a shared semantic                  feature regularities.
+feature space by a frozen pre-trained model f . The ACM                        The ACM aims to capture these regularities by learning a
+then constructs an attribution space A from samples of a                    class-consistent transformation in feature space. It is imple-
+single class (either real or generated), capturing the intrin-              mented through an encoder–decoder mapping D·E : RD →
+sic feature regularities of that class. When features from                  RD , where E and D denote the encoder and decoder, re-
+
+
+
+                                                                     6751
+                                                                                ACC                              AP          F1           Real ACC                           Fake ACC
+
+
+
+
+                (a) CNNDet                                                                              (b) UnivFD                         (c) CLIPing                                                         (d) VIB-Net
+
+
+
+
+                    (e) NPR                                                                                 (f) DIRE                        (g) DRCT                                                               (h) Ours
+
+Figure 4. Performance comparison of SOTA detectors (a-g) and our method (h) trained on SD1.4, evaluated on 15 generative models using
+ACC, AP, F1, Real ACC, and Fake ACC. Our approach achieves balanced real-fake accuracy and superior cross-model generalization.
+
+
+spectively. The attribution mapping is formulated as:                                                                               and outputs the probability that the image is generated. The
+                                                                                                                                    classifier is optimized with a binary cross-entropy loss:
+            \mathcal {A}(f(x))=\mathrm {abs}\!\left (f(x)-\mathcal {D}(\mathcal {E}(f(x)))\right ),                    (3)
+where A(f (x)) represents the attribution deviation, quanti-                                                                                      \mathcal {L}_\mathrm {classify} = \mathrm {BCE}(\mathcal {C}(\mathcal {A}(f(x^i))), y^i).    (5)
+fying the feature-level discrepancy of a sample relative to
+                                                                                                                                    This supervised discrimination reinforces the separability of
+the learned class manifold. By minimizing attribution de-
+                                                                                                                                    attribution deviations and complements the class-consistent
+viations, the ACM learns the class-consistent structure and
+                                                                                                                                    modeling learned by the ACM.
+forms a compact feature manifold:
+                       \mathcal {L}_{\mathcal {A}} = \mathbb {E}_{x_i \sim D_s^c}\|\mathcal {A}(f(x_i))\|_1,           (4)          5. Experiments
+where Dsc ⊂ Ds denotes the single-class subset (either real                                                                         In this section, we first introduce the experimental setup,
+or generated samples). Samples from the opposite domain                                                                             and then report and discuss in detail the comparative analy-
+naturally produce larger attribution deviations A(f (xj ))                                                                          sis of our method with state-of-the-art methods.
+when projected into this space, providing measurable cues
+for detection.
+                                                                                                                                    5.1. Experimental Setup
+                                                                                                                                    5.1.1. Training Dataset
+4.3. Attribution Deviations Discrimination
+                                                                                                                                    For a fair comparison, we follow mainstream baselines and
+After processing by the ACM, the original training set Ds =                                                                         use the ProGAN training set from CNNDet [36], and the
+{(xi , y i )}N
+             i=1 is transformed into an attribution deviation                                                                       SD1.4 training set from GenImage [42].
+representation Datt = {(A(f (xi )), y i )}N i=1 . Since A is
+trained using samples from a single class, features from the                                                                        5.1.2. Test Datasets
+same class tend to produce smaller deviations, while those                                                                          To evaluate the detection ability of our method in real-world
+from the opposite class yield significantly larger and more                                                                         scenarios, we test on a large collection of real and generated
+irregular deviations. This difference results in distinguish-                                                                       images from CNNDet and GenImage, covering 15 repre-
+able attribution patterns that implicitly encode the image’s                                                                        sentative generative models. The CNNDet dataset includes
+authenticity.                                                                                                                       three unconditional GANs (BigGAN [1], ProGAN [16] and
+    A lightweight classifier C : RD → [0, 1] is employed                                                                            StyleGAN [17]), three conditional GANs (GanGAN [26],
+to exploit these patterns for image authenticity discrimina-                                                                        CycleGAN [41] and StarGAN [5]), one low-vision models
+tion. It takes the attribution deviation A(f (xi )) as input                                                                        (SAN [8]) and one face-swapping model (Deepfake [29]).
+
+
+
+                                                                                                                             6752
+                       Generative Adversarial Networks       Others                        Diffusion Models                   AP
+    Methods      Pro- Big- Cycle- Star- Style- Gau-     Deep-
+                                                    SAN       ADM GLIDE SD1.4 SD1.5 VQDM Midj Wukong avg.
+                 GAN GAN GAN GAN GAN GAN                Fake
+ CNNDet [36] 100.00 84.52 93.46        98.15 99.54 89.49 57.67 89.03 71.05 66.09        56.88 57.25    61.90 55.89   52.85   75.58
+   LNP [19]      99.98 95.20 98.14 100.00 99.56 83.25 45.29 57.72 99.25 96.45           89.77 89.30    95.54 94.39   91.16   89.00
+  LGrad [33]     100.00 90.76 94.02    99.98 99.81 79.29 45.10 71.71 71.84 75.96        70.91 71.73    70.23 71.43   66.51   78.62
+   DIRE [37]     69.76 51.92 64.76     67.98 71.40 88.18 54.89 67.90 44.99 58.11        47.46 47.06    85.18 55.55   51.25   61.76
+  UnivFD [25]    100.00 99.23 99.76    99.01 97.88 99.98 77.53 81.22 86.48 83.24        86.00 85.17    96.50 73.35   90.89   90.45
+  CLIPing [18]   99.85 91.27 94.03     99.06 95.24 89.53 56.63 73.89 77.26 77.94        58.29 57.86    80.00 52.44   60.65   77.60
+ FatFormer [20] 100.00 99.98 100.00 100.00 99.75 100.00 81.23 97.99 91.73 95.99         81.12 81.09    96.99 62.76   85.86   91.63
+   NPR [34]      100.00 85.77 97.88 100.00 99.85 67.48 76.76 91.88 82.48 93.43          94.03 94.17    71.88 92.91   87.56   89.07
+ VIB-Net [40] 100.00 99.29 99.80       99.72 98.79 99.99 91.62 92.64 87.88 88.53        87.24 86.98    96.51 75.68   90.92   93.04
+     Ours        100.00 99.14 99.25    98.37 99.24 99.77 93.63 81.24 93.21 97.26        93.55 93.45    96.87 72.52   94.82   94.15
+
+
+Table 1. The AP values of various methods trained on GAN source images. Bold values indicate the best performance, and underlined
+values indicate the second best.
+
+
+                       Generative Adversarial Networks      Others                        Diffusion Models                   ACC
+    Methods        Pro- Big- Cycle- Star- Style- Gau-     Deep-
+                                                      SAN       ADM GLIDE SD1.4 SD1.5 VQDM Midj Wukong avg.
+                   GAN GAN GAN GAN GAN GAN                Fake
+ CNNDet [36]       99.99 70.08 85.16    91.65 85.73 78.94 50.91 53.49 58.73 54.96       51.57 51.78    53.64 52.61   50.23   65.96
+   LNP [19]        99.09 88.05 91.63 100.00 95.89 79.70 43.61 53.99 94.53 87.84         68.58 68.06    77.89 79.92   73.89   80.18
+  LGrad [33]       99.83 82.90 85.28    99.60 94.66 72.49 44.47 56.42 66.96 62.75       67.20 67.91    67.03 65.69   63.67   73.12
+   DIRE [37]       59.18 51.68 60.75    62.11 57.85 82.69 48.32 60.15 44.69 59.14       47.53 47.02    73.83 53.13   50.09   57.21
+  UnivFD [25]      99.85 95.08 98.18    93.75 85.37 99.42 57.08 67.38 67.01 62.43       64.20 64.01    85.68 56.18   71.39   77.80
+  CLIPing [18]     99.89 94.78 96.74    99.47 95.88 94.15 60.27 76.48 81.78 82.69       61.27 60.78    84.77 53.96   63.94   80.46
+ FatFormer [20] 99.89 99.50 99.36       99.75 97.13 99.42 68.04 93.27 78.45 88.03       67.83 68.06    86.88 56.09   73.06   84.98
+   NPR [34]      100.00 79.50 84.94 100.00 93.98 68.09 69.63 72.19 70.82 78.90          81.46 81.59    66.08 79.50   78.09   80.32
+ VIB-Net [40]      99.99 95.75 99.00    98.95 91.25 99.70 70.50 83.20 71.45 69.40       71.55 70.00    86.65 61.25   75.90   82.97
+     Ours        100.00 96.28 98.56     97.42 96.57 99.42 91.78 77.11 89.00 94.95       89.96 90.33    92.39 70.48   91.14   91.69
+
+
+     Table 2. The ACC values of various methods trained on GAN source images. Symbols follow the same notation as Table 1.
+
+The GenImage dataset contains seven diffusion-based mod-               computed with a 0.5 threshold. To assess potential bias, we
+els: ADM [9], Glide [24], Stable Diffusion v1.4&v1.5 [32],             also report F1 scores, as well as real-image accuracy (Real
+VQDM [12], Midjourney [22], and Wukong [23].                           ACC) and generated-image accuracy (Fake ACC) in some
+5.1.3. Baselines                                                       experiments.
+We compare our model to a set of state-of-the-art baselines            5.1.5. Implementation Details
+that have released their training or inference code. These             Following baseline UnivFD, we use a pre-trained CLIP ViT-
+baselines include CNNDet (CVPR 20’), LNP (ECCV 22’),                   L/14 to extract image features with frozen weights. Both
+LGrad (CVPR 23’), DIRE (ICCV 23’), UnivFD (CVPR                        A and C are optimized using Adam with a learning rate of
+23’), CLIPing (ICMR 24’), FatFormer (CVPR 24’), DRCT                   2 × 10−4 and a batch size of 256. All experiments are con-
+(ICML 24’), NPR (CVPR 24’), and VIB-Net (CVPR 25’).                    ducted on a single NVIDIA H100 GPU using PyTorch.
+To ensure a fair comparison of generalization performance,
+all baselines are trained on the same datasets as our method.          5.2. Detection performance
+5.1.4. Evaluation Metrics                                              5.2.1. Performance Evaluation Trained on DM Sources
+Following prior works, we use average precision (AP) and               We compare the performance of our method with several
+classification accuracy (ACC) as primary metrics. ACC is               SOTA detectors across 15 datasets, where all models are
+
+
+
+                                                                6753
+                                                                                             GANs               DMs          Others             avg.
+                                                                               Sources
+                                                                                           AP     ACC      AP     ACC      AP     ACC      AP      ACC
+                                                                             Real (GAN)   99.29   98.04   91.67   88.32   87.44   84.45   94.15    91.69
+                                                                             Real (DM)    97.70   94.01   99.20   96.20   86.27   78.60   96.87    92.98
+                                                                              ProGAN      99.18   98.09   90.96   87.78   89.44   84.06   94.05    91.41
+Ours
+
+
+
+
+                                 Ours
+                                                                               ADM        90.89   88.28   96.64   94.52   87.39   85.64   93.11    90.84
+                                                                               SD1.4      98.19   93.08   99.06   96.46   86.21   78.14   97.00    92.66
+                                                                               SD1.5      94.93   93.07   98.72   96.80   80.71   77.52   94.80    92.74
+                   Real                            Real
+                   Generated                       Generated                  VQDM        98.18   96.41   97.88   95.31   84.24   81.36   96.18    93.89
+
+              UnivFD                          UnivFD
+           (a) BigGAN                     (b) GauGAN                        Table 3. Performance comparison of models constructed with
+                                                                            different attribution sources. Real (GAN) and Real (DM) indi-
+                                                                            cate models built using real images from the ProGAN and SD1.4
+                                                                            datasets, respectively. Others use generated images only. More
+                                                                            results are in Appendix.
+Ours
+
+
+
+
+                                 Ours
+
+
+
+
+                                                                            diffusion-based datasets. This indicates that these meth-
+                                                                            ods overfit to GAN-specific artifacts, limiting their cross-
+                   Real                            Real                     model generalization. DIRE exploits reconstruction pri-
+                   Generated                       Generated
+                                                                            ors from diffusion models, performs competitively on DM
+              UnivFD                          UnivFD                        sources but fails to generalize to GAN architectures, in-
+            (c) Glide                      (d) SD1.4                        dicating limited cross-model adaptability. Contrastive and
+Figure 5. Scatter plots of per-sample logits. The X-axis and Y-
+                                                                            feature-based methods like CLIPing, UnivFD, and VIB-
+axis represent the outputs of UnivFD and our method, respectively.          Net, which leverage CLIP representations and fine-tuning
+Decision boundaries of UnivFD (purple) and ours (red) are shown.            strategies, show improved generalization compared to oth-
+More results are in Appendix.                                               ers, yet their performance remains unstable on challenging
+                                                                            datasets like Midj and Wukong, where generative seman-
+                                                                            tics differ significantly from training distributions. In con-
+trained on the SD1.4 dataset. As shown in Fig. 4, tradi-                    trast, our method achieves the best average results (AP =
+tional data-driven methods such as CNNDet tend to over-                     94.15%, ACC = 91.69%), surpassing the second-best Fat-
+fit to specific distributions, resulting in poor cross-model                Former by +6.71% in ACC. This advantage stems from
+performance. Contrastive or feature-based methods like                      modeling attribution consistency within a single-class man-
+CLIPing, UnivFD, and VIB-Net show improved general-                         ifold, which captures intrinsic forensic regularities rather
+ization but still struggle on certain generators. NPR ex-                   than generator-dependent artifacts, enabling well general-
+hibits severe classification bias, as it tends to label most un-            ization across both GAN and DM sources.
+seen samples as real, achieving near-100% Real ACC while
+Fake ACC drops drastically (even close to 0% on some
+                                                                            5.3. Score Ensemble
+datasets), indicating that it overfits to generator-specific ar-            To further evaluate the generalization, we compare the logit
+tifacts. Diffusion-oriented methods (e.g., DIRE and DRCT)                   distributions of the baseline UnivFD and our method across
+perform well on diffusion-based sources but fail to gener-                  four representative datasets, as shown in Fig. 5. UnivFD
+alize to GAN-generated images. In contrast, our method                      shows notable overlap near its decision boundary (purple
+achieves consistently superior performance and balanced                     dashed line), especially on challenging datasets such as
+scores between real and fake classes across all datasets,                   Glide and SD1.4, where it frequently misclassifies images
+which captures intrinsic forensic regularities rather than                  and tends to bias predictions toward real samples. In con-
+generator-dependent artifacts, enabling strong generaliza-                  trast, our method constructs a larger and more stable de-
+tion even to high-resolution and unseen diffusion models.                   cision margin (red dashed line), achieving clear vertical
+                                                                            separation and reducing classification ambiguity across all
+5.2.2. Performance Valuation Trained on GAN Sources                         datasets. These results highlight the effectiveness of our
+Table 1 and Table 2 present the AP and ACC of different                     attribution space in amplifying attribution deviations and
+methods trained on the ProGAN dataset and evaluated on                      achieving superior cross-model generalization.
+15 diverse datasets. Traditional data-driven and artifacts-
+based methods, such as CNNDet, LNP, and LGrad rely on                       5.4. Effectiveness of Various Attribution Sources
+modeling low-level traces, which makes them effective for                   Table 3 examines the influence of different attribution
+training-related images but exhibits severe degradation on                  sources on detection performance. Across all settings, our
+
+
+
+                                                                     6754
+                    100%         10%        1%                 0.1%         0.05%                                      CNNDet         UnivFD            FatFor              NPR              VIB-Net        Ours
+     100                                      100                                                         100                                                      100
+          90                                         90                                                       90                                                       90
+          80                                         80                                                       80                                                       80
+
+
+
+
+                                                                                                    ACC (%)
+ACC (%)
+
+
+
+
+                                                                                                                                                              AP (%)
+                                            AP (%)
+          70                                         70                                                       70                                                       70
+                                                                                                              60                                                       60
+          60                                         60
+                                                                                                              50                                                       50
+          50 GANs          DMs         Others        50 GANs          DMs           Others                         100   95     90 85 80           75    70                 100   95     90 85 80           75     70
+                           (a)                                        (b)                                                       Quality factor                                           Quality factor
+     100                                        100                                                       100                                                      100
+          90                                         90                                                       90                                                       90
+                                                                                                              80                                                       80
+
+
+
+
+                                                                                                    ACC (%)
+          80                                         80
+ACC (%)
+
+
+
+
+                                                                                                                                                              AP (%)
+                                            AP (%)
+
+
+          70                                         70                                                       70                                                       70
+                                                                                                              60                                                       60
+          60                                         60
+                                                                                                              50                                                       50
+          50 GANs          DMs         Others        50 GANs          DMs           Others                         0          0.5    1.0         1.5    2.0                 0          0.5      1.0       1.5      2.0
+                           (c)                                        (d)                                                           Sigma                                                      Sigma
+
+
+Figure 6. Performance under limited training data. We train the                                     Figure 7. Robustness evaluation under perturbations with the top
+full pipeline using 0.05%, 0.1%, 1%, 10%, and 100% of the Pro-                                      row showing JPEG compression and the bottom row showing
+GAN dataset (720K images in total). (a,b) Results on Mg , and                                       Gaussian blur.
+(c,d) results on Mr .
+
+                                                                                                    pability, making it suitable for practical scenarios where
+method maintains consistently high and balanced results on                                          large-scale labeled data may not be available.
+GANs, diffusion models, and other datasets, demonstrating
+                                                                                                    5.6. Robustness to Perturbations
+its robustness and generalization regardless of the attribu-
+tion source. Both real-image and generated-image construc-                                          In real-world scenarios, images often undergo various post-
+tions yield nearly identical AP and ACC, indicating that the                                        processing operations. Therefore, beyond cross-dataset
+proposed Attribution Space Modeling can effectively learn                                           generalization, it is also essential to evaluate robustness
+intrinsic class-consistent representations from either type of                                      against unknown perturbations. We assess detector perfor-
+data. This further confirms that our framework does not rely                                        mance under two common distortions: JPEG compression
+on specific data distributions and can generalize well across                                       and Gaussian blur, as illustrated in Fig. 7. As the perturba-
+diverse generative architectures.                                                                   tion intensity increases, most existing methods experience
+                                                                                                    sharp performance degradation. NPR is particularly vulner-
+5.5. Effectiveness under Limited Training Data                                                      able, with accuracy dropping close to random under mild
+                                                                                                    compression. CNNDet, UnivFD, and FatFormer also suf-
+To evaluate the data efficiency of our method, we test its per-
+                                                                                                    fer significant declines, while VIB-Net shows moderate ro-
+formance under different training data ratios. The training
+                                                                                                    bustness. In contrast, our method consistently achieves the
+data is derived from ProGAN dataset, which contains 720k
+                                                                                                    highest ACC and AP across all perturbation levels, demon-
+images. We randomly sample 0.05% (360), 0.1% (720),
+                                                                                                    strating strong resistance to both compression and blurring
+1% (7.2k), 10% (72k), and 100% (720k) of the data to train
+                                                                                                    effects. This robustness is from the attribution consistency
+the full pipeline. As shown in Fig. 6, our method main-
+                                                                                                    modeling, which focuses on feature-level attribution devia-
+tains strong performance even with extremely limited train-
+                                                                                                    tions rather than post-processing-sensitive pixel artifacts.
+ing samples. When trained with only 0.05% of the training
+data, the model already achieves competitive performance.
+                                                                                                    6. Conclusion
+As the training ratio increases, both metrics steadily im-
+prove and eventually saturate, suggesting that the attribu-                                         We propose an attribution consistency framework for AI-
+tion consistency module effectively captures stable class-                                          generated image detection that overcomes the reliance of
+specific regularities rather than relying on large-scale data.                                      existing methods on data-dependent discriminative learn-
+    A consistent trend is observed across both attribution                                          ing. By constructing an attribution space from a single-
+spaces, Mg (Fig. 6 (a, b)) and Mr (Fig. 6 (c, d)), where                                            class training set, either real images or those generated by a
+the performance gap between the smallest and full datasets                                          single generative model, our method learns compact, class-
+remains relatively small. This indicates that the proposed                                          consistent feature manifolds that enlarge the decision mar-
+attribution space modeling can learn transferable and com-                                          gins between real and generated images. Consequently, this
+pact representations even from a small number of samples.                                           perspective amplifies attribution deviations between learned
+Overall, these results confirm that the proposed approach                                           and unseen distributions, leading to superior generalization
+achieves high data efficiency and strong generalization ca-                                         and robustness across diverse generated images.
+
+
+
+                                                                                             6755
+Acknowledgements                                                                 ceedings of the IEEE/CVF conference on computer vision
+                                                                                 and pattern recognition, pages 12873–12883, 2021. 2
+This work was supported in part by the National Natu-                       [11] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+ral Science Foundation of China under Grant 62376046,                            cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+Grant 62576060 and Grant 62536002, and in part                                   quency analysis for deep fake image recognition. In Inter-
+by the Natural Science Foundation of Chongqing un-                               national conference on machine learning, pages 3247–3258.
+der Grant CSTB2023NSCQ-MSX0341, CSTB2025YITP-                                    PMLR, 2020. 1, 2
+QCRCX0074.                                                                  [12] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo
+                                                                                 Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+                                                                                 tor quantized diffusion model for text-to-image synthesis. In
+References                                                                       Proceedings of the IEEE/CVF conference on computer vi-
+ [1] Andrew Brock, Jeff Donahue, and Karen Simonyan. Large                       sion and pattern recognition, pages 10696–10706, 2022. 2,
+     scale gan training for high fidelity natural image synthesis.               6
+     arXiv preprint arXiv:1809.11096, 2018. 2, 5                            [13] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+ [2] George Cazenavette, Avneesh Sud, Thomas Leung, and Ben                      Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+     Usman. Fakeinversion: Learning to detect images from un-                    training paradigm for more general ai-generated image de-
+     seen text-to-image models by inverting stable diffusion. In                 tection. In Proceedings of the Computer Vision and Pattern
+     Proceedings of the IEEE/CVF Conference on Computer Vi-                      Recognition Conference, pages 18685–18694, 2025. 3
+     sion and Pattern Recognition, pages 10759–10769, 2024. 1,              [14] Seoyeon Gye, Junwon Ko, Hyounguk Shon, Minchan Kwon,
+     3                                                                           and Junmo Kim. Reducing the content bias for ai-generated
+ [3] Keshigeyan Chandrasegaran, Ngoc-Trung Tran, and Ngai-                       image detection. In 2025 IEEE/CVF Winter Conference on
+     Man Cheung. A closer look at fourier spectrum discrepan-                    Applications of Computer Vision (WACV), pages 399–408.
+     cies for cnn-generated images detection. In Proceedings of                  IEEE, 2025. 3
+     the IEEE/CVF conference on computer vision and pattern                 [15] Qinghui He, Haifeng Zhang, Qiao Qin, Bo Liu, Xiuli Bi,
+     recognition, pages 7200–7209, 2021. 1, 2                                    and Bin Xiao. Diversity over uniformity: Rethinking rep-
+                                                                                 resentation in generated image detection. arXiv preprint
+ [4] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.
+                                                                                 arXiv:2603.00717, 2026. 2
+     Drct: Diffusion reconstruction contrastive training towards
+     universal detection of diffusion generated images. In Forty-           [16] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.
+     first International Conference on Machine Learning, 2024.                   Progressive growing of gans for improved quality, stability,
+     3                                                                           and variation. arXiv preprint arXiv:1710.10196, 2017. 2, 5
+                                                                            [17] Tero Karras, Samuli Laine, and Timo Aila. A style-based
+ [5] Yunjey Choi, Minje Choi, Munyoung Kim, Jung-Woo Ha,
+                                                                                 generator architecture for generative adversarial networks.
+     Sunghun Kim, and Jaegul Choo. Stargan: Unified genera-
+                                                                                 In Proceedings of the IEEE/CVF conference on computer vi-
+     tive adversarial networks for multi-domain image-to-image
+                                                                                 sion and pattern recognition, pages 4401–4410, 2019. 2, 5
+     translation. In Proceedings of the IEEE conference on
+                                                                            [18] Sohail Ahmed Khan and Duc-Tien Dang-Nguyen. Clipping
+     computer vision and pattern recognition, pages 8789–8797,
+                                                                                 the deception: Adapting vision-language models for univer-
+     2018. 5
+                                                                                 sal deepfake detection. In Proceedings of the 2024 Inter-
+ [6] Riccardo Corvi, Davide Cozzolino, Giada Zingarini, Gio-                     national Conference on Multimedia Retrieval, pages 1006–
+     vanni Poggi, Koki Nagano, and Luisa Verdoliva. On the                       1015, 2024. 1, 2, 6
+     detection of synthetic images generated by diffusion mod-
+                                                                            [19] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and
+     els. In ICASSP 2023-2023 IEEE International Conference
+                                                                                 Xinbo Gao. Detecting generated images by real images.
+     on Acoustics, Speech and Signal Processing (ICASSP), pages
+                                                                                 In European conference on computer vision, pages 95–110.
+     1–5. IEEE, 2023. 1, 2
+                                                                                 Springer, 2022. 1, 2, 6
+ [7] Davide Cozzolino, Giovanni Poggi, Riccardo Corvi,                      [20] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,
+     Matthias Nießner, and Luisa Verdoliva. Raising the bar of                   Jingdong Wang, and Yao Zhao. Forgery-aware adaptive
+     ai-generated image detection with clip. In Proceedings of                   transformer for generalizable synthetic image detection. In
+     the IEEE/CVF Conference on Computer Vision and Pattern                      Proceedings of the IEEE/CVF Conference on Computer Vi-
+     Recognition, pages 4356–4366, 2024. 1, 2                                    sion and Pattern Recognition, pages 10770–10780, 2024. 6
+ [8] Tao Dai, Jianrui Cai, Yongbing Zhang, Shu-Tao Xia, and                 [21] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.
+     Lei Zhang. Second-order attention network for single im-                    Lareˆ 2: Latent reconstruction error based method for
+     age super-resolution. In Proceedings of the IEEE/CVF con-                   diffusion-generated image detection. In Proceedings of
+     ference on computer vision and pattern recognition, pages                   the IEEE/CVF Conference on Computer Vision and Pattern
+     11065–11074, 2019. 5                                                        Recognition, pages 17006–17015, 2024. 1, 3
+ [9] Prafulla Dhariwal and Alexander Nichol. Diffusion models               [22] Midjourney. Midjourney. https://www.midjourney.
+     beat gans on image synthesis. Advances in neural informa-                   com. 2024. 6
+     tion processing systems, 34:8780–8794, 2021. 2, 6                      [23] Huawei MindSpore.         Wukong.       https : / / xihe .
+[10] Patrick Esser, Robin Rombach, and Bjorn Ommer. Taming                       mindspore . cn / modelzoo / wukong / introduce.
+     transformers for high-resolution image synthesis. In Pro-                   2024. 6
+
+
+
+
+                                                                     6756
+[24] Alexander Quinn Nichol, Prafulla Dhariwal, Aditya Ramesh,                  tion in deepfake detection. In Proceedings of the AAAI Con-
+     Pranav Shyam, Pamela Mishkin, Bob Mcgrew, Ilya                             ference on Artificial Intelligence, pages 7184–7192, 2025. 2
+     Sutskever, and Mark Chen. Glide: Towards photorealis-                 [36] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     tic image generation and editing with text-guided diffusion                Owens, and Alexei A Efros. Cnn-generated images are
+     models. In International Conference on Machine Learning,                   surprisingly easy to spot... for now. In Proceedings of
+     pages 16784–16804. PMLR, 2022. 2, 6                                        the IEEE/CVF conference on computer vision and pattern
+[25] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-                    recognition, pages 8695–8704, 2020. 1, 2, 5, 6
+     versal fake image detectors that generalize across genera-            [37] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     tive models. In Proceedings of the IEEE/CVF conference                     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     on computer vision and pattern recognition, pages 24480–                   diffusion-generated image detection. In Proceedings of the
+     24489, 2023. 1, 2, 3, 6                                                    IEEE/CVF International Conference on Computer Vision,
+[26] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-Yan                     pages 22445–22455, 2023. 1, 3, 6
+     Zhu. Semantic image synthesis with spatially-adaptive nor-            [38] Haiwei Wu, Jiantao Zhou, and Shile Zhang. Generalizable
+     malization. In Proceedings of the IEEE/CVF conference on                   synthetic image detection via language-guided contrastive
+     computer vision and pattern recognition, pages 2337–2346,                  learning. IEEE Transactions on Artificial Intelligence, 2025.
+     2019. 5                                                                    2
+[27] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya                    [39] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,                      Chengchun Liu, Shen Chen, Taiping Yao, Shouhong Ding,
+     Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning                 Baoyuan Wu, and Li Yuan. Orthogonal subspace decompo-
+     transferable visual models from natural language supervi-                  sition for generalizable ai-generated image detection. In In-
+     sion. In International conference on machine learning, pages               ternational Conference on Machine Learning, pages 70268–
+     8748–8763. PmLR, 2021. 1                                                   70288. PMLR, 2025. 2
+[28] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu,             [40] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li, Bo Liu,
+     and Mark Chen. Hierarchical text-conditional image gener-                  and Bin Xiao. Towards universal ai-generated image detec-
+     ation with clip latents. arXiv preprint arXiv:2204.06125, 1                tion by variational information bottleneck network. In Pro-
+     (2):3, 2022. 2                                                             ceedings of the Computer Vision and Pattern Recognition
+[29] Yuan Rao and Jiangqun Ni. A deep learning approach to                      Conference, pages 23828–23837, 2025. 1, 2, 6
+     detection of splicing and copy-move forgeries in images. In           [41] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A
+     2016 IEEE international workshop on information forensics                  Efros. Unpaired image-to-image translation using cycle-
+     and security (WIFS), pages 1–6. IEEE, 2016. 5                              consistent adversarial networks. In Proceedings of the IEEE
+[30] Ali Razavi, Aaron Van den Oord, and Oriol Vinyals. Gener-                  international conference on computer vision, pages 2223–
+     ating diverse high-fidelity images with vq-vae-2. Advances                 2232, 2017. 2, 5
+     in neural information processing systems, 32, 2019. 2                 [42] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+[31] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-                     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     oblade: Training-free detection of latent diffusion images                 Yunhe Wang. Genimage: A million-scale benchmark for de-
+     using autoencoder reconstruction error. In Proceedings of                  tecting ai-generated image. Advances in neural information
+     the IEEE/CVF Conference on Computer Vision and Pattern                     processing systems, 36:77771–77782, 2023. 5
+     Recognition, pages 9130–9140, 2024. 3
+[32] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     Patrick Esser, and Björn Ommer. High-resolution image
+     synthesis with latent diffusion models. In Proceedings of
+     the IEEE/CVF conference on computer vision and pattern
+     recognition, pages 10684–10695, 2022. 2, 6
+[33] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     and Yunchao Wei. Learning on gradients: Generalized arti-
+     facts representation for gan-generated images detection. In
+     Proceedings of the IEEE/CVF Conference on Computer Vi-
+     sion and Pattern Recognition, pages 12105–12114, 2023. 6
+[34] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-
+     erations in cnn-based generative network for generalizable
+     deepfake detection. In Proceedings of the IEEE/CVF con-
+     ference on computer vision and pattern recognition, pages
+     28130–28139, 2024. 6
+[35] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu,
+     Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip: Inject-
+     ing category common prompt in clip to enhance generaliza-
+
+
+
+
+                                                                    6757
+

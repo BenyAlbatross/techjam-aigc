@@ -1,0 +1,1130 @@
+                                         JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                                         1
+
+
+
+
+                                                              How Noise Benefits AI-generated Image Detection
+                                                        Ziqiang Li, Jiazhen Yan, Fan Wang, Kai Zeng, Ziwen He, Zhangjie Fu, Member, IEEE,
+
+
+
+                                            Abstract—Generalization to unseen generative models remains
+                                         a fundamental challenge in AI-generated image (AIGI) detection.
+                                         Despite recent advances, existing detectors often overfit to spuri-
+                                         ous shortcuts—such as image-type biases, semantic correlations,
+                                         and frequency-domain discrepancies—that emerge early during
+                                         optimization and fail to capture causal forensic cues. This
+                                         shortcut reliance leads to rapid training loss convergence but
+                                         poor cross-domain robustness under open-world conditions. In
+arXiv:2511.16136v2 [cs.CV] 10 Apr 2026
+
+
+
+
+                                         this paper, we present a noise-driven learning framework for
+                                         AIGI detection. We first reveal that injecting subtle feature-space
+                                         perturbations into pretrained encoders can effectively mitigate
+                                         early-stage shortcut domination and stabilize decision margins.
+                                         Building on this insight, we propose PiND (Positive-incentive
+                                         Noise for AI-generated image Detection), a unified variational
+                                         framework that jointly learns a task-adaptive, forgery-conditional
+                                         noise generator and a detection network. Unlike random noise,
+                                         PiND optimizes structured Gaussian perturbations to maximize
+                                         mutual information with the detection task, thereby reducing
+                                         conditional uncertainty and suppressing shortcut-sensitive di-                  Fig. 1: The Cross-entropy Loss during Training. When training the
+                                         rections while preserving stable artifact-related cues. Extensive               PE-LoRA network, the cross-entropy loss drops sharply to approx-
+                                         experiments on two standard benchmarks and three real-world                     imately 0.2 within about 100 iterations, indicating early overfitting.
+                                         degradation benchmarks demonstrate that PiND consistently                       Introducing tiny feature-space perturbations (PE-Random) mitigates
+                                         improves robustness and generalization. Our method achieves                     this effect to some extent, maintaining a higher loss of around 0.3
+                                         new state-of-the-art performance, delivering up to 8.0% absolute                over the same iterations. However, he benefit of random perturbations
+                                         gains in average accuracy over existing approaches.                             is unstable and may disrupt optimization, as evidenced by a sudden
+                                                                                                                         loss increase after roughly 150 iterations. In contrast, our proposed
+                                           Index Terms—AI-generated image detection, AI security,                        PiND both slows the initial loss decrease and maintains more stable
+                                         Positive-incentive Noise.                                                       margins throughout training, consistent with suppressing shortcut-
+                                                                                                                         sensitive directions and promoting more robust convergence.
+
+                                                                   I. I NTRODUCTION
+                                                                                                                            To address these challenges, existing methods can be
+                                         W       ITH the rapid advancement of generative models, in-
+                                                 cluding Generative Adversarial Networks (GANs) [1–
+                                         3] and diffusion-based architectures [4–6], the boundary be-
+                                                                                                                         broadly categorized into two paradigms: i) Invariance Learn-
+                                                                                                                         ing, which aims to extract task-relevant cues through con-
+                                         tween synthetic and real visual content has become increas-                     trastive objectives [7–10] or handcrafted priors, such as local
+                                         ingly blurred. While these models enable compelling ap-                         pixel inconsistencies [11–13], frequency-domain artifacts [14–
+                                         plications, they also amplify risks such as misinformation,                     17], and category-interference patterns [18–20]; and ii) Data
+                                         privacy violations, and challenges to digital forensics. Con-                   Diversification, which mitigates overfitting by expanding
+                                         sequently, AI-generated image (AIGI) detection has become                       training coverage via cross-generator datasets [21–23] or
+                                         a critical task. Despite notable progress, current detectors                    data augmentation strategies [24–26]. However, under open-
+                                         often suffer substantial performance degradation on out-of-                     world settings, the training distribution can never exhaus-
+                                         distribution (OOD) samples, e.g., images generated by unseen                    tively encompass all possible generative models and post-hoc
+                                         model architectures, novel diffusion pipelines, or diverse post-                manipulations. Recent studies further indicate that standard
+                                         processing operations, thereby limiting their reliability in real-              training pipelines tend to induce spurious shortcuts, such as
+                                         world forensic settings.                                                        image-type biases [21, 27], semantic correlations [18, 19, 21],
+                                                                                                                         and frequency-domain discrepancies [28], and have proposed
+                                            This work was supported in part by the National Natural Science Foundation   targeted strategies to suppress their influence. Despite these
+                                         of China under grant U22B2062, 62172232, and Jiangsu Provincial Science         efforts, we observe that detectors still tend to overfit to
+                                         and Technology Major Project (No. BG2024042). (Corresponding author:
+                                         Zhangjie Fu).                                                                   previously unseen spurious shortcuts present in the train-
+                                            Jiazhen Yan, Ziqiang Li, Ziwen He and Zhangjie Fu are with the               ing data rather than genuine artifact-related cues, resulting
+                                         Engineering Research Center of Digital Forensics, Ministry of Educa-            in early overfitting and poor generalization. This behavior
+                                         tion, Nanjing University of Information Science and Technology, Nanjing,
+                                         210044, China. (e-mail: 247918horizon@gmail.com, iceli@mail.ustc.edu.cn,        arises because shortcut features often emerge rapidly during
+                                         {ziwen.he, fzj}@nuist.edu.cn).                                                  optimization and are difficult to eliminate completely. As
+                                            Fan Wang is with the University of Macau, Macau, 999078, China. (e-mail:     illustrated in Fig. 1, the training loss drops below 0.1 within
+                                         wf71103@126.com.
+                                            Kai Zeng is with the University of Siena, Siena, Italy. (e-mail:             only a few iterations, suggesting that shortcut learning occurs
+                                         kai.zeng@unisi.it.                                                              at an early stage and constitutes a key factor underlying the
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                         2
+
+
+
+observed generalization gap.                                           • We propose a unified variational training framework
+   Motivated by these observations, we investigate whether tiny          that jointly learns a π-noise generator and a detec-
+perturbations in feature space can steer learning away from              tion network, enabling task-adaptive, forgery-conditional
+shortcut reliance and toward causal forensic cues. Specifically,         noise injection guided by the optimization objective. This
+we inject small zero-mean Gaussian noise into the feature                mechanism suppresses shortcut-sensitive directions while
+embeddings of the image encoder. This simple intervention                amplifying stable, task-relevant forensic evidence under
+yields a pronounced effect: early-stage shortcut domination              beneficial stochastic transformations.
+is alleviated, and decision margins stabilize for a subset             • Extensive experiments across multiple generative do-
+of samples (Fig. 1). Remarkably, despite its simplicity, this            mains and unseen architectures show that our method
+strategy already delivers substantial performance gains on               consistently enhances cross-domain robustness and gen-
+unseen generators (see Sec. IV-C). These findings point to               eralization, establishing a new paradigm for noise-driven
+a key insight: tiny feature-space perturbations can dispro-              learning in AIGI detection.
+portionately disrupt brittle shortcut evidence, slowing its
+premature dominance while preserving margins supported                                    II. R ELATED W ORK
+by stable, artifact-related cues.
+   Nevertheless, random noise is not task-aligned for AIGI           A. Towards Generalizable AI-generated Image Detection
+detection. This motivates a key question: Can we design                 As generative model technology continues to advance
+customized noise to fine-tune a pretrained model more ef-            rapidly, ensuring the accurate identification of synthetic images
+fectively? Inspired by the variational Positive-Incentive Noise      has become increasingly critical. Much research has been
+principle [29–31], which demonstrates that appropriately struc-      devoted to generalizable AI-generated image detection, which
+tured noise can reduce conditional task uncertainty and en-          can be broadly categorized into two categories: invariance
+hance generalizability, we propose PiND—Positive-incentive           learning and data diversification.
+Noise for AI-generated image Detection. PiND elevates ran-           Invariance Learning. Many methods are dedicated to extract-
+dom jitter into a controllable and optimizable training signal by    ing task-invariant representations to improve the generalization
+jointly learning task-anchored, artifact-conditional Gaussian        ability of the model, including frequency-domain analysis
+perturbations alongside the detector. Specifically, we construct     [14–17], local pixel differences [11–13, 32], gradient patterns
+a task-relevant perturbation E that can decrease the uncertainty     [33], reconstruction errors [34–36], and contrastive learning
+of predictions and simplify the task, which is expressed as:         [10]. For instance, FreqNet [16] utilizes the Fast Fourier
+                                                                     Transform (FFT) to extract global high-frequency information;
+              I(T ; E) > 0 ⇔ H(T ) > H(T |E),                  (1)
+                                                                     LGrad [33] leverages gradients from pretrained CNNs to reveal
+where T is the definition of the AIGI detection task from a          universal forgery traces; DIRE [34] extracts the reconstruction
+probabilistic perspective, I(·; ·) denotes mutual information,       error of the image over a pre-trained diffusion model as
+and H represents entropy. We design a lightweight cross-             the artifact of diffusion-based images; NTF [10] significantly
+modal attention module that integrates visual representations        improves the generalization ability of forged image detection
+with label embeddings to produce a forgery-aware, curvature-         by utilizing natural trace representation learning and soft con-
+regularized perturbation, and optimize it to maximize the            trastive learning for pre-training. In addition, benefiting from
+mutual information I(T ; E) between the injected noise E             large-scale pre-training, many recent methods have begun to
+and the detection task T . Intuitively, we hypothesize that          leverage vision–language models (VLMs) (such as CLIP [37])
+images generated by each generative model follow a distinct          for AI-generated image detection, including feature-based
+distribution, which can be counteracted by introducing task-         [7, 19, 38] and fine-tuning-based [8, 18, 39, 40] methods. To
+specific perturbations from a tailored distribution. This effect     illustrate, UnivFD [38] directly freezes CLIP’s visual encoder
+is further amplified by optimizing the noise itself. In contrast     and tunes only a linear layer for classification; Effort [40] em-
+to random noise, which can negatively impact performance by          ploys Singular Value Decomposition to construct two orthog-
+artificially increasing input complexity, our task-related pertur-   onal subspaces to preserve the pre-trained knowledge while
+bation simplifies the task and suppresses spurious shortcuts,        learning forgery-related patterns; C2P-CLIP [8] finetunes the
+ultimately enhancing the model’s generalization ability.             image encoder by constructing category concepts combined
+   Under these structured yet stochastic transformations, the        with contrastive learning; NS-Net [18] constructs a NULL-
+shared encoder is encouraged to suppress shortcut-sensitive          Space of semantic features to remove semantic interference
+components while reinforcing stable forensic cues, leading to        embedded in visual features. Despite notable progress, existing
+more consistent and trustworthy predictions. What’s more, our        detectors still tend to exploit spurious shortcuts present in
+method is not tied to any particular pretrained model and can        the training data rather than learning the causal mechanisms
+be applied broadly to ViT-based pretrained architectures.            underlying artifact formation, which remains the core issue
+   Our main contributions can be summarized as follows:              limiting their generalization to unseen generative models.
+   • We reveal that introducing subtle, feature-space pertur-        Data Diversification. Some studies adopt a data-driven per-
+      bations can effectively steer model learning away from         spective, aiming to enhance artifact visibility through data
+      spurious shortcuts and toward causal, generalizable cues,      diversification, thereby improving the model’s generalization
+      providing a principled perspective on noise-driven regu-       ability, which can be broadly categorized into data augmen-
+      larization in AIGI detection.                                  tation [24–26] and dataset construction [22, 23]. Specifically,
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                          3
+
+
+
+CNN-Spot [24] employs diverse data augmentation techniques          signals, suppressing directions sensitive to shortcuts while
+to enhance generalization to unseen testing data; SAFE [26]         amplifying stable forensic clues. Fundamentally different from
+integrates cropping and augmentations such as ColorJitter,          existing methods, which are based on generalization artifact
+RandomRotation to improve generalization. What’s more,              representation and data diversification, our approach explores
+DRCT [25] utilizes reconstructed images as informative yet          the potential of noise in generated image detection from a
+challenging samples, enabling the detector to learn subtle          novel perspective and achieves superior performance.
+distinctions between real and generated images; OMAT [23]
+significantly enhances the model’s generalization and adversar-
+                                                                                         III. M ETHODOLOGY
+ial robustness by incorporating optimized adversarial samples
+into the training set. However, in open-world environments,            Generalization to out-of-distribution samples remains a fun-
+the training distribution can never fully encompass all possible    damental challenge in AI-generated image detection. We iden-
+generators. Therefore, data diversification alone cannot fun-       tify spurious shortcuts as the primary cause of overfitting in
+damentally resolve the problem of spurious shortcuts, which         existing detectors. To address this issue, we introduce Positive-
+ultimately limits the generalization capability of the detector.    incentive Noise to explore the constructive role of noise in AI-
+                                                                    generated image detection from a novel perspective, termed
+B. Shortcuts Existing in AI-generated Image Detection               Positive-incentive Noise for AI-generated image detection
+                                                                    (PiND).
+   Recent studies on AI-generated image detection suggest
+                                                                       In this section, we first provide the problem formulation
+that common training pipelines may induce spurious short-
+                                                                    in Section III-A, and then introduce how to define the task
+cuts, such as image-type cues [21, 27], semantic content
+                                                                    entropy on the specific dataset X , which is vital for calculating
+biases [18, 19, 21], and frequency-domain discrepancies [28].
+                                                                    the optimization objective I(T ; E) when generating π-noise.
+To illustrate, Grommelt et al. identify the dataset-level biases
+                                                                    To optimize this objective, the variational approximation is
+related to JPEG compression and image resolution, and em-
+                                                                    applied to obtain its upper bound in Section III-B. In the
+phasize that detectors should not inadvertently rely on such
+                                                                    final approximate loss, we define the joint training process
+undesirable variables. B-Free [21] further analyzes semantic-
+                                                                    with π-noise, which includes both the architecture of the
+content bias and constructs debiased training samples via
+                                                                    noise generator and the parameter updates during training, as
+reconstruction, encouraging detectors to focus on generation-
+                                                                    discussed in Section III-C.
+related artifacts rather than content. In addition, DDA [28]
+shows that pixel-level alignment alone cannot fully bridge
+the gap between real and synthetic images, and proposes a           A. Problem Formulation
+dataset construction strategy that aligns pairs in both pixel and      Given an image x ∈ X and its binary label y ∈ Y = {0, 1}
+frequency domains to mitigate frequency-related bias. Despite       indicating whether it is real or fake, the goal of AIGI detection
+these effective suppressions of known biases, detectors can         is to learn a detector with classifier hϕ : X → Y that estimates
+still overfit to unknown spurious shortcuts in the training         the posterior probability, which can be expressed as:
+data instead of genuine artifact-related cues, resulting in early
+overfitting and poor generalization (as shown in Figure 1).                           qϕ (y|x) = softmax(ĥϕ (x)).                 (2)
+
+C. Positive Noise                                                      To quantify the intrinsic difficulty of the detection task on an
+                                                                    arbitrary dataset, we first measure its task entropy. Following
+   In fact, within the signal-processing society, it has been       prior work [29–31], task entropy can be used to formulate the
+demonstrated that random noise helps stochastic resonance           complexity as
+improve the detection of weak signals [41]. Noise can have a
+positive effect when the mixing probability distribution lies             H(T ) = H(y|x) = Ex∼X Ey∼p(y|x) [− log p(y|x)]
+outside the extreme region [42]. It has also been reported                                                                         (3)
+                                                                                             = Ep(x,y) [− log p(y|x)],
+that noise can enhance model generalization in natural lan-
+guage processing (NLP) tasks [43–46]. Recently, the Positive-       which characterizes the uncertainty of predicting the authen-
+incentive Noise [31] has been proposed to scientifically in-        ticity label. However, in real-world environments, the distri-
+vestigate the positive or negative impact brought by noise.         butions of X generated by different generation models vary,
+Similarly, other methods [29, 30, 47] extended this insight to      which increases the uncertainty of predicting the label y.
+contrastive learning and vision-language alignment.                    As discussed in Sec I, we consider introducing the task-
+   To the best of our knowledge, we are among the first             related noise E into the detection task. Similar to H(T ), the
+to systematically study how feature-space perturbations af-         conditional task entropy under the injected noise E can be
+fect the generalization of AI-generated image detectors. As         defined as:
+discussed in Sec. I, small perturbations in the feature space
+                                                                                 H(T |E) = Ep(x,y,ε) [− log p(y|x, ε)].            (4)
+can mitigate the effects of spurious shortcuts and improve
+generalization. To make such perturbations inherently task-         Then, the mutual information between the task and the injected
+oriented, we construct task-relevant noise with artificial-level    noise I(T ; E) is defined as
+guidance from text embeddings. This transforms the tempo-
+rary random perturbations into predictable, artifact-conditional                     I(T ; E) = H(T ) − H(T |E).                   (5)
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                                   4
+
+
+
+
+Fig. 2: Architecture of PiND for Generalizable AI-Generated Image Detection. It includes a conditional noise generator and a detection
+network, enabling task-adaptive, forgery-conditional noise injection guided by the optimization objective. This mechanism suppresses shortcut-
+sensitive directions while amplifying stable, task-relevant forensic evidence under beneficial stochastic transformations.
+
+
+Thus, the noise E can decrease the uncertainty of predictions            over the continuous variable ε remains intractable, we further
+and simplify the task if it satisfies the following conditions:          employ the reparameterization trick [48] to enable gradient
+                                                                         backpropagation through stochastic nodes. Specifically, we
+              I(T ; E) > 0 ⇔ H(T ) > H(T |E).                      (6)
+                                                                         express the sampling process as:
+Therefore, our core objective is to maximize the mutual infor-
+                                                                               ε = Gθ (xi , yi , ϵ) = Σθ (xi , yi ) · ϵ + µθ (xi , yi ),   (11)
+mation I(T ; E) to improve the model’s ability to distinguish
+between real and fake images. Since H(T ) is constant during             where ϵ ∼ N (0, I) is a standard Gaussian random variable,
+optimization, maximizing I(T ; E) is equivalent to minimizing            and Gθ denotes a differentiable function that generates task-
+the conditional task entropy H(T |E). This encourages the                oriented noise.
+detector to learn noise-invariant yet task-discriminative repre-            Under the Monte Carlo approximation, the final training
+sentations, thereby improving its robustness and generalization          objective can be written as:
+to unseen generative models and domains.                                                 n
+                                                                                     1X                                           
+                                                                            LVPN ≈          Ep(ϵ) − log q yi |xi , Gθ (ϵ, xi , yi )
+                                                                                     n i=1
+B. Variational Objective
+                                                                                             n m
+   The variational objective of our framework is derived from                          1 XXh                                              i
+                                                                                  ≈                   − log q yi |xi , Gθ (ϵij , xi , yi ) ,
+the non-negativity property of the Kullback–Leibler (KL)                             n · m i=1 j=1
+divergence, expressed as:                                                                                                                   (12)
+                                                                         where m denotes the number of noise samples per input. Ac-
+                                                                         cordingly, the final training object contains two components:
+   KL(p∥q) ≥ 0 ⇔ Ep(x) [log p(x)] ≥ Ep(x) [log q(x)].              (7)
+                                                                                                 L = Lbase + γLVPN ,                       (13)
+Based on this property, we apply the principle of variational
+inference to obtain a tractable upper bound of the conditional           where γ is a trade-off coefficient and Lbase represents the
+task entropy H(T |E):                                                    original cross entropy loss of the base model hϕ .
+         LVPN = Ep(x,y,ε) [− log q(y|x, ε)] ≥ H(T |E),             (8)
+                                                                         C. Joint Training with π-noise
+where q(y|x, ε) is a variational approximation of the in-
+                                                                            The formula Eq. (12) derived above is mainly divided into
+tractable posterior p(y|x, ε). Intuitively, minimizing LVPN re-
+                                                                         two parts: I) q y|x, E , which models label prediction under
+duces the conditional uncertainty of task predictions, thereby
+                                                                         the injected noise. We will discuss it below in detail. II)
+guiding the detector toward more confident and reliable de-
+                                                                         Gθ (ϵ, x, y), which generates task-related noise. Different from
+cisions. To avoid direct integration over the continuous data
+                                                                         the common practice of injecting noise at the image level, we
+distribution, we approximate the expectation in LVPN using
+                                                                         apply perturbations directly in the feature space. Concretely,
+Monte Carlo sampling:
+                                                                         we replace the raw image x with the visual feature f extracted
+                        n
+                    1X                                                   by the visual encoder, and replace the label y with the text
+         LVPN ≈           Ep(ε|xi ,yi ) [− log q(yi |xi , ε)] .    (9)   feature t extracted by the text encoder, and generate task-
+                    n i=1
+                                                                         relevant perturbations E conditioned on these representations.
+We assume the conditional noise distribution follows a Gaus-             By optimizing the generator Gθ (·) via Eq. (13) in a joint
+sian form,                                                               training framework, the visual encoder is encouraged to learn
+                                                                         more stable and generalizable artifact representations.
+            p(ε|xi , yi ) = N (µθ (xi , yi ), Σθ (xi , yi )),     (10)
+                                                                            Leveraging the powerful generalization capability of pre-
+where the mean µθ and covariance Σθ are outputs of a learn-              trained models in AI-generated image detection tasks, we
+able function fθ (xi , yi ) parameterized by θ. Since the integral       select the pre-trained PE (Perception Encoder) model as the
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                              5
+
+
+
+Algorithm 1 Training Procedure of PiND                                  perturbed counterpart f˜. Unlike training with only perturbed
+Input: Traing set D = {xj , yj }N
+                                j=1 , with text prompts zi , learning   features, we also incorporate clean features during detection
+rate µ, hyperparameter λ.                                               training to mitigate the uncertainty introduced by the pertur-
+Output: Trained model parameters φ, θ, h, and hnoise .                  bations during inference. Thus, we use a clean head h(·) on
+Step 1: Feature Extraction
+Extract features fj = Eimg (xj ; φ), tj = Etext (zj ; ϕ).               f and a noisy head hnoise (·) on f˜ = f + ε.
+Step 2: Noise Generator                                                    The training objective can be formulated as follows:
+Generate Gaussian parameters: (µj , varj ) = Gθ (fj , tj ).
+Sample ξj for fj from N (0, Id ).
+                                                                                                                           
+                                                                            L = ℓ h(f ), y +λ ℓ hnoise (f + µ + var ⊙ ξ), y ,    (17)
+Reparameterization: εj = µj + varj ⊙ ξj .                                        | {z }          |             {z           }
+Step 3: Compute Losses                                                             Lbase                       LVPN
+Compute base model classification loss Lbase = ℓ h(fj ), yj .
+Compute variational proxy task loss LVPN = ℓ hnoise (fj + εj ), yj ).   where ℓ means the BCELoss.
+Step 4: Update Parameters                                               The Parameters Update. We first define the feature-space
+Update φ, θ, h, and hnoise by minimizing L = Lbase + λ LVPN .           gradients of the two branches:
+Step 5: Repeat
+Repeat Steps 1–4 for each batch until convergence.                                                                   
+                                                                                                        ∂ ℓ h(f ), y
+                                                                                             gclean :=                 ,        (18)
+                                                                                                              ∂f
+                                                                                             ∂ ℓ hnoise (f˜), y
+                                                                                                                
+base model. The framework has been illustrated in Figure 2. It
+is worth mentioning that our method is not limited to a single                     gnoisy :=                      , f˜ = f + ε.
+                                                                                                     ∂ f˜
+pre-trained model; it is applicable to multiple ViT-based pre-
+trained models simultaneously, as shown in Table VI.                    Since ε depends on f via the noise generator Gθ (f, t), the
+Input and Feature Extraction. For each image x, we attach               chain rule yields the total gradient w.r.t. f :
+a minimal text prompt z that is aligned with its label, such as                                                        
+”A real photo.” for real images, and ”A fake photo.” for fake
+images. The PE model provides an image encoder Eimg and                                                             ∂ f˜
+                                                                                                        
+                                                                                                                         
+a text encoder Etext , the feature extraction processes can be                      gfinal = gclean + λ  gnoisy ·
+                                                                                                                         ,           (19)
+                                                                                                         | {z } | ∂f
+                                                                                                                          
+defined as:                                                                                                    ˜
+                                                                                                           ∂ℓ/∂ f
+                                                                                                                     {z }
+                                                                                                                           ∂ε
+                                                                                                                       I + ∂f
+                             d                           d
+     f = Eimg (x; φ) ∈ R ,        t = Etext (z; ϕ) ∈ R ,        (14)
+where φ denotes the trainable parameters of the image en-               where
+                                                                                            ∂ε   ∂µ           ∂ var
+coder, and ϕ is frozen.                                                                        =    + Diag(ξ)       .                  (20)
+Architecture of Noise Generator. As illustrated in Eq. (11),                                ∂f   ∂f            ∂f
+generating conditional noise typically relies on explicit label           By the chain rule, the update of the PE’s image encoder
+information. Instead of using conventional one-hot labels, we           (LoRA) parameters φ can be expressed as:
+condition the perturbation on label-aligned textual embeddings
+t extracted from PE’s text encoder, enabling the noise genera-                                       ∂E
+                                                                                                         img (x; φ)
+                                                                                                                       ⊤
+tor to adapt its perturbations more precisely to the underlying                     φ ← φ − η                               gfinal ,   (21)
+                                                                                                           ∂φ
+forensic categories. Given the extracted image feature f ∈ Rd
+and the corresponding text feature t ∈ Rd , we instantiate a            where η denotes the learning rate.
+lightweight cross-attention module Gθ (f, t) to generate per-              The dual constraints from Lbase and LVPN jointly shape the
+dimension Gaussian parameters (µ, var) in the feature space             feature extractor: the clean term preserves performance on
+instead of the image space. Specifically, we define the weight          unperturbed features, while the noisy term provides a task-
+matrices Wq , Wk , Wv , Wµ , Wvar ∈ Rd×H , where H = d/r is             anchored, artifact-conditional signal that suppresses shortcut-
+a bottleneck hidden size (r≥1). The generation process can be           sensitive directions and amplifies stable forensic cues, yielding
+formulated as:                                                          consistent and trustworthy predictions. Finally, we provide an
+                                                                        algorithm illustration of the proposed approach in Alg. 1 for
+               q = Wq f,     k = Wk t,       v = Wv t,
+                                                                        an overall understanding.
+                                     ⊤
+                   a = SoftMax(qk )v ∈ RH ,                     (15)       During training, we update only the LoRA of the PE’s
+                µ = Wµ a,         var = ψ(Wvar a) ,                     image encoder (φ), the noise generator θ and the two linear
+                                                                        classification heads h and hnoise , keeping all other parameters
+where ψ(·) enforces element-wise nonnegativity. Reparame-
+                                                                        frozen. At inference time, we discard the noise and use Eimg
+terized sampling and feature perturbation are as follows:
+                                                                        with the clean head h only.
+    ε = µ + var ⊙ ξ,       ξ ∼ N (0, Id ),      f˜ = f + ε.     (16)
+  In this way, we combine the artifact-conditional Gaussian                                     IV. E XPERIMENTS
+perturbations ε with artifact representation f to maximize
+I(T ; E) as illustrated in (5).                                           In this section, we provide an extensive evaluation of our
+Loss Definitions. By Eqs. (2) and (12), optimization is                 method. We first introduce the experiment setup and then detail
+expressed as cross-entropy over the clean feature f and its             the results and observations.
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                                                                   6
+
+
+
+TABLE I: Cross-model Accuracy (Acc.) Performance on the AIGCDetect [50] Dataset. Bold numbers indicate the best performance in
+each column, and underlined numbers indicate the second-best performance.
+
+
+
+
+                                                                      2
+
+
+
+
+                                                                                                                                        rney
+                                                      GAN
+
+                                                                   GAN
+
+
+                                                                               AN
+
+                                                                                          AN
+                                     gan
+
+
+
+
+                                                                                                                                                                 E2
+                                              AN
+                         AN
+
+
+
+
+                                                                                                                                                 g
+
+                                                                                                                                                         M
+                                                                                                        .4
+
+                                                                                                                  .5
+
+
+
+
+                                                                                                                               E
+
+                                                                                                                                          ou
+
+
+                                                                                                                                                    n
+
+
+
+
+                                                                                                                                                                  L
+                                                                                               WFIR
+
+
+
+
+                                                                                                                                                                         .
+                                                                           GauG
+
+
+
+
+                                                                                                                              GLID
+
+
+
+
+                                                                                                                                               Wuko
+                                Cycle
+
+
+
+
+                                                                                     StarG
+
+
+
+
+                                                                                                                       ADM
+                                                                                                      SDv1
+
+                                                                                                              SDv1
+
+
+
+
+                                                                                                                                                                       mA cc
+                                            BigG
+
+
+
+
+                                                                                                                                                        VQD
+                     ProG
+
+
+
+
+                                                    Style
+
+                                                              Style
+
+
+
+
+                                                                                                                                                               DAL
+                                                                                                                                     Midj
+  Method
+  CNN-Spot [24]      49.9        49.5       49.8    49.9      49.9         50.0     50.0 50.0 93.9            94.1     51.0   54.6    97.7     91.2     51.5   52.0    61.6
+  UnivFD [38]        86.5        97.0       82.2    84.6      75.2         84.0     95.9 98.9 93.9            93.8     80.9   66.4    89.7     92.8     92.1   93.9    88.0
+  NPR [12]           76.1        56.5       55.0    69.8      74.3         47.4     77.3 50.1 93.8            93.9     67.7   98.9    99.7     83.0     65.8   97.3    75.4
+  DFFreq [17]        89.9        91.1       89.3    91.1      90.0         86.2     91.2 52.1 98.7            98.7     83.1   93.7    99.7     96.1     93.1   98.6    90.2
+  AIDE [51]          64.3        57.6       55.7    63.2      62.2         56.6     75.8 58.7 85.6            85.1     75.0   93.3    92.1     86.3     84.8   79.1    73.5
+  SAFE [26]          72.6        69.9       65.9    77.4      67.2         55.8     79.8 50.5 95.9            96.0     56.3   91.7    98.9     89.7     88.6   91.1    78.0
+  VIB-Net [19]       78.2        96.0       77.7    79.7      73.5         83.9     73.6 97.3 91.9            91.7     84.2   73.2    89.6     91.3     90.4   92.5    85.3
+  B-Free [21]        95.5        74.5       91.5    72.1      71.6         96.6     84.8 99.7 98.0            97.8     77.5   83.0    93.7     97.9     87.8   83.5    85.0
+  Effort [40]        67.4        98.4       86.8    75.0      66.0         73.0     97.2 100.0 99.0           98.8     89.9   92.4    98.8     98.6     97.7   99.9    89.9
+  DDA [28]           84.7        61.4       76.2    72.7      81.4         88.1     61.6 51.6 98.0            98.1     88.4   86.5    96.3     97.7     63.1   94.2    81.3
+  PiND (Ours)        95.6 99.3 99.6 93.0                      93.4         99.8 99.8 100.0 99.9 99.8 84.6 97.9                        98.0     99.7 98.5 99.5 97.4
+
+                   TABLE II: Cross-model Average Precision (A.P.) Performance on the AIGCDetect [50] Dataset.
+                                                                2
+
+
+
+
+                                                                                                                                       rney
+                                                     GAN
+
+                                                              GAN
+
+
+                                                                           AN
+
+
+                                                                                      AN
+                                   gan
+
+
+
+
+                                                                                                                                                                 E2
+                                            AN
+                      N
+
+
+
+
+                                                                                                                                                   ng
+
+                                                                                                                                                         M
+                                                                                                        4
+
+
+                                                                                                                  .5
+
+
+
+
+                                                                                                                               E
+
+                                                                                                                                         ou
+                        A
+
+
+
+
+                                                                                                                                                                   L
+                                                                                                          .
+                                                                                               WFIR
+                                                                          GauG
+
+
+
+
+                                                                                                                              GLID
+
+
+
+
+                                                                                                                                               Wuko
+                              Cycle
+
+
+
+
+                                                                                    StarG
+
+
+
+
+                                                                                                                       ADM
+
+
+
+
+                                                                                                                                                                           .
+                                                                                                      SDv1
+
+
+                                                                                                              SDv1
+
+
+
+
+                                                                                                                                                                       mA.P
+                                           BigG
+
+
+
+
+                                                                                                                                                        VQD
+                   ProG
+
+
+
+
+                                                   Style
+
+                                                            Style
+
+
+
+
+                                                                                                                                                               DAL
+                                                                                                                                     Midj
+  Method
+  CNN-Spot [24]    42.9       38.6         40.9    34.3     38.8          36.6      45.9 32.5         99.7     99.7    67.2   86.8 99.9        99.4     71.2 91.6 64.1
+  UnivFD [38]      95.8       99.7         97.1    90.5     81.1          97.5      99.4 99.9         99.2     98.9    89.6   77.2 95.6        98.4     98.0 98.3 94.8
+  NPR [12]         86.6       72.1         56.8    79.8     85.4          37.7      88.2 83.1         99.5     99.5    84.7   99.9 100.0       97.1     95.4 100.0 85.4
+  DFFreq [17]      98.0       99.5         97.3    98.0     97.9          94.7      99.7 73.3         99.9     99.9    99.0   99.5 100.0       99.8     99.8 100.0 97.3
+  AIDE [51]        71.5       67.4         59.2    69.4     69.5          60.3      87.8 65.4         95.9     95.5    89.4   98.3 99.0        96.0     94.7 95.0 82.1
+  SAFE [26]        93.0       92.4         81.5    93.9     90.6          63.5      92.0 70.6         99.0     99.9    88.9   99.7 100.0       99.4     99.6 99.9 91.6
+  VIB-Net [19]     91.9       99.3         95.5    91.2     87.6          98.2      96.2 99.7         99.4     99.2    92.7   81.6 96.7        99.0     98.4 97.7 95.3
+  B-Free [21]      98.6       86.9         97.7    86.6     86.1          99.2      88.8 99.7         99.8    99.8     91.0   94.6 98.5        99.9     96.2 96.4 93.1
+  Effort [40]      85.2       99.8         97.3    94.5     76.5          84.7      100.0 100.0       99.9    100.0    98.6   98.1 99.9        99.9     99.7 100.0 95.9
+  DDA [28]         97.7       72.3         88.0    84.2     91.8          95.2      66.7 68.8         99.9     99.9    97.1   96.8 99.6        99.9     81.3 98.8 89.9
+  PiND (Ours)      99.9 100.0 100.0 99.8                    99.4          100.0 100.0 100.0 100.0 100.0 97.7 99.9                    99.9      100.0 99.9 100.0 99.8
+
+
+
+A. Experimental Setup                                                                          [72], FaceSwap [73], InSwap [74], SimSwap [75], DALLE-
+                                                                                               3 [76], FLUX1-dev [77], Midjourney-V6 [62], GLIDE [61],
+Training Datasets. Consistent with many methods [21, 25,
+                                                                                               Imagen3 [78], SD3 [79], SDXL [80], BLIP [81], Infinite-
+28], we mitigate semantic shortcuts at the data level by em-
+                                                                                               ID [4], PhotoMaker [82], Instant-ID [83], IP-Adapter [84],
+ploying VAE reconstruction to construct the training dataset.
+                                                                                               CommunityAI and SocialRF. II) Real-world degradation
+Specifically, we use MSCOCO [49] for real images and
+                                                                                               benchmark. We also evaluate PiND on both public and newly
+reconstruct them using VAE model in SDv2.1, ensuring that
+                                                                                               collected real-world datasets, including Chameleon [51], Syn-
+the reconstructed image size matches the real one.
+                                                                                               thWildx [85], WildRF [32]. These datasets include various
+Evaluation Datasets. I) Ideal benchmark. We first evaluate
+                                                                                               propagation environments, black-box post-processing meth-
+PiND on two clean and high-quality datasets, AIGCDetect [50]
+                                                                                               ods, and image formats produced by both open-source and
+and AIGIBench [52]. AIGCDetect [50] contains 15 subsets
+                                                                                               commercial models. Together, they represent the complexities
+derived from different kinds of generative models, including
+                                                                                               of real-world social media situations and are used to assess
+ProGAN [53], CycleGAN [54], BigGAN [55], StyleGAN
+                                                                                               the robustness and generalization capabilities of models under
+[3], StyleGAN2 [56], GauGAN [57], StarGAN [58], WFIR
+                                                                                               uncontrolled degradation conditions.
+[59], SDv1.4 [5], SDv1.5 [5], ADM [60], GLIDE [61],
+Midjourney [62], Wukong [63], VQDM [64] and DALLE2                                             Baseline Detectors. We evaluate 10 off-the-shelf detectors
+[65], and Deepfake [66]. AIGIBench comprehensively sim-                                        including CNN-Spot [24] (CVPR 2020), UnivFD [38] (CVPR
+ulates state-of-the-art image generation methods, including                                    2023), NPR [12] (CVPR 2024), AIDE [51] (ICLR 2025),
+ProGAN [53], R3GAN [67], StyleGAN3 [68], StyleGAN-                                             DFFreq [17] (TIFS 2026), SAFE [26] (KDD 2025), VIB-
+XL [69], StyleSwim [70], WFIR [59], BlendFace[71], E4S                                         Net [19] (CVPR 2025), B-Free [21] (CVPR 2025), Effort [40]
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                                                    7
+
+
+
+        TABLE III: Cross-model Accuracy (Acc.) & Average Precision (A.P.) Performance on the AIGIBench Datasets [52].
+
+                  ProGAN           R3GAN        StyleGAN3     StyleGAN-XL      StyleSwim        WFIR           BlendFace             E4S         FaceSwap
+ Method
+                 Acc.    A.P.   Acc.   A.P.     Acc.   A.P.   Acc.    A.P.     Acc.   A.P.   Acc.     A.P.    Acc.     A.P.    Acc.      A.P.   Acc.     A.P.
+ CNN-Spot        49.9    42.9   49.7   43.5     50.2   56.4   49.8    36.5     50.8   66.9 50.0   32.5        50.3    75.9      49.9     65.4    50.6    60.1
+ UnivFD          86.5    95.8   62.7   72.9     63.5   68.6   65.7    65.9     66.4   79.7 98.7   99.9        59.7    69.1      64.9     80.5    66.1    82.0
+ NPR             76.1    86.1   53.6   65.7     64.6   79.5   89.6    96.0     85.2   95.0 50.1  83.1         53.8    57.7      50.1     54.8    72.9    90.0
+ DFFreq          89.9    98.0   87.0   85.2     89.6   94.5   64.4    68.4     89.8   89.0 52.1   73.3        33.5    42.9      34.3     43.2    62.8    71.3
+ AIDE            64.3    71.5   65.0   75.7     61.4   72.3   54.7    56.9     74.1   83.9 58.7   65.4        71.6    82.9      67.5     81.0    71.4    85.4
+ SAFE            72.6    93.0   84.1   92.9     69.4   79.8   94.5    89.7     86.8   85.6 50.5   70.6        43.6    46.7      43.9     47.5    58.3    76.2
+ VIB-Net         78.1    91.9   64.0   77.0     66.8   69.4   58.9    58.5     64.6   66.3 97.3   99.7        65.1    71.5      68.0     80.8    67.7    82.2
+ Effort          67.4    85.2   80.9   87.8     83.5   85.2   62.1    55.4     79.6   78.3 100.0 100.0        72.0    65.5      69.5     58.9    82.3    72.5
+ DDA             84.7    97.7   93.9   98.6     58.3   76.2   46.6    35.9     56.6   68.5 51.6   68.8        77.9    90.0      82.3     87.8    77.3    84.1
+ PiND (Ours)     95.6    99.9   95.5   99.5     98.6   99.7   95.4    97.9     96.3   99.9 100.0     100.0    61.2    84.9      91.8     95.4    69.4    83.6
+                  InSwap         SimSwap       FLUX1-dev      Midjourney V6     GLIDE        DALLE-3          Imagen3            SD3              SDXL
+ Method
+                 Acc. A.P.      Acc. A.P.      Acc. A.P.      Acc.    A.P.     Acc. A.P.     Acc. A.P.       Acc. A.P.        Acc. A.P.         Acc. A.P.
+ CNN-Spot        50.7    71.4   50.1   66.7    61.8    91.0   84.9    94.7     53.7   76.4   76.6    96.7    78.5    98.5     73.7      96.9    96.5    99.8
+ UnivFD          60.0    67.5   65.5   77.1    46.9    44.2   54.9    67.4     40.5   41.5   52.1    63.1    64.4    77.0     68,3      75.6    70.8     84.5
+ NPR             67.3    82.7   60.2   76.5    93.0    99.0   82.2    96.5     95.2   99.5   45.5    53.6    93.9    99.0     81.2      93.4    95.7     99.9
+ DFFreq          45.4    61.5   44.7   61.6    89.5    96.3   71.0    91.6     85.8   92.2   41.6    51.4    84.8    86.7     91.4      95.5    92.2     98.4
+ AIDE            70.2    84.0   71.7   85.0    78.6    88.5   88.3    94.9     90.7   97.2   56.3    65.9    81.0    91.0     61.2      67.8    77.1     88.1
+ SAFE            51.7    69.9   48.3   64.3    93.0    97.4   84.9    97.3     87.1   92.8   45.8    51.7    92.4    98.1     84.7      93.1    95.8     99.7
+ VIB-Net         64.2    72.2   66.7   76.7    55.6    64.3   63.5    84.1     49.8   52.6   57.2    81.7    66.7    87.7     68.9      84.5    71.7     94.6
+ Effort          77.5    69.7   82.3   75.3    80.8    94.8   68.5    96.2     76.7   73.9   67.6    73.2    82.3    98.9     81.7      97.1    82.8     99.0
+ DDA             82.0    87.8   83.3   89.3    95.2    99.3   96.4    99.5     85.1   93.7   93.1    98.1    90.9    97.2     95.7     100.0    95.8    100.0
+ PiND (Ours)     70.7    87.3   73.1   87.7    95.3    99.9   97.4    99.8     93.9   98.7   95.6    99.6    95.9    99.8     96.7     100.0    96.7    100.0
+                     BLIP            Infinite-ID        InstantID     IP-Adapter      PhotoMaker        SocialRF        CommunityAI               Mean
+  Method
+                  Acc. A.P.         Acc. A.P.          Acc. A.P.      Acc. A.P.       Acc. A.P.        Acc. A.P.        Acc.  A.P.              Acc. A.P.
+  CNN-Spot        99.3     100.0    72.9       96.6    95.2   99.9    83.8    98.8    50.6    72.5     65.4    79.6     62.3         89.1       64.3    76.4
+  UnivFD          68.5      89.3    69.4       92.0    81.7   94.4    66.7    79.7    66.8    85.2     53.9    57.6     60.0         66.0       64.4    74.6
+  NPR             96.3      99.9    94.0       99.5    94.4   99.9    94.5    99.8    94.3    99.7     56.6    65.1     54.8         58.2       75.8    85.2
+  DFFreq          99.0     100.0    91.0       96.1    89.8   98.1    89.8    96.3    89.7    97.6     59.3    62.8     55.0         58.1       72.9    80.4
+  AIDE            90.1      96.8    76.4       87.8    83.1   93.1    76.8    88.0    67.9    80.5     56.5    62.3     63.7         75.2       71.1    80.8
+  SAFE            98.9      99.7    95.1       99.8    94.8   98.6    93.9    98.4    94.6    99.8     57.5    64.6     54.5         47.4       75.1    82.2
+  VIB-Net         66.5      91.7    69.1       89.5    67.9   86.4    67.2    87.3    67.3    85.1     56.9    63.4     56.0         61.1       65.8    78.4
+  Effort          90.0      98.7    82.5       99.3    82.3   97.8    82.3    97.9    82.1    96.5     55.4    57.9     47.4         44.7       76.8    82.4
+  DDA             95.9      99.9    96.5      100.0    96.7   99.9    95.0    99.1    78.7    90.8     79.7    88.9     88.5         95.7       83.1    89.9
+  PiND (Ours)     95.6     100.0    96.5      100.0    95.9   100.0   96.0    100.0   95.8    99.9     92.2    95.0     89.5         98.0       91.2    97.1
+
+
+(ICML 2025), and DDA [28] (NeurIPS 2025) for comparison.                      using the PyTorch [89] library. All experiments are conducted
+To ensure a fair comparison, we retrained all methods using                   on an NVIDIA RTX 4090 GPU (48G).
+the aforementioned training set, except for B-Free and DDA,
+whose results are obtained directly from the official imple-
+                                                                              B. Effectiveness Evaluation
+mentations and pretrained weights released by their authors.
+                                                                              Performance on Ideal Benchmark. The results in Table I
+Implementation Details. we adopt PE-Core-L14-336 [86]                         and Table II demonstrate the capability of our method on
+as the backbone network and finetune it using the LoRA                        AIGCDetect [50], with the highest Acc. 97.4% and A.P. 99.8%
+[87] algorithm, using the rank of 8. During training, we use                  on average. Compared with the latest state-of-the-art method,
+randomly cropped windows of 336×336, while we use center-                     DFFreq, our approach improves mAcc. by 7.2% and mA.P.
+cropped windows of 336 × 336 during inference. Padding                        by 2.5%. In addition, on the more comprehensive dataset
+is applied when the image height or width is insufficient.                    AIGIBench, our method achieved an mAcc. of 85.8% and
+The hyperparameter λ is set to 0.2. No data augmentation is                   mA.P. of 92.5%, outperforming all competing methods by a
+applied in our experiments. During training, we use the Adam                  notable margin, as shown in Table III. Compared with DDA,
+optimizer [88], the batch size is set to 64, and the training                 the strongest baseline, our method yields an additional 8.1%
+lasts for only 1 epoch. Our proposed method is implemented                    gain in accuracy and 7.2% improvement in A.P. While conven-
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                               8
+
+
+
+TABLE IV: Cross-model Accuracy (Acc.) on Real-world Datasets. Datasets include Chameleon [51], SynthWildX [85] and WildRF [32].
+
+                                                      SynthWildX                               WildRF                          Mean
+   Method               Chameleon
+                                           DALLE-3         Firefly   Midjourney    Facebook      Reddit      Twitter        Acc.    A.P.
+   CNN-Spot [24]             65.7           82.2            50.1        88.6          84.1        67.5        68.4          72.3    84.2
+   UnivFD [38]               62.8           55.3            56.6        47.5          47.2        66.0        57.1          56.1    58.6
+   NPR [12]                  59.4           49.8            50.0        50.2          50.3        67.3        50.3          53.9    56.4
+   DFFreq [17]               59.4           56.0            56.6        56.0          62.9        75.3        40.9          58.2    51.4
+   AIDE [51]                 62.6           55.2            49.4        78.4          60.3        61.7        63.3          61.6    67.2
+   SAFE [26]                 59.1           49.2            50.1        49.3          50.9        70.5        38.5          52.5    58.7
+   VIB-Net [19]              60.8           63.3            57.1        51.1          52.5        68.9        56.2          58.6    66.0
+   B-Free [21]               78.0           88.4            82.9        87.6          87.8        76.5        88.6          84.3    93.3
+   Effort [40]               57.0           52.1            55.1        47.0          60.3        71.5        47.0          55.7    62.5
+   DDA [28]                  84.8           91.0            84.6        91.8          86.9        82.4        88.9          87.2    94.6
+   PiND (Ours)               92.4           97.0            93.3        95.5          96.9        97.9        97.7          95.8    98.5
+
+                                           TABLE V: Ablation Studies on the Noise Generator.
+
+     Noise Generator        AIGCDetect [50] AIGIBench [52] Chameleon [51] SynthWildX [85] WildRF [32] Mean Acc. Mean A.P.
+            ✗                       95.6            85.7              77.5            91.0            91.6           88.3          97.0
+         Random                     96.4            87.5              83.7            92.1            91.6           90.3          97.1
+         Sample                     95.9            89.2              81.3            92.7            92.4           90.7          98.0
+            MLP                     96.7            88.1              90.9            93.7            94.4           92.8          97.8
+   self-attention of text           97.0            89.8              87.6            92.5            96.5           92.7          98.3
+  self-attention of image           97.3            90.8              85.4            92.8            95.3           92.3          98.1
+      PiND (Ours)                   97.4            91.2              92.4            95.3            97.5           94.8          98.4
+
+
+tional detectors such as CNN-Spot and NPR perform well on              C. Ablation Studies
+specific generators (e.g., SDXL, BLIP), they fail to generalize
+to newer generation techniques, especially real-world datasets         Ablation Studies of the Noise Generator. We conduct
+such as SocialRF and CommunityAI. In contrast, our method              additional analyzes on the Noise Generator, as summarized
+consistently maintains high accuracy across most models, in-           in Table V. Without any noise, the average accuracies on
+dicating that task-beneficial perturbations effectively enhance        five datasets are 88.3% and 97%, respectively. Introducing
+the model’s detection capability.                                      our Positive-incentive Noise improves the results by 6.5% and
+Performance on Real-world Degradation Benchmark. To                    1,4%, confirming that task-beneficial perturbations effectively
+further assess real-world effectiveness, we evaluated our              enhance PE’s detection capability.
+method on the latest publicly available in-the-wild bench-                As discussed in Section I, we argue that subtle feature-
+marks, Chameleon [51], SynthWildX [85] and WildRF [32],                space perturbations can steer the model away from spurious
+which incorporate diverse compression settings and unknown             shortcuts and toward causal, generalizable cues. To further
+post-processing operations. The results is shown in Table IV.          support this claim, we evaluate two alternative perturbations:
+Across all three datasets, our method achieves an mAcc. of             (i) i.i.d. random Gaussian noise and (ii) mean-aligned Gaussian
+95.8% and mA.P. of 98.5%, surpassing the latest state-of-the-          noise (i.e., Gaussian noise shifted toward the visual feature
+art method, DDA, by 8.6% in mAcc. These results demonstrate            mean). Both variants yield moderate improvements (and can
+that our method effectively accommodates common degrada-               sometimes surpass existing baselines), improving mean accu-
+tions and distribution shifts encountered in real-world network.       racy by 2.0% and 2.4% over the baseline, respectively. These
+Compared with most other methods that achieve around 60%               results support our hypothesis that small feature-space pertur-
+accuracy, both B-Free and DDA demonstrate strong perfor-               bations can disproportionately disrupt brittle shortcut evidence.
+mance, reaching over 80% accuracy. This improvement is                 Nevertheless, compared with our PiND, these variants show
+partly due to their alignment training strategy, which helps           noticeable performance degradation, further validating that
+mitigate shortcuts. However, our method outperforms these              our designed perturbation better suppresses shortcut-sensitive
+approaches, achieving even higher accuracy, further demon-             directions while enhancing stable forensic cues through ben-
+strating that our Positive-incentive Noise more effectively sup-       eficial stochastic transformations, resulting in more consistent
+presses shortcut-sensitive directions while amplifying stable,         and reliable predictions.
+task-relevant forensic evidence.                                          In addition, to assess the contribution of cross-attention
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                                         9
+
+
+
+TABLE VI: Backbone Comparison across Five Datasets. Our method effectively improves the detection performance of all backbones.
+
+       Backbone          AIGCDetect [50] AIGIBench [52]         Chameleon [51]      SynthWildX [85]    WildRF [32]    Mean Acc.      Mean A.P.
+    CLIP:ViT-L/14                88.9                 74.3             59.7                  50.1            60.9        66.8              69.8
+       + Ours                    92.4                 79.2             58.9                  53.4            64.5      69.7+2.9          70.7+0.9
+   PE-Core-B16-224               82.9                 65.9             62.8                  50.3            57.1       63.8               69.5
+       + Ours                    91.9                 74.0             65.7                  72.0            76.1     75.9+12.1          82.5+13.0
+   PE-Core-L14-336               95.6                 85.7             77.5                  91.0            91.6        88.3              97.0
+       + Ours                    97.4                 91.2             92.4                  95.3            97.5      94.8+6.5          98.4+4.8
+  PE-Core-G14-448                95.6                 85.5             69.4                  81.7            83.6        83.2              92.9
+      + Ours                     98.5                 88.8             70.6                  83.9            89.4      86.2+3.0          97.7+4.8
+
+                                 TABLE VII: Hyperparameter λ Ablation Experiment on the Five Datasets.
+
+  Hyperparameter λ       AIGCDetect [50]       AIGIBench [52] Chameleon [51] SynthWildX [85]           WildRF [32]    Mean Acc.      Mean A.P.
+           0.0                   95.6                 85.7             77.5                  91.0            91.6       88.3               97.0
+           0.1                   97.3                 89.9             89.9                  94.3            96.5       93.6               97.9
+           0.2                   97.4                 91.2             92.4                  95.3            97.5       94.8               98.4
+           0.3                   96.1                 90.5             83.9                  90.9            91.9       90.7               97.6
+           0.4                   96.4                 90.7             81.7                  89.3            88.9       89.4               97.4
+           0.6                   96.3                 91.0             78.0                  86.0            87.1       87.7               96.6
+           0.8                   95.6                 91.2             77.6                  84.1            85.2       86.7               96.6
+           1.0                   96.4                 90.9             74.3                  80.6            83.2       85.1               96.2
+
+
+TABLE VIII: Robustness on JPEG Compression and Gaussian                   TABLE IX: Robustness on JPEG Compression and Gaussian
+Blur. The accuracy (%) averaged on AIGCDetect [50].                       Blur. The accuracy (%) averaged on real-world datasets, including
+                                                                          Chameleon [51], SynthWildX [85] and WildRF [32].
+                   JPEG Compression      Gaussian Blur
+  Method
+                 QF=95 QF=75 QF=60 σ = 0.5 σ = 1.5 σ = 2.5                                      JPEG Compression      Gaussian Blur
+                                                                              Method
+                                                                                              QF=95 QF=75 QF=60 σ = 0.5 σ = 1.5 σ = 2.5
+  UnivFD [38]     73.9    69.6          67.9   78.2      66.8   64.7
+  NPR [12]        56.7    59.0          58.6   72.7      72.0   72.5          UnivFD [38]      50.0   50.5     51.0   54.7        52.9       53.3
+  DFFreq [17]     64.1    63.0          62.1   90.1      85.7   81.8          NPR [12]         62.2   60.1     58.1   57.1        57.1       57.4
+  AIDE [51]       56.6    58.4          57.3   67.3      65.6   67.4          DFFreq [17]      60.6   57.9     56.3   58.5        62.7       62.9
+  VIB-Net [19]    70.8    67.9          63.0   78.0      68.7   68.7          AIDE [51]        60.0   60.0     59.9   61.2        57.1       58.5
+  Effort [40]     81.8    78.7          74.6   91.3      87.8   87.1          VIB-Net [19]     62.2   60.5     58.2   64.2        56.7       56.5
+  DDA [28]        80.7    80.6          79.5   80.6      80.0   80.3          Effort [40]      68.0   68.6     65.3   73.1        73.8       73.2
+                                                                              DDA [28]         86.9   85.1     81.6   86.7        87.3       87.2
+  PiND (Ours)     95.2    90.8          88.7   96.8      94.1   91.4
+                                                                              PiND (Ours)      94.8   93.1     93.7   95.9        94.6       93.4
+
+
+fusion in the noise generator, we conducted additional ablation           ViT-based and are pre-trained on image-text pairs, providing
+experiments. An MLP-based or self-attention-based genera-                 a useful prior alignment between visual and textual represen-
+tor conditioned only on visual features achieves competitive              tations that our method can leverage.
+performance, with mean accuracies of 92.8% and 92.3%,                     Ablation Study of Hyperparameter λ. In order to more
+respectively. However, when incorporating text features as                comprehensively evaluate the effectiveness of our method, we
+label-level guidance, the generator can adapt its perturbations           also conduct ablation experiments on the hyperparameter λ,
+more precisely to the underlying forensic categories, yielding            which can be shown in Table VII. When our parameter λ is
+the best performance of approximately 94.8%.                              set to 0.2 as set in the paper, the best results are achieved on all
+Ablation Study of Different Backbones. To assess the                      datasets. It is worth noting that overly large parameter values
+robustness of our method across backbone architectures, we                can degrade performance, which we attribute to excessive
+evaluate it with multiple backbone networks, where the results            perturbation that overwhelms task-relevant cues and introduces
+are shown in Table VI. Our method consistently improves the               harmful interference.
+detection performance of all pre-trained models (the accuracy
+of PE-Core-B16-224 increases by 12%), further validating that
+our Positive-incentive Noise effectively suppresses spurious              D. Robustness Evaluation
+shortcuts and enables the model to extract more generalized                 In real-world scenarios, images are inevitably affected by
+artifact representations. In addition, all selected backbones are         unknown disturbances during transmission and interaction,
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                    10
+
+
+
+
+Fig. 3: T-SNE Visualization of Features Extracted Using PE, PE-Random and PiND (ours). Our method achieves strong real/fake
+discrimination, while adding random noise to the visual features also improves discriminative ability.
+
+
+which pose additional challenges for AI-generated image            the-wild Reddit dataset, where real and fake samples are
+detection. To investigate robustness under such conditions, we     sometimes separable. Building on this, our method (PiND)
+further evaluate the performance of different detection methods    further enhances generalization, maintaining a clear separation
+against a variety of disturbances, such as JPEG Compression        between real and fake categories even under previously unseen
+and Gaussian Blur (Quality Factor (QF) = 95, 75, 60) and           generators, which suggests that the proposed Positive-incentive
+Gaussian blur (σ = 0.5, 1.5, 2.5). However, as noted in the        Noise more effectively suppresses spurious shortcut cues and
+AIGIBench[52], when robustness evaluations are performed           encourages the extraction of more stable, generator-agnostic
+without robust data augmentation during training, most exist-      artifact representations. Notably, compared with the original
+ing methods suffer a substantial performance drop to around        PE model, injecting random noise into the visual features also
+50%, indicating limited robustness under such conditions.          improves class separability, which further supports our insight
+Accordingly, in our experiments, we retrained all methods          that feature-level perturbations can strengthen the robustness
+and incorporated robust data augmentations during training, in-    and generalization of AI-generated image detectors.
+cluding random JPEG Compression (QF ∼ Uniform [30, 100))
+and random Gaussian Blur (σ ∼ Uniform [0.1, 3.0]). Each                                  V. C ONCLUSION
+augmentation is conducted with 10% probability. Notably, our
+approach remains unchanged and does not incorporate any               In this paper, we systematically analyze the limitations of
+data augmentation operations. The results are shown in Table       current AI-generated image detectors and identify spurious
+VIII and Table IX. Despite not using any data augmentation,        shortcuts as the root cause of overfitting. We are the first
+our method consistently outperforms others, maintaining a rel-     to explore how feature space perturbations affect the gener-
+atively higher accuracy in detecting AI-generated images. This     alization of AI-generated image detectors and observe that
+indicates that our method has the potential to preserve strong     introducing small random perturbations into the feature space
+detection performance under previously unseen perturbations.       can effectively mitigate the spurious shortcuts and signifi-
+                                                                   cantly improve generalization. Building on this insight, we
+                                                                   propose a novel framework, Positive-incentive Noise for AI-
+E. Qualitative Analysis                                            generated image detection(PiND), which transforms random
+   To further assess the generalization ability of our method,     noise perturbations into controllable, task-oriented signals.
+we visualize the feature distributions before the binary classi-   Specifically, we employ a cross-modal attention mechanism
+fier, as shown in Fig. 3. Owing to the strong representational     to integrate visual features and label embeddings, generating
+capacity inherited from pre-training, the PE baseline already      task-adaptive, forgery-conditional Gaussian perturbations. By
+exhibits solid detection performance, particularly on the in-      jointly optimizing the noise generator and the visual encoder,
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                  11
+
+
+
+PiND suppresses shortcut-sensitive directions under beneficial     [11] Zehao Chen and Hua Yang. Manipulated face detector:
+stochastic transformations while amplifying stable forensic             Joint spatial and frequency domain attention network.
+cues, leading to more generalized artifact representations. Our         arXiv preprint arXiv:2005.02958, 1(2):4, 2020.
+method can be adapted to different ViT-based pre-trained           [12] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua
+models, opening a new direction for noise-driven learning in            Gu, Ping Liu, and Yunchao Wei. Rethinking the up-
+multimedia forensics.                                                   sampling operations in cnn-based generative network for
+                                                                        generalizable deepfake detection. In Proceedings of the
+                                                                        IEEE/CVF Conference on Computer Vision and Pattern
+                          R EFERENCES
+                                                                        Recognition, pages 28130–28139, 2024.
+ [1] Ziqiang Li, Muhammad Usman, Rentuo Tao, Pengfei               [13] Chende Zheng, Chenhao Lin, Zhengyu Zhao, Hang
+     Xia, Chaoyue Wang, Huanhuan Chen, and Bin Li. A                    Wang, Xu Guo, Shuai Liu, and Chao Shen. Breaking
+     systematic survey of regularization and normalization in           semantic artifacts for generalized ai-generated image
+     gans. ACM Computing Surveys, 55(11):1–37, 2023.                    detection. Advances in Neural Information Processing
+ [2] Ziqiang Li, Chaoyue Wang, Heliang Zheng, Jing Zhang,               Systems, 37:59570–59596, 2024.
+     and Bin Li. Fakeclr: Exploring contrastive learning for       [14] Yuyang Qian, Guojun Yin, Lu Sheng, Zixuan Chen,
+     solving latent discontinuity in data-efficient gans. In            and Jing Shao. Thinking in frequency: Face forgery
+     European Conference on Computer Vision, pages 598–                 detection by mining frequency-aware clues. In European
+     615. Springer, 2022.                                               conference on computer vision, pages 86–103. Springer,
+ [3] Tero Karras, Samuli Laine, and Timo Aila. A style-                 2020.
+     based generator architecture for generative adversarial       [15] Yuchen Luo, Yong Zhang, Junchi Yan, and Wei Liu.
+     networks. In Proceedings of the IEEE/CVF conference                Generalizing face forgery detection with high-frequency
+     on computer vision and pattern recognition, pages 4401–            features. In Proceedings of the IEEE/CVF conference on
+     4410, 2019.                                                        computer vision and pattern recognition, pages 16317–
+ [4] Yi Wu, Ziqiang Li, Heliang Zheng, Chaoyue Wang, and                16326, 2021.
+     Bin Li. Infinite-id: Identity-preserved personalization via   [16] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua
+     id-semantics decoupling paradigm. In European Con-                 Gu, Ping Liu, and Yunchao Wei. Frequency-aware
+     ference on Computer Vision, pages 279–296. Springer,               deepfake detection: Improving generalizability through
+     2024.                                                              frequency space domain learning. In Proceedings of the
+ [5] Robin Rombach, Andreas Blattmann, Dominik Lorenz,                  AAAI Conference on Artificial Intelligence, volume 38,
+     Patrick Esser, and Björn Ommer. High-resolution image             pages 5052–5060, 2024.
+     synthesis with latent diffusion models. In Proceedings        [17] Jiazhen Yan, Ziqiang Li, Fan Wang, Ziwen He, and
+     of the IEEE/CVF conference on computer vision and                  Zhangjie Fu. Dual frequency branch framework with
+     pattern recognition, pages 10684–10695, 2022.                      reconstructed sliding windows attention for ai-generated
+ [6] Florinel-Alin Croitoru, Vlad Hondru, Radu Tudor                    image detection. IEEE Transactions on Information
+     Ionescu, and Mubarak Shah. Diffusion models in vision:             Forensics and Security, 2026.
+     A survey. IEEE transactions on pattern analysis and           [18] Jiazhen Yan, Fan Wang, Weiwei Jiang, Ziqiang Li, and
+     machine intelligence, 45(9):10850–10869, 2023.                     Zhangjie Fu. Ns-net: Decoupling clip semantic infor-
+ [7] Christos Koutlis and Symeon Papadopoulos. Leverag-                 mation through null-space for generalizable ai-generated
+     ing representations from intermediate encoder-blocks for           image detection. arXiv preprint arXiv:2508.01248, 2025.
+     synthetic image detection. In European Conference on          [19] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li,
+     Computer Vision, pages 394–411. Springer, 2024.                    Bo Liu, and Bin Xiao. Towards universal ai-generated
+ [8] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua                 image detection by variational information bottleneck
+     Gu, Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip:               network. In Proceedings of the Computer Vision and
+     Injecting category common prompt in clip to enhance                Pattern Recognition Conference, pages 23828–23837,
+     generalization in deepfake detection. In Proceedings               2025.
+     of the AAAI Conference on Artificial Intelligence, vol-       [20] Renshuai Tao, Chuangchuang Tan, Huan Liu, Jiakai
+     ume 39, pages 7184–7192, 2025.                                     Wang, Haotong Qin, Yakun Chang, Wei Wang, Ron-
+ [9] Lorenzo Baraldi, Federico Cocchi, Marcella Cornia,                 grong Ni, and Yao Zhao. Sagnet: Decoupling semantic-
+     Alessandro Nicolosi, and Rita Cucchiara. Contrasting               agnostic artifacts from limited training data for robust
+     deepfakes diffusion via contrastive learning and global-           generalization in deepfake detection. IEEE Transactions
+     local similarities. In European Conference on Computer             on Information Forensics and Security, 2025.
+     Vision, pages 199–216. Springer, 2025.                        [21] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+[10] Ziyou Liang, Weifeng Liu, Run Wang, Mengjie Wu,                    Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+     Boheng Li, Yuyang Zhang, Lina Wang, and Xinyi Yang.                training paradigm for more general ai-generated image
+     Transfer learning of real image features with soft con-            detection. In Proceedings of the Computer Vision and
+     trastive loss for fake image detection. In Proceedings             Pattern Recognition Conference, pages 18685–18694,
+     of the AAAI Conference on Artificial Intelligence, vol-            2025.
+     ume 39, pages 26281–26289, 2025.                              [22] Yongqi Yang, Zhihao Qian, Ye Zhu, Olga Russakovsky,
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                   12
+
+
+
+     and Yu Wu. Dˆ 3: Scaling up deepfake detection                     Vision, pages 22445–22455, 2023.
+     by learning from discrepancy. In Proceedings of the           [35] George Cazenavette, Avneesh Sud, Thomas Leung, and
+     Computer Vision and Pattern Recognition Conference,                Ben Usman. Fakeinversion: Learning to detect images
+     pages 23850–23859, 2025.                                           from unseen text-to-image models by inverting stable
+[23] Yue Zhou, Xinan He, KaiQing Lin, Bin Fan, Feng Ding,               diffusion. In Proceedings of the IEEE/CVF Conference
+     and Bin Li. Breaking latent prior bias in detectors                on Computer Vision and Pattern Recognition, pages
+     for generalizable aigc image detection. arXiv preprint             10759–10769, 2024.
+     arXiv:2506.00874, 2025.                                       [36] Beilin Chu, Xuan Xu, Xin Wang, Yufei Zhang, Weike
+[24] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew                  You, and Linna Zhou. Fire: Robust detection of diffusion-
+     Owens, and Alexei A Efros. Cnn-generated images are                generated images via frequency-guided reconstruction
+     surprisingly easy to spot... for now. In Proceedings of the        error. In Proceedings of the Computer Vision and Pattern
+     IEEE/CVF conference on computer vision and pattern                 Recognition Conference, pages 12830–12839, 2025.
+     recognition, pages 8695–8704, 2020.                           [37] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+[25] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui                  Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+     Yang. Drct: Diffusion reconstruction contrastive training          Amanda Askell, Pamela Mishkin, Jack Clark, et al.
+     towards universal detection of diffusion generated im-             Learning transferable visual models from natural lan-
+     ages. In Forty-first International Conference on Machine           guage supervision. In International conference on ma-
+     Learning, 2024.                                                    chine learning, pages 8748–8763. PmLR, 2021.
+[26] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang,           [38] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards
+     Yao Hu, and Fuli Feng. Improving synthetic image de-               universal fake image detectors that generalize across
+     tection towards generalization: An image transformation            generative models. In Proceedings of the IEEE/CVF
+     perspective. In Proceedings of the 31st ACM SIGKDD                 Conference on Computer Vision and Pattern Recognition,
+     Conference on Knowledge Discovery and Data Mining                  pages 24480–24489, 2023.
+     V. 1, pages 2405–2414, 2025.                                  [39] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao
+[27] Patrick Grommelt, Louis Weiss, Franz-Josef Pfreundt,               Wei, Jingdong Wang, and Yao Zhao. Forgery-aware
+     and Janis Keuper. Fake or jpeg? revealing common                   adaptive transformer for generalizable synthetic image
+     biases in generated image detection datasets. In European          detection. In Proceedings of the IEEE/CVF Conference
+     Conference on Computer Vision, pages 80–95. Springer,              on Computer Vision and Pattern Recognition, pages
+     2024.                                                              10770–10780, 2024.
+[28] Ruoxin Chen, Junwei Xi, Zhiyuan Yan, Ke-Yue Zhang,            [40] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     Shuang Wu, Jingyi Xie, Xu Chen, Lei Xu, Isabel Guan,               Chengchun Liu, Shen Chen, Taiping Yao, Shouhong
+     Taiping Yao, et al. Dual data alignment makes ai-                  Ding, Baoyuan Wu, and Li Yuan. Orthogonal subspace
+     generated image detector easier generalizable. arXiv               decomposition for generalizable ai-generated image de-
+     preprint arXiv:2505.14359, 2025.                                   tection. arXiv preprint arXiv:2411.15633, 2024.
+[29] Hongyuan Zhang, Sida Huang, Yubin Guo, and Xuelong            [41] Roberto Benzi, Alfonso Sutera, and Angelo Vulpiani.
+     Li. Variational positive-incentive noise: How noise ben-           The mechanism of stochastic resonance. Journal of
+     efits models. IEEE Transactions on Pattern Analysis and            Physics A: mathematical and general, 14(11):L453,
+     Machine Intelligence, 2025.                                        1981.
+[30] Sida Huang, Hongyuan Zhang, and Xuelong Li. Enhance           [42] James P Sethna, Karin A Dahmen, and Christopher R
+     vision-language alignment with noise. In Proceedings               Myers. Crackling noise. nature, 410(6825):242–250,
+     of the AAAI Conference on Artificial Intelligence, vol-            2001.
+     ume 39, pages 17449–17457, 2025.                              [43] Ziang Xie, Sida I Wang, Jiwei Li, Daniel Lévy, Aiming
+[31] Xuelong Li. Positive-incentive noise. IEEE Transactions            Nie, Dan Jurafsky, and Andrew Y Ng. Data noising as
+     on Neural Networks and Learning Systems, 35(6):8708–               smoothing in neural network language models. arXiv
+     8714, 2022.                                                        preprint arXiv:1703.02573, 2017.
+[32] Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen.       [44] Lis Kanashiro Pereira, Yuki Taya, and Ichiro Kobayashi.
+     Real-time deepfake detection in the real-world. arXiv              Multi-layer random perturbation training for improving
+     preprint arXiv:2406.09398, 2024.                                   model generalization efficiently. In Proceedings of the
+[33] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua                   Fourth BlackboxNLP Workshop on Analyzing and Inter-
+     Gu, and Yunchao Wei. Learning on gradients: Gener-                 preting Neural Networks for NLP, pages 303–310, 2021.
+     alized artifacts representation for gan-generated images      [45] Armen Aghajanyan, Akshat Shrivastava, Anchit Gupta,
+     detection. In Proceedings of the IEEE/CVF Conference               Naman Goyal, Luke Zettlemoyer, and Sonal Gupta.
+     on Computer Vision and Pattern Recognition, pages                  Better fine-tuning by reducing representational collapse.
+     12105–12114, 2023.                                                 arXiv preprint arXiv:2008.03156, 2020.
+[34] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun              [46] Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong
+     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire                  Liu, Jianfeng Gao, and Tuo Zhao. Smart: Robust and effi-
+     for diffusion-generated image detection. In Proceedings            cient fine-tuning for pre-trained natural language models
+     of the IEEE/CVF International Conference on Computer               through principled regularized optimization. In Proceed-
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                                  13
+
+
+
+     ings of the 58th annual meeting of the Association for      [61] Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav
+     Computational Linguistics, pages 2177–2190, 2020.                Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever,
+[47] Hongyuan Zhang, Yanchen Xu, Sida Huang, and Xue-                 and Mark Chen. Glide: Towards photorealistic image
+     long Li. Data augmentation of contrastive learning               generation and editing with text-guided diffusion models.
+     is estimating positive-incentive noise. arXiv preprint           arXiv preprint arXiv:2112.10741, 2021.
+     arXiv:2408.09929, 2024.                                     [62] Midjourney Team. Midjourney v6.1. https://www.
+[48] Diederik P Kingma and Max Welling. Auto-encoding                 midjourney.com/home. 2024.
+     variational bayes. arXiv preprint arXiv:1312.6114, 2013.    [63] Wukong. https://xihe.mindspore.cn/modelzoo/wukong.
+[49] Tsung-Yi Lin, Michael Maire, Serge Belongie, James               2022.
+     Hays, Pietro Perona, Deva Ramanan, Piotr Dollár, and       [64] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen,
+     C Lawrence Zitnick. Microsoft coco: Common objects               Bo Zhang, Dongdong Chen, Lu Yuan, and Baining Guo.
+     in context. In European conference on computer vision,           Vector quantized diffusion model for text-to-image syn-
+     pages 740–755. Springer, 2014.                                   thesis. In Proceedings of the IEEE/CVF conference on
+[50] Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and                computer vision and pattern recognition, pages 10696–
+     Xinpeng Zhang. Patchcraft: Exploring texture patch for           10706, 2022.
+     efficient ai-generated image detection. arXiv preprint      [65] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey
+     arXiv:2311.12397, 2023.                                          Chu, and Mark Chen. Hierarchical text-conditional
+[51] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xi-              image generation with clip latents. arXiv preprint
+     aolong Jiang, Yao Hu, and Weidi Xie.            A sanity         arXiv:2204.06125, 1(2):3, 2022.
+     check for ai-generated image detection. arXiv preprint      [66] Andreas Rossler, Davide Cozzolino, Luisa Verdoliva,
+     arXiv:2406.19435, 2024.                                          Christian Riess, Justus Thies, and Matthias Nießner.
+[52] Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei              Faceforensics++: Learning to detect manipulated facial
+     Jiang, Lizhi Xiong, and Zhangjie Fu. Is artificial in-           images. In Proceedings of the IEEE/CVF international
+     telligence generated image detection a solved problem?           conference on computer vision, pages 1–11, 2019.
+     arXiv preprint arXiv:2505.12335, 2025.                      [67] Nick Huang, Aaron Gokaslan, Volodymyr Kuleshov, and
+[53] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehti-          James Tompkin. The gan is dead; long live the gan! a
+     nen. Progressive growing of GANs for improved quality,           modern gan baseline. Advances in Neural Information
+     stability, and variation. In International Conference on         Processing Systems, 37:44177–44215, 2024.
+     Learning Representations, 2018.                             [68] Tero Karras, Miika Aittala, Samuli Laine, Erik Härkönen,
+[54] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A           Janne Hellsten, Jaakko Lehtinen, and Timo Aila. Alias-
+     Efros. Unpaired image-to-image translation using cycle-          free generative adversarial networks. Advances in neural
+     consistent adversarial networks. In Proceedings of the           information processing systems, 34:852–863, 2021.
+     IEEE international conference on computer vision, pages     [69] Axel Sauer, Katja Schwarz, and Andreas Geiger.
+     2223–2232, 2017.                                                 Stylegan-xl: Scaling stylegan to large diverse datasets.
+[55] Andrew Brock. Large scale gan training for high                  In ACM SIGGRAPH 2022 conference proceedings, pages
+     fidelity natural image synthesis.         arXiv preprint         1–10, 2022.
+     arXiv:1809.11096, 2018.                                     [70] Bowen Zhang, Shuyang Gu, Bo Zhang, Jianmin Bao,
+[56] Tero Karras, Samuli Laine, Miika Aittala, Janne Hellsten,        Dong Chen, Fang Wen, Yong Wang, and Baining Guo.
+     Jaakko Lehtinen, and Timo Aila. Analyzing and improv-            Styleswin: Transformer-based gan for high-resolution
+     ing the image quality of stylegan. In Proceedings of the         image generation. In Proceedings of the IEEE/CVF
+     IEEE/CVF conference on computer vision and pattern               conference on computer vision and pattern recognition,
+     recognition, pages 8110–8119, 2020.                              pages 11304–11314, 2022.
+[57] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-         [71] Kaede Shiohara, Xingchao Yang, and Takafumi Take-
+     Yan Zhu. Semantic image synthesis with spatially-                tomi. Blendface: Re-designing identity encoders for face-
+     adaptive normalization. In Proceedings of the IEEE/CVF           swapping. In Proceedings of the IEEE/CVF international
+     conference on computer vision and pattern recognition,           conference on computer vision, pages 7634–7644, 2023.
+     pages 2337–2346, 2019.                                      [72] Zhian Liu, Maomao Li, Yong Zhang, Cairong Wang,
+[58] Yunjey Choi, Minje Choi, Munyoung Kim, Jung-Woo                  Qi Zhang, Jue Wang, and Yongwei Nie. Fine-grained
+     Ha, Sunghun Kim, and Jaegul Choo. Stargan: Unified               face swapping via regional gan inversion. In Proceedings
+     generative adversarial networks for multi-domain image-          of the IEEE/CVF conference on computer vision and
+     to-image translation. In Proceedings of the IEEE confer-         pattern recognition, pages 8578–8587, 2023.
+     ence on computer vision and pattern recognition, pages      [73] Marek. Faceswap. https://github.com/MarekKowalski/
+     8789–8797, 2018.                                                 FaceSwap. 2020.
+[59] Jevin West and Carl Bergstrom. Which face is real?          [74] Haofan Wang, Ashley Kleynhans, and Abe Estrada. In-
+     https://www.whichfaceisreal.com/. 2019.                          swap. https://github.com/haofanwang/inswapper. 2023.
+[60] Prafulla Dhariwal and Alexander Nichol. Diffusion           [75] Renwang Chen, Xuanhong Chen, Bingbing Ni, and Yan-
+     models beat gans on image synthesis. Advances in neural          hao Ge. Simswap: An efficient framework for high
+     information processing systems, 34:8780–8794, 2021.              fidelity face swapping. In Proceedings of the 28th ACM
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020                                                       14
+
+
+
+     international conference on multimedia, pages 2003–          An imperative style, high-performance deep learning
+     2011, 2020.                                                  library. Advances in neural information processing
+[76] OpenAI Team. Dall-e 3 ai image generator. https://dalle3.    systems, 32, 2019.
+     ai/. 2024.
+[77] Black Forest Labs. Flux.1-dev. https://huggingface.co/
+     black-forest-labs/FLUX.1-dev. 2024.
+[78] Google DeepMind. Imagen3. https://deepmind.google/
+     technologies/imagen-3. 2024.
+[79] Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim
+     Entezari, Jonas Müller, Harry Saini, Yam Levi, Dominik
+     Lorenz, Axel Sauer, Frederic Boesel, et al. Scaling
+     rectified flow transformers for high-resolution image syn-
+     thesis. In Forty-first international conference on machine
+     learning, 2024.
+[80] Dustin Podell, Zion English, Kyle Lacey, Andreas
+     Blattmann, Tim Dockhorn, Jonas Müller, Joe Penna, and
+     Robin Rombach. Sdxl: Improving latent diffusion models
+     for high-resolution image synthesis. arXiv preprint
+     arXiv:2307.01952, 2023.
+[81] Junnan Li, Dongxu Li, Caiming Xiong, and Steven
+     Hoi. Blip: Bootstrapping language-image pre-training for
+     unified vision-language understanding and generation.
+     In International conference on machine learning, pages
+     12888–12900. PMLR, 2022.
+[82] Zhen Li, Mingdeng Cao, Xintao Wang, Zhongang Qi,
+     Ming-Ming Cheng, and Ying Shan. Photomaker: Cus-
+     tomizing realistic human photos via stacked id embed-
+     ding. In Proceedings of the IEEE/CVF conference on
+     computer vision and pattern recognition, pages 8640–
+     8650, 2024.
+[83] Qixun Wang, Xu Bai, Haofan Wang, Zekui Qin, Anthony
+     Chen, Huaxia Li, Xu Tang, and Yao Hu. Instantid: Zero-
+     shot identity-preserving generation in seconds. arXiv
+     preprint arXiv:2401.07519, 2024.
+[84] Hu Ye, Jun Zhang, Sibo Liu, Xiao Han, and Wei
+     Yang. Ip-adapter: Text compatible image prompt adapter
+     for text-to-image diffusion models.         arXiv preprint
+     arXiv:2308.06721, 2023.
+[85] Davide Cozzolino, Giovanni Poggi, Riccardo Corvi,
+     Matthias Nießner, and Luisa Verdoliva. Raising the bar of
+     ai-generated image detection with clip. In Proceedings
+     of the IEEE/CVF Conference on Computer Vision and
+     Pattern Recognition, pages 4356–4366, 2024.
+[86] Daniel Bolya, Po-Yao Huang, Peize Sun, Jang Hyun
+     Cho, Andrea Madotto, Chen Wei, Tengyu Ma, Jiale Zhi,
+     Jathushan Rajasegaran, Hanoona Rasheed, et al. Percep-
+     tion encoder: The best visual embeddings are not at the
+     output of the network. arXiv preprint arXiv:2504.13181,
+     2025.
+[87] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+     Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen,
+     et al. Lora: Low-rank adaptation of large language
+     models. ICLR, 1(2):3, 2022.
+[88] Diederik P Kingma. Adam: A method for stochastic
+     optimization. arXiv preprint arXiv:1412.6980, 2014.
+[89] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer,
+     James Bradbury, Gregory Chanan, Trevor Killeen, Zem-
+     ing Lin, Natalia Gimelshein, Luca Antiga, et al. Pytorch:
+

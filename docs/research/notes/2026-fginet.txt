@@ -1,0 +1,705 @@
+                                                Frequency-Aware Semantic Fusion with Gated Injection for
+                                                            AI-generated Image Detection
+                                                            Shuchang Zhou                                                    Shangkun Wu                                       Jiwei Wei∗
+                                              University of Electronic Science and                            University of Electronic Science and              University of Electronic Science and
+                                                     Technology of China                                             Technology of China                               Technology of China
+                                                   Chengdu, Sichuan, China                                         Chengdu, Sichuan, China                           Chengdu, Sichuan, China
+                                                   sczhou@std.uestc.edu.cn                                     2023150901020@std.uestc.edu.cn                        mathematic6@gmail.com
+
+                                                                     Ke Liu                                                       Ran Ran                                     Caiyan Qin
+                                              University of Electronic Science and                            University of Electronic Science and                 Harbin Institute of Technology
+arXiv:2604.27875v1 [cs.CV] 30 Apr 2026
+
+
+
+
+                                                     Technology of China                                             Technology of China                           Shenzhen, Guangdong, China
+                                                   Chengdu, Sichuan, China                                         Chengdu, Sichuan, China                             qincaiyan@hit.edu.cn
+                                                    liuke3068@gmail.com                                            ranran@std.uestc.edu.cn
+
+                                                                                                                                Yang Yang
+                                                                                                              University of Electronic Science and
+                                                                                                                     Technology of China
+                                                                                                                   Chengdu, Sichuan, China
+                                                                                                                   yang.yang@uestc.edu.cn
+
+                                         Abstract                                                                                        margin objective to learn compact and well-separated represen-
+                                         AI-generated images are becoming increasingly realistic and di-                                 tations. Extensive experiments demonstrate that FGINet achieves
+                                         verse, posing significant challenges for generalizable detection.                               state-of-the-art performance and strong generalization across mul-
+                                         While Vision Foundation Models (VFMs) provide rich semantic                                     tiple challenging datasets.
+                                         representations and frequency-based methods capture complemen-
+                                         tary artifact cues, existing approaches that combine these modalities                           CCS Concepts
+                                         still suffer from limited generalization, with notable performance                              • Computing methodologies → Computer vision; • Security
+                                         degradation on unseen generative models. We attribute this lim-                                 and privacy → Social aspects of security and privacy.
+                                         itation to two key factors: frequency shortcut bias toward easily
+                                         distinguishable cues associated with specific generators and cross-
+                                         domain representation conflict between high-level semantics and
+                                                                                                                                         Keywords
+                                         low-level frequency patterns. To address these issues, we propose                               AI-generated image detection, Frequency-band masking, Gated
+                                         a Frequency-aware Gated Injection Network (FGINet) to improve                                   injection
+                                         generalization. Specifically, we design a Band-Masked Frequency
+                                         Encoder (BMFE) that applies cross-band masking in the frequency                                 ACM Reference Format:
+                                                                                                                                         Shuchang Zhou, Shangkun Wu, Jiwei Wei, Ke Liu, Ran Ran, Caiyan Qin,
+                                         domain to reduce reliance on generator-specific patterns and en-
+                                                                                                                                         and Yang Yang. 2026. Frequency-Aware Semantic Fusion with Gated In-
+                                         courage more diverse and generalizable representations. We further                              jection for AI-generated Image Detection. In Proceedings of the 34rd ACM
+                                         introduce a Layer-wise Gated Frequency Injection (LGFI) mecha-                                  International Conference on Multimedia (MM ’26). ACM, New York, NY, USA,
+                                         nism to progressively inject frequency cues into the VFM backbone                               10 pages. https://doi.org/XXXXXXX.XXXXXXX
+                                         with adaptive gating, aligning with its hierarchical abstraction and
+                                         alleviating representation conflict. Moreover, we propose a Hyper-
+                                         spherical Compactness Learning (HCL) framework with a cosine                                    1    Introduction
+                                         ∗ Corresponding author.                                                                         The rapid evolution of AI-generated images [10, 13, 14, 27, 33] has
+                                                                                                                                         enabled the creation of highly realistic and diverse visual content,
+                                                                                                                                         posing significant challenges to the reliability of digital media. In
+                                         Permission to make digital or hard copies of all or part of this work for personal or
+                                         classroom use is granted without fee provided that copies are not made or distributed           response, AI-generated image detection has attracted increasing
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       attention. Vision Foundation Models (VFMs), such as DINOv3 [36],
+                                         on the first page. Copyrights for components of this work owned by others than the              have recently demonstrated strong potential due to their power-
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   ful open-set semantic representation capability. Meanwhile, prior
+                                         and/or a fee. Request permissions from permissions@acm.org.                                     studies [8, 11, 12, 38] reveal that generative processes inevitably
+                                         MM ’26, Rio de Janeiro, Brazil                                                                  introduce subtle yet systematic artifacts in the frequency domain,
+                                         © 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                         ACM ISBN 978-1-4503-XXXX-X/2018/06                                                              providing complementary cues for distinguishing real and synthetic
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 images.
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil                       Shuchang Zhou, Shangkun Wu, Jiwei Wei, Ke Liu, Ran Ran, Caiyan Qin, and Yang Yang
+
+
+    Existing frequency-based detection methods can be broadly                 constraining features onto a normalized hypersphere with a cosine
+categorized into three paradigms. The first directly exploits sta-            margin, HCL enforces intra-class compactness and inter-class sepa-
+tistical patterns or high-frequency components as discriminative              rability, encouraging compact and well-separated representations
+cues [12, 21, 38]. The second leverages frequency reconstruction              and improving generalization to unseen generative models.
+discrepancies to capture deviations from natural image forma-                    The main contributions of this paper are as follows:
+tion [8, 40, 47]. More recently, a third line of work integrates fre-              • We propose a Frequency-aware Gated Injection Network
+quency modeling into VFMs [7, 41, 45], aiming to combine high-                        (FGINet) that addresses frequency shortcut bias and semantic-
+level semantic consistency with low-level artifact cues. By leverag-                  frequency representation conflict via a Band-Masked Fre-
+ing the strong generalization capability of VFMs and the sensitivity                  quency Encoder (BMFE) and a Layer-wise Gated Frequency
+of frequency signals to generative artifacts, these approaches have                   Injection (LGFI) mechanism.
+the potential to better distinguish visually realistic yet statistically           • We introduce a Hyperspherical Compactness Learning (HCL)
+inconsistent images.                                                                  with cosine margin constraints to enforce compact and well-
+    However, existing methods still exhibit limited cross-generator                   separated representations, improving generalization to un-
+generalization: they perform well on seen generators but degrade                      seen generators.
+significantly on unseen ones. We attribute this issue to two key lim-              • Extensive cross-domain experiments show that FGINet achieves
+itations. (1) Frequency Shortcut Bias. During training, models tend                   state-of-the-art performance and superior generalization
+to rely on easily distinguishable frequency cues associated with                      across multiple challenging datasets.
+specific generators, which do not generalize well across sources
+and lead to degraded performance under distribution shifts. To                2 Related Work
+investigate this, we randomly mask frequency bands during train-
+ing to perturb frequency cues. As shown in Figure 1(a), masking
+                                                                              2.1 High-Frequency Artifact-based Detection
+slightly reduces seen performance but improves unseen perfor-                 Due to the intrinsic mechanisms of generative models, synthe-
+mance and narrows the gap, revealing a shortcut tendency toward               sized images often exhibit distinct high-frequency artifacts that
+generator-specific frequency cues. (2) Cross-Domain Representation            deviate from natural image statistics [11, 12, 20, 29, 38]. Frequency-
+Conflict. Existing dual-stream frameworks typically adopt direct fu-          based works usually exploit this property using shallow convo-
+sion strategies, such as concatenation or cross-attention, to combine         lutional networks, which are particularly effective at capturing
+frequency cues with semantic representations from VFMs. How-                  local high-frequency patterns in a computationally efficient man-
+ever, these features reside in inherently different representation            ner. Methods such as SAFE [21], NPR [38], and MesoNet [1] adopt
+spaces: frequency features capture low-level statistical irregulari-          lightweight architectures and achieve strong performance across
+ties, while VFM features encode high-level semantic abstractions.             multiple benchmarks. Li et al. [21] suggested applying data aug-
+This mismatch leads to mixed representations under direct fusion,             mentation to the training of shallow frequency models, which effec-
+degrading detection performance.                                              tively improves generalization. Reconstruction-based approaches,
+    To address these challenges, we propose a Frequency-aware                 such as DIRE [40], leverage reconstruction residuals to expose
+Gated Injection Network (FGINet), which aims to learn generaliz-              frequency discrepancies, while MRCL [47] extends this idea with
+able frequency representations and integrate them with semantic               multi-reconstruction and contrastive learning for improved repre-
+features in a structure-aware and hierarchical manner. We first               sentation learning. Moreover, region selection has been explored
+design a Band-Masked Frequency Encoder (BMFE), which applies                  to better localize informative frequency cues. TextureCrop [17]
+cross-band independent masking to reduce reliance on generator-               prioritizes high-texture regions based on texture density, whereas
+specific cues and encourage more diverse and generator-invariant              PatchCraft [44] and AIDE [41] exploit the contrast between rich-
+frequency representations. As shown in Figure 1(b), during training,          texture and smooth regions to enhance detection performance.
+the model without BMFE exhibits attention concentrated along spe-
+cific structures, whereas BMFE leads to a more balanced distribution          2.2     Pre-trained Model-based Detection
+covering richer frequency patterns. At test time, without BMFE,               Pre-trained visual models have significantly improved the general-
+the model exhibits diffuse and unstable evidence under distribution           ization and robustness of AI-generated image detection by leverag-
+shifts, while BMFE produces more concentrated and consistent evi-             ing rich visual priors from large-scale pre-training. Early work such
+dence. To further mitigate cross-modal representation conflict, we            as UnivFD [26] shows that simple k-NN and linear probing on CLIP
+introduce a Layer-wise Gated Frequency Injection (LGFI) mecha-                features [30] can already achieve strong cross-generator generaliza-
+nism. Instead of direct fusion, LGFI progressively injects frequency          tion. Subsequent studies further enhance detection from multiple
+cues into the VFM backbone following its hierarchical feature ab-             perspectives. Some works extend beyond vision-only architectures
+straction, with a learnable gating function dynamically controlling           by incorporating the CLIP textual branch, e.g., C2P-CLIP [37], Fat-
+the contribution at each layer. This design preserves the pretrained          former [22], and MiraGe [35]. Others focus on improving represen-
+semantic structure while enabling effective cross-modal interaction.          tation robustness, such as introducing a variational information
+As shown in Figure 1(c), direct fusion leads to entangled represen-           bottleneck (VIB) [23] into CLIP [43], or exploiting shallow-layer
+tations with unclear class separation (top), whereas LGFI produces            features that preserve fine-grained details for forgery detection [18].
+more compact and well-separated joint representations (bottom).               In addition, data-centric approaches, including DRCT [5], Rajan et
+    Moreover, we introduce a Hyperspherical Compactness Learn-                al. [31], and DDA [6], mitigate dataset bias through data alignment,
+ing (HCL) framework based on the CosFace objective [39]. By                   significantly improving cross-domain performance. HiDA-Net [25]
+Frequency-Aware Semantic Fusion with Gated Injection for AI-generated Image Detection                                        MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+
+
+                                                                                                                                               t-SNE Visualization of Direct Fusion
+                                                                        Fake image      w/o BMFE                   w/ BMFE
+              - 0.3%
+
+
+
+
+                                                    Seen Generator
+                                                     （Training）
+                                   + 2.2%
+
+
+
+                                                                                     Reliance on specific     More diverse and less
+                                                                                       frequency cues       generator-specific patterns
+
+
+                                                                        Fake image      w/o BMFE                   w/ BMFE
+                                                                                                                                                                           Acc: 88.60%
+
+
+                                                                                                                                                   t-SNE Visualization of LGFI
+               - 0.7%
+
+
+
+                                                     Unseen Generator
+                                                       （Testing）
+                                   + 3.0%
+                                                                                        Failure Case             Successful Case
+
+
+
+
+                                                                                        Diffuse and             Concentrated and
+                                                                                     unstable evidence         consistent evidence                                         Acc: 92.47%
+                        (a)                                                                  (b)                                                                  (c)
+
+Figure 1: (a) Randomly masking frequency bands narrows the performance gap between seen and unseen generators, revealing a shortcut
+tendency toward generator-specific frequency cues. (b) Saliency visualization of BMFE. During training (top), models lacking BMFE rely on
+specific frequency cues, whereas BMFE encourages more diverse patterns. During testing (bottom), such models exhibit diffuse and unstable
+evidence under distribution shifts, while BMFE produces more concentrated and consistent evidence. (c) t-SNE visualization. Direct fusion
+produces mixed representations with unclear class separation (top), while LGFI yields more compact and well-separated representations
+(bottom), improving detection performance.
+
+
+further enhances local modeling by aggregating region-level fea-                          Network (FGINet), a dual-stream framework for generalizable AI-
+tures to capture more comprehensive artifact cues.                                        generated image detection. As shown in Figure 2, our framework
+                                                                                          processes an input image through two complementary pathways.
+2.3     Joint Frequency and Pre-trained Detection                                         The semantic pathway utilizes a pretrained DINOv3 with LoRA to
+Integrating frequency-domain information with semantic repre-                             extract high-level semantic cues relevant to forgery detection. The
+sentations from pre-trained models has emerged as an effective                            frequency pathway employs a Band-Masked Frequency Encoder
+paradigm for enhancing detection performance. Representative                              (BMFE) (Sec. 3.2) to learn invariant frequency representations by
+works [7, 41, 45] demonstrate that combining these complementary                          suppressing generator-specific artifacts. To bridge the two domains,
+cues can significantly improve robustness. However, existing fusion                       we introduce a Layer-wise Gated Frequency Injection (LGFI)
+strategies remain limited. AIDE [41] adopts simple concatenation                          mechanism (Sec. 3.3), which progressively injects frequency tokens
+to combine frequency and semantic features. Building upon sim-                            into the backbone with learnable gates. Finally, a Hyperspher-
+ple concatenation, CO-spy [7] introduces dynamically computed                             ical Compactness Learning (HCL) module (Sec. 3.4) enforces
+scaling factors to enhance the effectiveness of feature fusion. AIGI-                     compact and well-separated representations for both real and fake
+Holmes [45] independently projects high-frequency information                             samples, improving generalization to unseen generators.
+from NPR [38] and semantic information from CLIP into the se-
+mantic space of Large Language Model (LLM), where the fusion                              3.2          Band-Masked Frequency Encoder
+occurs throughout the inference phase. Despite these efforts, most                        To mitigate frequency shortcut bias, where models tend to over-rely
+approaches rely on late fusion mechanisms that treat the two modal-                       on easily distinguishable generator-specific cues, we introduce a
+ities as largely independent. Such designs fail to fully exploit the                      Band-Masked Frequency Encoder (BMFE) to promote more gener-
+intrinsic correlations between frequency and semantic representa-                         alizable frequency representations.
+tions. We argue that frequency information should instead act as
+                                                                                          3.2.1 Haar Wavelet Decomposition. Given an input image X ∈
+a complementary signal that progressively guides semantic repre-
+                                                                                          R𝐶 ×𝐻 ×𝑊 , we apply a 2D discrete wavelet transform (DWT) with
+sentation learning, motivating a more structured and layer-wise
+                                                                                          fixed Haar filters to decompose it into four sub-bands:
+integration strategy.
+                                                                                                              [X𝐿𝐿 , X𝐿𝐻 , X𝐻 𝐿 , X𝐻𝐻 ] = DWT(X).                                        (1)
+3 Method
+                                                                                             High-frequency artifacts introduced during upsampling and de-
+3.1 Overall Architecture                                                                  coding are primarily captured by the X𝐿𝐻 , X𝐻 𝐿 , and X𝐻𝐻 bands,
+To address frequency shortcut bias and cross-domain representa-                           while X𝐿𝐿 encodes low-frequency structure [12]. Therefore, we
+tion conflict, we propose a Frequency-aware Gated Injection                               focus on the high-frequency components and discard X𝐿𝐿 , which
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil                                        Shuchang Zhou, Shangkun Wu, Jiwei Wei, Ke Liu, Ran Ran, Caiyan Qin, and Yang Yang
+
+
+
+                                                                                                (a) Band-Masked Frequency Encoder
+                                                         HH
+                                                    HL
+                            DWT                LH
+
+
+
+                                                                                    Band-level
+                                                                               Independent Masking                               Average Pooling
+
+
+
+                                                    (b) Layer-wise Gated Frequency Injection                                              (c) Hyperspherical
+                                                                                                                                        Compactness Learning
+                                    Gate                       Gate                          Gate                                              REAL/FAKE
+                                                                                                                                          Cosine Margin Classifier
+                                                                                            
+                                                                                                                                       Hyperspherical Normalization
+
+                                                                                                                                           Embedding Projection
+                                                                                                                                                           Unit hypersphere
+                                                                                                                                               𝐰𝐫𝐞𝐚𝐥               (‖x‖ = 1)
+                      DINO-v3
+
+
+
+
+                                  Block 1                     Block 2          …           Block N-1               Block N
+                                                                                                                                                           𝐰𝐟𝐚𝐤𝐞
+                                   LoRA                       LoRA                           LoRA                   LoRA
+
+
+                     Frozen                 Trainable            Patch Token             Class Token           Frequency Token               Spatio-Frequency Token
+
+
+
+
+Figure 2: Overview of the proposed Frequency-aware Gated Injection Network (FGINet). FGINet consists of three components: (a) a Band-Masked
+Frequency Encoder (BMFE) that applies cross-band masking in the frequency domain to learn generalizable frequency representations; (b)
+a Layer-wise Gated Frequency Injection (LGFI) module that progressively injects frequency cues into a DINOv3 backbone with LoRA, with
+a learnable gating function dynamically controlling the contribution at each layer; and (c) a Hyperspherical Compactness Learning (HCL)
+module that enforces compact and well-separated feature distributions via cosine margin optimization.
+
+
+largely contains redundant semantic information already captured                               of X𝐻 𝐹 , such that each binary entry corresponds to an 𝑆 × 𝑆 local
+by the semantic pathway. The remaining high-frequency compo-                                   region. The masked representation is given by:
+nents are then concatenated as:
+                                                                                                                     X̃𝐻 𝐹 = X𝐻 𝐹 ⊙ Upsample( M̂),                             (4)
+           X𝐻 𝐹 = Concat(X𝐿𝐻 , X𝐻 𝐿 , X𝐻𝐻 ) ∈ R3𝐶 ×𝐻 𝑓 ×𝑊𝑓 ,                       (2)
+where 𝐻 𝑓 = 𝐻 /2 and 𝑊 𝑓 = 𝑊 /2 denote the spatial dimensions of                               where ⊙ denotes element-wise multiplication.
+the high-frequency feature maps.
+                                                                                               3.2.3 Frequency Token Encoding. To inject frequency cues into
+3.2.2 Band-level Independent Masking. To perturb frequency cues                                the Transformer-based semantic pathway, we encode the masked
+and promote more diverse representations, we apply a Band-level                                high-frequency map X̃𝐻 𝐹 into a compact frequency token.
+Independent Masking strategy. Given X𝐻 𝐹 , we partition each fre-                                  We first employ a lightweight convolutional stem Φconv , which
+quency band into non-overlapping patches of size 𝑆 × 𝑆, forming a                              is structured with two sequential convolutional blocks (Conv Block
+coarse patch grid of size 𝐻𝑝 ×𝑊𝑝 , where 𝐻𝑝 = 𝐻 𝑓 /𝑆 and𝑊𝑝 = 𝑊 𝑓 /𝑆.                           1 and Conv Block 2). Within this stem, each individual block is uni-
+On this grid, we independently sample a binary mask for each high-                             formly composed of a convolutional layer, followed by BatchNorm
+frequency band:                                                                                and ReLU activation:
+           M ∈ {0, 1}3×𝐻𝑝 ×𝑊𝑝 ,             𝑀𝑏,𝑖,𝑗 ∼ Bernoulli(1 − 𝜌),             (3)                                                             ′   ′    ′
+                                                                                                                    Z = Φconv ( X̃𝐻 𝐹 ) ∈ R𝐶 ×𝐻 ×𝑊 ,                           (5)
+where 𝑏 ∈ {1, 2, 3} indexes the three high-frequency sub-bands,
+(𝑖, 𝑗) denote patch indices, and 𝜌 ∈ [0, 1] is the mask ratio.                                 where Z represents the intermediate frequency representation, and
+    Each sampled mask is shared across the RGB channels within the                             𝐶 ′ , 𝐻 ′ , and 𝑊 ′ denote the channel dimension and spatial dimen-
+same frequency band. We thus expand M along the channel dimen-                                 sions after convolution.
+sion to obtain M̂ ∈ {0, 1}3𝐶 ×𝐻𝑝 ×𝑊𝑝 . The mask is then upsampled                                   We then perform Average Pooling over Z to obtain a channel-
+                                                                                                                              ′
+via nearest-neighbor interpolation to match the spatial resolution                             wise representation v ∈ R𝐶 . For the 𝑐-th channel, this aggregation
+Frequency-Aware Semantic Fusion with Gated Injection for AI-generated Image Detection                              MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+
+
+is computed as:                                                                         3.4    Hyperspherical Compactness Learning
+                                         𝐻 ′ ∑︁
+                                             𝑊′                                         To encourage compact and well-separated representations, we in-
+                                  1      ∑︁
+                        𝑣𝑐 =                  𝑍𝑐,𝑖,𝑗 ,                     (6)          troduce a Hyperspherical Compactness Learning (HCL) based on
+                               𝐻 ′𝑊 ′ 𝑖=1 𝑗=1                                           the CosFace objective [39]. By constraining features onto a unit
+                                                                                        hypersphere and enforcing a cosine margin, HCL promotes com-
+where 𝑍𝑐,𝑖,𝑗 denotes the activation at channel 𝑐 and spatial location
+                                                                                        pact intra-class distributions and clear inter-class separation under
+(𝑖, 𝑗), and 𝑐 ∈ {1, . . . , 𝐶 ′ } indexes the channel dimension.
+                                                                                        a stricter geometric constraint.
+    Finally, to bridge the dimensional gap between the frequency                                                                           (𝑁 )
+and semantic streams, channel-wise representation v is projected                           Given the spatio-frequency representation t𝑐𝑙𝑠       from the LGFI
+into the Transformer embedding space to obtain the frequency                            module, we project it via the Embedding Projection to obtain f:
+token T 𝑓 𝑟𝑒𝑞 :                                                                                                               (𝑁 )
+                                                                                                                      f = E (t𝑐𝑙𝑠  ),                              (9)
+                               T 𝑓 𝑟𝑒𝑞 = P (v),                            (7)
+                                                                                        where E (·) denotes the Embedding Projection, implemented as a
+where P (·) denotes the Frequency Projection module, implemented                        linear layer followed by LayerNorm.
+as a linear layer followed by dropout and LayerNorm, to align the                          Next, in the Hyperspherical Normalization step, both features
+feature distribution with the Transformer embedding space.                              and classifier weights are mapped onto the unit hypersphere by ℓ2
+                                                                                        normalization:
+3.3     Layer-wise Gated Frequency Injection                                                                         f𝑖                  W𝑗
+                                                                                                            x𝑖 =           ,   w𝑗 =              ,                (10)
+To enable effective interaction between the low-level frequency rep-                                               ∥f𝑖 ∥ 2              ∥W 𝑗 ∥ 2
+resentations and high-level semantic representations, we propose a
+                                                                                        where f𝑖 ∈ R𝑑 denotes the feature of the 𝑖-th sample, W 𝑗 ∈ R𝑑
+Layer-wise Gated Frequency Injection (LGFI) mechanism. Instead
+                                                                                        is the weight vector of the 𝑗-th class (real and fake). The cosine
+of employing a direct fusion strategy, LGFI progressively injects
+                                                                                        similarity is computed as cos 𝜃 𝑗,𝑖 = w⊤𝑗 x𝑖 .
+frequency cues into the Vision Foundation Model (VFM) backbone,
+                                                                                           Finally, we adopt an additive Cosine Margin Classifier, which
+facilitating hierarchical feature abstraction while preserving the
+                                                                                        enforces a margin between classes on the hypersphere. The loss is
+pre-trained semantic space.
+                                                                                        formulated as:
+3.3.1 Semantic Pathway Adaptation. The semantic pathway is built
+                                                                                                                                 𝑒 𝑠 (cos 𝜃 𝑦𝑖 ,𝑖 −𝑚)
+                                                                                                               𝐵
+                                                                                                           1 ∑︁
+upon a pre-trained DINOv3 backbone. To adapt it to the forgery                                  L𝐻𝐶𝐿 = −         log 𝑠 (cos 𝜃 −𝑚) Í                          ,    (11)
+detection task with minimal parameter overhead, we employ Low-
+                                                                                                           𝐵 𝑖=1    𝑒        𝑦𝑖 ,𝑖       + 𝑗≠𝑦 𝑒 𝑠 cos 𝜃 𝑗,𝑖
+                                                                                                                                                     𝑖
+
+Rank Adaptation (LoRA) [15]. Specifically, the backbone weights are                     where 𝐵 is the batch size, 𝑦𝑖 denotes the ground-truth class label of
+kept frozen, and trainable low-rank matrices are injected into the                      the 𝑖-th sample, 𝑠 > 0 is a scaling factor for logits, and 𝑚 > 0 is the
+Query, Key, and Value (QKV) projection layers of the Multi-Head                         additive cosine margin.
+Self-Attention (MHSA) blocks. This design enables task-specific                            By enforcing feature normalization with an additive cosine mar-
+adaptation while preserving the generalizable representation of the                     gin, HCL organizes features into a compact and well-separated
+foundation model, and avoids overfitting by limiting the number                         structure on the hypersphere. In practice, real samples form tighter
+of trainable parameters.                                                                clusters, while features from different classes are separated by a
+                                                                                        larger margin, leading to improved generalization to unseen gener-
+3.3.2 Gated Injection Mechanism. While the semantic pathway
+                                                                                        ative models.
+extracts spatial inconsistencies, the frequency token T 𝑓 𝑟𝑒𝑞 carries
+explicit generator-specific artifacts. To bridge these two domains,
+we dynamically inject T 𝑓 𝑟𝑒𝑞 into the class token of the Transformer
+                                                                                        4 Experiments
+blocks via learnable layer-wise gated modulation.                                       4.1 Experimental Setup
+        (𝑙 )
+   Let t𝑐𝑙𝑠  denote the class token at the output of the 𝑙-th Trans-                    Dataset. Following the training setting of GenImage [46], all our
+former block. The layer-wise gated injection is formulated as:                          experiments are trained on a dataset constructed from Stable Dif-
+                            (𝑙 )    (𝑙 )
+                                                                                        fusion v1.4-generated images [33] and a subset of ImageNet [34].
+                          t̂𝑐𝑙𝑠  = t𝑐𝑙𝑠  + 𝛼 (𝑙 ) T 𝑓 𝑟𝑒𝑞 ,                (8)          In order to comprehensively evaluate our model’s generalization
+                                                                                        capability and benchmark it against existing approaches, we adopt
+where 𝛼 (𝑙 ) ∈ R is a learnable layer-wise gate that controls the                       a series of advanced datasets for testing. These include GenIm-
+strength of frequency injection. To maintain stability of the pre-                      age [46], a dataset consisting of 8 different generators and an equal
+trained semantic space during early training, 𝛼 (𝑙 ) is initialized to a                number of real images from ImageNet. SynthBuster [2] is also
+                                      (𝑙 )
+small constant. The updated token t̂𝑐𝑙𝑠    is then passed to the (𝑙 +1)-th              utilized, where real samples are sourced from uncompressed im-
+Transformer block together with the patch tokens.                                       ages in the Raise dataset [9], and the fake samples are generated by
+   This layer-wise gating adaptively regulates frequency contribu-                      9 diffusion generators. To assess our model’s performance in the
+tions across hierarchical semantic levels. After passing through all                    wild, we employ WildRF [4], where all images are collected from
+𝑁 Transformer blocks, we obtain the final spatio-frequency repre-                       several social media platforms like Facebook, Reddit and Twitter.
+             (𝑁 )
+sentation t𝑐𝑙𝑠    , which serves as the unified global representation                   We also adopt Chameleon [41], a challenging dataset sampled
+for classification.                                                                     from social media and specifically curated to include samples that
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil                                 Shuchang Zhou, Shangkun Wu, Jiwei Wei, Ke Liu, Ran Ran, Caiyan Qin, and Yang Yang
+
+
+                         Table 1: Performance comparison on the GenImage [46] dataset using accuracy (Acc) as the metric.
+
+     Method                           Midjourney            SD v1.4      SD v1.5    ADM          GLIDE        Wukong       VQDM         BigGAN            mAcc (%)
+     UniFD (CVPR 23) [26]                    56.9             65.1         64.7     69.2           60.1        73.5         86.0            89.3            70.6
+     DIRE (CVPR 23) [40]                     50.4            100.0         99.9     52.5           62.7        56.5         52.4            59.5            71.2
+     NPR (CVPR 24) [38]                      77.8             78.6         78.9     69.7           78.4        76.1         78.1            80.1            77.2
+     Fatformer (CVPR 24) [22]                92.7            100.0         99.9     75.9           88.0        99.9         98.8            55.8            88.9
+     DRCT (ICML 24) [5]                      91.5             95.0         94.4     79.4           89.2        94.7         90.0            81.7            89.5
+     AIDE (ICLR 25) [41]                     81.4             99.8         99.8     78.5           91.8        98.9         80.2            66.8            87.2
+     SAFE (KDD 25) [21]                      95.2             99.4         99.3     82.2           96.2        98.1         96.2            97.7            95.5
+     VIB (CVPR 25) [43]                      88.3             99.5         99.3     74.3           73.4        98.7         89.4            55.6            84.8
+     MiraGe (MM 25) [35]                     83.2             98.8         98.5     82.7           91.3        97.6         92.4            96.5            92.6
+     MRCL (MM 25) [47]                       87.2             99.6         99.6     79.8           92.2        99.6         96.5            98.7            94.2
+     FGINet (Ours)                           92.8             99.6         99.2     89.5           98.0        99.9         99.3            95.9            96.7
+
+
+                        Table 2: Performance comparison on the Synthbuster [2] dataset using accuracy (Acc) as the metric.
+
+   Method                                   DALL·E 2        DALL·E 3     Firefly   GLIDE         Midjourney    SD 1.3     SD 1.4     SD 2      SDXL        mAcc (%)
+   UniFD (CVPR 23) [26]                       83.5            47.4         89.9     53.3            52.5        70.4       69.9      75.7          68.0       67.8
+   NPR (CVPR 24) [38]                         51.1            49.3         46.5     48.5            52.8        51.4       51.8      46.0          52.8       50.0
+   Fatformer (CVPR 24) [22]                   59.4            39.5         60.3     72.7            44.4        53.7       54.0      52.3          69.1       56.1
+   DRCT (ICML 24) [5]                         77.2            86.6         84.1     82.6            73.7        86.6       86.6      83.2          71.3       84.8
+   AIDE (ICLR 25) [41]                        34.9            33.7         24.8     65.0            57.5        74.1       73.7      53.2          68.4       53.9
+   AlignedForensics (ICLR 25) [31]            50.2            48.9         51.7     53.5            98.7        98.8       98.8      98.6          97.3       77.4
+   C2P-CLIP (AAAI 25) [37]                    55.6            63.2         59.5     86.7            52.9        75.2       76.7      69.2          77.7       68.5
+   SAFE (KDD 25) [21]                         58.0            9.9          10.3     52.2            56.7        59.4       59.1      53.0          59.5       46.5
+   DDA (NIPS 25) [6]                          86.3            90.0         91.9     76.5            93.5        92.9       92.7      93.3          93.5       90.1
+   FGINet (Ours)                              91.9            92.3         92.9     92.3            96.1        95.1       96.4      95.7          96.0       94.3
+
+
+Table 3: Performance comparison on the WildRF [4] dataset using                            random horizontal flipping applied at a probability of 0.5, while dur-
+accuracy (Acc) as the metric.                                                              ing evaluation, images are resized and center-cropped to 224 × 224.
+                                                       WildRF                              We use a pre-trained DINOv3 ViT-L/14 as the backbone. To enable
+    Method
+                                Facebook            Reddit Twitter     mAcc (%)
+                                                                                           parameter-efficient adaptation, Low-Rank Adaptation (LoRA) is
+                                                                                           applied to all attention blocks with a rank of 8 and a scaling factor
+    UniFD (CVPR 23) [26]             49.1            60.2     56.5       55.3
+                                                                                           of 16. The feature dimension of the image encoder is set to 𝐷 = 1024.
+    NPR (CVPR 24) [38]               78.1            61.0     51.3       63.5
+    Fatformer (CVPR 24) [22]         54.1            68.1     54.4       58.9
+                                                                                           For the frequency module, the masking ratio is set to 𝜌 = 0.4, and
+    DRCT (ICML 24) [5]               46.6            53.1     55.2       50.6              the patch size is 𝑆 = 8. The layer-wise gating parameter 𝛼 (𝑙 ) is
+    AIDE (ICLR 25) [41]              57.8            71.5     45.8       58.4              initialized to 0.01. We adopt a CosFace classifier with scaling factor
+    Aligned (ICLR 25) [31]           89.4            69.1     81.8       80.1              𝑠 = 30 and margin 𝑚 = 0.35. The model is trained on four NVIDIA
+    C2P-CLIP (AAAI 25) [37]          54.4            68.4     55.9       59.6              RTX 3090 GPUs for only 3 epochs.
+    SAFE (KDD 25) [21]               50.9            74.1     37.5       57.2
+    DDA (NIPS 25) [6]                93.1            86.4     91.5       90.3
+                                                                                           4.2     Main Results
+    FGINet (Ours)                    95.9            90.3     95.3       93.8
+                                                                                           Performance on Standard Datasets. Table 1 and Table 2 present
+                                                                                           the performance of our proposed FGINet on the GenImage [46] and
+                                                                                           Synthbuster [2] datasets, compared with the baseline and existing
+are particularly hard for human observers to distinguish. We con-                          state-of-the-art methods. GenImage is a large-scale benchmark
+duct robustness analysis on the RRDataset [19], which uses social                          comprising over one million images generated by diverse mod-
+media transmission and re-digitization manner such as scanning,                            els, including BigGAN [3], ADM [16], Midjourney [24], etc. On
+re-photographing for augmentation. For further details, please refer                       this dataset, FGINet achieves an accuracy of 96.7%, outperforming
+to the supplementary material.                                                             all competing methods. This result demonstrates its strong capa-
+Metrics. Following prior AI-generated image detection works [21,                           bility in handling diverse generative mechanisms. Synthbuster
+26, 47], we report accuracy (Acc) as the primary metric, using a fixed                     focuses on high-quality diffusion model generated images, includ-
+decision threshold of 0.5 across all datasets. For ablation studies,                       ing DALL·E [32] and the Stable Diffusion series [28, 33], posing
+we additionally report average precision (AP) to provide a more                            a more challenging scenario for detection. Despite this, FGINet
+comprehensive evaluation.                                                                  attains an accuracy of 94.3%, surpassing the second-best method
+Implementation Details. We train the model using the AdamW                                 by a margin of 4.2%. This demonstrates its effectiveness in detect-
+optimizer with a learning rate of 1 × 10−5 and a batch size of 64.                         ing highly realistic, diffusion-based forgeries. Overall, the strong
+During training, images are randomly resized and cropped, with                             performance on these benchmarks validates our design.
+Frequency-Aware Semantic Fusion with Gated Injection for AI-generated Image Detection                                  MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+
+                                                                                                        98                                                   97
+Performance on Wild Dataset. Beyond standard benchmarks,                                                                                                Acc
+we evaluate our method on real-world datasets. As shown in Ta-                                                                                          AP 96
+                                                                                                        96
+ble 3 and Table 4, we assess the in-the-wild detection capability of                                                                                         95
+FGINet on WildRF and Chameleon. For WildRF, Table 3 reports                                             94                                                   94
+
+
+
+
+                                                                                              Acc (%)
+
+
+
+
+                                                                                                                                                              AP (%)
+performance across three social media sources (Facebook, Reddit,
+and Twitter). FGINet achieves the best results on all sources and                                       92                                                   93
+attains the highest mean accuracy (mAcc), demonstrating strong                                                                                               92
+cross-source generalization. Chameleon is a highly challenging                                          90
+                                                                                                                                                             91
+benchmark composed of hard samples from social media that are
+prone to human misclassification. As shown in Table 4, we report                                        88 0.0   0.2       0.4       0.6       0.8       1.0 90
+both real and fake accuracies. Notably, fake samples are signifi-                                                          Mask Ratio
+cantly harder to detect, and most methods exhibit very low fake                         Figure 3: Ablation study on the mask ratio in BMFE. We evaluate
+accuracy. DDA achieves relatively strong performance on fake sam-                       the effect of different mask ratios and report both accuracy (Acc)
+ples due to its dual-domain data alignment, which reduces spurious                      and average precision (AP). Models are trained on SDv1.4 [46] and
+correlations by aligning pixel- and frequency-level statistics be-                      evaluated on the Chameleon dataset [41].
+tween real and synthetic images. Despite this, FGINet achieves the
+best overall performance, reaching 92.5% accuracy and surpassing
+DDA by a margin of 7.7%. These results highlight that FGINet effec-
+tively learns generalizable frequency cues and integrates them in a
+structured manner, enabling reliable detection under challenging
+real-world conditions.
+
+
+
+4.3     Ablation Studies
+Ablation on Model Components. We conduct a component-wise
+ablation study on the Chameleon dataset to evaluate the effec-                          Figure 4: Learned gate visualization. Layer-wise gated frequency
+tiveness of each module in FGINet, including the Band-Masked                            injection on DINOv3 enables selective and adaptive control of fre-
+Frequency Encoder (BMFE), Layer-wise Gated Frequency Injec-                             quency information across network depth.
+tion (LGFI), and Hyperspherical Compactness Learning (HCL). As
+shown in Table 5, the baseline (LoRA fine-tuned DINOv3) achieves
+81.8% Acc and 91.1% AP. BMFE consistently improves performance,
+suggesting that perturbing frequency cues reduces reliance on                           Impact of Mask Ratio. We analyze the effect of different mask
+generator-specific patterns. LGFI brings larger gains (over 7% Acc),                    ratios in BMFE on the Chameleon dataset. As shown in Figure 3,
+highlighting the effectiveness of progressive gated injection over                      moderate masking yields the best performance, with both Acc and
+direct fusion. Combining BMFE and LGFI further boosts perfor-                           AP peaking at a ratio of 0.4. When the mask ratio is too low, the
+mance, indicating their complementary roles. Finally, incorporating                     model still relies on easily distinguishable frequency cues, leading
+HCL achieves the best results (92.5% Acc and 95.7% AP), showing                         to limited generalization. In contrast, excessive masking degrades
+that hyperspherical compactness enhances feature discriminability.                      performance, as overly aggressive perturbation removes informa-
+Overall, all components contribute consistently and yield signifi-                      tive frequency structures. These results indicate that an appropriate
+cant cumulative improvements.                                                           level of frequency masking effectively balances suppressing short-
+Analysis of Injection Strategy and Depth. We provide a finer-                           cut cues and preserving discriminative information, improving
+grained analysis of LGFI by examining different injection strategies                    generalization. Please refer to the supplementary material for more
+and layer-wise injection depths. All other components are kept                          details on frequency band selections and LoRA ablation studies.
+fixed, and experiments are conducted on the Chameleon dataset.
+As shown in Table 6, direct fusion methods (Add, Concat and Cross-                      4.4       Visualization Result
+Attention) applied at the final layer yield limited gains, indicating                   Learned Gate Visualization. We visualize the learned gating val-
+ineffective alignment between frequency and semantic represen-                          ues across the Transformer layers of DINOv3 in Figure 4. The gate
+tations. layer-wise frequency injection (LFI) without gating leads                      values remain relatively high in shallow and intermediate layers,
+to clear performance degradation, suggesting that indiscriminate                        while significantly decrease in deeper layers. This indicates that the
+injection disrupts the pretrained semantic structure. In contrast,                      model tends to emphasize frequency information at early stages,
+LGFI consistently outperforms both direct fusion and ungated injec-                     where low-level structures are more prominent, and progressively
+tion. Among partial strategies, early-layer injection performs best,                    suppress it at deeper layers to avoid interfering with high-level
+highlighting the importance of low-level alignment. Applying LGFI                       semantic representations. Such a pattern is well aligned with our
+across all layers further achieves the best results, demonstrating                      LGFI design, demonstrating that layer-wise gated injection enables
+the advantage of progressive and gated integration throughout the                       adaptive and structure-aware integration of frequency cues across
+hierarchy.                                                                              network depth.
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil                                                       Shuchang Zhou, Shangkun Wu, Jiwei Wei, Ke Liu, Ran Ran, Caiyan Qin, and Yang Yang
+
+
+Table 4: Performance comparison on Chameleon [41] using accuracy (Acc). Following prior work [25], most results are directly adopted.
+For DDA [6] and SAFE [21], we report reproduced results since class-wise (real/fake) accuracies are unavailable. Both overall and class-wise
+(real/fake) accuracies are reported.
+
+                                   UnivFD [26]             DIRE [40]          NPR [38]            AIDE [41]        SAFE [21]   DDA [6]     HiDA-Net [25]       PPL [42]     FGINet
+       Method
+                                       (CVPR 23)            (ICCV 23)          (CVPR 24)           (ICLR 25)        (KDD 25)   (NIPS 25)       (ICLR 26)        (ICLR 26)   (Ours)
+       Real Acc (%)                        93.5               95.7              100.0               94.4             99.6        87.8            79.4            68.1        94.4
+       Fake Acc (%)                        17.7               11.9               2.4                20.3              5.5        80.8            65.5            64.7        89.9
+       Overall Acc (%)                     55.6               59.7               58.1               62.6             59.4        84.8            73.4            66.6        92.5
+
+
+Table 5: Ablation on model components. We evaluate the contribu-                                               region, leading to less certain predictions. With HCL, the distribu-
+tions of BMFE (Band-Masked Frequency Encoder), LGFI (Layer-wise                                                tions become more concentrated and better separated, resulting in
+Gated Frequency Injection), and HCL (Hyperspherical Compactness
+                                                                                                               clearer decision boundaries. This improvement also leads to higher
+Learning) on the Chameleon dataset [41]. The baseline denotes LoRA
+fine-tuning [15] on DINOv3 [36].                                                                               detection accuracy, as reflected by the gain from 90.6% to 92.5%.
+                                                                                                               Feature Space Visualization. We visualize the feature distribu-
+                                                                                                               tions of our method and the state-of-the-art SAFE on the WildRF
+     Method                           BMFE         LGFI      HCL        Acc (%)          AP (%)
+                                                                                                               dataset, which contains fake images from diverse social media
+     Baseline                                                               81.8          91.1                 sources (Facebook, Reddit, and Twitter). As shown in Figure 6,
+     + BMFE                                ✓                                83.1          94.0
+                                                                                                               SAFE exhibits overlapping representations, where real samples are
+     + LGFI                                          ✓                      88.8          91.3
+     + BMFE + LGFI                         ✓         ✓                      90.6          94.5                 heavily mixed with fake samples from different sources. In contrast,
+     + BMFE + LGFI + HCL                   ✓         ✓         ✓            92.5          95.7                 our method produces more compact intra-class clusters and clearer
+                                                                                                               separation between real and fake samples, while maintaining better
+                                                                                                               consistency across different domains. This indicates that FGINet
+Table 6: Impact of fusion strategies and injection depth. LFI denotes                                          learns more generalizable representations under cross-source dis-
+layer-wise frequency injection without gating, while LGFI denotes
+                                                                                                               tribution shifts.
+layer-wise gated frequency injection. All models are trained on the
+SDv1.4 training set [46] and evaluated on the Chameleon dataset [41].
+                                                                                                               4.5      Robustness Evaluation
+       Method                      Layers           Gate           Acc (%)              AP (%)                 We further evaluate our method on RRDataset to assess robust-
+                                             Late Fusion                                                       ness under realistic degradations. Compared to conventional per-
+       Add                            last            ✗              89.3                92.7                  turbations such as Gaussian blur, compression, or additive noise,
+       Concat                         last            ✗              88.6                91.8                  RRDataset simulates two common yet more realistic processes:
+       Cross-Attention                last            ✗              89.3                93.2                  Transmission, involving repeated sharing and compression dur-
+                                             LGFI (ours)                                                       ing internet propagation, and Re-Digitization, caused by scan-
+       LFI                           all              ✗              68.9                69.9
+                                                                                                               ning or re-photographing. These processes introduce severe quality
+       LGFI (early)                  1-8              ✓              88.6                90.4                  degradation and distribution shifts, posing significant challenges
+       LGFI (middle)                8-16              ✓              82.5                86.1                  to reliable detection. As shown in Figure 7, all methods experience
+       LGFI (late)                  16-24             ✓              83.1                88.1                  notable performance drops under these conditions, highlighting
+       Full LGFI                      all             ✓              92.5                95.7                  the difficulty of such perturbations. In contrast, our method con-
+                                                                                                               sistently achieves superior performance across all conditions and
+             Chameleon – w/o HCL                                   Chameleon – w/ HCL
+                                                                                                               attains the highest average accuracy. We attribute this robustness
+                                                                                                               to two key factors. First, LGFI preserves the strong generalization
+                                                                                                               capability of the pretrained DINOv3 by avoiding destructive fusion
+                                                                                                               and enabling adaptive integration of frequency cues. Second, BMFE
+                              Acc: 90.6%                                           Acc: 92.5%                  introduces cross-band random masking, encouraging the model
+                                                                                                               to learn more diverse and generalizable frequency representations
+                                                                                                               rather than relying on specific artifacts. These results demonstrate
+                                                                                                               that FGINet maintains reliable detection performance even under
+                                                                                                               severe real-world degradations.
+Figure 5: Logit distributions on Chameleon dataset without and with
+HCL. HCL enforces more compact and well-separated representa-                                                  5     Conclusion
+tions, leading to clearer class separation and improved accuracy.
+                                                                                                               In this paper, we study the problem of limited cross-generator gen-
+                                                                                                               eralization in AI-generated image detection. We identify two key
+Logit Distribution Visualization with HCL. We visualize the                                                    limitations: a frequency shortcut bias toward easily distinguishable
+logit distributions on the Chameleon dataset without and with                                                  generator-specific cues, and a representation conflict between low-
+Hyperspherical Compactness Learning (HCL). Without HCL, the                                                    level frequency and high-level semantic features under direct fusion.
+distributions are more dispersed, with overlap in the mid-confidence                                           To address these issues, we propose FGINet, a frequency-aware
+Frequency-Aware Semantic Fusion with Gated Injection for AI-generated Image Detection                                                                      MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil
+
+
+                       t-SNE Visualization of SAFE                                 t-SNE Visualization of FGINet
+                                                                                                                                 generated images. In ICML.
+                                                                                                                             [6] Ruoxin Chen, Junwei Xi, Zhiyuan Yan, Ke-Yue Zhang, Shuang Wu, Jingyi Xie,
+                                                                                                                                 Xu Chen, Lei Xu, Isabel Guan, Taiping Yao, and Shouhong Ding. 2025. Dual
+                                                                                                                                 Data Alignment Makes AI-Generated Image Detector Easier Generalizable.
+                                                                                                                                 arXiv:2505.14359 [cs.CV] https://arxiv.org/abs/2505.14359
+                                                                                                                             [7] Siyuan Cheng, Lingjuan Lyu, Zhenting Wang, Xiangyu Zhang, and Vikash Se-
+                                                                                                                                 hwag. 2025. Co-spy: Combining semantic and pixel features to detect synthetic
+                                                                                                                                 images by ai. In CVPR. 13455–13465.
+                                                                                                                             [8] Beilin Chu, Xuan Xu, Xin Wang, Yufei Zhang, Weike You, and Linna Zhou.
+                                                                                                                                 2025. Fire: Robust detection of diffusion-generated images via frequency-guided
+                                                                                                                                 reconstruction error. In CVPR. 12830–12839.
+                                                                                                                             [9] Duc-Tien Dang-Nguyen, Cecilia Pasquini, Valentina Conotter, and Giulia Boato.
+                                                                                                                                 2015. RAISE: a raw images dataset for digital image forensics. MMSys (2015).
+Figure 6: t-SNE visualization comparing SAFE and FGINet on WildRF                                                           [10] Prafulla Dhariwal and Alexander Nichol. 2021. Diffusion models beat gans on
+                                                                                                                                 image synthesis. NeurIPS 34 (2021), 8780–8794.
+dataset. FGINet shows more clearer separation between real and fake                                                         [11] Ricard Durall, Margret Keuper, and Janis Keuper. 2020. Watch Your Up-
+samples.                                                                                                                         Convolution: CNN Based Generative Deep Neural Networks Are Failing to Re-
+                                                                                                                                 produce Spectral Distributions. In CVPR. 7887–7896. doi:10.1109/CVPR42600.
+                                Original             Transmission                Re-Digitization            Average              2020.00791
+                 100
+                                                                                                                            [12] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fischer, Dorothea Kolossa,
+                                                                                                                                 and Thorsten Holz. 2020. Leveraging frequency analysis for deep fake image
+                 90
+                                                                                                                                 recognition. In ICML. PMLR, 3247–3258.
+                                                                                                                            [13] Ian J Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley,
+                 80
+                                                                                                                                 Sherjil Ozair, Aaron Courville, and Yoshua Bengio. 2014. Generative adversarial
+  Accuracy (%)
+
+
+
+
+                                                                                                                                 nets. NeurIPS 27 (2014).
+                                                                                                                            [14] Jonathan Ho, Ajay Jain, and Pieter Abbeel. 2020. Denoising diffusion probabilistic
+                 70                                                                                    97.9
+                        93.3               92.2                                     94.5 93.9                 92.0               models. NeurIPS 33 (2020), 6840–6851.
+                                                                                                80.2                 82.6   [15] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+                 60                                             78.9 76.4 79.6
+                                                                                                                                 Wang, Lu Wang, Weizhu Chen, et al. 2022. Lora: Low-rank adaptation of large
+                                                  69.5
+                                                         64.4                                                                    language models. ICLR 1, 2 (2022), 3.
+                 50
+                                                                                                                            [16] Diederik P Kingma. 2014. Adam: A method for stochastic optimization. arXiv
+                               49.9 50.6
+                                                                                                                                 preprint arXiv:1412.6980 (2014).
+                 40
+                            SAFE               DDA                  AIDE                DRCT               Ours             [17] Despina Konstantinidou, Christos Koutlis, and Symeon Papadopoulos. 2025. Tex-
+                                                                                                                                 turecrop: Enhancing synthetic image detection through texture-based cropping.
+Figure 7: Robustness evaluation on RRDataset [19]. Compared with                                                                 In WACV. 1459–1468.
+SOTA detectors, our method achieves consistently superior perfor-                                                           [18] Christos Koutlis and Symeon Papadopoulos. 2024. Leveraging representa-
+                                                                                                                                 tions from intermediate encoder-blocks for synthetic image detection. In ECCV.
+mance under challenging post-processing scenarios, including Trans-                                                              Springer, 394–411.
+mission and Re-Digitization. The red curve denotes the average ac-                                                          [19] Chunxiao Li, Xiaoxiao Wang, Meiling Li, Boming Miao, Peng Sun, Yunjian Zhang,
+curacy across conditions.                                                                                                        Xiangyang Ji, and Yao Zhu. 2025. Bridging the Gap Between Ideal and Real-
+                                                                                                                                 world Evaluation: Benchmarking AI-Generated Image Detection in Challenging
+                                                                                                                                 Scenarios. arXiv:2509.09172 [cs.CV] https://arxiv.org/abs/2509.09172
+framework that learns more generalizable frequency representa-                                                              [20] Jun Li, Wentao Jiang, Liyan Shen, and Yawei Ren. 2025. Optimized Frequency
+tions and integrates them with semantic features in a structured                                                                 Collaborative Strategy Drives AI Image Detection. IEEE Internet of Things Journal
+                                                                                                                                 (2025).
+and hierarchical manner. Specifically, BMFE reduces reliance on                                                             [21] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and Fuli Feng.
+generator-specific cues via cross-band masking in the frequency                                                                  2025. Improving synthetic image detection towards generalization: An image
+domain, while LGFI enables progressive and adaptive frequency                                                                    transformation perspective. In KDD. 2405–2414.
+                                                                                                                            [22] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei, Jingdong Wang, and
+injection aligned with the hierarchical abstraction of Vision Foun-                                                              Yao Zhao. 2024. Forgery-aware adaptive transformer for generalizable synthetic
+dation Models (VFMs). HCL further enhances feature compactness                                                                   image detection. In CVPR. 10770–10780.
+                                                                                                                            [23] Rabeeh Karimi Mahabadi, Yonatan Belinkov, and James Henderson. 2021.
+and separability through hyperspherical constraints with a cosine                                                                Variational Information Bottleneck for Effective Low-Resource Fine-Tuning.
+margin. Extensive experiments demonstrate that FGINet achieves                                                                   arXiv:2106.05469 [cs.CL] https://arxiv.org/abs/2106.05469
+state-of-the-art performance and strong generalization across mul-                                                          [24] Midjourney. 2025. https://www.midjourney.com/home/.
+                                                                                                                            [25] Lianrui Mu, Zou Xingze, Jianhong Bai, Jiaqi Hu, Wenjie Zheng, Jiangnan Ye,
+tiple challenging datasets.                                                                                                      Jiedong Zhuang, Mudassar Ali, Jing Wang, and Haoji Hu. 2025. No Pixel Left Be-
+                                                                                                                                 hind: A Detail-Preserving Architecture for Robust High-Resolution AI-Generated
+Acknowledgments                                                                                                                  Image Detection. arXiv:2508.17346 [cs.CV] https://arxiv.org/abs/2508.17346
+                                                                                                                            [26] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. 2023. Towards universal fake image
+To Robert, for the bagels and explaining CMYK and color spaces.                                                                  detectors that generalize across generative models. In CVPR. 24480–24489.
+                                                                                                                            [27] William Peebles and Saining Xie. 2023. Scalable Diffusion Models with Trans-
+References                                                                                                                       formers. In ICCV. 4172–4182. doi:10.1109/ICCV51070.2023.00387
+                                                                                                                            [28] Dustin Podell, Zion English, Kyle Lacey, Andreas Blattmann, Tim Dockhorn,
+ [1] Darius Afchar, Vincent Nozick, Junichi Yamagishi, and Isao Echizen. 2018.                                                   Jonas Müller, Joe Penna, and Robin Rombach. 2023. SDXL: Improving Latent
+     MesoNet: a Compact Facial Video Forgery Detection Network. In WIFS. IEEE,                                                   Diffusion Models for High-Resolution Image Synthesis. arXiv:2307.01952 [cs.CV]
+     1–7. doi:10.1109/wifs.2018.8630761                                                                                          https://arxiv.org/abs/2307.01952
+ [2] Quentin Bammey. 2024. Synthbuster: Towards Detection of Diffusion Model                                                [29] Yuyang Qian, Guojun Yin, Lu Sheng, Zixuan Chen, and Jing Shao. 2020. Thinking
+     Generated Images. IEEE Open Journal of Signal Processing 5 (2024), 1–9. doi:10.                                             in frequency: Face forgery detection by mining frequency-aware clues. In ECCV.
+     1109/OJSP.2023.3337714                                                                                                      Springer, 86–103.
+ [3] Andrew Brock, Jeff Donahue, and Karen Simonyan. 2019. Large Scale GAN                                                  [30] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh,
+     Training for High Fidelity Natural Image Synthesis. arXiv:1809.11096 [cs.LG]                                                Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark,
+     https://arxiv.org/abs/1809.11096                                                                                            et al. 2021. Learning transferable visual models from natural language supervision.
+ [4] Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen. 2024. Real-Time Deepfake                                            In ICML. PmLR, 8748–8763.
+     Detection in the Real-World. arXiv:2406.09398 [cs.CV] https://arxiv.org/abs/                                           [31] Anirudh Sundara Rajan, Utkarsh Ojha, Jedidiah Schloesser, and Yong Jae Lee.
+     2406.09398                                                                                                                  2025. Aligned Datasets Improve Detection of Latent Diffusion-Generated Images.
+ [5] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang. 2024. Drct: Diffu-                                                  arXiv:2410.11835 [cs.CV] https://arxiv.org/abs/2410.11835
+     sion reconstruction contrastive training towards universal detection of diffusion
+MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil                                      Shuchang Zhou, Shangkun Wu, Jiwei Wei, Ke Liu, Ran Ran, Caiyan Qin, and Yang Yang
+
+
+[32] Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu, and Mark Chen.                     Recognition. In CVPR. 5265–5274. doi:10.1109/CVPR.2018.00552
+     2022. Hierarchical Text-Conditional Image Generation with CLIP Latents.                 [40] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun Wang, Hezhen Hu, Hong
+     arXiv:2204.06125 [cs.CV] https://arxiv.org/abs/2204.06125                                    Chen, and Houqiang Li. 2023. Dire for diffusion-generated image detection. In
+[33] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Björn                   ICCV. 22445–22455.
+     Ommer. 2022. High-resolution image synthesis with latent diffusion models. In           [41] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and Weidi
+     CVPR. 10684–10695.                                                                           Xie. [n. d.]. A Sanity Check for AI-generated Image Detection. In ICLR.
+[34] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, Sanjeev Satheesh, Sean             [42] Zheng Yang, Ruoxin Chen, Zhiyuan Yan, Ke-Yue Zhang, Xinghe Fu, Shuang Wu,
+     Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, et al.                 Xiujun Shu, Taiping Yao, Shouhong Ding, Zequn Qin, and Xi Li. 2026. All Patches
+     2015. Imagenet large scale visual recognition challenge. IJCV 115, 3 (2015),                 Matter, More Patches Better: Enhance AI-Generated Image Detection via Panoptic
+     211–252.                                                                                     Patch Learning. arXiv:2504.01396 [cs.CV] https://arxiv.org/abs/2504.01396
+[35] Kuo Shi, Jie Lu, Shanshan Ye, Guangquan Zhang, and Zhen Fang. 2025. Mi-                 [43] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li, Bo Liu, and Bin Xiao. 2025.
+     raGe: Multimodal Discriminative Representation Learning for Generalizable                    Towards Universal AI-Generated Image Detection by Variational Information
+     AI-Generated Image Detection. In ACM MM (Dublin, Ireland) (MM ’25). Asso-                    Bottleneck Network. In CVPR. 23828–23837.
+     ciation for Computing Machinery, New York, NY, USA, 353–361. doi:10.1145/               [44] Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and Xinpeng Zhang. 2023.
+     3746027.3755142                                                                              Patchcraft: Exploring texture patch for efficient ai-generated image detection.
+[36] Oriane Siméoni, Huy V. Vo, Maximilian Seitzer, Federico Baldassarre, Maxime                  arXiv preprint arXiv:2311.12397 (2023).
+     Oquab, Cijo Jose, Vasil Khalidov, Marc Szafraniec, Seungeun Yi, Michaël Ra-             [45] Ziyin Zhou, Yunpeng Luo, Yuanchen Wu, Ke Sun, Jiayi Ji, Ke Yan, Shouhong Ding,
+     mamonjisoa, Francisco Massa, Daniel Haziza, Luca Wehrstedt, Jianyuan Wang,                   Xiaoshuai Sun, Yunsheng Wu, and Rongrong Ji. 2025. Aigi-holmes: Towards
+     Timothée Darcet, Théo Moutakanni, Leonel Sentana, Claire Roberts, Andrea                     explainable and generalizable ai-generated image detection via multimodal large
+     Vedaldi, Jamie Tolan, John Brandt, Camille Couprie, Julien Mairal, Hervé Jégou,              language models. In ICCV. 18746–18758.
+     Patrick Labatut, and Piotr Bojanowski. 2025. DINOv3. arXiv:2508.10104 [cs.CV]           [46] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang, Guanyu Lin, Wei Li,
+     https://arxiv.org/abs/2508.10104                                                             Zhijun Tu, Hailin Hu, Jie Hu, and Yunhe Wang. 2023. Genimage: A million-scale
+[37] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu, Baoyuan Wu, Yao                       benchmark for detecting ai-generated image. NeurIPS 36 (2023), 77771–77782.
+     Zhao, and Yunchao Wei. 2025. C2p-clip: Injecting category common prompt in              [47] Wanyi Zhuang, Qi Chu, Tao Gong, Changtao Miao, and Nenghai Yu. 2025. To-
+     clip to enhance generalization in deepfake detection. In AAAI, Vol. 39. 7184–7192.           wards Good Generalizations for Diffusion Generated Image Detection Using
+[38] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao                   Multiple Reconstruction Contrastive Learning. In ACM MM (Dublin, Ireland)
+     Wei. 2024. Rethinking the up-sampling operations in cnn-based generative                     (MM ’25). Association for Computing Machinery, New York, NY, USA, 5431–5440.
+     network for generalizable deepfake detection. In CVPR. 28130–28139.                          doi:10.1145/3746027.3754567
+[39] Hao Wang, Yitong Wang, Zheng Zhou, Xing Ji, Dihong Gong, Jingchao Zhou,
+     Zhifeng Li, and Wei Liu. 2018. CosFace: Large Margin Cosine Loss for Deep Face
+

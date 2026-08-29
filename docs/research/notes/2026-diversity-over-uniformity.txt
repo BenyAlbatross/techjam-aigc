@@ -1,0 +1,771 @@
+                   This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                Except for this watermark, it is identical to the accepted version;
+                          the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+    Diversity over Uniformity: Rethinking Representation in Generated Image
+                                    Detection
+
+       Qinghui He1, 2 , Haifeng Zhang1, 2 , Qiao Qin1, 2 , Bo Liu * , 1, 3 , Xiuli Bi1, 3 , Bin Xiao1, 4
+                             1
+                               Chongqing Key Laboratory of Image Cognition,
+              Chongqing University of Posts and Telecommunications, Chongqing, China
+          2                                                  3
+            School of Computer Science and Technology          School of Artificial Intelligence
+                         4
+                           Jinan Inspur Data Technology Co., Ltd., Jinan, China
+                            {D250201011, D240201065, S240201048}@stu.cqupt.edu.cn
+                                       {boliu, bixl, xiaobin}@cqupt.edu.cn
+
+
+
+                           Abstract                                 Potential
+                                                                     Cues            Frequency          Noise                                                Semantic      …
+                                                                                                                                                                                   DMs-ACC / GANs-ACC
+                                                                                                                     Over-smoothing       Stylization
+                                                                                      Artifacts        Residual                                              Artifacts                Ours
+                                                                                                                                                                                      93.85 / 90.02
+With the rapid advancement of generative models, gener-                               Potential      Learned
+                                                                                                                                                 Potential
+                                                                    Potential                                           Potential    Learned      Cues                                CLIPping ICMR24'
+                                                                                                                                                                         Learned
+ated image detection has become an important task in vi-                &
+                                                                     learned
+                                                                                       Cues           Cues               Cues         Cues
+                                                                                                                                                                          Cues        90.27 / 85.56
+
+sual forensics. Although existing methods have achieved                             Insufficient Cues Learned        Narrow Cues Learned           Diverse Cues Learned               VIB-Net CVPR 25'
+                                                                                                                                                                                      88.93 / 83.46
+                                                                     high
+remarkable progress, they often rely, after training, on only                                                                                                                         DRCT ICML 24'
+                                                                                                     Training Set
+a small subset of highly salient forgery cues, which limits                                                                                                                           90.60 / 77.32
+                                                                                                                Similar-Generator Test Set
+                                                                      Performance
+
+
+
+
+                                                                                                                                                                                      NPR CVPR 24'
+their ability to generalize to unseen generative mechanisms.                                                                                                                          89.19 / 64.23
+We argue that reliably generated image detection should                                   low
+                                                                                      performance
+                                                                                                                                                                     high
+                                                                                                                                                                 performance          CO-SPY CVPR 25'
+                                                                                                                                                                                      76.99 / 66.98
+not depend on a single decision path but should preserve
+                                                                                                                                                                                      UnivFD CVPR 23'
+multiple judgment perspectives, enabling the model to un-                                                           Cross-Generator Test Set
+                                                                                                                                                                                      72.51 / 56.70
+                                                                                                                                domain-gap performance drop
+derstand the differences between real and generated images            low
+                                                                                     Uninformative                                                               Heterogeneity
+                                                                                                                                                                                      CNNDet CVPR 20'
+                                                                                                                                                                                      74.06 / 50.13
+                                                                                                                      Homogenization Features
+                                                                                        Features                                                                   Features
+from diverse viewpoints. Based on this idea, we propose an
+anti-feature-collapse learning framework that filters task-      Figure 1. Illustration and empirical comparison of feature utiliza-
+irrelevant components and suppresses excessive overlap           tion in generated image detection. The weakness of existing de-
+among different forgery cues in the representation space,        tectors stems not from insufficient cues in the data, but from se-
+preventing discriminative information from collapsing into       lectively exploiting the most prominent cues during training. Our
+a few dominant feature directions. This design maintains         approach encourages diverse cue utilization, resulting in heteroge-
+diverse and complementary evidence within the model, re-         neous representations and improved cross-domain performance.
+duces reliance on a small set of salient cues, and enhances
+robustness under unseen generative settings. Extensive ex-
+                                                                 a level of realism that surpasses human perception. These
+periments on multiple public benchmarks demonstrate that
+                                                                 models can produce high-quality, consistent images across
+the proposed method significantly outperforms the state-
+                                                                 diverse domains, resulting in the widespread circulation of
+of-the-art approaches in cross-model scenarios, achieving
+                                                                 synthetic media in social and news platforms. While this
+an accuracy improvement of 5.02% and exhibiting supe-
+                                                                 advancement has benefited creative industries, it also raises
+rior generalization and detection reliability. The source
+                                                                 serious concerns about misinformation and visual authen-
+code is available at https://github.com/Yanmou-
+                                                                 ticity. As a result, distinguishing real images from gener-
+Hui/DoU .
+                                                                 ated ones has become a core problem in visual forensics.
+                                                                 The goal is to reliably identify AI-generated images under
+                                                                 unknown or concealed generation mechanisms, making the
+1. Introduction                                                  development of robust and generalizable detection methods
+With the rapid progress of generative models such as GANs        crucial for ensuring content authenticity and supporting ap-
+and diffusion models, AI-generated images have achieved          plications such as media verification and digital forensics.
+                                                                     A more subtle challenge in generated image detection
+  * Corresponding Author                                         does not lie in the insufficiency of features, but in the ten-
+
+
+
+                                                            40407
+dency of models to compress multi-source information into         diversity, enhancing the model’s robustness and general-
+similar discriminative patterns during training, exhibiting a     ization capability under complex generation patterns. The
+representational homogenization. Deep models often pri-           main contributions are summarized as follows:
+oritize learning the most salient and easily distinguishable      • We propose a novel generated image detection method
+artifacts for real–fake separation and establish stable de-         named DoU, which explicitly encourages internal rep-
+cision boundaries based on these cues. This learning be-            resentational heterogeneity and complementarity during
+havior gradually narrows the feature space, weakening the           training, effectively mitigating the trend of feature ho-
+diversity among discriminative dimensions and leading to            mogenization and providing richer and more generaliz-
+highly similar internal representations. Although such con-         able forgery cues for reliable discrimination.
+vergence facilitates fast optimization and yields good per-       • We introduce a theoretical constraint to ensure that the
+formance under specific generation models or data distribu-         model extracts sufficient forgery-related features, thereby
+tions, it causes the model to rely excessively on fixed dis-        removing redundant information and enhancing task-
+criminative cues, thereby reducing its ability to adapt to di-      specific discriminability.
+verse generative techniques. When the generation method,          • Extensive experiments on multiple public benchmarks for
+image content, or perturbation type changes, the model,             generated image detection show that our method con-
+lacking multi-source and complementary features, struggles          sistently outperforms existing state-of-the-art methods,
+to adapt its decision criteria to new generative techniques,        demonstrating the effectiveness of anti-feature-collapse
+resulting in a degradation of detection performance.                learning in improving robustness and generalization.
+    To address this issue, we propose a novel research per-
+spective: reliably generated image detection should not rely      2. Related Works
+on a single discriminative path but should preserve multi-
+ple judgment perspectives. We aim to maintain diverse dis-        2.1. Feature-Driven Generated Image Detection
+criminative representations within the model, enabling it to      The rapid development of generative networks has spurred
+understand the differences between real and generated im-         extensive research on generated image detection. Most ex-
+ages from multiple viewpoints rather than being dominated         isting approaches focus on learning one or several discrimi-
+by a single decision pattern. Such representational hetero-       native forgery features to distinguish real images from gen-
+geneity acts as a resistance mechanism against the conver-        erated ones. Early studies are effective only within a spe-
+gence of feature homogenization, ensuring the coexistence         cific generative paradigm (such as GANs). Wang et al. [39]
+of multiple independent and complementary discriminative          use a simple CNN classifier with data augmentation to de-
+cues within the model. This design reduces reliance on spe-       tect unseen GAN-generated images. [5, 14, 16, 25] reveal
+cific artifacts and enhances the model’s robustness when          that GAN-generated images differ significantly from real
+facing shifts in generative techniques, content domains, or       ones in the frequency domain. Chandrasegaran et al. [6]
+unknown perturbations. Based on this concept, we pro-             identify color information as a transferable cue for cross-
+pose an Anti-Feature-Collapse Learning (AFCL) method,             model detection, while Jia et al. [21] observe that generated
+which encourages representational heterogeneity and com-          images exhibit higher color saturation and uneven distribu-
+plementarity during training to suppress feature homoge-          tions, and propose color quantization and recovery-based
+nization and maintain the openness and diversity of the dis-      features for detection. Tan et al. [36] find that the gra-
+criminative space. The performance improvement achieved           dient information from pretrained models can serve as a
+by AFCL does not come from an increase in information             general artifact for detection. In addition, they introduce
+quantity, but from the preservation of diverse discriminative     NPR [37] to capture local up-sampling artifacts. Corvi
+perspectives. Furthermore, we introduce a theoretical con-        et al. [11] demonstrate that existing detectors trained on
+straint mechanism to ensure that the model captures suf-          GANs generalize poorly to diffusion models, motivating
+ficient forgery-related cues while removing task-irrelevant       diffusion-specific designs. Wang et al. [40] propose using
+features, thereby strengthening its discriminative capability.    reconstruction errors from diffusion models for detection,
+   To validate the effectiveness of the proposed method, we       while Cazenavette et al. [4] leverage the inversion of pre-
+conduct extensive experiments on multiple public bench-           trained Stable Diffusion to obtain latent noise and recon-
+marks for generated image detection, covering a wide              structed images as auxiliary discriminative representations.
+range of generative architectures based on GANs and dif-          Luo et al. [26] compute single-step latent reconstruction er-
+fusion models. As shown in Fig. 1, the experimental               rors for efficiency, and Ricker et al. [32] achieve training-
+results demonstrate that the proposed approach signifi-           free detection via autoencoder reconstruction errors. Chu
+cantly outperforms existing detection methods in cross-           et al. [10] reveal that diffusion models inadequately recon-
+model and unseen-generator scenarios. The anti-feature-           struct mid-frequency components of real images and inte-
+collapse mechanism effectively maintains representational         grated frequency decomposition with reconstruction-error
+
+
+
+                                                             40408
+    Real Samples              Seen Real Samples   Unseen Real Samples             Feature Sensitivity     Detection Accuracy        Explained Variance (per PC)
+    Various Fake Samples      Seen Fake Samples   Unseen Fake Samples
+
+
+
+
+                   99.08   1.37                    1.92                            Subspace Dimension d      Subspace Dimension d         Subspace Dimension d
+ (a) Pre-trained model        (b) CNNDet             (C) VIB-Net                    (a) CNNDet                (b) VIB-Net                    (c) Ours
+
+Figure 2. UMAP visualizations with effective-rank bars. (a)                  Figure 3. Subspace-based evaluation with explained variance
+Features of real and various generated samples extracted by a pre-           analysis. The green circles denote feature sensitivity, where a
+trained model. (b) CNNDet and (c) VIB-Net features on seen and               larger circle indicates higher sensitivity to the corresponding prin-
+unseen samples. Bars denote the effective rank. A higher value re-           cipal component. The red line shows the detection accuracy
+flects more diverse and evenly distributed feature representations,          (mACC) achieved when using different subspace dimensions. The
+whereas a lower rank implies feature collapse and reliance on a              blue line represents the information contribution of each princi-
+few dominant cues.                                                           pal component (by PCA), reflecting its relative importance to the
+                                                                             overall feature representation.
+
+modeling to extract more discriminative features. Mean-
+while, DRCT [7], Bias-Free [18], and SFLD [19] decou-                        sity of discriminative cues. As shown in Fig. 2(b)(c), both
+ple content- and artifact-related representations, construct-                CNNDet and VIB-Net exhibit clear generalization failures.
+ing bias-free datasets through diffusion reconstruction to re-               These detectors tend to misclassify generated samples that
+duce overfitting to semantic content. These studies provide                  do not share forgery patterns similar to those seen in the
+insights into detecting GAN- or diffusion-generated images,                  training set as real. Although unseen generated samples still
+but still struggle to achieve cross-model generalization.                    exhibit subtle discrepancies compared to real ones, these
+2.2. Generalizable Generated Image Detection                                 relatively weak discriminative features are not effectively
+                                                                             exploited by the models, resulting in generalization failure.
+To address the challenge of cross-model generalization, re-                  Meanwhile, we observe that these detectors have a signifi-
+cent studies have begun exploring unified detection frame-                   cantly reduced effective rank, further revealing their strong
+works based on pretrained multimodal models. Specifically,                   reliance on a few dominant feature directions. This phe-
+Ojha et al. [28] leverage the pretrained CLIP [30] feature                   nomenon suggests that the fundamental limitation of cur-
+space and perform linear fine-tuning, thereby enhancing the                  rent detectors does not lie in the insufficiency of discrim-
+detector’s generalization across different generative mod-                   inative features, but rather in the way these features are
+els. Cozzolino et al. [12] observe that CLIP features capture                organized and utilized within the model. During training,
+high-level semantic artifacts rather than low-level frequency                detectors tend to converge toward the most salient and eas-
+cues. Khan et al. [24] combine CLIP’s visual and textual                     ily learnable discriminative cues, forming a dominant and
+branches and adopt prompt tuning, achieving improvements                     shortcut-like decision pattern [28, 43]. As training pro-
+in generalization. Wu et al. [41] formulate generated image                  gresses, the model gradually compresses forgery evidence
+detection as a few-shot classification problem and employ                    from multiple sources into a single discriminative subspace,
+prototype-based metric learning to enable efficient detec-                   thereby losing representational diversity and weakening its
+tion with limited samples from unseen generators. Zhang                      adaptability to unseen generative mechanisms.
+et al. [44] introduce a variational information bottleneck
+                                                                                 To further verify this observation, we conduct a
+mechanism into multimodal features, explicitly compress-
+                                                                             subspace-based analysis. As illustrated in Fig. 3(a)(b),
+ing task-irrelevant information while preserving the features
+                                                                             both CNN-based and ViT-based detectors exhibit similar
+most relevant to real–fake discrimination.
+                                                                             feature contraction behavior. Their detection performance
+3. Empirical Motivation and Analysis                                         rapidly saturates with only a few principal components, and
+                                                                             adding more components brings almost no further improve-
+To investigate the root cause of the limited generalization                  ment, suggesting that most discriminative capacity is con-
+ability of existing detectors, we first visualize the feature                centrated in a few feature directions. The blue curve indi-
+distributions of different models, as shown in Fig. 2. The                   cates that a large portion of feature variance remains un-
+features extracted by a pre-trained model form a broad and                   derutilized, while the rapid saturation of the performance
+uniformly distributed structure between real and generated                   curve (highlighted in green) reveals the model’s high sensi-
+samples, indicating that those features retain a rich diver-                 tivity to specific components, reflecting the fragility of the
+
+
+
+                                                                        40409
+                                                           Image Encoder
+                                                                                                                                                                               [Vreal]1 [Vreal]2 ...[Vreal]M [Real]
+                          1-st Stage of                2-nd Stage of                                 N-th Stage of
+                                                      Image Encoder           …                     Image Encoder
+                         Image Encoder                                                                                                                                         [Vfake]1 [Vfake]2 ...[Vfake]M [Fake]
+
+
+                                                                                                          …
+
+
+
+
+                                                                                                                                       CIB
+                                                                                   1   2     3    4
+                                                                               *                                    N
+
+
+
+
+                                          CIB
+                                                                                                                                                                                                    Text Encoder
+
+
+
+
+                                           CIB
+                                                                                                                        1
+
+
+
+
+                                             CIB
+     Frozen                                                                                                                            Filter out
+
+
+     Trainable
+                            …                 Filter out      …
+                                        N x CIB                                                                             Min similarity
+     Forgery cues       CLS tokens                                                                                      0
+                                        Cue Information Bottleneck
+     Superfluous cues   (per layer)                                    AFCL (Anti-Feature-Collapse Learning)                                                                               Similarity                                   Real Fake
+
+Figure 4. Overview of our proposed AFCL framework. The frozen image encoder provides multi-stage CLS embeddings, which are
+refined by the CIBs to remove superfluous cues. AFCL enforces layer-wise decorrelation to maintain feature diversity. The resulting
+representations are aligned with real/fake textual embeddings for classification.
+
+
+decision boundary and the dependency of the representa-                    tations that capture hierarchical and complementary forgery
+tion. This observation further indicates that existing detec-              cues. Each stage feature is first refined by the Cue In-
+tors implicitly integrate heterogeneous forgery cues into a                formation Bottleneck (CIB) module, which preserves task-
+single dominant direction during optimization, causing the                 relevant signals and removes redundant correlations that do
+feature space to collapse from a diverse, multi-cue structure              not contribute to authenticity discrimination. To maintain
+into a narrow sub-manifold. Although this sub-manifold                     diversity across stages, the Anti-Feature-Collapse Learning
+maximizes separability, it sacrifices orthogonal information               (AFCL) module imposes an inter-stage decorrelation con-
+and robustness. Once the key discriminative features shift                 straint, encouraging each layer to capture distinct aspects of
+or disappear in new generative samples, the detector’s de-                 forgery evidence. The stage-wise features are then aggre-
+cision foundation collapses, leading to a significant drop in              gated through learnable weights to adaptively balance con-
+generalization performance.                                                tributions from different representation levels, followed by
+    Based on the above findings, we further design a val-                  another CIB refinement to suppress residual noise. Finally,
+idation experiment by explicitly introducing a representa-                 the aggregated representation is aligned with learnable tex-
+tional heterogeneity constraint during training to encourage               tual prototypes of “real” and “fake” through cosine similar-
+the learning of diverse forgery cues. As shown in Fig. 3(c),               ity to produce the final prediction.
+after incorporating this constraint, the detector’s accuracy
+                                                                           4.2. Cue Information Bottleneck
+gradually improves with increasing subspace dimensional-
+ity, instead of saturating within only a few principal com-                The CIB module is designed to refine multiple forgery cues
+ponents. This demonstrates that the model can effectively                  by explicitly filtering out superfluous information within
+utilize multiple complementary cues, making its decision                   cues and preventing over-reliance on any single cue. For-
+process less sensitive to specific components and enabling                 mally, given an input image x and its authenticity label
+more comprehensive exploitation of overall feature infor-                  y ∈ {0, 1}, the frozen image encoder produces multi-stage
+mation. These results validate our hypothesis and indicate                 CLS features:
+that, to maintain reliable decision-making under distribu-
+                                                                                                         \mathcal {V}=\{v_1, v_2, ..., v_N\}, \quad v_i\in \mathbb {R}^D,                                                                      (1)
+tional shifts, detectors need to preserve diverse and comple-
+mentary discriminative representations.                                    where vi denotes the feature of the i-th stage. Each vi passes
+                                                                           through an independent learnable transformation module
+4. Method                                                                  CIB(·) that performs information filtering:
+
+4.1. Overview                                                                                  \widetilde {v}_i=\mathrm {CIB}_i(v_i), \quad \widetilde {\mathcal {V}}=\{\widetilde {v}_1, \widetilde {v}_2, ..., \widetilde {v}_N\}.           (2)
+The proposed framework aims to improve the generaliza-                     where each vei represents one aspect of potential forgery cue.
+tion capability of generated image detectors by addressing                 The objective is to maximize predictive relevance between
+two essential aspects of representation learning: eliminat-                each purified cue vei and the label y, while minimizing the
+ing irrelevant and spurious features, and preserving hetero-               dependency between vei and the input x:
+geneous and complementary discriminative cues. As il-
+lustrated in Fig. 4, given an input image, a pretrained and                                                 \max _{\{\mathrm {CIB}_i\}} \sum _{i=1}^{N} \big [ I(\widetilde {v}_i; y) - \beta I(\widetilde {v}_i; x) \big ],                   (3)
+frozen image encoder produces multi-stage CLS represen-
+
+
+
+                                                                  40410
+where I(·, ·) denotes mutual information and β > 0 con-                                                                                                                                                                  Minimizing LAFCL encourages representational indepen-
+trols the compression strength. The first term ensures task                                                                                                                                                              dence, ensuring that different cues retain complementary
+relevance by retaining discriminative authenticity-related                                                                                                                                                               and orthogonal discriminative properties.
+cues, while the second term enforces compactness by sup-                                                                                                                                                                    Once diversity is enforced, AFCL integrates the decorre-
+pressing task-independent variations. In practice, we in-                                                                                                                                                                lated cues through a learnable weighted aggregation:
+stantiate this objective using a VAE-style KL-to-prior regu-
+larization:
+                                                                                                                                                                                                                              v_{\mathrm {agg}}=\sum _i^N \alpha _i \widetilde {v}_i, \quad \mathrm {where} \sum _{i=1}^N \alpha _i=1, \quad \alpha _i \ge 0.                                                     (9)
+                      \mathcal {L}_{\mathrm {IB}}=\sum _{i=1}^{N} \mathrm {D}_{\mathrm {KL}}\!\left (q(z_i\mid v_i)\ \Vert \ \mathcal {N}(0,I)\right ).                                                           (4)
+                                                                                                                                                                                                                         The weights αi are optimized jointly with the network, al-
+   To prevent over-reliance on any single cue, we further                                                                                                                                                                lowing the detector to automatically balance contributions
+enforce prediction stability when removing the i-th cue:                                                                                                                                                                 from heterogeneous cues. To prevent weight collapse, we
+                                                                                                                                                                                                                         introduce a weight uniformity regularization that encour-
+          \mathcal {L}_{\mathrm {cons}} = \sum _{i=1}^N \mathrm {D}_{\mathrm {KL}} \big [ p(y \mid \widetilde {\mathcal {V}}) \mid \mid p(y \mid \widetilde {\mathcal {V}} \setminus \widetilde {v}_i) \big ].    (5)    ages a more balanced distribution:
+
+
+Minimizing Lcons enforces prediction stability under cue                                                                                                                                                                                                                  \mathcal {L}_{\mathrm {reg}} = \big ( \sum _{i=1}^N \alpha _i^2 - \frac {1}{N} \big ) ^2,                                              (10)
+removal, encouraging each cue vei to retain sufficient task-
+relevant information for authenticity discrimination.
+   Overall, CIB combines the variational IB regularizer for                                                                                                                                                             This regularization term attains its minimum when all cues
+cue purification and the cue-removal consistency regular-                                                                                                                                                               contribute equally, avoiding over-dependence on a small
+izer for robust prediction:                                                                                                                                                                                             subset of features. The final aggregated representation is
+                                                                                                                                                                                                                        further refined by a global CIB module:
+                                                            \mathcal {L}_\mathrm {CIB} = \mathcal {L}_\mathrm {IB} + \mathcal {L}_\mathrm {cons}.                                                                 (6)
+                                                                                                                                                                                                                                                                                      \widetilde {v}_{\mathrm {final}} = \mathrm {CIB}(v_{\mathrm {agg}}).                                                       (11)
+4.3. Anti-Feature-Collapse Learning
+While the CIB purifies task-relevant cues within each rep-                                                                                                                                                              which suppresses residual noise and reinforces authenticity-
+resentation, it does not explicitly regulate the relationships                                                                                                                                                          related information.
+among different cues. As training proceeds, deep detec-
+tors tend to converge toward a few dominant discriminative                                                                                                                                                              4.4. Class-Specific Prompt Learning
+cues, leading to increasingly correlated representations and                                                                                                                                                            We adopt a Class-Specific Prompt Learning (CSP) strat-
+a loss of diversity. This phenomenon, referred to as fea-                                                                                                                                                               egy that dynamically aligns visual representations with
+ture collapse, causes the detector to rely excessively on the                                                                                                                                                           category-aware textual concepts inspired by CoOp [45]. In-
+most salient pattern and severely limits its generalization to                                                                                                                                                          stead of relying on fixed textual templates (e.g., “a photo of
+unseen generative models.                                                                                                                                                                                               a real image”), CSP parameterizes the textual prompts for
+    To alleviate this issue, we introduce AFCL, which main-                                                                                                                                                             each authenticity category as a sequence of learnable con-
+tains structural diversity among cue representations by en-                                                                                                                                                             text vectors:
+forcing decorrelation. Given the refined set of characteris-
+tics V
+     e = {e v1 , ve2 , ..., veN }, each vei encodes a different type                                                                                                                                                                                               T_c = \big [ T_c^1, T_c^2, ..., T_c^M, [C] \big ],                                                                                            (12)
+of forgery evidence. AFCL measures the dependency be-
+tween any two cue features using the Hilbert–Schmidt In-                                                                                                                                                                where TcM denotes the m-th learnable token and [C] is the
+dependence Criterion (HSIC), a kernel-based dependence                                                                                                                                                                  class token corresponding to ”real” or ”fake”. Each prompt
+metric that equals zero if and only if the variables are inde-                                                                                                                                                          Tc is encoded by the frozen CLIP text encoder to obtain the
+pendent. For two representations vei and vej , the empirical                                                                                                                                                            prototype ec = ftext (Tc ). The final image feature vefinal
+HSIC is computed as:                                                                                                                                                                                                    the is projected into the shared visual-semantic space, and
+                                                                                                                                                                                                                        authenticity is determined by cosine similarity:
+              \mathrm {HSIC}(\widetilde {v}_i, \widetilde {v}_j) = \frac {1}{(B-1)^2} \mathrm {Tr}(K_iHK_jH),                                                                                                     (7)
+                                                                                                                                                                                                                                                   s_c=\frac {\widetilde {v}_{\mathrm {final}} \cdot e_c}{\Vert \widetilde {v}_{\mathrm {final}}\Vert \Vert e_c \Vert }, c\in \{\text {real}, \text {fake}\}.    (13)
+where Ki and Kj are the Gram matrices of the features,
+H is the centering matrix, and B denotes the batch size.
+The overall AFCL objective averages pairwise dependen-                                                                                                                                                                  Then, the similarity scores are normalized with a softmax
+cies across all cues:                                                                                                                                                                                                   function to produce class probabilities:
+
+                  \mathcal {L}_{\mathrm {AFCL}} = \frac {1}{N(N-1)} \sum _{i \ne j} \mathrm {HSIC}(\widetilde {v_i}, \widetilde {v_j}),                                                                           (8)                                                          p_c = \frac {\exp (s_c / \tau )}{\sum _{c'} \exp (s_{c'} / \tau )},                                                               (14)
+
+
+
+
+                                                                                                                                                                                                                    40411
+                                                                                                                                  AP                                                ACC                 F1                  Real ACC                      Fake ACC
+                                DALL·E                 StyleGAN                                                                                   DALL·E                 StyleGAN                                        DALL·E   StyleGAN                                      DALL·E   StyleGAN
+                      Glide                                   StarGAN                                                                   Glide                                   StarGAN                          Glide                   StarGAN                        Glide                   StarGAN
+                                                                   ProGAN                                                                                                            ProGAN                                                   ProGAN                                                 ProGAN
+           ADM                                                                                                               ADM                                                                              ADM                                                   ADM
+                                                                                            GauGAN                                                                                          GauGAN                                              GauGAN                                                 GauGAN
+    Glide                                                                                                 Glide                                                                                      Glide                                                    Glide
+                                                                                                  CycleGAN                                                                                   CycleGAN                                                 CycleGAN                                               CycleGAN
+   Midj                                                                                                  Midj                                                                                       Midj                                                     Midj
+                                                                                                   BigGAN                                                                                     BigGAN                                                  BigGAN                                                 BigGAN
+ SDv1.4                                                                                                      SDv1.4                                                                                  SDv1.4                                                SDv1.4
+                                                                                                 VAR                                                                                         VAR                                                  VAR                                                    VAR
+  SDv1.5                                                                                                         SDv1.5                                                                               SDv1.5                                                SDv1.5
+                                                                                           Show-o                                                                                          Show-o                                               Show-o                                                 Show-o
+      VQDM                                                                                                                VQDM                                                                            VQDM                                                  VQDM
+                                                                  SD35-L                                                                                                            SD35-L                                                   SD35-L                                                 SD35-L
+                   WuKong                                     PixArt-XL                                                              WuKong                                     PixArt-XL                       WuKong                   PixArt-XL                     WuKong                   PixArt-XL
+                         Infinity                      LlamaGen                                                                            Infinity                      LlamaGen                                     Infinity    LlamaGen                                   Infinity    LlamaGen
+
+                              (a) CNNDet                                                                                                            (b) UnivFD                                                              (c) NPR                                   (d) CLIPping (Baseline)
+                                DALL·E                 StyleGAN                                                                                   DALL·E                 StyleGAN                                        DALL·E   StyleGAN                                      DALL·E   StyleGAN
+                     Glide                                    StarGAN                                                                   Glide                                   StarGAN                          Glide                   StarGAN                        Glide                   StarGAN
+                                                                   ProGAN                                                                                                            ProGAN                                                   ProGAN                                                 ProGAN
+          ADM                                                                                                                ADM                                                                              ADM                                                   ADM
+                                                                                            GauGAN                                                                                          GauGAN                                              GauGAN                                                 GauGAN
+    Glide                                                                                                 Glide                                                                                      Glide                                                    Glide
+                                                                                                  CycleGAN                                                                                   CycleGAN                                                 CycleGAN                                               CycleGAN
+   Midj                                                                                                  Midj                                                                                       Midj                                                     Midj
+                                                                                                   BigGAN                                                                                     BigGAN                                                  BigGAN                                                 BigGAN
+SDv1.4                                                                                                       SDv1.4                                                                                  SDv1.4                                                SDv1.4
+                                                                                                VAR                                                                                          VAR                                                  VAR                                                    VAR
+  SDv1.5                                                                                                         SDv1.5                                                                               SDv1.5                                                SDv1.5
+                                                                                           Show-o                                                                                          Show-o                                               Show-o                                                 Show-o
+      VQDM                                                                                                                VQDM                                                                            VQDM                                                  VQDM
+                                                                  SD35-L                                                                                                            SD35-L                                                   SD35-L                                                 SD35-L
+                   WuKong                                     PixArt-XL                                                              WuKong                                     PixArt-XL                       WuKong                   PixArt-XL                     WuKong                   PixArt-XL
+                         Infinity                      LlamaGen                                                                            Infinity                      LlamaGen                                     Infinity    LlamaGen                                   Infinity    LlamaGen
+
+                                  (e) DRCT                                                                                                         (f) CO-SPY                                                   (g) VIB-Net (SOTA)                                                  (h) Ours
+
+Figure 5. Cross-model generalization comparison on multiple generative sources. All detectors are trained on SD v1.4 and evaluated
+on representative subsets from UniversalFakeDetect, GenImage, and AIGI-Holmes. The radar plots report the performance across 21
+generative models in terms of AP, ACC, F1, Real ACC, and Fake ACC.
+
+
+Finally, the class-specific prompts are optimized using a                                                                                                                                                     details. We then present a comprehensive comparison be-
+cross-entropy loss:                                                                                                                                                                                           tween our method and state-of-the-art methods. Further-
+                                                                                                                                                                                                              more, we conduct ablation studies to analyze the contri-
+                                           \mathcal {L}_{\mathrm {CSP}}= -\sum _{c\in \{ \text {real}, \text {fake} \}} y_c \log (p_c),                                                    (15)               bution of each component, and perform robustness exper-
+                                                                                                                                                                                                              iments to evaluate the model’s stability.
+
+where yc is the one-hot label indicating the ground-truth au-                                                                                                                                                 5.1. Experimental Setup
+thenticity.                                                                                                                                                                                                   Training dataset. We use the Stable Diffusion v1.4 subset
+4.5. Optimization Objective                                                                                                                                                                                   of the GenImage [48] to ensure a fair and consistent com-
+                                                                                                                                                                                                              parison with previous works. The dataset contains a large
+All modules are jointly optimized in an end-to-end man-                                                                                                                                                       number of real and generated image pairs across diverse
+ner under a unified objective that integrates cue purifica-                                                                                                                                                   scenes and categories, providing a comprehensive bench-
+tion, diversity preservation, aggregation regularization, and                                                                                                                                                 mark for evaluating generated image detectors.
+authenticity alignment. The training loss is formulated as:                                                                                                                                                   Testing dataset. To comprehensively evaluate the de-
+                                                                                                                                                                                                              tection capability of our method in real-world scenar-
+            \mathcal {L} = \mathcal {L}_{\mathrm {CSP}} + \lambda _1 \mathcal {L}_{\mathrm {CIB}} + \lambda _2 \mathcal {L}_{\mathrm {AFCL}} + \lambda _3 \mathcal {L}_{\mathrm {reg}}.    (16)               ios, we conduct experiments on three large-scale bench-
+                                                                                                                                                                                                              marks: UniversalFakeDetect [28], GenImage [48], and
+where λ1 , λ2 , and λ3 control the relative contributions of
+                                                                                                                                                                                                              AIGI-Holmes [46]. These benchmarks jointly cover both
+the respective terms. This joint objective drives the detec-
+                                                                                                                                                                                                              GAN- and diffusion-based paradigms, with a wide range of
+tor to build a compact yet heterogeneous authenticity-aware
+                                                                                                                                                                                                              resolutions, semantics, and generation styles.
+representation space, where purified, diversified, and bal-
+                                                                                                                                                                                                                 We select 11 mainstream subsets including BigGAN [3],
+anced cues collectively support robust generalization to un-
+                                                                                                                                                                                                              CycleGAN [47], GauGAN [29], ProGAN [22], Star-
+seen generative mechanisms.
+                                                                                                                                                                                                              GAN [9], StyleGAN [23], DeepFakes [34], Guided Dif-
+5. Experiments                                                                                                                                                                                                fusion [13], LDM [33], GLIDE [27], and DALL·E [31]
+                                                                                                                                                                                                              from UniversalFakeDetect. GenImage primarily focuses on
+In this section, we first introduce the experimental setup,                                                                                                                                                   diffusion-based models, including ADM [13], GLIDE [27],
+including datasets, evaluation metrics, and implementation                                                                                                                                                    Midjourney [1], SD v1.4 and SD v1.5 [33], VQDM [17],
+
+
+
+                                                                                                                                                                                                  40412
+  Seen Real Samples     Unseen Real Samples
+  Seen Fake Samples     Unseen Fake Samples          Δ = 26 Δ = 479 Δ = 479
+                                                                                                                      ACC                   AP
+                                                                                      CIB    AFCL      reg
+                                                                                                                avg         cross     avg        cross
+                                                                                      ×        ×        ×     87.81%     85.56%     87.32%    84.69%
+                                                                                      ✓        ×        ✓     89.72%     85.99%     99.38%    98.73%
+                                                                                      ×        ✓        ✓     91.60%     91.15%     99.40%    98.73%
+                                                                                      ✓        ✓        ✓     92.81%     90.02%     99.52%    98.90%
+
+                                                                                   Table 1. Ablation study on the contributions of the compo-
+                        67.38                 CLIP    Ours   CNNDet VIB-Net        nents. “×” indicates the component is disabled, while “✓” indi-
+                                                                                   cates it is enabled. avg denotes the average over all test sets, while
+                      (a)                                 (b)
+                                                                                   cross denotes the average over cross-generator evaluations.
+Figure 6. (a) UMAP visualizations with effective-rank bars. (b)
+Comparison of the number of PCA components needed by each
+                                                                                   vanced methods, including CLIPping [24], DRCT [7], and
+detector to account for 90% of the total variance (PCs@90%).
+                                                                                   VIB-Net [44], improve generalization by explicitly reduc-
+                                                                                   ing data bias and suppressing spurious correlations during
+and Wukong [2]. AIGI-Holmes comprises high-resolution                              training, which alleviates overfitting to specific generation
+diffusion-generated images and compressed, web-scraped                             biases. Nevertheless, their performance remains inconsis-
+real images. It includes subsets generated by recent diffu-                        tent across benchmarks, suggesting that debiasing alone is
+sion models, such as Infinity [20], LlamaGen [35], PixArt-                         insufficient to achieve stable generalization.
+XL [8], SD3.5-L [15], Show-o [42], and VAR [38].                                       In contrast, our method achieves high and balanced per-
+Evaluation metrics. Following prior works [25, 39, 44],                            formance across all generative sources. On average, it at-
+we adopt average precision (AP) and classification accuracy                        tains 99.52% AP and 92.81% ACC, surpassing the state-of-
+(ACC) as the primary evaluation metrics. To assess poten-                          the-art method (VIB-Net) by 3.39% AP and 5.68% ACC,
+tial bias, we also report F1 scores, as well as real-image                         and outperforming the baseline (CLIPping) by 12.20% AP
+accuracy (Real ACC) and generated-image accuracy (Fake                             and 5.00% ACC. These results validate the effectiveness of
+ACC) in some experiments.                                                          our design in maintaining diverse and complementary rep-
+Implementation details. All experiments are implemented                            resentations, leading to superior cross-model generalization
+in PyTorch and trained on NVIDIA H100 PCIe GPUs. We                                and reliable detection performance.
+use the Adam optimizer with an initial learning rate of 1 ×
+10−4 and a batch size of 512 with early stopping applied to                        5.3. Representation Diversity Analysis
+prevent overfitting. The CLIP:ViT-L/14 model serves as the                         To better understand how our method shapes the feature
+backbone for feature extraction, and we apply the same data                        space, we examine the structure of the learned representa-
+augmentation strategy as described in [44].                                        tions by visualizing their distribution and measuring their
+                                                                                   effective rank. As shown in Fig. 6(a), our method maintains
+5.2. Comparisons of Detection Performance                                          clear separability between real and generated images and
+In this section, we compare the detection performance of                           simultaneously preserves the diversity among distinct gen-
+our method with a series of state-of-the-art generated image                       erative sources. The corresponding effective rank reaches
+detection approaches across multiple benchmark datasets.                           67.38, reflecting a more evenly distributed and heteroge-
+For fairness, all models are trained on the same SD v1.4                           neous representation manifold. In contrast, CNNDet and
+subset and evaluated under identical experimental settings.                        VIB-Net in Fig. 2 exhibit severely compressed manifolds
+    As shown in Fig. 5, traditional detectors such as CN-                          with effective ranks of only 1.37 and 1.92. Fig. 6(b) pro-
+NDet [39] and UnivFD [28] achieve strong detection accu-                           vides a quantitative evaluation through the number of prin-
+racy when the testing data share similar generation charac-                        cipal components required to explain 90% of the variance
+teristics with the training set. However, their performance                        (PCs@90%). Existing detectors greatly compress the rep-
+drops significantly on unseen domains, particularly on                             resentational space of the pretrained backbone, often elim-
+GAN-generated or high-resolution diffusion-generated im-                           inating hundreds of meaningful feature directions. Our
+ages, revealing their strong dependence on source-specific                         method preserves the majority of the original representa-
+artifacts. Methods such as NPR [37] and CO-SPY [21]                                tional structure, reducing only 26 principal components.
+rely heavily on a small set of discriminative cues. These                          This observation demonstrates that maintaining a high-rank,
+cues generalize moderately across visually similar genera-                         diverse feature space enables the detector to retain pre-
+tors but fail when the generation paradigm differs substan-                        trained knowledge more effectively and to generalize more
+tially, such as in the case of GAN-based images. More ad-                          effectively to unseen generative mechanisms.
+
+
+
+                                                                              40413
+                                                               92.81±6.75                                   95.85±3.79 96.94±2.48 99.52±0.29
+   100
+                                     85.56±9.05
+                                                  89.55±7.46                  100   90.81±6.67 92.79±5.07                                                        UnivFD          NPR       DRCT            VIB-Net       CLIPping     Ours
+             80.98±9.30 81.90±9.10
+        90                                                                     90
+
+        80                                                                     80
+ACC %
+
+
+
+
+                                                                               %
+                                                                            AP %
+                                                                            AP
+        70                                                                     70
+
+
+
+
+                                                                                                                                                       ACC (%)
+
+
+
+
+                                                                                                                                                                                                  AP (%)
+        60                                                                     60
+
+        50                                                                     50
+              0.1%         1%          10%          50%         100%                 0.1%         1%          10%        50%        100%
+
+
+Figure 7. Few-shot performance for generated image detection.
+                                                                                                                                                                          Quality factor                             Quality factor
+The bar chart reports ACC and AP under varying training data ra-
+tios (0.1%, 1%, 10%, 50%, 100%). Both metrics steadily improve
+as more training data becomes available.
+
+
+
+
+                                                                                                                                                       ACC (%)
+
+
+
+
+                                                                                                                                                                                                  AP (%)
+5.4. Ablation Study
+To evaluate the contributions of each component, we con-
+duct an ablation study summarized in Table 1. Adding CIB
+                                                                                                                                                                             Sigma                                      Sigma
+yields a clear improvement over the baseline, increasing the
+average accuracy from 87.81% to 89.72% and the average                                                                                              Figure 8. Robustness evaluation under perturbations. The top
+AP from 87.32% to 99.38%, indicating that removing su-                                                                                              row shows performance under different JPEG compression qual-
+perfluous information strengthens task-relevant cues. Intro-                                                                                        ity factors, while the bottom row reports results under Gaussian
+ducing AFCL leads to further gains, particularly in cross-                                                                                          blur with increasing sigma. Both ACC and AP are presented for
+model accuracy, which rises from 85.56% to 91.15%, show-                                                                                            each method, providing a comprehensive comparison of robust-
+ing that maintaining diverse and complementary cues im-                                                                                             ness against common post-processing distortions.
+proves robustness to distribution shifts. When all compo-
+nents are combined, the model achieves the best perfor-
+                                                                                                                                                    graded inputs. Methods that depend more heavily on lo-
+mance, reaching 92.81% average accuracy and 99.52% av-
+                                                                                                                                                    calized or high-frequency artifacts tend to show larger de-
+erage AP. These results demonstrate that information pu-
+                                                                                                                                                    creases in performance, while approaches with stronger fea-
+rification and anti-collapse learning work synergistically to
+                                                                                                                                                    ture abstraction generally retain better stability. Overall, ac-
+enhance both overall and cross-model generalization.
+                                                                                                                                                    curacy declines are observed to varying degrees across ex-
+5.5. Few-shot Performance                                                                                                                           isting baselines as distortions intensify. Our method main-
+                                                                                                                                                    tains the highest ACC and AP across all distortion levels in
+To assess the data efficiency of our method, we train the de-
+                                                                                                                                                    both settings. This robustness arises from cue purification
+tector using different proportions of the full dataset: 0.1%
+                                                                                                                                                    and anti-collapse learning, which reduce over-reliance on
+(320 samples), 1% (3.2k), 10% (32k), 50% (160k), and
+                                                                                                                                                    fragile low-level artifacts that are easily disrupted by post-
+100% (320k). As shown in Fig. 7, our method achieves
+                                                                                                                                                    processing such as JPEG compression and Gaussian blur.
+strong performance even under limited supervision—for
+example, using only 0.1% of the data, it already obtains
+                                                                                                                                                    6. Conclusion
+80.98% ACC and 90.81% AP. As more data becomes avail-
+able, both metrics improve steadily, reaching 92.81% ACC                                                                                            In this work, we revisit the core challenges of generaliza-
+and 99.52% AP with the full dataset. These results demon-                                                                                           tion in generated image detection and identify a fundamen-
+strate that our framework maintains high sample efficiency,                                                                                         tal limitation of existing detectors: during training, diverse
+achieving competitive performance even with limited data,                                                                                           forgery cues often collapse into a small set of dominant fea-
+and continues to improve as more training samples are pro-                                                                                          ture directions, leading to brittle decision boundaries and
+vided, showing a strong ability to make effective use of su-                                                                                        poor adaptation to unseen generative models. To address
+pervision at all scales and to adapt to richer training signals.                                                                                    this issue, we introduce a unified detection framework that
+                                                                                                                                                    combines cue-level information purification, inter-cue di-
+5.6. Robustness to Unseen Perturbations                                                                                                             versity preservation, and class-specific authenticity model-
+In real-world scenarios, images are affected by post-                                                                                               ing. Together, these components maintain heterogeneous
+processing operations, making robustness to perturbations                                                                                           and complementary sources of evidence, suppress spuri-
+an essential aspect of evaluating detector reliability. We                                                                                          ous or redundant patterns, and construct a well-structured,
+therefore assess performance under two commonly encoun-                                                                                             authenticity-aware feature space. Extensive experiments
+tered distortions, JPEG compression and Gaussian blur, as                                                                                           across multiple benchmarks demonstrate that preserving di-
+shown in Fig. 8. As the perturbation strength increases, dif-                                                                                       verse and high-rank representations is critical for achieving
+ferent detectors exhibit varying levels of sensitivity to de-                                                                                       robust cross-model generalization.
+
+
+
+                                                                                                                                               40414
+Acknowledgements                                                          detection of synthetic images generated by diffusion mod-
+                                                                          els. In ICASSP 2023-2023 IEEE International Conference
+This work was supported in part by the National Natu-                     on Acoustics, Speech and Signal Processing (ICASSP), pages
+ral Science Foundation of China under Grant 62376046,                     1–5. IEEE, 2023. 2
+Grant 62576060 and Grant 62536002, and in part                       [12] Davide Cozzolino, Giovanni Poggi, Riccardo Corvi,
+by the Natural Science Foundation of Chongqing un-                        Matthias Nießner, and Luisa Verdoliva. Raising the bar of
+der Grant CSTB2023NSCQ-MSX0341, CSTB2025YITP-                             ai-generated image detection with clip. In Proceedings of
+QCRCX0074.                                                                the IEEE/CVF Conference on Computer Vision and Pattern
+                                                                          Recognition, pages 4356–4366, 2024. 3
+References                                                           [13] Prafulla Dhariwal and Alexander Nichol. Diffusion models
+ [1] Midjourney. https://www.midjourney.com, 2022.                        beat gans on image synthesis. Advances in neural informa-
+     2025. 6                                                              tion processing systems, 34:8780–8794, 2021. 6
+                                                                     [14] Tarik Dzanic, Karan Shah, and Freddie Witherden. Fourier
+ [2] Wukong.          https : / / xihe . mindspore . cn /
+                                                                          spectrum discrepancies in deep network generated images.
+     modelzoo / wukong / introduce, 2022.                   2025.
+                                                                          Advances in neural information processing systems, 33:
+     7
+                                                                          3022–3032, 2020. 2
+ [3] Andrew Brock, Jeff Donahue, and Karen Simonyan. Large
+                                                                     [15] Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim
+     scale gan training for high fidelity natural image synthesis.
+                                                                          Entezari, Jonas Müller, Harry Saini, Yam Levi, Dominik
+     arXiv preprint arXiv:1809.11096, 2018. 6
+                                                                          Lorenz, Axel Sauer, Frederic Boesel, et al. Scaling recti-
+ [4] George Cazenavette, Avneesh Sud, Thomas Leung, and Ben               fied flow transformers for high-resolution image synthesis.
+     Usman. Fakeinversion: Learning to detect images from un-             In Forty-first international conference on machine learning,
+     seen text-to-image models by inverting stable diffusion. In          2024. 7
+     Proceedings of the IEEE/CVF Conference on Computer Vi-
+                                                                     [16] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+     sion and Pattern Recognition, pages 10759–10769, 2024. 2
+                                                                          cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+ [5] Keshigeyan Chandrasegaran, Ngoc-Trung Tran, and Ngai-                quency analysis for deep fake image recognition. In Inter-
+     Man Cheung. A closer look at fourier spectrum discrepan-             national conference on machine learning, pages 3247–3258.
+     cies for cnn-generated images detection. In Proceedings of           PMLR, 2020. 2
+     the IEEE/CVF conference on computer vision and pattern          [17] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo
+     recognition, pages 7200–7209, 2021. 2                                Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+ [6] Keshigeyan Chandrasegaran, Ngoc-Trung Tran, Alexander                tor quantized diffusion model for text-to-image synthesis. In
+     Binder, and Ngai-Man Cheung. Discovering transferable                Proceedings of the IEEE/CVF conference on computer vi-
+     forensic features for cnn-generated images detection. In             sion and pattern recognition, pages 10696–10706, 2022. 6
+     European conference on computer vision, pages 671–689.          [18] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+     Springer, 2022. 2                                                    Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+ [7] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.              training paradigm for more general ai-generated image de-
+     Drct: Diffusion reconstruction contrastive training towards          tection. In Proceedings of the Computer Vision and Pattern
+     universal detection of diffusion generated images. In Forty-         Recognition Conference, pages 18685–18694, 2025. 3
+     first International Conference on Machine Learning, 2024.       [19] Seoyeon Gye, Junwon Ko, Hyounguk Shon, Minchan Kwon,
+     3, 7                                                                 and Junmo Kim. Reducing the content bias for ai-generated
+ [8] Junsong Chen, Chongjian Ge, Enze Xie, Yue Wu, Lewei                  image detection. In 2025 IEEE/CVF Winter Conference on
+     Yao, Xiaozhe Ren, Zhongdao Wang, Ping Luo, Huchuan                   Applications of Computer Vision (WACV), pages 399–408.
+     Lu, and Zhenguo Li. Pixart-σ: Weak-to-strong training of             IEEE, 2025. 3
+     diffusion transformer for 4k text-to-image generation. In       [20] Jian Han, Jinlai Liu, Yi Jiang, Bin Yan, Yuqi Zhang, Zehuan
+     European Conference on Computer Vision, pages 74–91.                 Yuan, Bingyue Peng, and Xiaobing Liu. Infinity: Scaling bit-
+     Springer, 2024. 7                                                    wise autoregressive modeling for high-resolution image syn-
+ [9] Yunjey Choi, Minje Choi, Munyoung Kim, Jung-Woo Ha,                  thesis. In Proceedings of the Computer Vision and Pattern
+     Sunghun Kim, and Jaegul Choo. Stargan: Unified genera-               Recognition Conference, pages 15733–15744, 2025. 7
+     tive adversarial networks for multi-domain image-to-image       [21] Zexi Jia, Chuanwei Huang, Yeshuang Zhu, Hongyan Fei, Xi-
+     translation. In Proceedings of the IEEE conference on                aoyue Duan, Zhiqiang Yuan, Ying Deng, Jiapei Zhang, Jin-
+     computer vision and pattern recognition, pages 8789–8797,            chao Zhang, and Jie Zhou. Secret lies in color: Enhancing
+     2018. 6                                                              ai-generated images detection with color distribution anal-
+[10] Beilin Chu, Xuan Xu, Xin Wang, Yufei Zhang, Weike                    ysis. In Proceedings of the Computer Vision and Pattern
+     You, and Linna Zhou. Fire: Robust detection of diffusion-            Recognition Conference, pages 13445–13454, 2025. 2, 7
+     generated images via frequency-guided reconstruction error.     [22] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.
+     In Proceedings of the Computer Vision and Pattern Recogni-           Progressive growing of gans for improved quality, stability,
+     tion Conference, pages 12830–12839, 2025. 2                          and variation. arXiv preprint arXiv:1710.10196, 2017. 6
+[11] Riccardo Corvi, Davide Cozzolino, Giada Zingarini, Gio-         [23] Tero Karras, Samuli Laine, and Timo Aila. A style-based
+     vanni Poggi, Koki Nagano, and Luisa Verdoliva. On the                generator architecture for generative adversarial networks.
+
+
+
+
+                                                                 40415
+     In Proceedings of the IEEE/CVF conference on computer vi-          [35] Peize Sun, Yi Jiang, Shoufa Chen, Shilong Zhang, Bingyue
+     sion and pattern recognition, pages 4401–4410, 2019. 6                  Peng, Ping Luo, and Zehuan Yuan. Autoregressive model
+[24] Sohail Ahmed Khan and Duc-Tien Dang-Nguyen. Clipping                    beats diffusion: Llama for scalable image generation. arXiv
+     the deception: Adapting vision-language models for univer-              preprint arXiv:2406.06525, 2024. 7
+     sal deepfake detection. In Proceedings of the 2024 Inter-          [36] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     national Conference on Multimedia Retrieval, pages 1006–                and Yunchao Wei. Learning on gradients: Generalized arti-
+     1015, 2024. 3, 7                                                        facts representation for gan-generated images detection. In
+[25] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and                  Proceedings of the IEEE/CVF Conference on Computer Vi-
+     Xinbo Gao. Detecting generated images by real images.                   sion and Pattern Recognition, pages 12105–12114, 2023. 2
+     In European conference on computer vision, pages 95–110.           [37] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     Springer, 2022. 2, 7                                                    Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-
+[26] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.                     erations in cnn-based generative network for generalizable
+     Lareˆ 2: Latent reconstruction error based method for                   deepfake detection. In Proceedings of the IEEE/CVF con-
+     diffusion-generated image detection. In Proceedings of                  ference on computer vision and pattern recognition, pages
+     the IEEE/CVF Conference on Computer Vision and Pattern                  28130–28139, 2024. 2, 7
+     Recognition, pages 17006–17015, 2024. 2                            [38] Keyu Tian, Yi Jiang, Zehuan Yuan, Bingyue Peng, and Li-
+[27] Alexander Quinn Nichol, Prafulla Dhariwal, Aditya Ramesh,               wei Wang. Visual autoregressive modeling: Scalable image
+     Pranav Shyam, Pamela Mishkin, Bob Mcgrew, Ilya                          generation via next-scale prediction. Advances in neural in-
+     Sutskever, and Mark Chen. Glide: Towards photorealis-                   formation processing systems, 37:84839–84865, 2024. 7
+     tic image generation and editing with text-guided diffusion        [39] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     models. In International Conference on Machine Learning,                Owens, and Alexei A Efros. Cnn-generated images are
+     pages 16784–16804. PMLR, 2022. 6                                        surprisingly easy to spot... for now. In Proceedings of
+[28] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-                 the IEEE/CVF conference on computer vision and pattern
+     versal fake image detectors that generalize across genera-              recognition, pages 8695–8704, 2020. 2, 7
+     tive models. In Proceedings of the IEEE/CVF conference             [40] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     on computer vision and pattern recognition, pages 24480–                Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     24489, 2023. 3, 6, 7                                                    diffusion-generated image detection. In Proceedings of the
+[29] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-Yan                  IEEE/CVF International Conference on Computer Vision,
+     Zhu. Semantic image synthesis with spatially-adaptive nor-              pages 22445–22455, 2023. 2
+     malization. In Proceedings of the IEEE/CVF conference on           [41] Shiyu Wu, Jing Liu, Jing Li, and Yequan Wang. Few-
+     computer vision and pattern recognition, pages 2337–2346,               shot learner generalizes across ai-generated image detection.
+     2019. 6                                                                 In International Conference on Machine Learning, pages
+[30] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya                      67449–67460. PMLR, 2025. 3
+     Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,              [42] Jinheng Xie, Weijia Mao, Zechen Bai, David Junhao Zhang,
+     Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning              Weihao Wang, Kevin Qinghong Lin, Yuchao Gu, Zhijie
+     transferable visual models from natural language supervi-               Chen, Zhenheng Yang, and Mike Zheng Shou. Show-o:
+     sion. In International conference on machine learning, pages            One single transformer to unify multimodal understanding
+     8748–8763. PmLR, 2021. 3                                                and generation. arXiv preprint arXiv:2408.12528, 2024. 7
+[31] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott Gray,            [43] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     Chelsea Voss, Alec Radford, Mark Chen, and Ilya Sutskever.              Chengchun Liu, Shen Chen, Taiping Yao, Shouhong Ding,
+     Zero-shot text-to-image generation. In International confer-            Baoyuan Wu, and Li Yuan. Orthogonal subspace decompo-
+     ence on machine learning, pages 8821–8831. Pmlr, 2021. 6                sition for generalizable ai-generated image detection. In In-
+[32] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-                  ternational Conference on Machine Learning, pages 70268–
+     oblade: Training-free detection of latent diffusion images              70288. PMLR, 2025. 3
+     using autoencoder reconstruction error. In Proceedings of          [44] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li, Bo Liu,
+     the IEEE/CVF Conference on Computer Vision and Pattern                  and Bin Xiao. Towards universal ai-generated image detec-
+     Recognition, pages 9130–9140, 2024. 2                                   tion by variational information bottleneck network. In Pro-
+[33] Robin Rombach, Andreas Blattmann, Dominik Lorenz,                       ceedings of the Computer Vision and Pattern Recognition
+     Patrick Esser, and Björn Ommer. High-resolution image                  Conference, pages 23828–23837, 2025. 3, 7
+     synthesis with latent diffusion models. In Proceedings of          [45] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei
+     the IEEE/CVF conference on computer vision and pattern                  Liu. Learning to prompt for vision-language models. In-
+     recognition, pages 10684–10695, 2022. 6                                 ternational journal of computer vision, 130(9):2337–2348,
+[34] Andreas Rossler, Davide Cozzolino, Luisa Verdoliva, Chris-              2022. 5
+     tian Riess, Justus Thies, and Matthias Nießner. Faceforen-         [46] Ziyin Zhou, Yunpeng Luo, Yuanchen Wu, Ke Sun, Jiayi Ji,
+     sics++: Learning to detect manipulated facial images. In                Ke Yan, Shouhong Ding, Xiaoshuai Sun, Yunsheng Wu, and
+     Proceedings of the IEEE/CVF international conference on                 Rongrong Ji. Aigi-holmes: Towards explainable and gener-
+     computer vision, pages 1–11, 2019. 6                                    alizable ai-generated image detection via multimodal large
+
+
+
+
+                                                                40416
+     language models. In Proceedings of the IEEE/CVF Interna-
+     tional Conference on Computer Vision, pages 18746–18758,
+     2025. 6
+[47] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A
+     Efros. Unpaired image-to-image translation using cycle-
+     consistent adversarial networks. In Proceedings of the IEEE
+     international conference on computer vision, pages 2223–
+     2232, 2017. 6
+[48] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Yunhe Wang. Genimage: A million-scale benchmark for de-
+     tecting ai-generated image. Advances in neural information
+     processing systems, 36:77771–77782, 2023. 6
+
+
+
+
+                                                               40417
+

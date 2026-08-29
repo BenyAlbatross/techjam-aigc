@@ -1,0 +1,686 @@
+                             This CVPR Findings paper is the Open Access version, provided by the Computer Vision
+                                   Foundation. Except for this watermark, it is identical to the accepted version;
+                                    the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+             E x pl oiti n g t h e S o u r c e- As y m m et r y C o n ﬁ d e n c e G a p f o r G e n e r ali z a bl e
+                                           AI- G e n e r at e d I m a g e D et e cti o n
+
+                   Zi y a n g Z h e n g                                           Wei y a n C h e n                                                                                         Ya o Xi a o
+    zhengzy55@mail2.sysu.edu.cn                                    chenwy93@mail2.sysu.edu.cn                                                                           xiaoy99@mail2.sysu.edu.cn
+
+                        Ziji e C a o                                           D o n g y u Z ha n g                                                                                      P e n g x u Wei
+        caozj5@mail2.sysu.edu.cn                                  zhangdy27@mail.sysu.edu.cn                                                                           weipx3@mail.sysu.edu.cn
+
+                             S c h o ol of C o m p ut er S ci e n c e a n d E n gi n e eri n g, S u n Yat- S e n U ni v ersit y
+
+
+                                   A bst r a ct                                                                                                         S e e n R e al
+                                                                                                                                 2 0. 0
+                                                                                                                                                        See n Fa ke
+E xisti n g AI- g e n er at e d i m a g e ( AI GI) d et e cti o n m et h o ds ar e                                               1 7. 5                 U ns e e n R e al
+tr ai n e d o n i m a g es s y nt h esiz e d b y o nl y a f e w g e n er at ors, r e-                                                                   U ns e e n F a k e
+s ulti n g i n p o or g e n er aliz ati o n t o t h e e v er- e v ol vi n g d o m ai n            P r o b a bilit y D e nsit y   1 5. 0
+
+of u ns e e n g e n er ati v e m o d els. I n r es p o ns e t o t his li mit a-                                                  1 2. 5
+ti o n, r e c e nt w or k l e v er a g es l ar g e Visi o n Fo u n d ati o n M o d-
+els ( V F Ms) t o o bt ai n m or e r o b ust r e pr es e nt ati o ns, y et t y p-                                                1 0. 0
+
+i c all y r eli es o n c o m p ut ati o n all y e x p e nsi v e str at e gi es, e. g .,
+                                                                                                                                  7. 5
+i ntr o d u ci n g a d diti o n al l ar g e- s c al e s y nt h eti c d at as ets or e m-
+pl o yi n g c o m pl e x tr ai ni n g pi p eli n es. I n t his p a p er, w e d e-                                                 5. 0
+vis e a li g ht w ei g ht V F M- b as e d str at e g y f or g e n er aliz e d AI GI
+d et e cti o n. O ur k e y i nsi g ht is a s o ur c e as y m m etr y p h e-                                                       2. 5
+
+n o m e n o n: d uri n g tr ai ni n g, m o d els ar e e x p os e d t o di v ers e                                                 0. 0
+                                                                                                                                          0. 9   0. 8         0. 7       0. 6     0. 5       0. 4   0. 3   0. 2   0. 1   0. 0
+r e al d at a, w hil e t h e f a k e i m a g es ar e s y nt h esiz e d b y o nl y a                                                                                             G E N Sc ore
+f e w g e n er at ors. We v erif y t h at t his cl ass- di v ersit y as y m m e-
+tr y c a us es a ﬁ n e- t u n e d V F M t o l e ar n a m or e g e n er aliz a bl e                Fi g ur e 1. T h e S o u r c e- As y m m et r y C o n ﬁ d e n c e G a p ( S A C G).
+r e pr es e nt ati o n f or t h e r e al cl ass. T his m e c h a nis m yi el ds                   Pr o b a bilit y d e nsit y of t h e G E N s c or e [ 2 1 ] (s e e S e c. 3. 3. 1 ), w h er e
+o ur k e y ﬁ n di n g: t h e S o ur c e- As y m m etr y C o n ﬁ d e n c e G a p                   s c or es cl os er t o 0 i n di c at e hi g h er c o n ﬁ d e n c e. M ost s e e n s a m-
+( S A C G), a c o nsist e nt a n d e x pl oit a bl e s e p ar ati o n i n pr e di c-              pl es ( bl u e a n d or a n g e) a n d u ns e e n r e al ( gr e e n) s a m pl es yi el d hi g h-
+ti v e c o n ﬁ d e n c e w h er e u ns e e n r e al i m a g es yi el d s yst e m ati-             c o n ﬁ d e n c e s c or es, w hil e u ns e e n f a k e ( p ur pl e) s a m pl es f or m a dis-
+c all y hi g h er c o n ﬁ d e n c e t h a n u ns e e n f a k es. L e v er a gi n g t his          ti n ct, l o w er- c o n ﬁ d e n c e distri b uti o n. O ur m et h o d (s e e S e c. 3 ) e x-
+i nsi g ht, w e i ntr o d u c e a li g ht w ei g ht, p ost- h o c str at e g y t h at             pl oits t his g a p b y c ali br ati n g a d e cisi o n t hr es h ol d usi n g o nl y t h e
+                                                                                                  s e e n r e al i m a g es, e n a bli n g r o b ust g e n er ali z ati o n t o u ns e e n g e n er-
+e m pl o ys a s p e ci aliz e d c o n ﬁ d e n c e m etri c ( G E N s c or e) t o a m-
+                                                                                                  at ors. T h e vis u ali z ati o n is o bt ai n e d fr o m a ﬁ n e-t u n e d C LI P- Vi T.
+plif y t his g a p a n d a p pli es a c o n diti o n al d e cisi o n r ul e c al-
+i br at e d o nl y o n t h e r e al i m a g es f or st a bl e d et e cti o n. O n
+t h e C o m m u nit y For e nsi cs b e n c h m ar k ( 2 1 disti n ct g e n er a-
+ti v e m o d els), o ur m et h o d a c hi e v es st at e- of- t h e- art r es ults,               i m a g e ( AI GI) d et e ct ors c a n a c hi e v e hi g h a c c ur a c y o n g e n er-
+s ur p assi n g t h e n e xt- b est b as eli n e b y + 6. 8 2 % i n a c c ur a c y.               at ors s e e n d uri n g tr ai ni n g, t h eir p erf or m a n c e oft e n d e gr a d es
+                                                                                                  s u bst a nti all y w h e n a p pli e d t o i m a g es fr o m u ns e e n g e n er a-
+                                                                                                  t ors [4 3 ]. T his g e n er aliz ati o n g a p is wi d el y r e c o g ni z e d as
+                                                                                                  t h e criti c al b ottl e n e c k hi n d eri n g t h e d e pl o y m e nt of r o b ust,
+1. I nt r o d u cti o n                                                                           r e al- w orl d d et e ct ors.
+T h e r a pi d e v ol uti o n a n d pr olif er ati o n of g e n er ati v e m o d-                      R e c e nt st at e- of-t h e- art a p pr o a c h es d e m o nstr at e t h at
+els, fr o m o p e n-s o ur c e diff usi o n s yst e ms [ 3 7 ] t o a d v a n c e d                l e v er a gi n g l ar g e Visi o n F o u n d ati o n M o d els ( V F Ms), s u c h
+pr o pri et ar y m o d els li k e D A L L· E 3 [ 3 1 ], p os e a n es c al ati n g                as C LI P [ 3 5 ] a n d DI N O v 2 [3 2 ], pr o vi d es r o b ust f e at ur e r e p-
+c h all e n g e t o di git al f or e nsi cs. W hil e e xisti n g AI- g e n er at e d              r es e nt ati o ns f or AI GI d et e cti o n [1 8 , 4 5 , 4 6 ]. H o w e v er, e x-
+
+
+
+                                                                                           8715
+isting strategies to enhance generalization via VFMs often              marks. On the GenImage benchmark [47] (7 unseen gen-
+resort to computationally expensive paradigms. One line                 erators), our method establishes a new state-of-the-art, sur-
+of work, for instance, requires introducing extensive, large-           passing the next-best baseline by +4.09% in accuracy. We
+scale datasets of generated images to expose the model to               demonstrate even stronger performance on the larger and
+diverse artifacts [33]. Alternatively, other approaches de-             more challenging Community Forensics benchmark [33]
+vise complex training workloads. These include designing                (21 distinct generative models), where we again establish
+intricate network architectures [18, 46] or formulating so-             a new state-of-the-art, surpassing the next-best baseline
+phisticated fine-tuning objectives, such as subspace decom-             by +6.82% in accuracy. This SOTA performance across
+position [45] or contrastive frameworks with hard-negative              diverse benchmarks is achieved without complex training
+mining [5]. This reliance on computationally intensive in-              workloads or additional auxiliary data, highlighting the ef-
+terventions leaves a critical research gap: the development             ficacy of our lightweight strategy.
+of a lightweight and efficient strategy that can harness the                Our primary contributions are:
+generalization power of VFMs without demanding massive                  • We systematically investigate the consequences of source
+auxiliary data or complex training schemes.                                asymmetry, verifying that this data imbalance causes a
+    In this paper, to devise a lightweight VFM-based strat-                fine-tuned VFM to learn an asymmetric feature-space
+egy for generalized AIGI detection, we shift our perspec-                  representation.
+tive from designing complex training schemes to exploit-                • We identify and validate that this feature-space asym-
+ing a fundamental yet insufficiently leveraged property of                 metry produces the Source-Asymmetry Confidence Gap
+the training data: the source asymmetry phenomenon. This                   (SACG) at the classifier’s output—a novel and reliable
+refers to the training condition where a detector has access               signal for generalization.
+to diverse, semantically-rich real data but only a limited set          • We propose a lightweight, post-hoc detection strategy that
+of generated fake data from a few known sources. We first                  efficiently exploits SACG. The method requires calibra-
+verify that this class diversity asymmetry leads a fine-tuned              tion only on the seen real images, enabling it to stably
+VFM to learn a more generalizable representation for the                   generalize to unseen generators without complex training
+real class. Supporting evidence shows that the real class                  schemes or architectural overhead.
+feature space retains a broad, high-dimensional structure,
+whereas the fake class representation collapses into a com-             2. Related Work
+pact, low-dimensional subspace (see Fig. 2 and Tab. 1).                 Research in AIGI detection has primarily followed several
+Consequently, the detector’s predictive confidence on un-               dominant paradigms. Among them, approaches leverag-
+seen real images is systematically higher than on unseen                ing large-scale Vision Foundation Models (VFMs) [32, 35]
+generated fakes, as visualized in Fig. 1. This core obser-              have recently shown significant promise.
+vation allows us to identify the Source-Asymmetry Con-                  Forgery Artifact-Centric Detectors. One paradigm as-
+fidence Gap (SACG)—a consistent and exploitable sepa-                   sumes that generated images contain generator-related
+ration in predictive confidence between real and generated              forgery artifacts. Foundational work suggested that CNN-
+image distributions.                                                    based generators shared common flaws [41]. More recent
+    To this end, we leverage SACG through a lightweight,                methods use VFMs as feature extractors to hunt for these
+post-hoc strategy. First, we employ a specialized confidence            artifacts, combining low-level frequency analysis with high-
+metric, the GEN score [21], to transform the detector’s out-            level semantic features [44], or pixel artifacts with seman-
+put probabilities into a new confidence score specifically              tic inconsistencies [6]. Rather than pursuing these artifact-
+designed to amplify this separation. These resulting confi-             based signals, which are inherently reactive to generator
+dence scores are used to effectively isolate high-confidence            evolution, our work investigates a more fundamental prop-
+samples (scores near 0), for which the detector’s original              erty of the training data itself (source asymmetry) to find a
+prediction is trusted. Then, for the remaining samples,                 stable generalization signal.
+which fall into the lower-confidence spread (visualized in              Advanced Training and Architectural Strategies. To
+Fig. 1), we apply a conditional decision rule. Crucially, the           improve generalization, another line of work proposes
+threshold for this rule is calibrated only on the distribution          more complex training schemes or architectures. Data-
+of the seen real images. This simple, real-only calibration             centric methods employ contrastive frameworks with re-
+enables our method to stably separate the hard real sam-                constructed hard-negative samples [5], create semantically-
+ples from the unseen fake samples that predominantly popu-              identical real/fake pairs to mitigate content bias [15] or
+late this low-confidence region. The entire procedure is im-            introduce additional large-scale generated images [33].
+plemented as a post-hoc strategy, requiring no architectural            Another sub-trend avoids the cost of full fine-tuning by
+changes and incurring zero additional training overhead.                adapting pre-trained backbones in parameter-efficient ways.
+    We validate our approach on two comprehensive bench-                These approaches range from using completely frozen fea-
+
+
+
+                                                                 8716
+                                                                                                       S e e n R e al                          See n Fa ke                            U ns e e n F a k e 2
+t ur es wit h si m pl e n e ar est- n ei g h b or s e ar c h es [2 9 ], t o tr ai ni n g               U ns e e n R e al                       U ns e e n F a k e 1                   U ns e e n F a k e 3
+li g ht w ei g ht n et w or ks o n r e pr es e nt ati o ns e xtr a ct e d fr o m i n-
+t er m e di at e e n c o d er bl o c ks [1 8 ], t o m or e s o p histi c at e d s u b-
+s p a c e d e c o m p ositi o n m et h o ds [ 4 5 ]. W hil e w e als o l e v er a g e
+a V F M- b as e d d et e ct or, w e i ntr o d u c e n o ar c hit e ct ur al c o m-
+pl e xit y or e x p e nsi v e tr ai ni n g o bj e cti v es.
+M o d eli n g t h e r e al I m a g e Dist ri b uti o n.                 T h e t hir d
+p ar a di g m f o c us es o n m o d eli n g t h e distri b uti o n of r e al i m-
+a g es a n d tr e ati n g f a k es as a n o m ali es. S o m e m et h o ds m o d el
+l o w-l e v el st atisti c al pr o p erti es [7 , 1 7 , 2 0 ]. Ot h er tr ai ni n g-
+                                                                                                         ( a) O ri gi n al ( P r e-t r ai n e d)                      ( b) Fi n e-t u n e d
+fr e e a p pr o a c h es us e r e c o nstr u cti o n err or fr o m pr e-tr ai n e d
+diff usi o n m o d els [ 4 2 ] or t h eir i nt er n al a ut o e n c o d ers [3 6 ] as              Fi g ur e 2. As y m m et ri c F e at u r e S e p a r ati o n. t- S N E [2 5 ] vis u al-
+a si g n al of a ut h e nti cit y. U nli k e t h es e a p pr o a c h es, w hi c h                  i z ati o n of e m b e d di n gs fr o m ( a) t h e ori gi n al a n d ( b) t h e ﬁ n e-t u n e d
+tr e at d et e cti o n as a o n e- cl ass or o ut- of- distri b uti o n ( O O D)                   C LI P- Vi T b a c k b o n e. ( a) T h e ori gi n al e m b e d di n gs s h o w n o cl ass
+pr o bl e m, o ur m et h o d tr ai ns a bi n ar y cl assi ﬁ er a n d e x pl oits a                 s e p ar a bilit y. ( b) Fi n e-t u ni n g i n d u c es a str u ct ur al as y m m etr y : t h e
+p ost- h o c si g n al ( S A C G) t h at e m er g es fr o m t h e as y m m etri c                  r e al cl ass (s e e n a n d u ns e e n) f or ms a si n gl e, br o a d cl ust er, d e m o n-
+g e n er ali z ati o n b et w e e n t h e t w o l e ar n e d cl ass es.                            str ati n g a g e n er ali z a bl e r e pr es e nt ati o n. I n c o ntr ast, t h e s e e n f a k e
+                                                                                                   cl ass c oll a ps es i nt o a ti g ht, disti n ct gr o u p, s e p ar at e fr o m u ns e e n
+                                                                                                   f a k es, i n di c ati n g a s o ur c e-s p e ci ﬁ c r e pr es e nt ati o n.
+3. M et h o d ol o g y
+T his s e cti o n pr o vi d es a d et ail e d a n al ysis of t h e s o ur c e as y m-
+m etr y p h e n o m e n o n a n d i ntr o d u c es o ur m et h o d t o e x pl oit                  it e d, l o w- di v ersit y f a k e s et F s e e n f or c es t h e m o d el t o l e ar n
+its c o ns e q u e n c es. We ﬁrst i n v esti g at e h o w t his as y m m etr y                    a c oll a ps e d, s o ur c e-s p e ci ﬁ c r e pr es e nt ati o n f or s e e n f a k es.
+l e a ds t o t h e o bs er v e d S o u r c e- As y m m et r y C o n ﬁ d e n c e G a p              As y m m et ri c F e at u r e S e p a r ati o n. We vis u ali z e t h e V F M
+( S A C G). We t h e n pr es e nt o ur li g ht w ei g ht, p ost- h o c str at e g y                b a c k b o n e e m b e d di n gs usi n g t- S N E [ 2 5 ] i n Fi g. 2 . As s h o w n
+t h at l e v er a g es t his g a p f or st a bl e, g e n er ali z e d d et e cti o n.              i n Fi g. 2 a , t h e pr e-tr ai n e d f e at ur es s h o w n o cl e ar cl ass s e p a-
+                                                                                                   r a bilit y. I n c o ntr ast, t h e ﬁ n e-t u n e d f e at ur es i n Fi g. 2 b r e v e al
+3. 1. P r o bl e m S et u p                                                                        a disti n ct st r u ct u r al as y m m et r y . T h e s e e n r e al a n d u ns e e n
+                                                                                                   r e al s a m pl es f or m a c o h esi v e a n d br o a d cl ust er, d e m o nstr at-
+L et t h e tr ai ni n g d at a D t r ai n = R s e e n ∪ F s e e n , w h er e R s e e n             i n g t h at t h e m o d el h as l e ar n e d a g e n er ali z a bl e r e pr es e nt a-
+is a di v ers e s et of r e al i m a g es a n d F s e e n is a s et of f a k e i m-                ti o n f or t h e r e al cl ass. C o n v ers el y, t h e s e e n f a k e s a m pl es
+a g es s o ur c e d fr o m a li mit e d c oll e cti o n of s e e n g e n er at ors,                c oll a ps e i nt o a ti g ht, is ol at e d cl ust er, w hil e u ns e e n f a k e s a m-
+G s e e n = { G 1 , . . . , Gn } . We tr ai n a bi n ar y AI GI d et e ct or f ,                   pl es m a p t o s e p ar at e r e gi o ns. T his vis u all y c o n ﬁr ms t h at t h e
+w hi c h c o m pris es a Visi o n F o u n d ati o n M o d el ( V F M) b a c k-                     l e ar n e d f a k e r e pr es e nt ati o n is n o n- g e n er ali z a bl e a n d hi g hl y
+b o n e ( e. g ., C LI P- Vi T [1 2 , 3 5 ]) a n d a n M L P h e a d, usi n g a                    s p e ci ﬁ c t o t h e tr ai ni n g s o ur c es.
+st a n d ar d bi n ar y cr oss- e ntr o p y ( B C E) l oss. We assi g n l a-                       R e p r es e nt ati o n C o m pl e xit y C oll a ps e. We q u a ntif y t his
+b els y = 0 f or t h e r e al cl ass a n d y = 1 f or t h e f a k e cl ass.                        str u ct ur al as y m m etr y b y m e as uri n g t h e eff e cti v e di m e n-
+Gi v e n a n i n p ut x , t h e d et e ct or f o ut p uts a si g m oi d pr o b a bil-              si o n alit y of t h e cl ass r e pr es e nt ati o ns. As s h o w n i n Ta b. 1 ,
+it y p = f (x ) ∈ [ 0, 1] , r e pr es e nti n g t h e pr e di ct e d pr o b a bilit y              w e c o m p ut e t h e n u m b er of pri n ci p al c o m p o n e nts ( P Cs) r e-
+P (y = 1 |x ).                                                                                     q uir e d t o e x pl ai n 9 5 % of t h e v ari a n c e f or t h e r e al a n d f a k e
+     T h e o bj e cti v e is t o e ns ur e t h at f , tr ai n e d o nl y o n D t r ai n ,          cl ass e m b e d di n gs. T h e pr e-tr ai n e d f e at ur es e x hi bit hi g h,
+g e n er ali z es st a bl y t o a t est s et D t e s t . T his s et c o nt ai ns                   c o m p ar a bl e di m e nsi o n alit y ( 2 1 1 vs. 2 3 3 P Cs). Aft er ﬁ n e-
+r e al i m a g es a n d f a k e i m a g es fr o m a disj oi nt s et of u ns e e n                  t u ni n g, a si g ni ﬁ c a nt as y m m et ri c c oll a ps e o c c urs: t h e f a k e
+g e n er at ors, G u n s e e n = { G n + 1 , . . . , Gm } , w h er e G s e e n ∩                   cl ass di m e nsi o n alit y pl u m m ets t o j ust 1 5 P Cs, w hil e t h e
+G u ns e e n = ∅ .                                                                                 r e al cl ass r et ai ns a si g ni ﬁ c a ntl y hi g h er di m e nsi o n alit y of
+                                                                                                   7 1 P Cs. T his q u a ntit ati v el y v ali d at es t h at ﬁ n e-t u ni n g o n
+3. 2. S o u r c e- As y m m et r y C o n ﬁ d e n c e G a p                                         a s o ur c e- as y m m etri c d at as et yi el ds a g e n er ali z a bl e, hi g h-
+T his s e cti o n a n al y z es t h e m e c h a nis m u n d erl yi n g t h e                       di m e nsi o n al r e pr es e nt ati o n f or t h e r e al cl ass a n d a c ol-
+S o ur c e- As y m m etr y C o n ﬁ d e n c e G a p ( S A C G).                                     l a ps e d, l o w- di m e nsi o n al r e pr es e nt ati o n f or t h e f a k e cl ass.
+     We i d e ntif y S A C G as a dir e ct c o ns e q u e n c e of t h e s o ur c e
+as y m m etr y (s e e S e c. 3. 1 ) i n h er e nt i n t h e tr ai ni n g d at a.
+                                                                                                   3. 3. P r o p os e d M et h o d
+S p e ci ﬁ c all y, t h e ﬁ n e-t u ni n g pr o c ess, w h e n e x p os e d t o t h e              O ur m et h o d is a li g ht w ei g ht, p ost- h o c str at e g y d esi g n e d t o
+hi g hl y di v ers e r e al s et R s e e n , l e ar ns a br o a d a n d g e n er ali z-            ef ﬁ ci e ntl y e x pl oit S A C G. It c o nsists of t hr e e k e y c o m p o-
+a bl e r e pr es e nt ati o n f or t h e r e al cl ass. C o n v ers el y, t h e li m-              n e nts, d et ail e d b el o w: a s p e ci ali z e d c o n ﬁ d e n c e m etri c t o
+
+
+
+                                                                                            8717
+                                                                  O n e- Ti m e T h r es h ol d C ali b r ati o n                                            � � � � ��� �          � � � �� �                 Froze n
+
+
+                                                                                                                                                                    1           2     3
+                                                                                                                                                                                                      C ali b r at e d
+                                                                                                                                                                                                       T h r es h ol d
+       R e al i m a g es f o r                                                                                                                                                                       � � ��� � < � � � �
+           c ali b r ati o n                                              ( a) P r e di ct e d P r o b a bilit y                                             ( b) G E N S c o r e
+                                                  Visi o n                                                                        GEN �
+                                              F o u n d ati o n
+                                                  M o d el                                                                            =
+                                                      +                                                                                           �
+                                                                                                                             −    � � − �
+                                              M L P He a d
+
+                                                                                                                                                                   1           2     3                   F a ke
+                                               O u r B as e                                                                     G E N Sc ore
+                                            AI GI D et e ct o r                                                              Tr a nsf o r m ati o n                                                        or
+                                                                                                                                                                                                         R e al
+                                                                          ( c) PP r e ddii ctt e dd PP r o bb a bbilit y                                     ( d) G E N S c o r e
+           T est D at a
+                                                                                            I nf e r e n c e
+
+Fi g ur e 3. O u r P ost- H o c D e cisi o n Pi p eli n e. T h e pi p eli n e o p er at es i n t w o p h as es. ( T o p) O n e- Ti m e T h r es h ol d C ali b r ati o n: A s m all s et of
+s e e n r e al i m a g es ar e pr o c ess e d t o g et Pr e di ct e d Pr o b a biliti es ( a) a n d t h e n G E N s c or es ( b). Fr o m t his r e al- o nl y distri b uti o n, w e pr e- c ali br at e
+t w o t hr es h ol ds, τ c ali b a n d τ G E N , b as e d o n us er- d e ﬁ n e d Tr u e N e g ati v e R at e ( T N R) c o nstr ai nts, w h er e 0 % < T N R G E N < T N R c ali b <
+1 0 0 % (s e e S e c. 3. 3. 3 ). ( B ott o m) I nf e r e n c e: F or a t est i m a g e, t h e B as e AI GI D et e ct or’s o ut p ut ( c) is tr a nsf or m e d i nt o a G E N( p ) s c or e
+( d). O ur c o n diti o n al str at e g y ( E q. (2 )) t h e n us es τ G E N t o tr ust t h e d et e ct or’s ori gi n al pr e di cti o n f or hi g h- c o n ﬁ d e n c e s a m pl es ( R e gi o n 3).
+F or t h e r e m ai ni n g l o w- c o n ﬁ d e n c e s a m pl es, τ c ali b is us e d t o m a k e t h e ﬁ n al d e cisi o n: s a m pl es i n R e gi o n 1 (G E N( p ) < τ c ali b ) ar e pr e di ct e d
+as F a k e , w hil e t h os e i n R e gi o n 2 ar e pr e di ct e d as R e al .
+
+
+    Cl ass                       O ri gi n al ( P r e-t r ai n e d)                    Fi n e-t u n e d                           ri c s p e ci ﬁ c all y d esi g n e d t o a m plif y t h es e d e vi ati o ns n e ar t h e
+                                                                                                                                  0 a n d 1 b o u n d ari es.
+    r e al                                      211                                                71
+                                                                                                                                       We s el e ct t h e G E N s c or e [ 2 1 ] f or t his p ur p os e. Gi v e n t h e
+    f a ke                                      233                                                15
+                                                                                                                                  d et e ct or’s o ut p ut pr o b a bilit y p , t h e s c or e is c o m p ut e d as:
+Ta bl e 1. R e p r es e nt ati o n C o m pl e xit y C oll a ps e. N u m b er of pri n-                                                                     G E N( p ) = − [p ( 1 − p )] γ                                  ( 1)
+ci p al c o m p o n e nts r e q uir e d t o e x pl ai n 9 5 % v ari a n c e f or e a c h cl ass’s
+e m b e d di n gs. Fi n e-t u ni n g i n d u c es a n as y m m etri c c oll a ps e i n eff e c-                                   T h e m etri c’s s e nsiti vit y is g o v er n e d b y t h e e x p o n e nt γ . F ol-
+ti v e di m e nsi o n alit y: t h e f a k e cl ass r e pr es e nt ati o n c oll a ps es, w hil e
+                                                                                                                                  l o wi n g t h e ori gi n al w or k [2 1 ], w e s et γ = 0 .1 . T his s m all
+t h e r e al cl ass r et ai ns a si g ni ﬁ c a ntl y hi g h er di m e nsi o n alit y. T his
+pr o vi d es q u a ntit ati v e v ali d ati o n f or t h e as y m m etri c g e n er ali z ati o n
+                                                                                                                                  v al u e m a k es t h e m etri c hi g hl y r es p o nsi v e t o s m all c h a n g es
+s h o w n i n Fi g. 2 .                                                                                                           n e ar t h e p → 0 a n d p → 1 b o u n d ari es, eff e cti v el y m a g ni-
+                                                                                                                                  f yi n g t h e si g n al i n t h e hi g h- c o n ﬁ d e n c e r e gi o n. As vis u all y
+                                                                                                                                  d e m o nstr at e d i n Fi g. 1 a n d f urt h er v ali d at e d i n o ur a bl ati o ns
+a m plif y t h e g a p ( S e c. 3. 3. 1 ), a c o n diti o n al d e cisi o n str at-
+                                                                                                                                  ( S e c. 4. 3 ), t his m etri c pr o vi d es a m u c h cl e a n er s e p ar ati o n of
+e g y t o a p pl y t his si g n al ( S e c. 3. 3. 2 ), a n d a si m pl e, r e al- o nl y
+                                                                                                                                  t h e c o n ﬁ d e n c e distri b uti o ns t h a n st a n d ar d e ntr o p y.
+c ali br ati o n f or t h at str at e g y ( S e c. 3. 3. 3 ).
+                                                                                                                                  3. 3. 2. C o n diti o n al D e cisi o n St r at e g y
+3. 3. 1. M et ri c t o A m plif y t h e C o n ﬁ d e n c e G a p                                                                   O ur str at e g y is m oti v at e d b y t h e o bs er v ati o n fr o m Fi g. 1 : t h e
+A st a n d ar d AI GI d et e ct or’s ﬁ n al si g m oi d a cti v ati o n c o m-                                                    G E N s c or e distri b uti o n r e v e als t w o disti n ct r e gi o ns. First,
+pr ess es o ut p uts p t o w ar d t h e hi g h- c o n ﬁ d e n c e b o u n d ari es ( 0                                            t h er e is a hi g h- c o n ﬁ d e n c e r e gi m e w h er e G E N( p ) s c or es
+or 1). T his c o m pr essi o n r e n d ers m etri cs li k e S h a n n o n e n-                                                    cl ust er n e ar 0. T his cl ust er c o nt ai ns b ot h e as y r e al a n d
+tr o p y s u b- o pti m al, as t h e y ar e i ns uf ﬁ ci e ntl y s e nsiti v e t o t h e                                          e as y f a k e s a m pl es, r e pr es e nti n g c as es w h er e t h e d et e ct or’s
+s m all y et criti c al d e vi ati o ns wit hi n t his r e gi o n ( e. g ., disti n-                                              ori gi n al pr o b a bilit y p is alr e a d y d e cisi v el y cl os e t o 0 or 1.
+g uis hi n g p = 0 .0 1 fr o m p = 0 .0 0 1 ). T his is a k e y c h all e n g e,                                                  F or t h es e s a m pl es, t h e d et e ct or’s pr e di cti o ns ar e hi g hl y r e-
+as t h e o bs er v e d S A C G (s e e Fi g. 1 ) m a nif ests pr e cis el y as a                                                   li a bl e. We t h er ef or e d e ﬁ n e a t hr es h ol d, τ G E N , t o is ol at e
+s e p ar ati o n wit hi n t h es e s u btl e, hi g h- c o n ﬁ d e n c e d e vi ati o ns.                                          t his r e gi m e. S e c o n d, t h er e is a l o w er- c o n ﬁ d e n c e r e gi m e ( all
+T h er ef or e, t o eff e cti v el y e x pl oit t his g a p, w e r e q uir e a m et-                                              s a m pl es wit h G E N( p ) ≤ τ G E N ). T his r e gi o n c o nt ai ns t h e
+
+
+
+                                                                                                                           8718
+hard cases. Critically, this is the precise region where the            dataset [47]. The training set consists of 162k real images
+observed SACG—the separation between hard real sam-                     (ImageNet [10]) and 162k fake images from a single gener-
+ples and unseen fake samples—becomes the dominant, ex-                  ator (SD V1.4 [37]).
+ploitable signal.                                                           For evaluation, we test generalization on two diverse
+   This two-regime structure motivates our conditional de-              benchmarks: 1) The GenImage Benchmark [47], con-
+cision strategy, illustrated in Fig. 3:                                 taining fakes from 7 unseen generators (e.g., BigGAN [4],
+                                                                       ADM [11]), and 2) The Community Forensics Bench-
+        I(p > 0.5)                 if GEN(p) > τGEN ,                  mark [33], a challenging benchmark with fakes from 21
+   ŷ =                                                  (2)            distinct models (e.g., DALL·E 3 [31], Imagen 3 [13]).
+        I(GEN(p) < τ
+                           calib ) otherwise.                           Implementation Details. We use CLIP-ViT [35] as the
+                                                                        VFM backbone, with other backbones explored in Sec. 4.3.
+This policy operates as follows:
+                                                                        We train our base AIGI detector by partially fine-tuning
+• If GEN(p) > τGEN : The sample is in the high-                         only the latter half of the backbone, which is followed
+  confidence regime. We trust the base detector’s original              by a two-layer MLP head. We train for 10 epochs us-
+  prediction, I(p > 0.5).                                               ing AdamW [23] (batch size 128) with differential learning
+• Otherwise: The sample falls into the lower-confidence                 rates: 1 × 10−5 for the backbone and 1 × 10−3 for the MLP
+  regime. Here, we apply the SACG-derived strategy, using               head. All other protocols follow Rine [18].
+  a second threshold, τcalib , to separate the unseen fakes             Calibration and Metrics. Our post-hoc strategy is ap-
+  from the hard real samples. A sample is classified as fake            plied at inference time. The GEN score exponent is γ =
+  (ŷ = 1) only if its score falls below this threshold.                0.1 [21]. As defined in Sec. 3.3.3, both thresholds are
+3.3.3. Real-Only Threshold Calibration                                  calibrated using a small subset of 128 seen real images
+                                                                        (Sreal ⊂ Rseen ) via our unified TNR-based mechanism. We
+A key principle of our method is that both thresholds, τGEN
+                                                                        use TNRcalib = 95% and TNRGEN = 20%. We evaluate
+and τcalib , are calibrated post-hoc using only a small subset
+                                                                        all methods using Accuracy (Acc).
+of the seen real images (Sreal ⊂ Rseen ). This real-only cal-
+                                                                        Baselines. We compare against a comprehensive suite of
+ibration ensures our method is independent of the seen fake
+                                                                        SOTA detectors: CNNSpot [41], LNP [20], UnivFD [29],
+generators Gseen , which is critical for generalization. Both
+                                                                        DIRE [42], NPR [38], DRCT [5], Rine [18], AIDE [44],
+thresholds are derived using a single, unified mechanism:
+                                                                        VIBAIGCDetect [46], and Effort [45]. To ensure fairness,
+finding the GEN(p) score that corresponds to a target True
+                                                                        we used official codebases. Methods not originally trained
+Negative Rate (TNR) on this real calibration set. Formally,
+                                                                        on GenImage [18, 29, 41] were retrained by us. For meth-
+given a target TNRtarget ∈ [0, 1], we find the correspond-
+                                                                        ods already trained on GenImage [38, 44–46] or those with
+ing threshold τ by solving for the quantile:
+                                                                        unique data requirements [5, 20, 42], we used their official,
+       1        X                                                       pre-trained models as per author instructions.
+                         I(GEN(f (x)) ≥ τ ) = TNRtarget   (3)
+    |Sreal |
+               x∈Sreal                                                  4.2. Main Results
+This mechanism is applied to find both thresholds:                      We evaluate our lightweight, post-hoc strategy against ten
+• τcalib : We set this by choosing a high, user-defined oper-           SOTA baselines on two challenging benchmarks. We apply
+  ating point, such as TNRcalib = 95%. This deterministi-               our method to two VFM backbones: a base CLIP-ViT-B/16
+  cally sets τcalib to the value that correctly classifies 95%          and a larger CLIP-ViT-L/14, to demonstrate its effective-
+  of the real calibration samples.                                      ness and scalability. The full accuracy results are presented
+• τGEN : We set this by choosing a second, interme-                     in Tab. 2 and Tab. 3.
+  diate target, TNRGEN , such that 0 < TNRGEN <                         Performance on the GenImage Benchmark. As shown
+  TNRcalib . This effectively isolates the high-confidence              in Tab. 2, our approach establishes a new state of the
+  peak from the lower-confidence region where the SACG                  art. Our ViT-B/16 model achieves 95.37% average accu-
+  is exploited. As we demonstrate in our ablation study                 racy, and our ViT-L/14 model further improves to 96.10%.
+  (Sec. 4.3), our method is robust to a wide range of                   This decisively surpasses the next-best baseline, Effort [45]
+  TNRGEN values, making precise tuning unnecessary.                     (92.01%), by +3.36% and +4.09%, respectively. This ro-
+                                                                        bust performance across all generator families (e.g., Big-
+4. Experiments                                                          GAN [4], ADM [11], Glide [28]) validates that exploiting
+                                                                        the observed SACG is a highly effective strategy for gener-
+4.1. Experimental Setup                                                 alization.
+Datasets and Benchmarks. The VFM-based detectors we                     Performance on the Community Forensics Benchmark.
+use in our post-hoc strategy are trained on the GenImage                On the more diverse and challenging Community Forensics
+
+
+
+                                                                 8719
+Table 2. Generalization performance on the GenImage benchmark [47]. All our models were trained on the SD V1.4 subset of
+GenImage [47]. Accuracy (%) is reported. Baselines used models trained on the same data, or their official public models [5, 20, 42].
+Our method with a ViT-B/16 backbone achieves 95.37% average accuracy, already surpassing the best baseline (Effort [45], 92.01%). Our
+ViT-L/14 model extends this lead to 96.10%. Best and second-best results are in bold and underlined.
+
+                        CNNSpot LNP DIRE UnivFD NPR Rine DRCT AIDE VIBDetect Effort Ours     Ours
+      Test Sets
+                          [41]  [20] [42] [29]  [38] [18] [5]  [44]   [46]    [45] ViT-B/16 ViT-L/14
+   BigGAN [4]             51.85    63.51 51.76      56.01   81.84 78.62      81.67   66.83      55.57     92.28    92.02      89.20
+    ADM [11]              54.38    73.48 49.06      79.27   84.63 83.78      79.42   78.49      74.42     84.91    96.02      97.65
+    Glide [28]            67.18    72.86 51.68      88.53   90.31 89.91      89.18   91.78      73.36     92.58    96.24      98.43
+   VQDM [14]              53.62    63.74 50.89      90.20   87.04 99.18      90.03   80.24      89.21     93.40    96.23      98.27
+   SD V1.5 [37]           99.94    61.53 50.41      99.37   90.74 99.81      94.41   99.75      99.29     98.65    95.98      98.06
+Midjourney V5 [26]        54.88    54.07 48.42      81.13   89.84 81.49      91.50   81.38      88.28     84.36    95.02      92.80
+  Wukong [27]             99.85    60.36 50.41      98.50   90.67 99.88      94.67   98.85      98.68     97.92    96.11      98.29
+
+         Avg.             68.82    64.22 50.38      84.71   87.87 90.38 88.70 85.33             82.69     92.01    95.37      96.10
+
+
+benchmark (Tab. 3), our method’s superiority is even more               to this same detector boosts performance to 96.43%. This
+pronounced. Our ViT-B/16 model achieves 97.49% average                  confirms our gain stems from effectively exploiting the ob-
+accuracy, surpassing the strongest baseline, Effort [45], by a          served SACG. This effectiveness hinges on two key design
+significant margin of +6.11%. Our ViT-L/14 model extends                choices. First, the choice of metric is critical: replacing the
+this lead, achieving 98.20% accuracy. Notably, our per-                 GEN score with Shannon entropy causes a performance col-
+formance remains exceptionally high against contemporary                lapse to 13.98%. This validates our analysis in Sec. 3.3.1
+commercial models like DALL-E 3 [31] and Imagen 3 [13].                 that Shannon entropy is insensitive to the high-confidence
+This confirms that the SACG is a stable signal for general-             signals. Second, our conditional, two-threshold structure
+ization, even against the most rapidly evolving, real-world             is vital. A simpler variant, Ours (w/o τGEN ), which ap-
+generators.                                                             plies the τcalib rule globally, achieves 90.90% accuracy.
+Efficiency and Scalability of SACG Strategy. These re-                  While still effective, it underperforms our full strategy by
+sults highlight a crucial observation regarding efficiency              5.53%, confirming that isolating the easy high-confidence
+and scalability. Many SOTA baselines [5, 18, 29, 44–46]                 cases with τGEN is a more robust approach.
+rely on computationally expensive training schemes and                  Hyperparameter Sensitivity Analysis. As summarized
+large ViT-L backbones to achieve their performance. In                  in Tab. 5, our method is highly robust to its key parame-
+contrast, our lightweight, post-hoc strategy, when applied              ters. Performance is stable around our default TNRcalib
+to a smaller ViT-B/16 backbone, already outperforms these               of 95% and is highly data-efficient, achieving optimal accu-
+heavier, more complex approaches. As seen on the Com-                   racy with only 128 seen real images for calibration. This op-
+munity Forensics benchmark, our ViT-B/16 (97.49% Acc)                   timal data size represents a balance: the performance drop
+decisively surpasses the ViT-L-based Effort (91.38% Acc).               at 32 images is due to a poor statistical approximation of the
+Moreover, our simple, backbone-agnostic strategy scales ef-             real distribution, leading to a biased threshold. Conversely,
+fectively, with our ViT-L/14 model extending this lead to               the slight drop at 512 images is because this larger sam-
+98.20%. This confirms that exploiting the SACG is a more                ple introduces more hard real samples (the low-confidence
+efficient and effective path to generalization than relying on          tail). To maintain the 95% TNR target, τcalib is forced to
+complex, training-heavy designs.                                        a lower confidence value, which inadvertently misclassifies
+                                                                        more unseen fakes as real. Crucially, the TNRGEN param-
+4.3. Ablation Studies                                                   eter, which separates the high-confidence regime, is excep-
+We conduct a suite of ablation studies to validate our de-              tionally insensitive. As shown in the table, performance is
+sign choices and dissect the contribution of each compo-                identical across the entire tested range (1% to 60%). This
+nent. Unless otherwise specified, all ablations use a fine-             confirms our claim in Sec. 3.3.3 that TNRGEN does not
+tuned CLIP-ViT-B/16 model.                                              require precise hyperparameter tuning and is robust by de-
+Strategy Component and Metric Ablation. The Base                        fault.
+Detector, using a p > 0.5 rule, yields a baseline accu-                 Generality Across VFM Backbones. To confirm our strat-
+racy of 70.35%. Simply applying our full strategy (Ours)                egy is not tied to a specific architecture, we apply it to base
+
+
+
+                                                                 8720
+Table 3. Zero-shot generalization to the Community Forensics Benchmark [33]. We report Accuracy (%) on 21 diverse generators
+using the exact same models from the GenImage experiments (Tab. 2). Our ViT-B/16 model achieves 97.49% All Avg. accuracy, surpassing
+the strongest baseline (Effort [45], 91.38%) by +6.11%. Our ViT-L/14 model extends this lead to 98.20%. Our method is also SOTA on
+the Commercial Avg. (representing the bottom 11 generators), achieving 97.60% and 97.78% for ViT-B and ViT-L, respectively. Best and
+second-best results are in bold and underlined.
+
+                        CNNSpot LNP DIRE UnivFD NPR Rine DRCT AIDE VIBDetect Effort Ours     Ours
+      Test Sets
+                          [41]  [20] [42] [29]  [38] [18] [5]  [44]   [46]    [45] ViT-B/16 ViT-L/14
+   DF-GAN [39]            50.15      83.10 51.65    98.75    88.30 99.65         95.30   76.25    98.55    96.95    98.20     99.20
+ LCM-SDv1.5 [24]          63.70      53.10 51.40    96.70    92.20 98.40         93.10   93.85    95.30    95.90    96.40     98.20
+ LCM-SDXL [24]            50.00      42.45 51.60    97.15    90.65 98.80         93.40   72.50    97.30    94.15    98.00     99.35
+ LCM-SSD1B [24]           50.05      41.55 48.90    97.10    86.85 99.80         94.30   77.40    97.40    95.40    97.85     99.05
+   GALIP [40]             50.10      44.40 51.50    91.55    84.45 68.15         92.60   74.95    91.40    89.05    97.80     99.35
+Stable Cascade [34]       69.10      70.15 51.30    99.15    92.75 99.75         94.15   94.90    99.35    97.10    97.90     99.25
+  Kvikontent [19]         99.65      63.65 51.40    99.45    93.10 100.00        95.60   99.20    98.95    96.60    97.95     99.45
+Kandinsky V2.2 [2]        90.10      53.40 51.30    99.35    91.20 100.00        94.80   89.15    99.25    96.50    98.40     99.55
+     HDiT [8]             52.95      67.00 51.20    58.90    85.85 63.05         68.60   79.55    58.45    80.65    96.15     95.70
+  Deci Diff V2 [9]        64.30      52.25 51.25    83.65    92.65 91.20         93.55   92.85    93.30    96.05    95.10     97.55
+
+Midjourney V5 [26]        53.16      53.84 50.05    90.29    84.55 92.62         78.22   80.61    82.29    94.13    97.22     98.22
+Midjourney V6 [26]        53.93      45.77 50.10    95.17    80.29 99.10         90.62   85.02    95.22    89.94    98.05     99.30
+ DALL·E 2 [30]            51.95      47.85 49.50    92.85    91.15 97.60         91.05   75.80    92.20    88.20    97.10     98.70
+ DALL·E 3 [31]            98.00      49.85 49.95    99.40    92.45 100.00        94.10   99.20    98.70    96.25    98.00     99.60
+   Firefly 2 [1]          50.05      41.49 50.83    52.21    75.93 50.18         90.06   61.50    74.49    68.06    97.32     92.45
+   Firefly 3 [1]          50.10      54.72 48.31    56.34    77.85 51.26         88.89   64.91    84.37    71.18    98.10     92.61
+Ideogram V1 [16]          77.60      48.35 49.95    95.80    91.20 98.15         85.50   87.70    92.05    96.60    97.00     99.00
+Ideogram V2 [16]          79.35      48.10 49.80    94.20    90.75 97.40         79.55   84.20    90.90    96.10    97.80     99.00
+  Imagen 3 [13]           74.60      53.64 50.14    97.30    91.01 100.00        89.97   81.93    94.51    89.74    98.20     99.48
+   Flux-dev [3]           64.45      63.80 50.85    74.55    91.40 84.95         84.10   93.80    82.45    95.35    97.60     98.80
+ Flux-schnell [3]         57.50      59.80 50.00    66.35    91.00 76.85         80.40   88.25    74.95    95.10    97.20     98.45
+
+  Commercial Avg.         64.61      51.57 49.95    83.13    87.05 86.19         86.59 82.08      87.47    89.15    97.60     97.78
+
+       All Avg.           64.32      54.20 50.52    87.44    88.36 88.90         88.95 83.50      90.07    91.38    97.49     98.20
+
+
+Table 4. Ablation of Strategy Components and Metric Choice.                detectors built with different VFM backbones, including
+We compare our full strategy against three variants: the Base De-          CLIP-ConvNeXt [22, 35] and DINOv2 [32]. The results in
+tector, a version replacing the GEN score with Shannon Entropy,            Tab. 6 demonstrate the broad applicability of our approach.
+and a single-threshold version (Ours (w/o τGEN )). The results
+                                                                           Our post-hoc strategy delivers a substantial and consistent
+demonstrate that both the GEN score and our conditional, two-
+threshold design are critical for performance. Best and second-
+                                                                           average accuracy boost across all architectures, with gains
+best results are in bold and underlined.                                   ranging from +15.24% (DINOv2) to +26.08% (CLIP-ViT).
+                                                                           This consistency validates our method as a VFM-backbone-
+       Method             GenImage       Commfor         Avg.              agnostic solution, suggesting that the source-asymmetry
+                                                                           phenomenon induces the exploitable SACG across diverse
+   Base Detector             74.55          66.16       70.35              VFM architectures.
+  Shannon Entropy            18.05           9.90       13.98
+  Ours (w/o τGEN )           87.25          94.55       90.90
+                                                                           5. Discussion: On the Generality of SACG
+       Ours                  95.37          97.49       96.43
+                                                                           Given that SACG stems from the training data’s source
+                                                                           asymmetry, we investigate if this signal exists in other
+                                                                           VFM-based detectors. Visualizing their unseen GEN score
+
+
+
+                                                                    8721
+Table 5. Hyperparameter sensitivity analysis. We evaluate our                                                                                       6
+
+                                                                                                                                       Real                                                                  Real
+framework’s robustness by varying three key hyper-parameters:                 5
+                                                                                                                                       Fake         5                                                        Fake
+the target TNRcalib , the target TNRGEN , and the Data Size
+                                                                              4                                 Overlapped: 24.7%                                                     Overlapped: 47.9%
+(number of seen real images) for calibration. The results demon-                                                                                    4
+
+
+strate our method’s stability, highlighting its high data efficiency          3
+                                                                                                                                                    3
+(optimal with just 128 images) and its insensitivity to the choice
+of TNRGEN . Best results are in bold.                                         2
+                                                                                                                                                    2
+
+
+
+
+    Study       Parameter GenImage Commfor Avg.                               1                                                                     1
+
+
+
+
+                    91%           93.73         96.60      95.17              0
+                                                                                  0.9     0.8    0.7     0.6   0.5   0.4   0.3   0.2    0.1   0.0
+                                                                                                                                                    0
+                                                                                                                                                        0.9     0.8    0.7     0.6   0.5   0.4   0.3   0.2    0.1   0.0
+
+                    93%           94.69         97.10      95.89                                        (a) Effort [45]                                                (b) VIBDetect [46]
+ TNRcalib           95%           95.37         97.49      96.43                                                                                    10
+
+                                                                                                       Real                                                                  Real
+                    97%           91.98         95.20      93.59              30
+                                                                                                       Fake                                                                  Fake
+                    99%           85.06         85.27      85.17                                                                                     8
+
+                                                                              25         Overlapped: 3.6%                                                      Overlapped: 5.6%
+                     1%           95.37         97.49      96.43              20                                                                     6
+
+
+                    20%           95.37         97.49      96.43
+ TNRGEN                                                                       15
+                    40%           95.37         97.49      96.43                                                                                     4
+
+
+
+                    60%           95.37         97.49      96.43              10
+
+
+                                                                                                                                                     2
+
+                      32          93.42         96.42      94.92               5
+
+
+
+
+                      64          94.73         97.12      95.93               0
+                                                                                   0.9     0.8   0.7     0.6   0.5   0.4   0.3   0.2    0.1   0.0
+                                                                                                                                                     0
+                                                                                                                                                         0.9     0.8   0.7     0.6   0.5   0.4   0.3   0.2    0.1   0.0
+
+
+  Data Size          128          95.37         97.49      96.43                                        (c) Rine [18]                                          (d) Our Base AIGI Detector
+                     256          94.73         97.12      95.93
+                     512          92.35         95.65      94.00              Figure 4. Probability Density of GEN Scores for Unseen Data.
+                                                                              Probability density plots (y-axis) of the GEN score (x-axis). Com-
+Table 6. Generality Across VFM Backbones. We apply our post-                  plex methods (a) Effort [45] and (b) VIBDetect [46] show severe
+hoc strategy (+ Ours) to our base AIGI detectors built from three             overlap (24.7% and 47.9%, respectively). Simpler methods (c)
+different VFMs. Our method provides a substantial and consistent              Rine [18] and (d) Our Base AIGI Detector show a clean separa-
+performance boost across all architectures, with average accuracy             tion (3.6% and 5.6% overlap, respectively). This suggests complex
+gains from +15.24% to +26.08%. This demonstrates our approach                 training schemes interfere with the SACG signal.
+is a VFM-backbone-agnostic solution. Best results are in bold.
+
+       Vision Models            GenImage Commfor Avg.                         6. Conclusion
+      CLIP-ViT [35]                74.55         66.16      70.35             We tackle the AIGI generalization gap by exploiting the
+         + Ours                    95.37         97.49      96.43             source asymmetry in the AIGI detection task, demonstrat-
+                                                                              ing that this asymmetry induces the Source-Asymmetry
+CLIP-ConvNeXt [22, 35]             77.17         63.24      70.20
+                                                                              Confidence Gap (SACG)—a stable separation in predic-
+       + Ours                      93.59         90.68      92.13
+                                                                              tive confidence between real and fake images. Our primary
+        DinoV2 [32]                70.92         70.30      70.61             contribution is a lightweight, post-hoc strategy that effi-
+          + Ours                   83.76         87.93      85.85             ciently exploits this gap through a simple, real-only calibra-
+                                                                              tion. Applied to a partially fine-tuned VFM, this approach
+probability densities (Fig. 4) reveals that while all meth-                   decisively outperforms SOTA methods that rely on compu-
+ods exhibit the SACG, its separability varies significantly.                  tationally expensive and complex training workloads. Our
+Methods with complex training objectives, like Effort [45]                    work confirms that exploiting this stable signal is a more
+( Fig. 4a) and VIBDetect [46] ( Fig. 4b), show severe                         efficient path to generalization than building increasingly
+overlap between their real and fake probability densities.                    complex detectors. The effectiveness of our post-hoc real-
+We suggest that their sophisticated training targets inadver-                 only calibration, however, implicitly assumes that unseen
+tently interfere with the SACG. However, a simpler method                     fakes will remain statistically separable from the hard real
+like Rine [18] ( Fig. 4c) exhibits a clean separation simi-                   confidence tail on which our decision rule is calibrated. An
+lar to our base AIGI detector ( Fig. 4d). This provides a                     advanced generator could potentially exploit this by pro-
+key insight: the simplicity of the training schemes is crit-                  ducing fakes that statistically mimic the confidence distri-
+ical, as it preserves the stable, exploitable signal that more                bution of these hard real samples, thus bypassing our de-
+complex methods may damage. This also suggests our post-                      tection rule. Investigating the robustness of our calibration
+hoc strategy could boost other VFM detectors that are also                    against such confidence-mimicking attacks is an important
+trained with similar simplicity.                                              future direction.
+
+
+
+                                                                       8722
+Acknowledgments                                                            [14] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo
+                                                                                Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+This work is supported in part by National Natural Science                      tor quantized diffusion model for text-to-image synthesis.
+Foundation of China (NSFC) under Grant No.62376292,                             In IEEE/CVF Conference on Computer Vision and Pattern
+62536010, Guangdong Provincial General Fund No.                                 Recognition, 2022. 6
+2024A1515010208, and Guangzhou Science and Technol-                        [15] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+ogy Program Project No.2025A04J5465, 2024A04J6365.                              Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+                                                                                training paradigm for more general ai-generated image de-
+References                                                                      tection. In IEEE/CVF Conference on Computer Vision and
+                                                                                Pattern Recognition, 2025. 2
+ [1] Adobe Inc. Adobe firefly. https://www.adobe.com/                      [16] Ideogram, Inc. Ideogram. https://ideogram.ai/,
+     products/firefly, 2023. 7                                                  2024. 7
+ [2] ai-forever. Kandinsky 2.2. https://github.com/ai-                     [17] Dimitrios Karageorgiou, Symeon Papadopoulos, Ioannis
+     forever/Kandinsky-2, 2023. 7                                               Kompatsiaris, and Efstratios Gavves.          Any-resolution
+ [3] Black Forest Labs.              Flux.1.        https : / /                 ai-generated image detection by spectral learning.         In
+     blackforestlabs.ai/, 2024. 7                                               IEEE/CVF Conference on Computer Vision and Pattern
+ [4] Andrew Brock, Jeff Donahue, and Karen Simonyan. Large                      Recognition, 2025. 3
+     scale GAN training for high fidelity natural image synthe-            [18] Christos Koutlis and Symeon Papadopoulos. Leveraging rep-
+     sis. In International Conference on Learning Representa-                   resentations from intermediate encoder-blocks for synthetic
+     tions, 2019. 5, 6                                                          image detection. In European Conference on Computer Vi-
+ [5] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.                    sion, 2024. 1, 2, 3, 5, 6, 7, 8
+     DRCT: diffusion reconstruction contrastive training towards
+                                                                           [19] Kvikontent. Kvikontent midjourney v6 lora. https://
+     universal detection of diffusion generated images. In Pro-
+                                                                                huggingface.co/Kvikontent/midjourney- v6,
+     ceedings of the International Conference on Machine Learn-
+                                                                                2024. 7
+     ing, 2024. 2, 5, 6, 7
+                                                                           [20] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and
+ [6] Siyuan Cheng, Lingjuan Lyu, Zhenting Wang, Xiangyu
+                                                                                Xinbo Gao. Detecting generated images by real images. In
+     Zhang, and Vikash Sehwag. Co-spy: Combining seman-
+                                                                                European Conference on Computer Vision, 2022. 3, 5, 6, 7
+     tic and pixel features to detect synthetic images by ai.
+                                                                           [21] Xixi Liu, Yaroslava Lochman, and Christopher Zach. GEN:
+     In IEEE/CVF Conference on Computer Vision and Pattern
+                                                                                pushing the limits of softmax-based out-of-distribution de-
+     Recognition, 2025. 2
+                                                                                tection. In IEEE/CVF Conference on Computer Vision and
+ [7] Davide Cozzolino, Giovanni Poggi, Matthias Nießner, and
+                                                                                Pattern Recognition, 2023. 1, 2, 4, 5
+     Luisa Verdoliva. Zero-shot detection of ai-generated images.
+     In European Conference on Computer Vision, 2024. 3                    [22] Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feicht-
+                                                                                enhofer, Trevor Darrell, and Saining Xie. A convnet for the
+ [8] Katherine Crowson, Stefan Andreas Baumann, Alex Birch,
+                                                                                2020s. In IEEE/CVF Conference on Computer Vision and
+     Tanishq Mathew Abraham, Daniel Z. Kaplan, and Enrico
+                                                                                Pattern Recognition, 2022. 7, 8
+     Shippole. Scalable high-resolution pixel-space image syn-
+     thesis with hourglass diffusion transformers. In Proceedings          [23] Ilya Loshchilov and Frank Hutter. Decoupled weight de-
+     of the International Conference on Machine Learning, 2024.                 cay regularization. In International Conference on Learning
+     7                                                                          Representations, 2019. 5
+ [9] DeciAI Research Team. Decidiffusion v2.0. https://                    [24] Simian Luo, Yiqin Tan, Suraj Patil, Daniel Gu, Patrick von
+     huggingface.co/Deci/DeciDiffusion- v2- 0,                                  Platen, Apolinário Passos, Longbo Huang, Jian Li, and Hang
+     2024. 7                                                                    Zhao. Lcm-lora: A universal stable-diffusion acceleration
+[10] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,                     module. arXiv preprint arXiv:2311.05556, 2023. 7
+     and Li Fei-Fei. Imagenet: A large-scale hierarchical image            [25] Laurens van der Maaten and Geoffrey Hinton. Visualiz-
+     database. In IEEE/CVF Conference on Computer Vision and                    ing data using t-sne. Journal of machine learning research,
+     Pattern Recognition, 2009. 5                                               2008. 3
+[11] Prafulla Dhariwal and Alexander Quinn Nichol. Diffusion               [26] Midjourney, Inc.         Midjourney.     https : / / www .
+     models beat gans on image synthesis. In Advances in Neural                 midjourney.com/, 2025. 6, 7
+     Information Processing Systems, 2021. 5, 6                            [27] MindSpore. Wukong. https://xihe.mindspore.
+[12] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,                     cn/modelzoo/wukong/introduce, 2025. 6
+     Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,                   [28] Alexander Quinn Nichol, Prafulla Dhariwal, Aditya Ramesh,
+     Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-                   Pranav Shyam, Pamela Mishkin, Bob McGrew, Ilya
+     vain Gelly, Jakob Uszkoreit, and Neil Houlsby. An image is                 Sutskever, and Mark Chen. GLIDE: towards photorealis-
+     worth 16x16 words: Transformers for image recognition at                   tic image generation and editing with text-guided diffusion
+     scale. In International Conference on Learning Representa-                 models. In Proceedings of the International Conference on
+     tions, 2021. 3                                                             Machine Learning, 2022. 5, 6
+[13] Google DeepMind. Imagen. https://deepmind.                            [29] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+     google/models/imagen/, 2024. 5, 6, 7                                       versal fake image detectors that generalize across generative
+
+
+
+
+                                                                    8723
+     models. In IEEE/CVF Conference on Computer Vision and                 [42] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     Pattern Recognition, 2023. 3, 5, 6, 7                                      Wang, Hezhen Hu, Hong Chen, and Houqiang Li. DIRE
+[30] OpenAI. Dall·e 2. https://openai.com/index/                                for diffusion-generated image detection. In IEEE/CVF In-
+     dall-e-2/, 2022. 7                                                         ternational Conference on Computer Vision, 2023. 3, 5, 6,
+[31] OpenAI. Dall·e 3. https://openai.com/index/                                7
+     dall-e-3/, 2023. 1, 5, 6, 7                                           [43] Qijie Xu, Defang Chen, Jiawei Chen, Siwei Lyu, and Can
+[32] Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy V.                   Wang. Recent advances on generalizable diffusion-generated
+     Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez,                     image detection. arXiv preprint arXiv:2502.19716, 2025. 1
+     Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, Mido              [44] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong
+     Assran, Nicolas Ballas, Wojciech Galuba, Russell Howes,                    Jiang, Yao Hu, and Weidi Xie. A sanity check for ai-
+     Po-Yao Huang, Shang-Wen Li, Ishan Misra, Michael Rab-                      generated image detection. In International Conference on
+     bat, Vasu Sharma, Gabriel Synnaeve, Hu Xu, Hervé Jégou,                  Learning Representations, 2025. 2, 5, 6, 7
+     Julien Mairal, Patrick Labatut, Armand Joulin, and Piotr Bo-          [45] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     janowski. Dinov2: Learning robust visual features without                  Chengchun Liu, Shen Chen, Taiping Yao, Shouhong Ding,
+     supervision. Trans. Mach. Learn. Res., 2024. 1, 2, 7, 8                    Baoyuan Wu, and Li Yuan. Orthogonal subspace decompo-
+[33] Jeongsoo Park and Andrew Owens. Community forensics:                       sition for generalizable ai-generated image detection. In Pro-
+     Using thousands of generators to train fake image detectors.               ceedings of the International Conference on Machine Learn-
+     In IEEE/CVF Conference on Computer Vision and Pattern                      ing, 2025. 1, 2, 3, 5, 6, 7, 8
+     Recognition, 2025. 2, 5, 7                                            [46] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li, Bo
+[34] Pablo Pernias, Dominic Rampas, Mats L. Richter, Christo-                   Liu, and Bin Xiao. Towards universal ai-generated im-
+     pher Pal, and Marc Aubreville. Würstchen: An efficient                    age detection by variational information bottleneck network.
+     architecture for large-scale text-to-image diffusion models.               In IEEE/CVF Conference on Computer Vision and Pattern
+     In International Conference on Learning Representations,                   Recognition, 2025. 1, 2, 5, 6, 7, 8
+     2024. 7                                                               [47] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+[35] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya                         Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,                      Yunhe Wang. Genimage: A million-scale benchmark for de-
+     Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen                        tecting ai-generated image. In Advances in Neural Informa-
+     Krueger, and Ilya Sutskever. Learning transferable visual                  tion Processing Systems, 2023. 2, 5, 6
+     models from natural language supervision. In Proceedings
+     of the International Conference on Machine Learning, 2021.
+     1, 2, 3, 5, 7, 8
+[36] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. AER-
+     OBLADE: training-free detection of latent diffusion images
+     using autoencoder reconstruction error. In IEEE/CVF Con-
+     ference on Computer Vision and Pattern Recognition, 2024.
+     3
+[37] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     Patrick Esser, and Björn Ommer. High-resolution image syn-
+     thesis with latent diffusion models. In IEEE/CVF Conference
+     on Computer Vision and Pattern Recognition, 2022. 1, 5, 6
+[38] Chuangchuang Tan, Huan Liu, Yao Zhao, Shikui Wei,
+     Guanghua Gu, Ping Liu, and Yunchao Wei. Rethinking the
+     up-sampling operations in cnn-based generative network for
+     generalizable deepfake detection. In IEEE/CVF Conference
+     on Computer Vision and Pattern Recognition, 2024. 5, 6, 7
+[39] Ming Tao, Hao Tang, Fei Wu, Xiaoyuan Jing, Bing-Kun Bao,
+     and Changsheng Xu. DF-GAN: A simple and effective base-
+     line for text-to-image synthesis. In IEEE/CVF Conference
+     on Computer Vision and Pattern Recognition, 2022. 7
+[40] Ming Tao, Bing-Kun Bao, Hao Tang, and Changsheng Xu.
+     GALIP: generative adversarial clips for text-to-image syn-
+     thesis. In IEEE/CVF Conference on Computer Vision and
+     Pattern Recognition, 2023. 7
+[41] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Owens, and Alexei A. Efros. Cnn-generated images are sur-
+     prisingly easy to spot... for now. In IEEE/CVF Conference
+     on Computer Vision and Pattern Recognition, 2020. 2, 5, 6,
+     7
+
+
+
+
+                                                                    8724
+

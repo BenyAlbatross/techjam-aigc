@@ -1,0 +1,951 @@
+                                        Ghosts Beneath Textures: Texture-Relation Cues for
+                                          Cross-Paradigm AI-Generated Image Detection
+                                             Haoyu Wang§         Yiming Qin§        Zhongjie Ba§‡       Ziping Dong§       Jishen Zeng†     Peng Cheng§      Kui Ren§
+                                                                   § State Key Laboratory of Blockchain and Data Security, Zhejiang University
+                                                                      † Alibaba Group         ‡ Corresponding Author: zhongjieba@zju.edu.cn
+
+
+
+                                           Abstract—AI-generated images have proliferated rapidly, mo-         feature responses. These methods exploit abnormal spectrum-
+                                        tivating extensive research. Most existing AI-generated image          level regularities introduced during image synthesis. Spatial-
+                                        detectors are developed and evaluated under image-free gener-          domain methods instead analyze visual evidence in the im-
+                                        ation paradigms, such as noise-based or text-guided generation.
+                                        However, image-conditioned generation has become increasingly          age space, and can be further divided into semantics-related
+arXiv:2607.03862v1 [cs.CV] 4 Jul 2026
+
+
+
+
+                                        important in practical applications, as it enables more fine-          and semantics-irrelevant cues [5]. Semantics-related methods
+                                        grained control over generated content. Detecting AI-generated         leverage high-level content representations. For example, Uni-
+                                        images across these two paradigms creates a critical cross-            vFD [9] classifies images in the feature space of a pretrained
+                                        paradigm detection problem that has long been overlooked. To           CLIP [10] , and C2P-CLIP [11] introduces category-level
+                                        study this problem, we construct ConImageGen, a benchmark
+                                        for cross-paradigm AI-generated image detection. Evaluations           common prompts into CLIP to enhance category-conditioned
+                                        on ConImageGen show that existing detectors fail to generalize         discrimination. AIDE [2] further strengthens semantic rep-
+                                        reliably across image-free and image-conditioned generation.           resentations by incorporating spatial artifact statistics from
+                                           To address this failure, this paper identifies a cross-paradigm     frequency-selected regions as complementary evidence. In
+                                        forensic cue and provides a new perspective for generalized AI-        contrast, semantics-irrelevant methods focus on low-level
+                                        generated image detection. Specifically, by suppressing semantic
+                                        interference, we visualize, for the first time, semantics-irrelevant
+                                                                                                               forensic traces beyond image content, such as the upsampling-
+                                        texture patterns across generation paradigms. These patterns           induced pixel dependencies exploited by NPR [3] and the post-
+                                        exhibit structured local-global texture relations, indicating a        processing-related forensic traces modeled by TruFor [12].
+                                        generalizable form of forensic evidence. Motivated by this finding,       However, these cue designs have been largely developed
+                                        we shift the focus from directly exploiting explicit artifacts to      and evaluated under image-free generation paradigms, such as
+                                        modeling texture relations and propose DTS-Det, a detection
+                                        framework that captures and leverages such relations for gener-
+                                                                                                               noise-based or text-guided generation, where images are gen-
+                                        alized AI-generated image detection.                                   erated primarily from random noise or textual prompts [13]–
+                                           Extensive experiments validate the effectiveness of our method.     [15]. In contrast, image-conditioned generation uses an input
+                                        DTS-Det achieves state-of-the-art performance across diverse           image as additional guidance, enabling fine-grained control
+                                        evaluation settings, reaching 99.6% ACC on ConImageGen with            over the generated content and making it increasingly impor-
+                                        a 10.5% gain over the best baseline. It also achieves 93.2%/94.1%      tant in practical applications [16]–[18]. Nevertheless, whether
+                                        ACC in cross-dataset evaluation on PicoBanana/RAID and
+                                        maintains detection rates of 95.2%/88.1% under reconstruction          existing detectors can generalize from image-free to image-
+                                        attacks and black-box adversarial attacks, respectively.               conditioned generation remains unclear, revealing a critical
+                                                                                                               cross-paradigm detection problem that has long been over-
+                                                               I. I NTRODUCTION                                looked [19].
+                                                                                                                  Cross-Paradigm Generalization Failure. A key prereq-
+                                           Media forensics plays an important role in social, legal,           uisite for studying cross-paradigm detection is a unified de-
+                                        and economic security by providing technical support for               tection benchmark that covers both generation paradigms.
+                                        assessing the authenticity of image content [1]. With the rapid        Existing AI-generated benchmarks are mainly focus on image-
+                                        development of generative models, AI-generated images have             free generation [20]–[22]. Recent datasets such as X2Edit [23]
+                                        become one of the major forms of image forgery, motivating             and PicoBanana [24] include image-conditioned samples, but
+                                        extensive research on AI-generated image detection [2]–[4].            they are primarily intended for developing and evaluating
+                                        These studies aim to identify forensic evidence that distin-           image-conditioned generation models, making them unsuitable
+                                        guishes synthetic images from real ones.                               for direct use in cross-paradigm detection. To fill this gap,
+                                           Forensic Cues under Image-Free Generation. Existing                 we introduce ConImageGen, a comprehensive benchmark
+                                        detectors mainly exploit two types of forensic cues: frequency-        dataset comprising 364K real and AI-generated images from
+                                        domain cues and spatial-domain cues [5]–[7]. Frequency-                13 generative models, covering both image-free and image-
+                                        domain methods characterize synthetic artifacts based on               conditioned generation paradigms.
+                                        spectral responses. For example, F3Net [8] separates im-                  Based on this benchmark, we evaluate seven representa-
+                                        ages into frequency-aware components and summarizes local              tive detectors from three families: frequency cues, semantics-
+                                        frequency statistics, whereas FreqNet [4] embeds learnable             related cues, and semantics-irrelevant cues. Our results show
+                                        operations into the Fourier space to enhance high-frequency            that image-conditioned samples are generally harder to de-
+tect than image-free samples, and cues learned under one               aggregate them into model-level texture patterns. We then
+generation paradigm often fail to generalize to the other.             conduct peak-to-correlation energy (PCE) [29] experiments
+Even when trained with data from both generation paradigms,            to measure the correlations among these patterns. The results
+existing detectors improve only modestly. These results reveal         show that texture patterns are strongly associated with gener-
+the failure of existing detectors to handle cross-paradigm             ative model architectures. However, as new generative models
+detection.                                                             emerge, previously unseen texture patterns may undermine
+   Our work. In this paper, we analyze the failure modes of            detectors that rely on explicit artifacts, leading to limited
+different cue families and identify semantics-irrelevant cues as       generalization [19], [26].
+a promising yet narrowly modeled source of cross-paradigm                 Motivated by these findings, we provide a new detection
+forensic evidence. We further visualize such texture patterns          perspective that shifts the focus from directly exploiting
+shared across models and paradigms, revealing new forensic             explicit texture patterns to modeling texture relations, and
+evidence and offering a novel perspective for detection. This          introduce semantics-irrelevant texture relations as a new
+study is guided by the following research questions:                   form of forensic evidence for cross-paradigm AI-generated
+   RQ1: What cues are shared across generation paradigms?              image detection.
+   RQ2: How can such cues be identified and characterized as              A Comprehensive Framework for Generalizable De-
+forensic evidence?                                                     tection. Based on the above analysis, we propose DTS-
+   RQ3: How can such evidence be used to achieve general-              Det, a detection framework that models semantics-irrelevant
+izable detection?                                                      texture relations for cross-paradigm AI-generated image de-
+   Semantics-irrelevant Texture Patterns Across Gener-                 tection. Specifically, we design a texture-relation encoder to
+ation Paradigms. To identify forensic cues shared across               capture structured dependencies between local and global
+generation paradigms, we revisit the limitations of existing cue       textures, allowing the detector to exploit semantics-irrelevant
+types. Frequency-domain cues are becoming increasingly dif-            cues beyond explicit texture patterns. We further introduce
+ficult to exploit as generative models evolve [25], [26], while        a relation-guided attention mechanism to guide the model
+semantics-related cues may suffer from limited generalization          toward more generalizable texture-relation representations. To
+when detectors rely on dataset-specific abnormal semantics or          enhance discriminative capacity, we incorporate a semantics-
+spurious correlations [27], [28]. Prior studies on compression-        related stream that captures anomaly cues associated with
+related, up-sampling-induced, and other low-level forensic             high-level image content.
+clues suggest that semantics-irrelevant information can provide           Extensive experiments validate the effectiveness and gen-
+useful evidence for AI-generated image detection [3], [12].            eralization ability of DTS-Det. On ConImageGen, DTS-Det
+However, these cues are often modeled around specific artifact         achieves an accuracy of 99.6%, outperforming the best-
+sources or generation operations, limiting their role as shared        performing baseline by 10.5%, and achieves state-of-the-art
+evidence across generation paradigms. As a result, semantics-          performance under multiple evaluation settings. In more chal-
+irrelevant information remains a promising yet narrowly mod-           lenging generalization scenarios, DTS-Det achieves the best
+eled source of cross-paradigm forensic evidence. We therefore          performance under cross-dataset evaluation, with accuracies
+systematically examine whether semantics-irrelevant informa-           of 93.2% on PicoBanana and 94.1% on RAID. Under the
+tion itself contains forensic cues shared across generative            cross-media setting, it achieves a video detection accuracy of
+models from different paradigms.                                       87.3%, outperforming the best-performing baseline by 18.0%.
+   The first challenge is to reduce content interference, as           DTS-Det also remains robust to common image operations
+image content can obscure underlying semantics-irrelevant              and adaptive evasion attacks, achieving detection rates of
+texture patterns. Inspired by content suppression in Photo-            95.2% and 81.6% under reconstruction-based and maximum-
+Response Non-Uniformity (PRNU) analysis [29], we aggre-                perturbation black-box adversarial attacks, respectively, out-
+gate a large number of visually diverse samples to suppress            performing the best-performing baseline by 29.5% and 15.3%.
+image-specific components and make generation-related tex-
+                                                                       Contributions. This paper makes the following contributions:
+ture patterns more observable. Based on the visualization
+results, we show, for the first time, that semantics-irrelevant          • We provide a novel and effective detection perspective
+texture patterns exist in generative models across paradigms               that shifts from direct artifact exploitation to texture-
+and manifest as diverse structural textures. These results                 relation modeling, motivated by our first observation that
+suggest that such patterns may constitute a class of forensic              semantics-irrelevant texture patterns exist across genera-
+cues shared across generation paradigms.                                   tive models and paradigms.
+   From Texture Patterns to Texture Relations. Compared                  • We construct ConImageGen, a benchmark covering two
+with real images, generated images show more pronounced                    generation paradigms and 13 generative models. Based
+texture patterns in these visualizations, and their noticeable             on this benchmark, we expose the generalization failure
+differences across generative models suggest that the observed             of existing detectors across generation paradigms.
+patterns may be associated with generative model architec-               • We propose DTS-Det, a detection network equipped with
+tures. To validate this hypothesis, we adapt the PRNU [29]                 a texture-relation encoder and relation-guided attention,
+extraction procedure to obtain single-image texture traces and             which explicitly models semantics-irrelevant texture re-
+
+
+
+                                                                   2
+    lations as forensic evidence for cross-paradigm general-               In our experimental evaluation, we additionally consider
+    ization.                                                            non-adaptive post-processing robustness under common image
+  • We conduct extensive experiments across nine gener-                 degradations to simulate routine image dissemination [34]. Our
+    alization and robustness settings, covering challenging             robustness claims are limited to the evaluated reconstruction-
+    scenarios such as cross-media detection, reconstruction             based attacks, transferable black-box adversarial attacks, and
+    attacks, and black-box adversarial attacks. The results             common degradation settings. We do not consider white-box
+    show that our method achieves state-of-the-art perfor-              attacks or fully adaptive attacks specifically optimized against
+    mance, demonstrating its effectiveness.                             the target detector, which require access to the deployed model
+                                                                        or a different evaluation protocol and are beyond the scope of
+    II. P ROBLEM F ORMULATION AND T HREAT M ODEL
+                                                                        this work.
+A. Problem Formulation
+   Detection Task. We formulate AI-generated image detec-                     III. C ROSS -PARADIGM A NALYSIS OF E XISTING
+tion as a binary classification task. Given an input image                                    F ORENSIC C UES
+x ∈ X , the goal is to determine whether it is real or AI-
+generated. We denote the label as y ∈ {0, 1}, where y = 0                  In this section, we build a unified cross-paradigm analysis
+and y = 1 indicate real and AI-generated images, respectively.          setting based on ConImageGen and complementary out-of-
+A detector fθ : X → [0, 1] predicts the probability that x is           domain evaluations. We then revisit existing forensic cues
+AI-generated, and the final prediction is obtained by applying          to examine whether current detectors remain effective when
+a threshold τ ∈ [0, 1]:                                                 transferring between image-free and image-conditioned gen-
+                                                                        eration paradigms.
+                      ŷ = I [fθ (x) ≥ τ ] .                 (1)
+B. Threat Model                                                         A. Benchmark and Analysis Setting
+   Deployment Assumption. We consider a practical deploy-                  Construction of ConImageGen. As discussed in Sec-
+ment scenario where the detector receives only the image con-           tion I, existing benchmarks leave a gap in cross-paradigm AI-
+tent as input. No provenance metadata, watermark information,           generated image detection, as they do not provide a unified
+source generator identity, or generation prompt is assumed to           setting for evaluating detector generalization across image-free
+be available. The detector must therefore make decisions based          and image-conditioned generation paradigms. To fill this gap,
+solely on visual and forensic evidence contained in the image.          we construct ConImageGen, a comprehensive benchmark
+   Adversary Goal. The adversary aims to make an AI-                    covering both generation paradigms.
+generated image be classified as real while preserving its                 Specifically, the image-free subset is built upon GenIm-
+visual quality and semantic content. This corresponds to                age [20], a million-scale AI-generated image detection bench-
+evasion attempts that weaken, overwrite, or perturb forensic            mark that includes diverse image contents and multiple rep-
+traces without substantially changing the perceived image               resentative generators, including ADM [35], BigGAN [36],
+content [30], [31].                                                     Stable Diffusion v1.4 [37], Stable Diffusion v1.5 [37], VQDM
+   Adversary Capabilities, Attacks, and Scope. We consider              [38], GLIDE [39], Midjourney [40], and Wukong [41]. We
+a transfer-only black-box setting. In practical deployment, the         derive the image-conditioned subset from X2Edit [23] by
+adversary usually does not know which detector is used by               selecting samples generated under real-image guidance, which
+the platform and has no access to the target detector’s pa-             aligns with the image-conditioned generation and detection
+rameters, gradients, training data, or query outputs. However,          setting. This subset covers five image-conditioned editing
+the adversary may know common detector designs used in the              models, including Bagel [42], Kontext [43], OmniConsistency
+community and can train or use external surrogate detectors             [44], GPT-4o [45], and Step1X-Edit [46]. For each generator,
+to craft transferable attacks [32].                                     we collect 10K training images, 2K validation images, and
+   Under this assumption, we evaluate two complementary                 2K testing images. In total, ConImageGen contains 182K AI-
+evasion capabilities. First, the adversary may reconstruct the          generated images and 182K corresponding real images, form-
+AI-generated image, using it as the input or reference in a re-         ing a binary classification benchmark with 364K images. This
+construction or image-conditioned re-generation pipeline [21],          unified benchmark enables controlled evaluation of detector
+[33]. This models practical image reuse, refinement, and re-            generalization within each paradigm and, more importantly,
+dissemination scenarios, where the main semantic content is             across image-free and image-conditioned generation.
+preserved but the original forensic traces may be rewritten or             Analysis Settings. Based on ConImageGen, we first define
+weakened.                                                               an in-domain setting. In this setting, detectors are trained
+   Second, the adversary may conduct transferable black-box             on samples from both image-free and image-conditioned
+adversarial attacks [22]. Since the target detector is inaccessi-       generation and tested on all generative models in the bench-
+ble, the adversary crafts perturbations against external surro-         mark. This setting examines whether existing detectors can
+gate detectors and relies on transferability to attack the unseen       learn forensic cues that remain effective when both generation
+target detector [30], [32]. The target detector is excluded from        paradigms are covered during training. We report the average
+the surrogate ensemble used for attack generation.                      accuracy across all models as the overall metric.
+
+
+
+                                                                    3
+Fig. 1: Average spectra of real and generated images under different generation paradigms. Each spectrum is accumulated from
+5,000 images. Some image-free models exhibit clear spectral cues, whereas the spectral differences between image-conditioned
+generated images and real images are substantially reduced.
+
+
+   We further evaluate out-of-domain generalization using
+image-free samples from RAID [22] and image-conditioned
+samples from Pico-Banana [24]. We use the same detectors
+trained on both generation paradigms in ConImageGen
+and directly test them on these external datasets to examine
+whether the learned forensic cues generalize beyond the train-
+ing benchmark.
+   Finally, we define cross-paradigm settings to assess general-
+ization across generation paradigms. Detectors are trained on
+one paradigm and tested on the other, covering both directions
+between image-free and image-conditioned generation. We
+report the average performance of the two directions as each           Fig. 2: Generalization performance of representative AI-
+method’s cross-paradigm generalization ability.                        generated image detectors. In-domain and out-of-domain ac-
+   Under these settings, we evaluate seven representative detec-       curacy are evaluated using detectors trained on both image-
+tors from three cue families: frequency cues, semantics-related        free and image-conditioned data; cross-paradigm accuracy is
+cues, and semantics-irrelevant cues.                                   averaged over both transfer directions.
+
+B. Revisiting Forensic Cues under Cross-Paradigm Evaluation
+   In this subsection, we analyze the limitations of three types       abnormalities. These results suggest that frequency-domain ev-
+of forensic cues under cross-paradigm detection, based on              idence is becoming less reliable for cross-paradigm detection.
+our experimental results and findings from prior studies [25],            Semantics-related cues. We evaluate UnivFD [9], C2P-
+[27], [28]. Specifically, frequency-domain cues are becoming           CLIP [11], and AIDE [2] as representative detectors for
+increasingly difficult to exploit, semantics-related cues are          semantics-related cues. These methods achieve relatively
+sensitive to training data and generalize poorly when used             strong in-domain performance, with AIDE performing espe-
+alone, and semantics-irrelevant cues remain promising but              cially well, but their performance varies substantially when
+narrowly modeled.                                                      the testing distribution changes. For example, their results
+   Frequency cues. For frequency-domain cues, we evaluate              fluctuate across cross-paradigm and out-of-domain settings,
+F3Net [8] and FreqNet [4] as representative detectors. As              suggesting that such cues can be effective when training and
+shown in Table 2, both methods perform moderately under                testing data share similar content distributions but become
+the in-domain setting but degrade under cross-paradigm and             less reliable under distribution shifts. This is consistent with
+out-of-domain evaluations, indicating that the learned spectral        prior studies showing that semantics-related detectors may
+evidence is not stable across generation paradigms or data             exploit dataset-specific abnormal semantics or spurious cor-
+sources. This trend is consistent with prior studies showing           relations [27], [28]. Therefore, semantics-related cues provide
+that frequency artifacts are becoming increasingly difficult to        useful discriminative information but are insufficient as stan-
+exploit as generative models evolve [25]. Our accumulated              dalone forensic evidence for cross-paradigm generalization.
+spectrum visualizations in Fig. 1 further support this limita-            Semantics-irrelevant cues. For semantics-irrelevant cues,
+tion: compared with image-free generation, image-conditioned           we evaluate NPR [3] and Noiseprint++ [12] as representative
+generation exhibits weaker and less distinguishable spectral           methods that exploit low-level forensic clues beyond image
+
+
+
+                                                                   4
+Fig. 3: Spatial visualization of semantically irrelevant texture patterns across 14 models from two generation paradigms. The
+results for each model are obtained from 5,000 images after suppressing the influence of semantic content. Different models
+exhibit distinctive texture patterns.
+
+
+semantics. NPR achieves competitive performance in some               semantics. Given images of the same resolution generated by
+cross-paradigm settings, suggesting that semantics-irrelevant         the same model, we aggregate a large number of samples from
+cues have potential for generalizable detection. However, its         diverse categories to reveal model-level texture patterns while
+performance still degrades under out-of-domain evaluations,           reducing image-specific content.
+                                                                                                  (g) Ng
+while Noiseprint++ remains unstable across most settings.                Formally, let Xg = {Xi }i=1     denote a set of Ng same-
+These results suggest that although prior studies have explored                                                                (g)
+                                                                      resolution images generated by model g, where Xi             ∈
+compression-related, upsampling-induced, or other low-level           R H×W ×C
+                                                                                 . We compute the cross-sample average as follows:
+forensic clues [3], [12], such cues are often associated with
+                                                                                                          Ng
+specific artifact sources or post-processing operations. As a                                   (g)     1 X (g)
+result, they may not fully capture the shared forensic evidence                            X̄         =       X .                   (2)
+                                                                                                        Ng i=1 i
+across different generative models and generation paradigms.
+                                                                         As discussed in prior work [29], when the samples span
+ Finding. Existing forensic cues fail to generalize across            sufficiently diverse semantic categories, the semantic compo-
+ paradigms, while semantics-irrelevant cues remain insuffi-           nents at each spatial location tend to be weakly correlated
+ ciently modeled and require further exploration.                     across images and are therefore suppressed by averaging. In
+                                                                      contrast, semantics-irrelevant texture traces that consistently
+             IV. T EXTURE R ELATION ACROSS                            appear across images generated by the same model can survive
+                 G ENERATION PARADIGMS                                aggregation and become more visible in X̄(g) . We refer to the
+   Building on the analysis in Section III, we further ex-            resulting aggregated structure as a model-level texture pattern.
+plore semantics-irrelevant cues in this section. Specifically,           Fig. 3 shows that model-level texture patterns differ notice-
+we perform spatial visualization, extraction, and analysis of         ably across generative models. Pronounced texture patterns
+semantics-irrelevant texture patterns from generative models          can be observed in both image-free and image-conditioned
+across different generation paradigms. The results show that          generation, such as BigGAN in the image-free paradigm
+semantics-irrelevant cues manifest as diverse, model-related          and OmniConsistency and GPT-4o in the image-conditioned
+texture patterns across generation paradigms. This analysis           paradigm. Stable Diffusion v1.4 and Stable Diffusion v1.5
+points to texture relation modeling as a novel detection per-         exhibit similar texture patterns despite being different versions,
+spective for cross-paradigm AI-generated image detection.             suggesting that these patterns may be linked to the model
+                                                                      architecture or generation mechanism. These patterns are not
+A. Semantics-Irrelevant Texture Patterns                              simple grid artifacts caused by resizing or JPEG compression,
+   The first step in studying semantics-irrelevant cues is to         nor are they trivial repetitive textures [3], [12]. Instead, they
+suppress content-related interference in images. In real-image        exhibit complex model-related regularities, such as periodicity
+forensics, stable content-independent traces can be estimated         and symmetry. This observation may provide a possible expla-
+by extracting noise residuals and aggregating them from               nation for the limited generalization of previous semantics-
+a large number of images via maximum-likelihood estima-               irrelevant cues. As these cues are often designed around
+tion [29]. Inspired by this idea, we examine whether synthetic        specific operations or artifact sources, such as upsampling or
+images also contain stable traces that are independent of image       compression [3], [12], they may not fully capture structured
+
+
+
+                                                                  5
+model-level texture patterns and may consequently become              while preserving structured texture information, we estimate
+less effective in these cases.                                        local statistics with multiple window sizes and apply a
+                                                                      Wiener-style shrinkage operation to each high-frequency sub-
+ Finding. By suppressing semantic content, we visualize               band [29], [47]. Let Ω = {3, 5, 7, 9} denote the set of local
+ semantics-irrelevant texture patterns in the spatial domain.         window sizes. For each k ∈ Ω, we compute
+ The visualizations reveal that generative models across dif-                                          
+                                                                                 (g,j,b)        (g,j,b)
+ ferent paradigms leave distinct semantics-irrelevant cues,                    µi,k      = Bk YH,i        ,
+ which manifest as model-related texture patterns.                                                      2           2
+                                                                                 (g,j,b)          (g,j,b)        (g,j,b)
+                                                                               ν i,k     = Bk YH,i            − µi,k        ,   (4)
+                                                                                 (g,j,b)               (g,j,b)
+                                                                               ν i,min = min ν i,k               .
+                                                                                                k∈Ω
+
+                                                                      where Bk (·) denotes a box filter with kernel size k × k. The
+                                                                      minimum variance across different window sizes provides a
+                                                                      conservative estimate of local texture stability, which helps re-
+                                                                      duce content-dependent fluctuations while retaining structured
+                                                                      responses that consistently appear in local neighborhoods.
+                                                                         Based on this estimate, we compute a shrinkage coefficient
+                                                                      and obtain the filtered high-frequency sub-band:
+                                                                                                                     (g,j,b)
+                                                                                             (g,j,b)         ν i,min
+                                                                                           Si          =    (g,j,b)
+                                                                                                                               ,
+                                                                                                           ν i,min + σ 2                       (5)
+Fig. 4: Illustration of the proposed texture trace extraction
+                                                                                           e (g,j,b) = S(g,j,b) ⊙ Y(g,j,b) ,
+                                                                                           Y
+pipeline. Each image is processed by multi-scale wavelet                                     H,i        i          H,i
+decomposition and multi-window local filtering to obtain a
+                                                                      where σ denotes the assumed noise standard deviation, and
+single-image trace, which is then aggregated via maximum-
+                                                                      ⊙ denotes element-wise multiplication. The filtered high-
+likelihood estimation to capture model-level texture patterns.
+                                                                      frequency components are then reconstructed into a semantics-
+                                                                      suppressed residual, which is used as the single-image texture
+B. Extraction of Texture Patterns                                     trace:
+   This subsection extracts semantics-irrelevant texture pat-
+                                                                                            n             o             
+                                                                               (g)      −1         (g,j,b)
+terns from AI-generated images and analyzes their character-                 Ti = W         0, YH,i
+                                                                                                 e                         .     (6)
+                                                                                                                          j=1,...,J; b=1,2,3
+istics. In AI-generated image detection, the detector typically
+receives a single image as input. We therefore first extract                           (g)
+                                                                      The resulting Ti suppresses low-frequency semantic content
+a single-image texture trace from each image to suppress              while retaining structured high-frequency responses, including
+semantic interference as much as possible. As illustrated in          periodic texture patterns that are consistent with the observed
+Fig. 4, we then aggregate traces from images generated by the         characteristics of synthetic images.
+same model to construct a model-level texture pattern. This              Model-Level Texture Pattern Construction. Single-image
+design allows image-specific content to be weakened while             texture traces still contain residual image-specific varia-
+model-consistent texture structures are enhanced.                     tions.Compared with raw images, the extracted traces contain
+   Single-Image Texture Trace Extraction. Given an im-                a texture-pattern signal that remains weak and embedded in
+        (g)
+age Xi generated by model g, we follow wavelet-domain                 image-dependent noise [29]; therefore, we prefer maximum
+residual extraction with multi-window local variance esti-            likelihood estimation aggregation over simple accumulation
+mation [29], [47]. We first perform a multi-scale wavelet             to estimate a stable model-level pattern from trace responses
+decomposition using a J-level discrete wavelet transform:             extracted from images generated by the same model:
+                         n          o              
+             (g)        (g)    (g,j,b)                                                          PNg (g)          (g)
+       W Xi       = YL,i , YH,i                         , (3)                             (g)          T ⊙X
+                                      j=1,...,J; b=1,2,3                                P̂ = P i=1  i 2 i ,                      (7)
+                                                                                                   Ng     (g)
+         (g)                                                                                       i=1  X i     +  ϵ
+where YL,i denotes the low-frequency approximation compo-
+             (g,j,b)
+nent, and YH,i denotes the high-frequency detail sub-band             where ϵ is a small constant for numerical stability, and ⊙
+at scale j and orientation b. Since image semantics are mainly        denotes element-wise multiplication. This aggregation reduces
+concentrated in the low-frequency component, we discard               random noise that varies across individual images and en-
+   (g)
+YL,i and retain the high-frequency sub-bands as semantics-            hances texture traces that consistently appear across samples
+suppressed representations [29].                                      from the same generator. The estimated P̂(g) , shown in Fig. 3,
+   However, high-frequency components may still contain               is regarded as the model-level texture pattern of generator g
+image-specific fluctuations [47]. To reduce unstable responses        and is used for subsequent model-related analysis.
+
+
+
+                                                                  6
+C. Analysis of Model-Related Texture Patterns                           to prior work and open-source model analysis, also show
+   After extracting single-image texture traces and constructing        stronger cross-associations than unrelated generators. This
+model-level texture patterns, we further analyze whether these          indicates that the extracted semantics-irrelevant texture traces
+patterns are associated with generative model architectures.            contain model- and architecture-related information rather than
+To this end, we use peak-to-correlation energy (PCE) [29] to            random residuals.
+measure the match between a single-image texture trace and a               This model-related property suggests that directly relying on
+reference model-level texture pattern. The reference pattern is         specific semantics-irrelevant texture patterns may have limited
+constructed from images generated by a candidate model and              generalization, as new generative models could introduce pre-
+does not include the test image being evaluated.                        viously unseen patterns. Nevertheless, synthetic images from
+                            (g)
+   Given a test image Xi generated by model g and a                     different generation paradigms still tend to differ from real
+candidate model h, we define the query single-image texture             images in the semantics-irrelevant texture space, indicating a
+trace and the reference model-level texture pattern as                  potentially more generalizable forensic cue.
+                              
+               (g)         (g)
+             Ti = T Xi           ,   Q(h) = P̂(h) ,          (8)
+
+where T (·) denotes the single-image texture trace extraction
+              (g)
+operator, Ti is the query trace extracted from the test
+image, and Q(h) is the reference model-level texture pattern
+                                              (g)
+of candidate model h. The test image Xi is not used
+                      (h)
+when constructing Q . We then compute the normalized
+correlation response between the query trace and the reference
+pattern:
+                   P      (g)        (h)
+    (g,h)           m,n Ti (m, n)Q       (m + u, n + v)
+  ρi      (u, v) =                                      . (9)
+                               (g)
+                              Ti      Q(h) 2
+                                       2
+
+A strong match between the query trace and the reference
+pattern should produce a sharp and well-localized peak in the
+correlation map. Let (u⋆i , vi⋆ ) denote the peak location:
+                                           (g,h)
+               (u⋆i , vi⋆ ) = arg max ρi           (u, v).   (10)
+                                 u,v
+
+We compute the average sidelobe energy by excluding a small
+neighborhood around the peak:                                           Fig. 5: PCE matching results between model-level texture pat-
+                                             i2                         terns and image-level texture traces from different generative
+           (g,h)     1     X h (g,h)
+                                                                        models. Strong diagonal responses and high PCE similarity
+          Ei,sl =                 ρi   (u, v) ,        (11)
+                   |Ωsl |                                               among architecturally similar models reveal model-related
+                           (u,v)∈Ωsl
+                                                                        characteristics in the extracted texture patterns.
+where Ωsl denotes the sidelobe region. The PCE score is then
+defined as the ratio between the squared peak response and
+the average sidelobe energy:                                             Finding. By extracting and analyzing semantics-irrelevant
+                             h
+                                (g,h) ⋆ ⋆
+                                               i2                        texture patterns, we introduce texture relation modeling as
+                               ρi    (ui , vi )                          a new perspective for AI-generated image detection.
+                     (g,h)
+               PCEi        =         (g,h)
+                                                  .     (12)
+                                   Ei,sl
+A higher PCE score indicates a stronger match between                           V. T HE P ROPOSED DTS-D ET F RAMEWORK
+the query trace from model g and the reference pattern of                 Motivated by the observations in Section III and Section IV,
+candidate model h [29]. We treat PCE as a similarity score and          we propose DTS-Det, a detection framework that leverages
+evaluate its ability to distinguish same-generator pairs from           semantics-irrelevant texture relations and complements them
+different-generator pairs using AUC. Positive pairs correspond          with high-level semantics-related evidence for comprehensive
+to h = g, while negative pairs correspond to h ̸= g. A higher           AI-generated image detection.
+AUC indicates stronger association between query traces and
+the model-level texture patterns of their source generators.            A. Overview
+   The results show that texture traces usually match most                As illustrated in Fig. 6, DTS-Det consists of three main
+strongly with the model-level texture pattern of their source           components: a texture-relation stream, a semantic cue stream,
+generator. Stable Diffusion v1.4, Stable Diffusion v1.5 [37],           and a prediction head. The texture-relation stream takes
+and Wukong [41], which are architecturally related according            semantics-irrelevant texture traces as input and provides a
+
+
+
+                                                                    7
+Fig. 6: Overview of the proposed DTS-Det framework. DTS-Det extracts semantics-irrelevant texture traces and models their
+relations through a texture-relation stream, where learned relation priors are injected into relation-guided attention blocks. A
+complementary semantic cue stream provides high-level semantic evidence for comprehensive AI-generated image detection.
+
+
+                                                                                                      a
+texture-relation prior that captures semantics-irrelevant foren-       DINOv3 [49], denoted as Etex      (·), and transform its output
+sic cues. The semantic cue stream operates on the original             into a token-level texture-relation bias:
+RGB image and extracts high-level semantics-related evi-                                          a
+                                                                                         m = Pb (Etex (Rtex (x))) ,               (13)
+dence. Finally, the prediction head aggregates the evidence
+from both streams and produces the detection result.                   where Pb (·) denotes the bias transformation, which com-
+                                                                       presses the channel dimension of each patch feature into a
+                                                                       scalar bias, applies normalization and bounded activation, and
+B. Texture Relation Stream
+                                                                       completes the bias sequence to match the full DINOv3 token
+   Following the findings in Sec. IV-C, the texture-relation           layout. The resulting m provides patch-wise texture-relation
+stream shifts the focus from fixed texture traces to texture-          evidence for subsequent relation-guided attention.
+relation modeling. It first suppresses semantic content and               2) Relation-Guided Attention: The token-level texture-
+preserves semantics-irrelevant texture traces using the residual       relation bias m is injected into DINOv3 self-attention as a
+extraction operator introduced in Sec. IV. These traces are            continuous attention bias [50], [51]. Rather than using it as
+then encoded into a texture-relation prior, which characterizes        an independent classification feature, we use it to modulate
+relationships among texture patterns rather than fixed artifact        DINOv3 token aggregation according to patch-wise texture-
+appearances. The prior is injected into relation-guided atten-         relation evidence. Let X(l) denote the input tokens of the l-th
+tion to enable texture-relation learning for AI-generated image        DINOv3 block. Given the query, key, and value projections
+detection.                                                             Q(l) , K(l) , and V(l) , the relation-guided attention output is
+   1) Texture Relation Modeling: The goal of texture relation          computed as:
+modeling is to convert semantics-irrelevant texture traces into                                            ⊤           !
+                                                                              (l)               Q(l) K(l)
+a token-level texture-relation bias for relation-guided atten-             X̂ = softmax              √        + λB(m) V(l) ,      (14)
+tion. Given an input image x, we first obtain its semantics-                                           d
+suppressed texture trace using the residual extraction operator        where d is the head dimension, λ is a learnable scaling
+Rtex (·). The resulting trace is then fed into a texture encoder       factor, and B(·) broadcasts m across attention heads and query
+Etex (·) to capture texture organization beyond fixed artifact         tokens. In this way, the texture-relation bias is added along
+appearances.                                                           the key-token dimension, allowing patch tokens with stronger
+   We use SegFormer [48] as the texture encoder because its            texture-relation responses to receive higher attention during
+hierarchical structure can capture both local texture responses        token aggregation.
+and broader texture organization. We use the encoder stage                In practice, relation guidance is applied only to the last Lg
+whose spatial resolution matches the patch-token layout of             DINOv3 blocks, with Lg = 2 by default. This introduces
+
+
+
+                                                                   8
+TABLE I: In-domain performance comparison on ConImageGen. All methods are trained with data from both image-free and
+image-conditioned generation paradigms and evaluated on all generators. All values are reported as ACC/F1 (%).
+
+                                                   Image-Free Generation                                                    Image-Conditioned Generation
+Baselines                                                                                                                                                               AVG
+               ADM         BigGAN      GLIDE       Midjourney   SDv1.4      SDv1.5          VQDM        Wukong      Bagel   GPT-4o Kontext OmniCons. Step1XEdit
+
+ResNet50     68.8/69.6     54.1/54.6   68.6/69.9    78.0/77.7   79.2/79.6   82.7/83.0       62.8/62.0   77.7/78.3 56.0/57.0 64.3/63.5 53.1/51.4 72.5/72.5   64.6/63.0 67.9/67.8
+Xception     66.3/66.9     73.1/72.6   73.8/74.2    80.2/80.5   86.2/85.7   84.7/84.8       65.6/64.9   81.2/80.9 58.9/57.8 63.2/62.7 56.3/55.0 68.6/67.8   67.8/65.7 70.7/70.7
+SigLIP2      61.0/55.2     54.2/42.0   73.5/72.8    85.4/86.9   85.6/88.9   86.6/88.7       70.1/68.1   85.4/87.2 50.1/59.8 57.7/69.1 49.2/65.1 65.4/74.0   55.2/64.9 67.6/70.8
+DINOv3       81.5/77.6     97.7/97.8   92.2/91.7    86.8/85.2   97.9/97.9   97.9/97.9       96.9/96.8   98.4/98.4 60.7/47.5 78.6/80.3 52.9/41.1 88.0/89.1   65.5/64.3 84.2/82.0
+SigLIP2
+             96.5/97.2     98.0/97.9   92.7/92.7    90.4/90.5   97.1/97.1   97.4/97.4       98.4/98.4   98.2/98.2 63.4/49.2 88.6/86.3 65.5/53.4 91.3/91.3   81.1/78.7 89.1/85.4
++DINOv3
+
+F3Net        83.7/83.3     85.9/86.3   83.6/84.0    90.2/90.1   92.9/93.1   90.7/90.9       70.0/69.8   91.4/91.2 55.0/52.8 78.2/78.4 52.1/43.7 87.5/86.6   64.0/60.6 78.9/78.2
+FreqNet      93.3/93.5     76.6/78.6   76.0/77.5    82.3/82.6   89.6/89.7   89.8/89.3       77.5/78.6   85.6/85.0 64.6/63.2 72.2/71.2 55.7/55.0 72.9/71.4   63.1/62.2 76.9/76.8
+
+Noiseprint++ 48.9/63.9     54.6/69.4   53.7/68.4    53.4/68.6   48.3/63.6   47.0/62.4       48.9/64.0   48.9/63.8 52.7/67.4 51.2/67.1 50.9/66.9 39.3/53.8   48.1/62.1 49.7/64.7
+NPR          93.3/93.5     78.8/79.5   81.4/82.0    84.2/83.5   81.7/82.3   83.3/83.2       83.5/83.3   83.9/84.1 59.6/57.8 88.4/88.0 64.3/62.1 87.5/87.6   65.6/65.4 79.7/79.4
+
+UnivFD       77.4/71.8     94.6/94.5   94.2/94.1    76.6/71.7   88.2/87.1   90.2/89.7       87.7/86.3   83.9/81.7 56.7/39.6 70.3/71.2 56.0/46.2 88.1/89.9   58.9/51.1 78.7/74.9
+C2P-CLIP     71.6/65.0     91.1/91.4   90.4/90.8    74.8/71.0   74.4/68.9   76.0/72.8       76.7/75.4   74.4/69.4 53.7/61.9 57.7/65.0 52.4/56.4 65.2/73.1   56.7/66.8 70.4/71.4
+AIDE         97.6/97.6     85.4/86.4   76.0/76.4    89.9/89.8   97.7/97.7   97.6/97.6       94.0/93.9   97.8/97.9 82.7/80.2 77.4/77.2 50.4/43.5 97.2/97.3   91.1/90.9 87.3/86.6
+
+DTS-Det     100.0/100.0 100.0/100.0 100.0/100.0 99.6/99.6 100.0/100.0 100.0/100.0 100.0/100.0 100.0/100.0 99.2/99.2 99.5/99.5 96.8/96.9 100.0/100.0 99.5/99.5 99.6/99.5
+
+
+
+
+texture-relation evidence at the high-level token aggregation                                                            VI. E XPERIMENTS
+stage while avoiding unnecessary perturbation to lower-level                                    This section evaluates DTS-Det in terms of detection per-
+pretrained representations.                                                                  formance, generalization ability, and robustness under diverse
+                                                                                             evaluation scenarios. We further conduct ablation studies to
+C. Semantic Cue Stream and Final Prediction                                                  analyze the contribution of each proposed component. Across
+                                                                                             these evaluations, DTS-Det consistently outperforms existing
+   Semantic-related features remain useful as complementary                                  detectors. The results show that relation-guided texture mod-
+evidence for AI-generated image detection. Therefore, besides                                eling provides semantics-irrelevant evidence that generalizes
+the texture-relation stream, DTS-Det introduces a semantic                                   across both paradigms, thereby improving the robustness and
+cue stream to provide complementary high-level evidence for                                  generalization of AI-generated image detection.
+comprehensive forensic analysis. The semantic cue stream is
+implemented with SigLIP2 [52], a vision-language pretrained                                  A. Experimental Setup
+encoder. Given the original RGB image x, this stream extracts                                   Benchmarks: We use ConImageGen, introduced in
+a high-level semantics-related representation from image con-                                Sec. III-A, for in-domain and cross-paradigm evaluation. It
+tent. To support comprehensive forensic analysis, it comple-                                 covers both image-free and image-conditioned generation with
+ments the texture-relation stream with semantic evidence.                                    13 generative models, using 2K generated images and 2K real
+   To adapt the pretrained encoders while preserving their                                   images per generator for testing. For cross-dataset evaluation,
+generalizable representations, we use lightweight LoRA [53]                                  we use PicoBanana [24] and the clean split of RAID [22].
+adaptation. Specifically, LoRA modules are inserted into the                                 From PicoBanana, we randomly sample 5K image-conditioned
+query and value projections of both pretrained encoders, en-                                 editing samples and their 5K corresponding source images
+abling parameter-efficient adaptation without fully fine-tuning                              as fake/real test pairs. From RAID, we randomly sample
+the backbones. For final prediction, we concatenate the class-                               1K clean generated images and 1K real images to evaluate
+token representations from the two streams. Let cd denote                                    generalization to unseen image-free generators. For cross-
+the texture-relation-guided representation from the DINOv3                                   media evaluation, we use GenVidBench [39], which covers 11
+stream, and cs denote the semantic representation from the                                   video generation models. We conduct frame-level evaluation
+SigLIP2 stream. The prediction is computed as:                                               by randomly sampling 1K generated videos and 1K real videos
+                                                                                             for each video generator, and extracting one random frame
+                         ŷ = σ (Wc [cd ; cs ] + bc ) ,                        (15)          from each video as the image-level test sample. For robustness
+                                                                                             evaluation, we consider common image operations on ConIm-
+where [cd ; cs ] denotes feature concatenation, σ(·) is the sig-                             ageGen, reconstruction-based attacks on ConImageGen, and
+moid function, and Wc and bc are learnable classifier pa-                                    transferable black-box adversarial attacks from RAID [22].
+rameters. Through this fusion, DTS-Det combines semantics-                                   For the RAID adversarial benchmark, we randomly sample 1K
+irrelevant texture-relation evidence with semantics-related ev-                              adversarial examples and their corresponding 1K real images
+idence, enabling a more comprehensive forensic analysis.                                     for testing.
+
+
+
+                                                                                        9
+TABLE II: Cross-paradigm generalization results. All values               TABLE III: Cross-dataset generalization results when training
+are reported as ACC/F1 (%). IF and IC denote image-free                   on ConImageGen. All values are reported as ACC/F1 (%).
+and image-conditioned generation, respectively, and arrows                PicoBanana and RAID are used as out-of-domain datasets for
+indicate the training-to-testing direction.                               image-conditioned and image-free generation, respectively.
+
+    Type       Baselines          IF→IC      IC→IF         AVG                Type       Baselines        PicoBanana    RAID         AVG
+
+               ResNet50          65.6/64.1   61.9/60.7   63.7/62.4                       ResNet50          57.3/55.3   46.1/38.8   51.7/47.1
+               Xception          70.7/70.1   61.9/62.7   66.3/66.4                       Xception          65.9/65.7   50.6/45.8   58.3/55.8
+  Generic                                                                   Generic
+               SigLIP2-LoRA      73.1/73.9   63.0/55.0   68.0/64.5                       SigLIP2-LoRA      59.2/63.5   45.4/48.2   52.3/55.9
+  Classifier                                                                Classifier
+               DINOv3-LoRA       79.9/71.4   60.7/48.9   70.3/60.1                       DINOv3-LoRA       52.0/25.1   56.9/54.5   54.5/39.8
+               SigLIP2+DINOv3    84.5/83.8   84.5/81.0   84.5/82.4                       SigLIP2+DINOv3     50.9/8.8   63.2/63.2   57.1/36.0
+
+               F3Net             72.3/72.8 63.0/63.5 67.6/68.1                           F3Net             53.1/52.8   48.4/40.4 50.8/46.6
+  Frequency                                                                 Frequency
+               FreqNet           69.6/70.0 56.9/52.7 63.2/61.3                           FreqNet           67.1/66.5   50.6/45.2 58.9/55.9
+
+               Noiseprint++      50.4/69.6 49.9/66.3 50.2/67.9              Semantic-    Noiseprint++      48.8/65.8   37.7/54.7 43.3/60.3
+  Semantic-
+                                                                            irrelevant   NPR               75.6/75.9   49.6/45.4 62.6/60.7
+  irrelevant   NPR               83.1/83.2 67.5/69.1 75.3/76.1
+                                                                                         UnivFD            53.7/26.8   76.9/70.2 65.3/48.5
+               UnivFD            77.2/79.7 63.5/62.8 70.4/71.3
+                                                                            Semantic     C2P-CLIP          53.9/53.3   43.8/33.3 48.9/43.3
+  Semantic     C2P-CLIP          68.8/74.4 59.4/53.2 64.1/63.8
+                                                                                         AIDE              62.4/53.7   52.8/52.3 57.6/53.0
+               AIDE              81.7/81.6 67.9/66.2 74.8/73.9
+                                                                                         Ours              93.2/93.1   94.1/91.9 93.7/92.5
+               Ours              92.2/90.8 96.2/95.9 94.2/93.3
+
+
+                                                                             As shown in Table I, DTS-Det achieves the best overall
+   Baselines. We compare DTS-Det with representative de-                  performance, with an average ACC/F1 of 99.6/99.5 across 13
+tectors from different cue families: frequency-domain meth-               generative models. It improves over the best baseline results
+ods, including F3Net [8] and FreqNet [4]; semantic-cue-                   by 10.5/12.9 percentage points in ACC/F1. Since the generic
+based methods, including UnivFD [9], C2P-CLIP [11],                       backbone baselines already include SigLIP2, DINOv3, and
+and AIDE [2]; and semantic-irrelevant methods, includ-                    their feature-level fusion, this gain cannot be explained by
+ing Noiseprint++ [12] and NPR [3]. We further include                     stronger pretrained semantic representations alone. Instead,
+generic classifier baselines, including ResNet50 [54], Xcep-              it demonstrates the benefit of introducing semantic-irrelevant
+tion [55], SigLIP2-LoRA [52], DINOv3-LoRA [49], and                       texture relations as complementary forensic evidence.
+SigLIP2+DINOv3. ResNet50 and Xception are trained with a                     The performance breakdown further exposes the limitations
+binary classifier, SigLIP2-LoRA and DINOv3-LoRA fine-tune                 of existing detectors. Although several baselines perform well
+the corresponding pretrained encoders with LoRA [53] and a                on image-free generative models, they fail to maintain com-
+binary classifier, while SigLIP2+DINOv3 concatenates their                parable performance on image-conditioned generative models,
+class-token features for classification. These baselines help             especially Bagel [42] and Kontext [43]. This suggests that
+evaluate the effectiveness of texture-relation-guided modeling.           their learned evidence does not generalize well across different
+   Metrics and Implementation Details. We report accuracy                 generation paradigms and may still depend on artifacts that
+and F1 score for all experiments, denoted as ACC/F1. Fol-                 are unstable or model-specific. In contrast, DTS-Det main-
+lowing common practice [2], [3], all values are reported on               tains consistently high performance across both generation
+a 0–100 scale in tables and result discussions. For DTS-Det,              paradigms. This further supports the effectiveness of modeling
+all input images are resized to 384 × 384, and the model is               texture relations as more generalizable forensic evidence.
+optimized using AdamW [56] with a learning rate of 1 × 10−5
+and a weight decay of 0.05. We use lightweight LoRA [53]                   Result. DTS-Det maintains effective detection perfor-
+adaptation for the pretrained encoders. For a fair comparison,             mance across both image-free and image-conditioned gen-
+we follow the original preprocessing and training protocols                eration paradigms, suggesting that the learned texture rela-
+of each baseline when available, and train and evaluate all                tions provide useful forensic evidence for both paradigms.
+methods using the same data splits.
+
+B. Main Results on ConImageGen                                            C. Generalization Evaluation
+   We first evaluate all methods under the in-domain setting                 We evaluate the generalization ability of DTS-Det from
+of ConImageGen, where detectors are trained with data from                three perspectives: cross-paradigm, cross-dataset, and cross-
+both image-free and image-conditioned generation paradigms                media. Cross-paradigm and cross-dataset settings examine
+and tested on all generative models in the benchmark. This set-           whether the learned forensic cues are less dependent on
+ting examines whether a detector can learn forensic evidence              specific generation paradigms, dataset sources, or generator
+that remains effective across both generation paradigms, rather           families. Cross-media evaluation further provides a more chal-
+than fitting cues that are specific to a particular paradigm.             lenging setting, where the detector is tested on a different
+
+
+
+                                                                     10
+TABLE IV: Cross-media evaluation on GenVidBench. All detectors are trained on ConImageGen and evaluated at the frame
+level on videos generated by 11 different video generation models. All values are reported as ACC/F1 (%).
+
+                                                            Video Generation Models
+ Baselines                                                                                                                            AVG
+                CogVideo Keling      Mora     MuseV      Sora     SVD      ModelScope OpenSora      Pika   T2V-Zero VideoCraftV2
+
+ ResNet50       53.5/52.3 58.5/58.7 61.5/61.7 54.0/53.5 50.5/49.2 56.5/55.8 58.0/58.4   62.5/63.7 57.0/56.7 61.5/62.8   61.5/61.7   57.7/57.6
+ Xception       49.0/49.5 56.2/57.2 54.8/55.0 53.0/54.3 49.4/48.7 58.0/59.9 61.5/62.8   58.0/59.2 57.0/59.1 56.5/56.3   63.5/65.4   56.1/57.0
+ SigLIP2-LoRA 50.5/61.7 48.2/59.0 44.5/55.0 47.5/58.4 40.3/49.7 48.3/59.6 56.5/65.0     50.5/58.0 60.5/69.2 50.7/58.2   56.0/66.7   50.3/60.1
+ DINOv3-LoRA 76.5/80.9 61.5/75.5 57.5/81.0 57.5/58.3 54.6/54.8 56.0/57.3 77.0/81.3      75.5/79.8 75.0/79.3 76.2/80.3   76.8/81.3   67.6/73.6
+ SigLIP2
+             83.5/81.8 58.5/36.6 84.0/82.4 53.0/21.6 66.3/52.8 50.5/13.9 80.5/77.9      85.5/84.5 77.0/72.9 86.5/85.6   86.4/85.6   73.8/63.2
+ +DINOv3
+
+ F3Net          57.5/57.7 52.0/51.9 58.5/57.8 49.0/47.4 48.4/47.6 53.5/52.7 56.0/56.4   56.5/56.7 54.0/54.9 56.2/55.6   53.8/53.5   54.1/53.8
+ FreqNet        53.0/54.3 50.0/50.4 43.5/43.2 46.5/46.7 43.8/43.2 51.0/53.3 49.5/49.2   50.0/48.9 49.5/48.7 47.0/46.5   51.0/51.5   48.6/48.7
+
+ Noiseprint++   53.0/67.8 52.5/67.4 47.5/62.6 51.0/65.9 51.1/65.9 53.0/67.8 49.0/65.5   50.0/66.4 49.2/65.4 47.5/64.1   48.5/65.1   50.2/65.8
+ NPR            49.5/50.2 58.0/59.9 58.5/61.0 52.5/54.9 54.5/55.2 52.0/55.6 66.5/68.2   61.5/63.2 55.0/57.5 56.2/56.9   63.8/66.3   57.1/58.9
+
+ UnivFD         81.0/83.0 66.5/65.6 75.5/76.9 52.0/42.1 69.4/69.0 53.0/44.0 69.0/70.4   77.5/80.2 73.0/75.2 76.5/79.1   69.0/70.4   69.3/68.7
+ C2P-CLIP       49.0/59.8 46.0/56.4 48.5/59.3 49.5/60.4 49.5/60.2 47.5/58.2 52.0/63.1   40.5/49.8 53.0/64.1 38.0/46.5   47.2/57.6   47.3/57.7
+ AIDE           55.8/65.1 52.2/60.2 61.5/67.3 53.0/61.7 47.9/55.6 58.2/67.5 58.5/73.7   58.4/63.7 52.0/59.6 62.5/68.1   54.0/58.8   55.8/63.6
+
+ DTS-Det        95.5/95.7 79.1/76.2 95.1/95.2 76.2/71.8 83.2/81.5 76.1/71.7 92.2/92.6   91.5/92.1 88.5/89.0 92.1/92.5   91.0/91.6   87.3/86.4
+
+
+
+media form, reflecting whether the learned cues are related              texture relations rather than exact trace templates, and com-
+to the visual-content synthesis process and can generalize               bines them with semantic evidence. This directly supports our
+beyond image-level training data. Across these settings, DTS-            motivation that texture relations provide a more transferable
+Det shows favorable generalization performance, validating the           semantic-irrelevant cue for cross-paradigm detection.
+effectiveness of the proposed framework.                                    2) Cross-Dataset Generalization: We next evaluate cross-
+   1) Cross-Paradigm Generalization: We first evaluate cross-            dataset generalization by training all detectors on ConImage-
+paradigm generalization on ConImageGen by training detec-                Gen and testing them on out-of-domain data collected from
+tors on one generation paradigm and testing them on the                  PicoBanana [24] and the clean split of RAID [22], without
+other. Specifically, IF→IC trains on image-free generators and           further fine-tuning. Specifically, we use PicoBanana to obtain
+tests on image-conditioned generators, while IC→IF trains on             out-of-domain image-conditioned samples, and use RAID-
+image-conditioned generators and tests on image-free gener-              clean to obtain out-of-domain image-free samples. This setting
+ators. This setting directly tests whether the learned forensic          tests whether the learned evidence can generalize to unseen
+evidence can transfer across generation paradigms, rather than           data sources and generator families under both generation
+relying on paradigm-specific artifacts.                                  paradigms. As shown in Table III, DTS-Det achieves the
+   As shown in Table II, DTS-Det achieves the best                       best cross-dataset performance, with an average ACC/F1 of
+performance in both directions, with an average AC-                      93.7/92.5. On PicoBanana, DTS-Det reaches 93.2/93.1, out-
+C/F1 of 94.2/93.3. It outperforms the strongest baseline,                performing the strongest baseline, NPR, by 17.6/17.2. On
+SigLIP2+DINOv3, by 9.7/10.9 percentage points. The im-                   RAID-clean, DTS-Det obtains 94.1/91.9.
+provement is consistent in both transfer directions, reaching               The strong performance on both out-of-domain image-
+92.2/90.8 for IF→IC and 96.2/95.9 for IC→IF. This shows                  conditioned and image-free datasets shows that DTS-Det
+that DTS-Det does not rely on the mixed training distribution            does not rely on ConImageGen-specific artifacts or generator-
+in the in-domain setting, but learns cues that remain effective          specific distributions. Instead, it indicates that texture relations
+when the target paradigm is unseen.                                      provide generalizable semantic-irrelevant forensic evidence
+   The results also reflect the cue mismatch analyzed in                 across datasets, generator families, and generation paradigms.
+Sec. III. Frequency-based detectors degrade because spectral                3) Cross-Media Generalization: We further evaluate
+artifacts are not stable across paradigms. Semantic-based de-            whether image-trained detectors can generalize to AI-
+tectors provide partial transfer, but remain sensitive to the            generated video frames. All detectors are trained on Con-
+target paradigm. Existing semantic-irrelevant methods such as            ImageGen and directly tested on frame-level samples from
+NPR are stronger than several semantic baselines, but still rely         GenVidBench [39]. For each video generator, we randomly
+on narrowly modeled local traces. In contrast, DTS-Det models            sample one frame from each selected generated video as a fake
+
+
+
+                                                                    11
+Fig. 7: Robustness comparison under image degradations and adaptive attacks. JPEG compression and resizing simulate real-
+world degradations, while adversarial and reconstruction attacks evaluate deployment robustness.
+
+
+image, and apply the same strategy to real videos. No temporal            D. Robustness Evaluation
+information or video-level supervision is used, making this                  We further evaluate whether DTS-Det remains reliable when
+a challenging single-frame cross-media generalization setting.            forensic cues are weakened or adversarially perturbed. We con-
+As shown in Table IV, DTS-Det achieves the best overall                   sider two challenging scenarios: common image degradations
+performance on generated video frames, with an average                    and adaptive attacks.
+ACC/F1 of 87.3/86.4. It outperforms the strongest image-                     1) Common Image Degradations: We evaluate the relia-
+detector baseline, SigLIP2+DINOv3, by 13.5/23.2 percentage                bility of DTS-Det under common image operations on Con-
+points, and achieves the best results across all tested video             ImageGen in the in-domain setting. Test images from all
+generators.                                                               generation paradigms are perturbed with JPEG compression
+   Notably, DTS-Det is not trained on any video data, yet its             and resizing to simulate routine degradations during image
+single-frame ACC is even higher than the best Top-1 accuracy              sharing. All detectors are trained on clean images and tested
+reported by many video-trained detectors on GenVidBench,                  under different JPEG quality factors and resizing scales. As
+although the evaluation protocols are not identical.                      shown in Fig. 7, DTS-Det achieves the best performance
+                                                                          under both operations. Under strong JPEG compression with
+   Since DTS-Det is trained only on images but remains
+                                                                          quality 40, it maintains 90.9 accuracy compared with 99.6
+effective on synthetic video frames, its learned evidence is not
+                                                                          on clean images. Under the strongest downsampling scale
+limited to still-image distributions. Instead, the result suggests
+                                                                          of 0.5, it maintains 91.8 accuracy, while AIDE and C2P-
+that semantic-irrelevant texture relations are closely related to
+                                                                          CLIP drop to 58.1 and 58.2, respectively. These results show
+the synthesis behavior of generative models, making them a
+                                                                          that DTS-Det remains reliable under common post-processing
+generalizable forensic perspective for detecting AI-generated
+                                                                          operations that degrade low-level artifacts, suggesting that
+visual content across media forms.
+                                                                          local-global texture relations provide more stable semantics-
+                                                                          irrelevant forensic evidence than fragile artifact-specific cues.
+                                                                             2) Reconstruction-Based Attacks: We next evaluate robust-
+ Result. The DTS-Det framework demonstrates strong gen-
+                                                                          ness under reconstruction-based attacks. All detectors are
+ eralization ability in both cross-paradigm and cross-dataset
+                                                                          trained on clean ConImageGen using data from all generators
+ evaluations. Moreover, its zero-shot detection performance
+                                                                          and then tested on reconstructed samples. Following the re-
+ on synthetic videos further highlights the close connection
+                                                                          construction protocol of DRCT [21], we construct this setting
+ between texture relations and the underlying synthesis
+                                                                          using AI-generated images from the Bagel subset of Con-
+ behavior of visual-content generative models.
+                                                                          ImageGen. This setting is challenging because reconstruction
+
+
+
+                                                                     12
+can rewrite the original forensic traces. As shown in Fig. 7,
+reconstruction severely weakens existing detectors. Frequency-
+based methods drop close to random performance, with F3Net
+decreasing from 78.9 to 50.2 and FreqNet from 76.9 to
+49.8. Semantic-irrelevant methods are also fragile: NPR drops
+from 79.7 to 50.2. Even AIDE, the strongest clean baseline,
+decreases from 87.3 to 49.9. In contrast, DTS-Det remains
+stable, decreasing only from 99.6 to 95.2. This result directly
+supports our motivation: reconstruction can remove or rewrite
+exact artifact traces, but local-global texture relations provide
+more persistent semantic-irrelevant evidence when combined
+with semantic cues.
+   3) Transferable Black-Box Adversarial Attacks: Finally,
+we evaluate robustness against adaptive black-box adversar-
+ial attacks using RAID [22]. Following the RAID protocol,
+detectors are tested on clean samples and adversarial samples
+under perturbation levels ϵ = 8/255, 16/255, and 32/255.
+Here, ϵ denotes the L∞ perturbation budget, which bounds
+the maximum per-channel pixel change after normalizing
+image intensities to [0, 1]. Equivalently, these settings allow          Fig. 8: Ablation comparison across in-domain, generalization,
+each pixel channel to be changed by at most 8, 16, or                    and robustness settings. Setting A uses SigLIP2, Setting B uses
+32 intensity levels on the standard 8-bit image scale, with              DINOv3, Setting C fuses the two semantic components, and
+larger ϵ indicating stronger attacks. As shown in Fig. 7,                Ours denotes the full DTS-Det with texture-relation guidance.
+adversarial perturbations severely degrade existing detectors.
+This effect is especially clear for semantic-dominant methods.
+SigLIP2+DINOv3 achieves 73.2 on clean RAID images but                    semantic-only fusion still degrades under distribution shifts
+degrades substantially under adversarial perturbations. UnivFD           and attacks, showing that stronger semantic backbones alone
+similarly drops from 76.9 on clean images to 69.8 and 52.1               are insufficient for robust forensic detection. With relation-
+under ϵ = 8/255 and ϵ = 16/255, respectively. These results              guided texture modeling, DTS-Det achieves clear improve-
+indicate that semantic forensic cues can be easily disrupted by          ments across all settings, especially under cross-dataset trans-
+adversarial perturbations.                                               fer, reconstruction-based attacks, and transferable adversarial
+   DTS-Det shows stronger robustness under the same attacks,             attacks. These results demonstrate the effectiveness of texture-
+achieving 88.1 and 78.4 under ϵ = 8/255 and ϵ = 16/255,                  relation guidance in improving detection performance.
+respectively. Even under the strongest perturbation level of
+ϵ = 32/255, it obtains the highest ACC of 81.6. These results                                  VII. C ONCLUSION
+indicate that adaptive adversarial attacks remain challenging,
+but texture-relation evidence reduces the model’s reliance on               Most existing AI-generated image detectors are developed
+vulnerable semantic cues.                                                under image-free generation, while image-conditioned gener-
+                                                                         ation is becoming increasingly important in practical appli-
+ Result. DTS-Det demonstrates robust performance across                  cations. This paper investigated cross-paradigm AI-generated
+ diverse evaluation scenarios, including common image                    image detection, an important yet overlooked task that re-
+ degradations and adaptive attacks. Its resilience under var-            quires detectors to generalize between image-free and image-
+ ious attack settings further indicates its practical potential          conditioned generation. We construct ConImageGen and show
+ for real-world AI-generated image detection.                            that existing detection cues fail to provide reliable cross-
+                                                                         paradigm generalization. Through content suppression and
+E. Ablation Study                                                        texture analysis, we reveal semantics-irrelevant texture patterns
+   We conduct ablation studies to verify the contribution of             shared across generation paradigms and further identify texture
+each component in DTS-Det. We compare four variants: (A)                 relations as forensic evidence for cross-paradigm generaliza-
+SigLIP2-LoRA, (B) DINOv3-LoRA, (C) feature-level fusion                  tion. Based on this insight, we proposed DTS-Det, which
+of SigLIP2 and DINOv3, and (D) the full DTS-Det with                     models semantics-irrelevant texture relations and combines
+relation-guided texture modeling. All variants are evaluated             them with complementary semantic evidence. Extensive exper-
+under the same protocol across in-domain, generalization,                iments across in-domain, cross-paradigm, cross-dataset, cross-
+and robustness settings. As shown in Fig. 8, single pre-                 media, and robustness settings demonstrate the effectiveness
+trained semantic encoders show unstable performance, while               and generalization ability of DTS-Det. These findings high-
+fusing SigLIP2 and DINOv3 improves the results, indicat-                 light texture-relation modeling as a potential direction for
+ing their complementary semantic evidence. However, this                 cross-paradigm AI-generated image detection.
+
+
+
+                                                                    13
+                   VIII. E THIC C ONSIDERATION                                         [18] N. Ruiz, Y. Li, V. Jampani, Y. Pritch, M. Rubinstein, and K. Aberman,
+                                                                                            “Dreambooth: Fine tuning text-to-image diffusion models for subject-
+   This study aims to improve the reliability and generalization                            driven generation,” in Proceedings of the IEEE/CVF Conference on
+ability of AI-generated image detection, with a clear defensive                             Computer Vision and Pattern Recognition, 2023, pp. 22 500–22 510.
+                                                                                       [19] U. Ojha, Y. Li, and Y. J. Lee, “Towards universal fake image detec-
+purpose. Throughout the research, we follow principles of                                   tors that generalize across generative models,” in Proceedings of the
+responsible data use and privacy protection. The study does                                 IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+not involve personal privacy, sensitive identity information,                               2023, pp. 24 480–24 489.
+or security-sensitive data; all experiments are conducted on                           [20] M. Zhu, H. Chen, Q. YAN, X. Huang, G. Lin, W. Li, Z. Tu, H. Hu, J. Hu,
+                                                                                            and Y. Wang, “Genimage: A million-scale benchmark for detecting
+publicly available datasets and are used solely for training,                               ai-generated image,” in Advances in Neural Information Processing
+evaluation, and analysis of detection methods.                                              Systems. Curran Associates, Inc., 2023, pp. 77 771–77 782.
+                                                                                       [21] B. Chen, J. Zeng, J. Yang, and R. Yang, “DRCT: Diffusion recon-
+                              R EFERENCES                                                   struction contrastive training towards universal detection of diffusion
+                                                                                            generated images,” in Proceedings of the 41st International Conference
+ [1] L. Verdoliva, “Media forensics and deepfakes: An overview,” IEEE                       on Machine Learning, 2024, pp. 7621–7639.
+     Journal of Selected Topics in Signal Processing, pp. 910–932, 2020.               [22] H. Eddoubi, J. Ricker, F. Cocchi, L. Baraldi, A. Sotgiu, M. Pintor,
+ [2] S. Yan, O. Li, J. Cai, Y. Hao, X. Jiang, Y. Hu, and W. Xie, “A sanity                  M. Cornia, A. Fischer, R. Cucchiara, and B. Biggio, “Raid: A dataset
+     check for ai-generated image detection,” in International Conference on                for testing the adversarial robustness of ai-generated image detectors,”
+     Learning Representations, 2025, pp. 70 702–70 720.                                     arXiv preprint arXiv:2506.03988, 2025.
+ [3] C. Tan, H. Liu, Y. Zhao, S. Wei, G. Gu, P. Liu, and Y. Wei, “Rethinking           [23] J. Ma, X. Zhu, Z. Pan, Q. Peng, X. Guo, C. Chen, and H. Lu, “X2edit:
+     the up-sampling operations in cnn-based generative network for general-                Revisiting arbitrary-instruction image editing through self-constructed
+     izable deepfake detection,” in 2024 IEEE/CVF Conference on Computer                    data and task-aware representation learning,” in Proceedings of the AAAI
+     Vision and Pattern Recognition (CVPR), 2024, pp. 28 130–28 139.                        Conference on Artificial Intelligence, 2026, pp. 7764–7772.
+ [4] C. Tan, Y. Zhao, S. Wei, G. Gu, P. Liu, and Y. Wei, “Frequency-aware              [24] Y. Qian, E. Bocek-Rivele, L. Song, J. Tong, Y. Yang, J. Lu, W. Hu, and
+     deepfake detection: improving generalizability through frequency space                 Z. Gan, “Pico-banana-400k: A large-scale dataset for text-guided image
+     domain learning,” in Proceedings of the Thirty-Eighth AAAI Conference                  editing,” arXiv preprint arXiv:2510.19808, 2025.
+     on Artificial Intelligence and Thirty-Sixth Conference on Innovative              [25] H. Zhang, Q. He, X. Bi, W. Li, B. Liu, and B. Xiao, “Towards universal
+     Applications of Artificial Intelligence and Fourteenth Symposium on                    ai-generated image detection by variational information bottleneck net-
+     Educational Advances in Artificial Intelligence, 2024.                                 work,” in Proceedings of the IEEE/CVF Conference on Computer Vision
+ [5] Y. Zhang, Z. Pang, S. Huang, C. Wang, and X. Zhou, “Unmasking                          and Pattern Recognition (CVPR), 2025, pp. 23 828–23 837.
+     ai-created visual content: a review of generated images and deepfake              [26] K. Chandrasegaran, N.-T. Tran, and N.-M. Cheung, “A closer look
+     detection technologies,” Journal of King Saud University Computer and                  at fourier spectrum discrepancies for cnn-generated images detection,”
+     Information Sciences, p. 148, 2025.                                                    in Proceedings of the IEEE/CVF Conference on Computer Vision and
+ [6] X. Zhang, S. Karaman, and S.-F. Chang, “Detecting and simulating                       Pattern Recognition, 2021, pp. 7200–7209.
+     artifacts in gan fake images,” in IEEE International Workshop on                  [27] C. Zheng, C. Lin, Z. Zhao, H. Wang, X. Guo, S. Liu, and C. Shen,
+     Information Forensics and Security, 2019.                                              “Breaking semantic artifacts for generalized ai-generated image detec-
+ [7] T. Dzanic, K. Shah, and F. Witherden, “Fourier spectrum discrepancies                  tion,” in Advances in Neural Information Processing Systems, 2024, pp.
+     in deep network generated images,” in NeurIPS, 2020.                                   59 570–59 596.
+ [8] Y. Qian, G. Yin, L. Sheng, Z. Chen, and J. Shao, “Thinking in frequency:          [28] S. Gye, J. Ko, H. Shon, M. Kwon, and J. Kim, “Reducing the content
+     Face forgery detection by mining frequency-aware clues,” in European                   bias for ai-generated image detection,” in Proceedings of the Winter
+     conference on computer vision, 2020, pp. 86–103.                                       Conference on Applications of Computer Vision (WACV), 2025, pp. 399–
+ [9] U. Ojha, Y. Li, and Y. J. Lee, “Towards universal fake image detectors                 408.
+     that generalize across generative models,” in CVPR, 2023.                         [29] M. Chen, J. Fridrich, M. Goljan, and J. Lukas, “Determining image ori-
+[10] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal,                      gin and integrity using sensor noise,” IEEE Transactions on Information
+     G. Sastry, A. Askell, P. Mishkin, J. Clark et al., “Learning transferable              Forensics and Security, pp. 74–90, 2008.
+     visual models from natural language supervision,” in International                [30] N. Carlini and H. Farid, “Evading deepfake-image detectors with white-
+     conference on machine learning, 2021, pp. 8748–8763.                                   and black-box attacks,” in Proceedings of the IEEE/CVF Conference on
+[11] C. Tan, R. Tao, H. Liu, G. Gu, B. Wu, Y. Zhao, and Y. Wei, “C2p-clip:                  Computer Vision and Pattern Recognition Workshops, 2020, pp. 658–
+     Injecting category common prompt in clip to enhance generalization in                  659.
+     deepfake detection,” Proceedings of the AAAI Conference on Artificial             [31] M. Saberi, V. S. Sadasivan, K. Rezaei, A. Kumar, A. Chegini, W. Wang,
+     Intelligence, pp. 7184–7192, 2025.                                                     and S. Feizi, “Robustness of ai-image detectors: Fundamental limits and
+[12] F. Guillaro, D. Cozzolino, A. Sud, N. Dufour, and L. Verdoliva, “Trufor:               practical attacks,” in International Conference on Learning Representa-
+     Leveraging all-round clues for trustworthy image forgery detection and                 tions, 2024.
+     localization,” in Proceedings of the IEEE/CVF Conference on Computer              [32] N. Papernot, P. McDaniel, I. Goodfellow, S. Jha, Z. B. Celik, and
+     Vision and Pattern Recognition (CVPR), 2023, pp. 20 606–20 615.                        A. Swami, “Practical black-box attacks against machine learning,” in
+[13] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,”             Proceedings of the 2017 ACM on Asia Conference on Computer and
+     in Advances in Neural Information Processing Systems, vol. 33, 2020,                   Communications Security, 2017, pp. 506–519.
+     pp. 6840–6851.                                                                    [33] Y. Huang, F. Juefei-Xu, R. Wang, Q. Guo, L. Ma, X. Xie, J. Li, W. Miao,
+[14] A. Nichol, P. Dhariwal, A. Ramesh, P. Shyam, P. Mishkin, B. McGrew,                    Y. Liu, and G. Pu, “Fakepolisher: Making deepfakes more detection-
+     I. Sutskever, and M. Chen, “Glide: Towards photorealistic image gen-                   evasive by shallow reconstruction,” in Proceedings of the 28th ACM
+     eration and editing with text-guided diffusion models,” arXiv preprint                 international conference on multimedia, 2020, pp. 1217–1226.
+     arXiv:2112.10741, 2021.                                                           [34] S.-Y. Wang, O. Wang, R. Zhang, A. Owens, and A. A. Efros, “Cnn-
+[15] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, “High-                    generated images are surprisingly easy to spot... for now,” in Proceedings
+     resolution image synthesis with latent diffusion models,” in Proceedings               of the IEEE/CVF Conference on Computer Vision and Pattern Recogni-
+     of the IEEE/CVF Conference on Computer Vision and Pattern Recogni-                     tion, 2020, pp. 8695–8704.
+     tion, 2022, pp. 10 684–10 695.                                                    [35] P. Dhariwal and A. Nichol, “Diffusion models beat gans on image
+[16] T. Brooks, A. Holynski, and A. A. Efros, “Instructpix2pix: Learning                    synthesis,” Advances in neural information processing systems, pp.
+     to follow image editing instructions,” in Proceedings of the IEEE/CVF                  8780–8794, 2021.
+     Conference on Computer Vision and Pattern Recognition, 2023, pp.                  [36] A. Brock, J. Donahue, and K. Simonyan, “Large scale gan training for
+     18 392–18 402.                                                                         high fidelity natural image synthesis,” arXiv preprint arXiv:1809.11096,
+[17] L. Zhang, A. Rao, and M. Agrawala, “Adding conditional control                         2018.
+     to text-to-image diffusion models,” in Proceedings of the IEEE/CVF                [37] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, “High-
+     International Conference on Computer Vision, 2023, pp. 3836–3847.                      resolution image synthesis with latent diffusion models,” in Proceedings
+
+
+
+
+                                                                                  14
+     of the IEEE/CVF conference on computer vision and pattern recognition,
+     2022, pp. 10 684–10 695.
+[38] S. Gu, D. Chen, J. Bao, F. Wen, B. Zhang, D. Chen, L. Yuan, and
+     B. Guo, “Vector quantized diffusion model for text-to-image synthesis,”
+     in Proceedings of the IEEE/CVF conference on computer vision and
+     pattern recognition, 2022, pp. 10 696–10 706.
+[39] Z. Ni, Q. Yan, M. Huang, T. Yuan, Y. Tang, H. Hu, X. Chen,
+     and Y. Wang, “Genvidbench: A 6-million benchmark for ai-generated
+     video detection,” in Proceedings of the AAAI Conference on Artificial
+     Intelligence, 2026, pp. 15 582–15 590.
+[40] Midjourney, “Midjourney,” https://www.midjourney.com/home/, 2022,
+     accessed: 2026-05-05.
+[41] WuKong-HuaHua                Contributors,           “WuKong-HuaHua,”
+     https://github.com/JeffDing/WuKong-HuaHua, 2022, accessed: 2026-
+     05-05.
+[42] C. Deng, D. Zhu, K. Li, C. Gou, F. Li, Z. Wang, S. Zhong, W. Yu, X. Nie,
+     Z. Song et al., “Emerging properties in unified multimodal pretraining,”
+     arXiv preprint arXiv:2505.14683, 2025.
+[43] S. Batifol, A. Blattmann, F. Boesel, S. Consul, C. Diagne, T. Dockhorn,
+     J. English, Z. English, P. Esser, S. Kulal et al., “Flux. 1 kontext: Flow
+     matching for in-context image generation and editing in latent space,”
+     arXiv e-prints, pp. arXiv–2506, 2025.
+[44] Y. Song, C. Liu, and M. Z. Shou, “Omniconsistency: Learning style-
+     agnostic consistency from paired stylization data,” arXiv preprint
+     arXiv:2505.18445, 2025.
+[45] A. Hurst, A. Lerer, A. P. Goucher, A. Perelman, A. Ramesh, A. Clark,
+     A. Ostrow, A. Welihinda, A. Hayes, A. Radford et al., “Gpt-4o system
+     card,” arXiv preprint arXiv:2410.21276, 2024.
+[46] S. Liu, Y. Han, P. Xing, F. Yin, R. Wang, W. Cheng, J. Liao, Y. Wang,
+     H. Fu, C. Han et al., “Step1x-edit: A practical framework for general
+     image editing,” arXiv preprint arXiv:2504.17761, 2025.
+[47] M. K. Mihcak, I. Kozintsev, and K. Ramchandran, “Spatially adaptive
+     statistical modeling of wavelet image coefficients and its application
+     to denoising,” in 1999 IEEE International Conference on Acoustics,
+     Speech, and Signal Processing. Proceedings. ICASSP99 (Cat. No.
+     99CH36258), 1999, pp. 3253–3256.
+[48] E. Xie, W. Wang, Z. Yu, A. Anandkumar, J. M. Alvarez, and P. Luo,
+     “Segformer: Simple and efficient design for semantic segmentation with
+     transformers,” in Neural Information Processing Systems (NeurIPS),
+     2021.
+[49] O. Siméoni, H. V. Vo, M. Seitzer, F. Baldassarre, M. Oquab, C. Jose,
+     V. Khalidov, M. Szafraniec, S. Yi, M. Ramamonjisoa, F. Massa, D. Haz-
+     iza, L. Wehrstedt, J. Wang, T. Darcet, T. Moutakanni, L. Sentana,
+     C. Roberts, A. Vedaldi, J. Tolan, J. Brandt, C. Couprie, J. Mairal,
+     H. Jégou, P. Labatut, and P. Bojanowski, “DINOv3,” arXiv preprint
+     arXiv:2508.10104, 2025.
+[50] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+     Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” in Advances
+     in Neural Information Processing Systems, 2017.
+[51] Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin, and
+     B. Guo, “Swin transformer: Hierarchical vision transformer using shifted
+     windows,” in Proceedings of the IEEE/CVF International Conference on
+     Computer Vision, 2021, pp. 10 012–10 022.
+[52] M. Tschannen, A. Gritsenko, X. Wang, M. F. Naeem, I. Alabdulmohsin,
+     N. Parthasarathy, T. Evans, L. Beyer, Y. Xia, B. Mustafa, O. Hénaff,
+     J. Harmsen, A. Steiner, and X. Zhai, “Siglip 2: Multilingual vision-
+     language encoders with improved semantic understanding, localization,
+     and dense features,” arXiv preprint arXiv:2502.14786, 2025.
+[53] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang,
+     W. Chen et al., “Lora: Low-rank adaptation of large language models.”
+     Iclr, p. 3, 2022.
+[54] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image
+     recognition,” in Proceedings of the IEEE conference on computer vision
+     and pattern recognition, 2016, pp. 770–778.
+[55] F. Chollet, “Xception: Deep learning with depthwise separable convolu-
+     tions,” in Proceedings of the IEEE conference on computer vision and
+     pattern recognition, 2017, pp. 1251–1258.
+[56] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,”
+     in International Conference on Learning Representations, 2019.
+
+
+
+
+                                                                                 15
+

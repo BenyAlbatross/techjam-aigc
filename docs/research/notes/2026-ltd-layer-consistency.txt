@@ -1,0 +1,952 @@
+                                                 Layer Consistency Matters: Elegant Latent Transition Discrepancy for
+                                                               Generalizable Synthetic Image Detection
+
+                                                                      Yawen Yang Feng Li∗ Shuqi Kong Yunfeng Diao
+                                                                           Xinjian Gao Zenglin Shi Meng Wang
+                                                                                Hefei University of Technology
+arXiv:2603.10598v2 [cs.CV] 20 Mar 2026
+
+
+
+
+                                                                                                                              Real v.s. ProGAN v.s. SDv1.4                                     Real v.s. ProGAN v.s. SDv1.4
+                                                                       Abstract                                    93                                                              400                                        Real
+                                                                                                                                                                                   380                                        ProGAN
+                                                                                                                   92                                                                                                         SDv1.4
+                                                                                                                   91                                                              360
+
+
+
+
+                                                                                                                                                                     L2 Distance
+                                            Recent rapid advancement of generative models has                                                                                      340
+
+
+
+
+                                                                                                           Cos %
+                                                                                                                   90
+                                                                                                                   89                                                              320
+                                         significantly improved the fidelity and accessibility of AI-                                                    Real                      300
+                                                                                                                   88
+                                         generated synthetic images. While enabling various inno-                                                        ProGAN                    280
+                                                                                                                   87                                    SDv1.4
+                                         vative applications, the unprecedented realism of these syn-               11&12     12&13      13&14     14&15    15&16                    11&12     12&13         13&14    14&15     15&16
+
+                                         thetics makes them increasingly indistinguishable from au-                         (a) Cosine Similarity                                             (b) L2 Distance
+                                                                                                                    200                                                            100.0
+                                         thentic photographs, posing serious security risks, such as                175                                                             97.5
+                                         media credibility and content manipulation. Although ex-                   150                                                             95.0
+                                                                                                                    125                                                             92.5
+
+
+
+
+                                                                                                                                                                    ACC %
+                                         tensive efforts have been dedicated to detecting synthetic
+                                                                                                           FPS
+
+
+
+                                                                                                                    100                                                             90.0
+                                                                                                                     75                                                             87.5
+                                         images, most existing approaches suffer from poor gener-                    50                                                             85.0
+                                         alization to unseen data due to their reliance on model-                    25                                                             82.5
+                                                                                                                      0FatFormer      VIB         D3         Ours                   80.0FatFormer      VIB           D3        Ours
+                                         specific artifacts or low-level statistical cues. In this work,
+                                                                                                                        (c) Inference Speed (FPS)                                        (d) Comparison on UFD
+                                         we identify a previously unexplored distinction that real im-
+                                         ages maintain consistent semantic attention and structural         Figure 1. Illustration of inter-layer feature consistency, computa-
+                                         coherence in their latent representations, exhibiting more         tional efficiency, and detection performance. (a) and (b) calculate
+                                         stable feature transitions across network layers, whereas          the cosine similarity and L2 distance between adjacent ViT mid-
+                                         synthetic ones present discernible distinct patterns. There-       level layers, respectively. The features from real images maintain
+                                                                                                            stable consistency with lower-layer transition discrepancy (LTD).
+                                         fore, we propose a novel approach termed latent transition
+                                                                                                            (c) Inference speed measured in FPS. (d) Detection performance
+                                         discrepancy (LTD), which captures the inter-layer consis-          with recent state-of-the-art methods on the UFD [38] dataset.
+                                         tency differences of real and synthetic images. LTD adap-
+                                         tively identifies the most discriminative layers and assesses      ism and accessibility of synthetic imagery make it increas-
+                                         the transition discrepancies across layers. Benefiting from        ingly difficult to distinguish from real images, which raises
+                                         the proposed inter-layer discriminative modeling, our ap-          critical concerns about privacy and security due to the po-
+                                         proach exceeds the base model by 14.35% in mean Acc                tential misuse of deepfakes and misinformation dissemina-
+                                         across three datasets containing diverse GANs and DMs.             tion [15, 25, 40], underscoring the urgent need for robust
+                                         Extensive experiments demonstrate that LTD outperforms             detectors capable of discerning AI-generated images.
+                                         recent state-of-the-art methods, achieving superior detec-             In response to this challenge, extensive research ef-
+                                         tion accuracy, generalizability, and robustness. The code is       forts [21–23, 29, 32, 52, 54] have been directed towards
+                                         available at https://github.com/yywencs/LTD                        discovering discriminative forensic traces for accurate syn-
+                                                                                                            thetic image detection. Early studies predominantly ad-
+                                                                                                            dress GAN-based generation, where some methods focus
+                                         1. Introduction                                                    on deepfake detection utilizing facial features [59], and
+                                                                                                            others target various natural images by capturing genera-
+                                         Generative models [4, 9, 17, 26–28, 39] have achieved re-
+                                                                                                            tive artifacts in the frequency [16, 21, 22, 32, 51] or tex-
+                                         markable progress in synthesizing photorealistic images, a
+                                                                                                            ture [6, 50, 52, 54, 62] domains. While often effective
+                                         trend greatly accelerated by the advent of diffusion models
+                                                                                                            within their training domain, these methods rely on data
+                                         (DM) [11, 14, 18, 20, 37], demonstrating impressively re-
+                                                                                                            from a limited set of models (e.g., ProGAN [26]), causing
+                                         alistic and creative expression. However, the dramatic real-
+                                                                                                            them to learn model-specific biases that hamper generaliza-
+                                            * Corresponding Author                                          tion to unseen samples. This limitation is exacerbated by
+the rise of DMs, whose distinct generation paradigms yield          which achieves superior robustness and generalizability
+different artifact signatures and a degree of realism that nar-     across a diverse spectrum of GAN and DM generators
+rows the perceptual gap with real images. Although some             with more efficient implementation (Figure 1 (c) and (d)).
+subsequent methods [10, 35, 55] have been specifically de-
+signed to model DM reconstruction errors, they still strug-       2. Related Works
+gle with the dilemma of cross-domain generalization.
+                                                                  2.1. Generalizable Synthetic Image Detection
+    To address this issue, recent methods [29, 33, 38, 53,
+57, 60] have pivoted towards semantic artifacts using pre-        Generalized detectors focus on analyzing spatial irregular-
+trained CLIP model [41]. UnivFD [38] pioneers a CLIP-             ities or specific frequency patterns to distinguish real and
+based detector that performs nearest neighbor/linear prob-        fake ones. The spatial line [24, 30, 30, 36, 50, 54] is
+ing on the final CLIP feature for real/fake classification,       dedicated to extracting low-level texture artifacts from im-
+overlooking the rich low-level information in shallow fea-        ages. LNP [32] discriminates generated images by cap-
+ture space. Some other methods [8, 29, 33] improve Uni-           turing their inconsistent noise patterns. LGrad [50] uses
+vFD by integrating forgery-aware features across all ViT          image gradients as a generalized artifacts representation.
+layers [12]. Despite their effectiveness, these methods ac-       NPR [52] models neighboring pixel relationships to capture
+tually extract general features that contain substantial irrel-   upsampling artifacts, achieving source-agnostic detection
+evant information. This can introduce noise in learning for       across both GANs and DMs. There are also several meth-
+forgery-aware traces, thus interfering with detection.            ods [57, 62] that disrupt the universal artifacts in patches
+                                                                  to expose discrepancies in generative patterns. In paral-
+    This work investigates the frozen CLIP-based detection
+                                                                  lel, the prominent upsampling artifacts that GAN models
+paradigm through the lens of layer transition discrepancies
+                                                                  impart on high-frequency components have motivated the
+in ViT feature space. By analyzing feature similarity be-
+                                                                  frequency domain [13, 16, 23, 34]. FreqGAN [22] ad-
+tween adjacent layers (Figure 1 (a) and (b)), we observe a
+                                                                  versarially learns frequency-level perturbation to suppress
+notable distinction that, in the mid-level space, real images
+                                                                  domain-specific frequency spectral signatures and accentu-
+maintain consistent semantic attention across layers to pro-
+                                                                  ates pixel-level irregularities. FingerprintNet [23] simulates
+vide stable feature evolution, whereas synthetic images of-
+                                                                  generator-specific artifacts by applying varied upsampling
+ten show abrupt shifts between foreground and background
+                                                                  rates to real images and performs detection directly in the
+regions (Figure 1), thus presenting substantial deviations
+                                                                  frequency domain. BiHPF [21] utilizes bilateral high-pass
+between consecutive layers. Based on this observation, we
+                                                                  filters to amplify high-frequency components, particularly
+propose a novel detection framework that leverages the dis-
+                                                                  within background regions where generative artifacts are
+criminative power of layer transition discrepancy in frozen
+                                                                  more pronounced. FreqNet [51] leverages both phase and
+CLIP-ViT models. Specifically, our LTD-based detector de-
+                                                                  amplitude spectra to strengthen its capability in broader ar-
+vises a dynamic layer-wise selection strategy that identifies
+                                                                  tifact identification. However, these methods mostly em-
+the most informative subset of consecutive mid-level layers.
+                                                                  phasize GAN-based forgeries, often ineffective when con-
+On these selected candidates, we calculate the differences
+                                                                  fronted with diffusion-generated images.
+between adjacent ones to capture the LTD features. Then,
+a dual-branch architecture is developed, where one branch         2.2. Specialized Diffusion Image Detection
+models holistic feature consistency from the selected raw         The recent dominance of DMs [11, 61] in content gener-
+features, while the other amplifies the LTD. By simultane-        ation and artistic creation has catalyzed the development
+ously modeling both global structural alignment and local         of specialized detectors that aim to identify their gener-
+inter-layer variations. Our contributions are as follows:         ated images. Some methods [10, 44, 55] suggest leverag-
+• We propose a cross-layer transition representation that         ing the reconstruction error based on the observation that
+   leverages the discrepancy in feature evolution across mid-     synthetic images can be more readily recovered than real
+   level ViT layers. We provide a comprehensive analysis          counterparts. LaRE2 [35] introduces a latent reconstruc-
+   that real images exhibit more stable layer-wise consis-        tion error within single-step reconstruction, significantly
+   tency than synthetic ones, providing a discriminative cue      improving the detection efficiency. DRCT [7] presents the
+   for generalizable synthetic image detection.                   diffusion reconstruction contrastive learning, which gener-
+• We propose a dynamic layer-wise selection strategy that         ates hard samples by DM and adopts contrastive training
+   adaptively determines the most informative consecutive         to capture diffusion artifacts. FakeInversion [5] extracts
+   mid-level layers for each image. Based on this, we build       text-conditioned inversion features from Stable Diffusion
+   an LTD-based detector that bridges local inter-layer vari-     (SD) [45], enabling detection of synthetic images from un-
+   ation and global structural alignment for better detection.    seen text-to-image generators. FIRE [10] researches the fre-
+• Extensive experiments demonstrate the state-of-the-art          quency decomposition on the reconstruction error, offering
+   performance of our method in synthetic image detection,        a robust method for DM-generated image detection.
+                                                                  SD v1.4 ProGAN
+2.3. Frozen CLIP-based Detector
+Recently, some methods [8, 33, 38] have emerged that look
+beyond low-level features, focusing instead on semantic-
+level artifacts by using powerful pre-trained VLMs like
+
+
+
+
+                                                                  Real
+CLIP [41]. A straightforward strategy for detection lever-
+ages pre-trained embeddings directly, as exemplified by                             layer0   layer1   layer2   layer11   layer12   layer13   layer21   layer22   layer23
+
+UnivFD [38], which performs classification using the                               Shallow                                                                         Deep
+
+frozen final-layer representations of CLIP-ViT. RINE [29]          Figure 2. CAM visualization of features extracted by the CLIP
+emphasizes the importance of intermediate representa-              ViT-L/14 transformer layers for ProGAN, SD v1.4, and real im-
+tions by combining features from multiple ViT blocks,              ages. ProGAN and SD v1.4 show noticeable attention shifts be-
+while other approaches [8, 33] insert lightweight, forgery-        tween foreground and background regions in mid-level features,
+aware learners between adjacent ViT blocks to enhance              indicating unstable representations and discrepancies in layer tran-
+sensitivity to forgery cues. On the textual side, C2P-             sition. Real images exhibit highly consistent attention across adja-
+CLIP [53] enhances semantic alignment by integrating a             cent layers, reflecting smooth and stable evolution.
+category-common prompt into the CLIP text encoder and
+contrastively constrains the classification through concept        tual properties between real and synthetic images; 2) Deep
+matching. VIB [60] imposes an information bottleneck on            layers (e.g., Layer22 v.s. Layer23) also demonstrate lim-
+CLIP-ViT features to suppress redundant forgery-invariant          ited separation as they prioritize semantic coherence over
+information. This work argues that modeling the layer tran-        structural details, both image types converge toward similar
+sition discrepancy of images is crucial for synthetic image        semantic manifolds due to the text-image alignment objec-
+detection. Our method innovatively bridges local inter-layer       tive of CLIP, thus reducing discriminability; 3) Surprisingly,
+variation and global structural alignment, thus demonstrat-        intermediate layer transitions (e.g., Layer11 v.s. Layer12
+ing superior detection accuracy across diverse generators.         v.s. Layer13) show distinct separation patterns, suggesting
+                                                                   that mid-level features possess unique potential for captur-
+3. Methods                                                         ing discriminative clustering patterns that effectively distin-
+                                                                   guish real from synthetic images.
+3.1. Motivation                                                        To intuitively investigate the inter-layer transition dis-
+Existing CLIP-based detectors follow a common paradigm             crepancy of two types of images, we conduct a layer-wise
+that applies pre-trained visual encoders (mostly ViT-L/14)         differential analysis using t-SNE visualization on ProGAN
+to extract general-purpose representations. They typically         and SD v1.4, as shown in Figure 2. It reveals that the most
+exploit the rich semantic information from the final embed-        discriminative discrepancies for detecting synthetic content
+dings [38, 60] or all intermediate features [8, 29, 33] to fa-     emerge specifically during mid-level layer transitions. We
+cilitate the classification of real/fake images. Given an in-      attribute this to the inherent optimization paradigm of mod-
+put image x, the CLIP-ViT encoder first partitions it into         ern generative pipelines: while prioritizing pixel-level re-
+a sequence of non-overlapping patches. These patches are           alism and high-level semantic alignment, they often lack
+then processed through a stack of transformer layers. This         strict physical constraints. Consequently, as mid-level ViT
+layered architecture induces a natural hierarchy of visual         layers integrate local textures into structural components,
+representations: the initial layers capture low-level statis-      synthetic images fail to maintain continuous spatial corre-
+tics, such as fine-grained textures; mid-level layers integrate    lations, thereby exposing abrupt structural artifacts. This
+these local cues into structured representations that reflect      phenomenon appears to reflect an intrinsic property of the
+object parts and scene layouts; while deeper layers encode         generative pipeline itself, which exploits a model-agnostic
+semantic concepts [12, 42].                                        signature embedded in the hierarchical feature evolution,
+    However, in this work, we revisit the CLIP-encoded fea-        making our approach fundamentally different from existing
+tures and shift focus to the inter-layer transition discrepan-     methods with improved robustness and generalization.
+cies that have been overlooked in the current research com-
+                                                                   3.2. Detector with Layer Transition Discrepancy
+munity. To this end, we analyze spatial attention dynam-
+ics across hierarchical layers using class activation maps         Motivated by the above analysis, this work designs a simple
+(CAMs). As illustrated in Figure 1, we can observe that:           yet effective detection network based on the layer transition
+1) In shallow layers (e.g., Layer0 v.s. Layer1), both real and     discrepancy (LTD), as illustrated in Figure 4. Specifically,
+synthetic images exhibit substantial embedding space over-         we utilize the CLIP ViT-L/14 image encoder as the frozen
+lap, indicating low separability. This is consistent with the      backbone to extract hierarchical visual representations. Ac-
+known function of the early network stage, which primarily         cording to the findings in Sec. 3.1 which reveal that the most
+captures low-level visual primitives sharing similar percep-       distinctive discrepancies between real and generated images
+ProGAN
+SDv1.4
+
+
+
+
+             Layer 0 v.s. Layer 1            Layer 11 v.s. Layer 12                   Layer 14 v.s. Layer 15                                               Layer 22 v.s. Layer 23
+Figure 3. t-SNE maps of the layer transition discrepancy (LTD) between adjacent layers for real and generated images. We can see that
+1) Shallow layers (Layer 0 vs. 1) and deep layers (Layer 22 v.s. 23) show high consistency in both real and generated images, offering
+limited discriminative power; 2) Middle layers (Layer 10 vs. 11 and Layer 14 vs. 15) exhibit a clearer gap of the LTD between real and
+fake images, providing more discriminative clues for detection.
+                     Fake                                   Adaptive Layer-wise Selection (ALS)                                     LTD
+  Real                                                        Mid-level Features                                                 Calculation
+
+
+                                                                                                                                                                               LTD-                 Real?
+                                    CLIP ViT-L/14                                                                                                                              based
+                                                                                      Gumbel                                                                                  Detector              Fake?
+                                                                                      Softmax
+                                                          �1 �2 �3 �4 �5
+                                                                                                                               Layer Transition
+                                                              One-hot code                                                    Discrepancy (LTD)
+
+                                                            Selected Layer Features
+            Frozen      Trainable
+                                            Class token                                   ViT Transformer block
+
+
+
+
+                                                                                                                                                                         Classify
+            matrix multiplication                         Pos. Enc.                                             Weight sharing
+                                                                          Pos. Enc.
+            Element-wise subtraction        Class token                                   ViT Transformer block
+         Pos. Enc.: Positional encoding                         LTD Features                                                             LTD-based Detector
+
+Figure 4. Overview of the proposed Layer Transition Discrepancy(LTD) architecture. Discriminative intermediate features are extracted
+from a pre-trained Vision Transformer and used to construct two branches: one stacking multi-layer features directly, and the other com-
+puting pairwise differences between adjacent layers. A shared transformer block processes both branches, followed by an MLP for classi-
+fication based on the concatenated representation.
+
+emerge in the mid-to-high layers, we can directly determine                    tain differentiability during training:
+                                      (1)  (2)         (l)
+a sequence of intermediate layers, fmid , fmid , ..., fmid , to
+construct discriminative representations.                                                     s = \text {one\_hot}\left (\arg \max _{i} (\log \pi _i + g_i) / \tau \right ),                          (1)
+   Layer Transition Discrepancy Calculation. Instead of                        where gi denotes Gumbel noise and τ is the temperature
+relying on manually fixed layer combinations, a dynamic                        parameter. This enables the differentiable selection of n
+layer-wise selection strategy is introduced that adaptively                                         (k)
+                                                                               consecutive layers {fs }nk=1 from the candidate windows,
+identifies the most informative subset of layers for each in-
+                                                                               where each f denotes the class token (“CLS”) of the corre-
+put. Let n denote the window size, a fixed hyperparameter
+                                                                               sponding layer. We then compute the LTD by taking feature
+specifying the number of consecutive layers to be selected.
+                                                                               differences between adjacent selected layers:
+We consider all possible windows of n consecutive layers as
+candidates. Then we parameterize the selection with learn-                                \mathbf {d}^{(k)}_s = \mathbf {f}^{(k+1)}_{s} - \mathbf {f}^{(k)}_{s}, \quad k \in \{1, \dots , n-1\}.      (2)
+able logits π ∈ RC (where C = l−n+1) and determine the
+optimal starting index s via the Gumbel-Softmax to main-                       Compared to raw mid-level features, LTD focuses on char-
+Table 1. Performance comparison on UFD in Acc. (%). Each row corresponds to a detection method, and each column to a generative
+model. The last column reports the mean Acc across all models. Red and blue colors indicate the best and second-best results, respectively.
+
+                                           GAN-based Models               Deep-                                                                                                                    LDM                            Glide                      Mean
+ Method                                                                                                                                                                                                           ADM                                Dalle
+                               Pro- Style- Style2- Big- Cycle- Star- Gau- Fake                                                                                                                                                                               Acc
+                                                                                100                                                                                                               200 200 cfg           50 27 100 10 100 27
+                               GAN GAN GAN GAN GAN GAN GAN
+ CNNSpot [54] 100.00 85.72                                                            83.39                      70.17                     85.71                     91.70 78.93 53.79 55.15 53.90       53.90    61.00 62.75    61.00      60.35   56.10 69.60
+ UnivFD [38]     99.81 84.93                                                          74.96                      95.08                     98.34                     95.75 99.47 68.51 95.00 94.40       74.00    69.65 79.05    77.90      78.50   87.30 85.79
+ LGrad [50]      99.83 94.73                                                          96.05                      85.62                     84.96                     99.62 72.49 56.48 93.20 92.60       94.05    77.50 89.05    88.10      88.10   86.65 87.44
+ NPR [52]        99.79 97.71                                                          98.39                      84.35                     96.84                     99.35 82.50 80.22 98.65 98.45       98.30    75.15 97.55    97.60      97.10   93.85 93.49
+ FatFormer [33] 99.70 97.13                                                           98.70                      99.50                     99.36                     99.70 99.30 93.27 98.50 98.50       94.80    75.92 94.31    94.15      94.13   98.70 95.98
+ RINE [32]      100.00 88.90                                                           94.5                      99.60                     99.30                     99.50 99.80 80.60 98.60 98.30       88.20    76.10 92.60    90.70      88.90   95.00 93.16
+ FreqNet [51]    99.60 90.20                                                           87.9                      90.50                     95.10                     85.70 93.40 88.90 97.90 97.50       97.40    67.30 86.70    87.90      84.50   97.40 90.49
+ C2P-CLIP [53] 99.98 96.44                                                            93.48                      99.12                     97.31                      99.6 99.17 93.77 99.30 99.25       97.25    69.00 95.25    95.25      96.10   98.55 95.55
+ D3 [57]        99.39 94.88                                                           99.59                      99.10                     90.66                     95.87 98.02 67.92 94.45 94.70       88.30    93.45 94.55    94.60      94.30   92.25 93.25
+ VIB [60]        99.90 90.45                                                          87.25                      95.20                     98.35                     97.25 99.25 81.70 95.70 77.70       96.25    72.70 86.25    89.25      86.95   87.40 90.10
+ ForgeLens [8] 99.94 97.33                                                            97.38                      98.02                     98.79                     92.47 98.72 88.91 98.70 98.80       98.15    79.45 97.40    96.15      97.85   97.95 95.56
+ LTD (ours)      99.98 99.10                                                          95.70                      95.53                     98.00                     99.50 95.38 95.20 97.00 98.50       98.00    88.00 97.00    97.50      97.50   98.50 96.90
+
+
+Table 2. Performance comparison on UFD in AP. Each row corresponds to a detection method, and each column to a generative model.
+The last column reports the mean AP across all models. Red and blue colors indicate the best and second-best results, respectively.
+
+                                                                                    GAN-based Models                                                                               Deep-          LDM                           GLIDE                        Mean
+                                                                                                                                                                                                                 ADM
+ Method                      Pro- Style- Style2- Big- Cycle- Star-                                                                                                        Gau-     Fake                                                           DALL-E      AP
+                                                                                                                                                                                            100   200 200 cfg          50 27 100 10 100 27
+                             GAN GAN GAN GAN GAN GAN                                                                                                                      GAN
+ CNNSpot [54] 100.00 99.54                                                      99.06 84.51 93.43 98.15 89.49 89.02 72.50 71.11                                                                          71.11   73.96 84.6     82.01     80.47     71.27    85.01
+ UnivFD [38]   100.00 97.56                                                     97.90 99.27 99.80 99.37 99.98 81.79 99.27 99.32                                                                          92.50   87.64 95.56    94.96     95.28     97.47    96.10
+ LGrad [50]    100.00 99.86                                                     99.89 90.73 93.61 99.98 79.28 72.67 98.36 98.18                                                                          98.57   87.06 94.53    94.20     93.23     95.72    93.49
+ NPR [52]       99.99 99.78                                                     99.94 87.80 98.94 99.94 85.49 82.40 99.80 99.76                                                                          99.73   80.29 99.61    99.63     99.55     98.96    95.73
+ FatFormer     100.00 99.75                                                     99.92 99.98 99.99 100.00 100.00 97.99 99.89 99.83                                                                        99.22   91.92 99.50    99.33     99.27     99.84    99.15
+ RINE [32]     100.00 99.40                                                    100.00 99.90 100.00 100.00 100.00 97.90 99.90 99.90                                                                       98.00   95.70 99.30    98.80     98.90     93.00    98.79
+ FreqNet [51]  100.00 99.70                                                     99.50 96.00 99.50 99.80 98.60 94.40 99.90 99.90                                                                          99.90   75.70 96.30    96.40     96.00     99.80    96.96
+ C2P-CLIP [53] 100.00 99.50                                                     98.56 99.96 100.00 100.00 100.00 98.59 99.98 99.99                                                                       99.83   94.13 99.32    99.38     99.30     99.94    99.28
+ D3 [57]       100.00 99.18                                                     99.38 99.97 97.69 99.36 99.94 87.09 99.54 99.51                                                                          95.88   98.67 99.05    98.89     98.91     98.26    98.21
+ VIB [60]      100.00 98.73                                                     97.23 98.98 99.80 99.54 99.88 92.05 99.37 99.42                                                                          92.66   87.09 98.04    97.67     97.47     96.81    97.17
+ ForgeLens [8] 100.00 99.85                                                     99.58 99.99 100.00 100.00 100.00 96.23 99.96 99.95                                                                       99.72   94.82 99.48    99.43     99.60     99.89    99.11
+ LTD (ours)    100.00 99.96                                                     99.31 99.97 100.00 100.00 99.92 98.44 99.48 99.46                                                                        99.59   96.83 99.73    99.75     99.71     99.97    99.51
+
+
+
+acterizing inter-layer variations while suppressing redun-                                                                                                                                 ture learning. This weight-sharing mechanism enforces fea-
+dant irrelevant information.                                                                                                                                                               ture alignment by mapping both spatial consistency and
+    LTD-based Detector. We design a dual-branch detec-                                                                                                                                     inter-layer transitions into a unified semantic space. This
+tion architecture in which each branch serves a complemen-                                                                                                                                 strategy effectively prevents distributional divergence and
+tary role. One processes the selected raw features to model                                                                                                                                encourages the model to capture discriminative variations
+holistic feature consistency, and the other amplifies local                                                                                                                                across layers. The transformed representations are concate-
+transition patterns between adjacent layers. Following the                                                                                                                                 nated and fed into a classification head for detection.
+standard ViT paradigm, we prepend “CLS” fcls and dcls to                                                                                                                                      In this way, our model dynamically selects the most
+the sequence. Considering that these features are extracted                                                                                                                                informative depth region and models hierarchical correla-
+from different transformer layers, we add the learnable po-                                                                                                                                tions among transformer layers, which effectively bridges
+sitional encoding to ensure position awareness in relation to                                                                                                                              local inter-layer variation and global structural alignment,
+their original hierarchy, constituting the overall features as                                                                                                                             achieving preferable robustness and generalizability across
+                                                                                                                                                                                           diverse DM and GAN generation methods.
+              \mathbf {F}_s = [\mathbf {f}_{s}, \mathbf {f}_{\text {cls}}, \mathbf {f}_p], \quad \mathbf {D} = [\mathbf {d}, \mathbf {d}_{\text {cls}}, \mathbf {d}_p]       (3)
+                                                                                                                                                                                           4. Experiment
+where fp and dp denote the positional embeddings for the
+selected raw layer and LTD features, respectively. The out-
+                                                                                                                                                                                           4.1. Settings
+puts from both branches are processed by parallel, weight-                                                                                                                                 Training Dataset. We evaluate our method on three bench-
+shared trainable ViT transformer blocks for interactive fea-                                                                                                                               marks: UFD [38], DRCT-2M [7], and GenImage [64]. For
+Table 3. Performance comparison on DRCT-2M in Acc. (%). Each row corresponds to a detection method, and each column to a generative
+model. The last column reports the mean Acc across all models. Red and blue colors indicate the best and second-best results, respectively.
+
+                                     SD variants                       Turbo Variants   LCM Variants       ControlNet Variants     Mean
+ Method                                                                                                                            Acc
+                                                             SDXL- SD- SDXL- LCM- LCM- SDv1- SDv2- SDXL-
+                  LDM SDv1.4 SDv1.5 SDv2 SDXL
+                                                             Refiner Turbo Tubo SDv1.5 SDXL Ctrl Ctrl Ctrl
+ CNNSpot [54]     74.26 99.87       99.88    87.44   54.04   54.48     84.00   80.04    98.59    64.10   79.46    63.11    68.21   77.50
+ UnivFD [38]      97.93 95.40       93.73    93.73   89.25   91.47     86.20   84.73    94.64    89.87   88.71    80.86    74.89   89.34
+ LGrad [50]       52.07 51.46       51.49    50.38   50.16   50.27     50.07   50.91    50.24    49.99   50.10    50.47    51.77   50.72
+ NPR [52]         50.31 99.70       99.65    54.51   50.01   50.17     99.30   99.61    99.92    50.17   61.47    53.99    64.76   71.81
+ DIRE [55]        57.43 98.95       98.85    65.87   59.63   63.95     89.48   88.00    97.42    70.35   90.28    85.67    82.67   80.66
+ DRCT [7]         99.58 98.64       98.48    99.85   96.40   97.88     99.42   83.52    98.45    93.64   96.17    99.67    97.48   96.86
+ AIDE [56]        80.20 62.05       62.99    71.07   50.21   58.45     53.72   52.10    52.37    50.02   53.95    52.49    61.19   58.52
+ D3 [57]          79.73 98.91       98.91    97.38   82.39   81.24     82.35   82.35    97.40    85.75   93.70    87.12    82.08   88.41
+ VIB [60]         65.06 85.09       85.32    82.56   73.78   80.60     75.67   70.23    78.70    68.54   81.80    76.88    65.70   76.15
+ ForgeLens [8]    98.56 100.00      98.46    98.09   97.84   99.00     98.10   97.58    98.01    97.97   97.20    97.48    98.56   98.22
+ LTD (ours)       99.80 99.84       99.84    98.56   99.65   99.69     99.84   99.84    99.84    99.80   99.56    98.40    99.34   99.54
+
+
+Table 4. Performance comparison on DRCT-2M in AP. Each row corresponds to a detection method, and each column to a generative
+model. The last column reports the mean AP across all models. Red and blue colors indicate the best and second-best results, respectively.
+
+                                     SD variants                       Turbo Variants   LCM Variants        ControlNet Variants    Mean
+ Method                                                                                                                             AP
+                                                             SDXL-      SD-    SDXL- LCM- LCM- SDv1- SDv2- SDXL-
+                  LDM     SDv1.4 SDv1.5 SDv2 SDXL
+                                                             Refiner   Turbo    Tubo SDv1.5 SDXL Ctrl Ctrl  Ctrl
+ CNNSpot [54] 91.53 100.00          100.00   99.68   92.87   92.34      99.47 98.94      99.97 87.39      92.37    97.12   86.63   95.25
+ UnivFD [38]   99.89 99.72           99.72   99.62   99.28   99.55      98.96 98.80      99.67 99.26      99.24    98.25   97.53   99.19
+ LGrad [50]    52.63 60.23           59.36   57.18   44.30   51.36      50.30 46.50      49.86 39.04      49.61    51.94   54.58   51.30
+ NPR [52]      99.60 99.98           99.98   97.17   70.99   76.71     100.00 100.00    100.00 84.86      99.05    97.81   99.29   94.26
+ DIRE [55]     90.43 99.96           99.96   93.13   92.63   95.16      99.45 99.28      99.89 96.68      99.33    99.21   98.97   97.24
+ DRCT [7]      99.99 99.86           99.86   99.98   99.98   99.05     100.00 98.12      99.98 98.25      99.67   100.00   99.62   99.57
+ AIDE [56]     96.78 87.40           87.79   92.76   68.47   90.81      80.38 74.04      71.61 77.00      72.17    72.54   91.21   81.77
+ D3 [57]       99.55 99.98           99.98   97.38   99.01   99.45     82.35 99.22       99.94 99.37      99.86   99.62    99.38   98.08
+ VIB [60]      93.21 98.39           98.38   98.11   97.10   98.10      96.93 95.77      97.02 95.61      97.69    97.00   93.90   96.71
+ ForgeLens [8] 100.00 100.00        100.00   99.87   99.57   99.71      99.99 99.95      98.01 98.88      99.98    99.10   99.75   99.76
+ LTD (ours)     99.99 100.00        100.00   99.94   99.98   99.99     100.00 100.00    100.00 100.00     99.99   99.95    99.98   99.99
+
+
+
+UFD and cross-dataset, we adopt a 2-class training setting               (ACC) and Average Precision (AP) to evaluate the perfor-
+(chair, tvmonitor) comprising 72k ProGAN-generated im-                   mance of detectors. Without prior distribution knowledge,
+ages and real images from LSUN [58].To evaluate cross-                   we set a standard 0.5 decision threshold for Accuracy.
+dataset generalization on GenImage, we maintain this iden-               Implementation Detail. We employ the pre-trained CLIP
+tical UFD training configuration. For DRCT-2M, we follow                 ViT-L/14 model as the backbone for feature extraction and
+the official protocol, training on 236k SDv1.4-generated im-             implement our framework on the Pytorch platform. During
+ages across 80 classes from MSCOCO [31].                                 training, all input images are resized to 256×256 resolution
+Testing Dataset. The UFD provides fake images synthe-                    and then center-cropped to 224 × 224. Random cropping
+sized by 12 different GAN and DM generators. The Gen-                    and horizontal flipping are applied for data augmentation.
+Image dataset utilizes the ImageNet dataset as the source                All models are trained using the Adam optimizer [3] with a
+of real images and incorporates eight mainstream GAN                     fixed learning rate of 5e-5 and a batch size of 256. Notably,
+and Diffusion generators to produce synthetic images. The                our approach demonstrates exceptional training efficiency,
+DRCT-2M is composed of 13 comprehensive test sets that                   converging in just 5 epochs on a NVIDIA RTX 4090 GPU.
+cover diverse diffusion architectures. Note that we exclude
+the three DR (Diffusion Reconstruction) subsets to focus on              4.2. Comparing with the State-of-the-Art Methods
+standard global synthesis. These 13 sets include multiple                Comparisons on UFD. Tables 1 and 2 present a com-
+Stable Diffusion (SD) variants, latent consistency models                prehensive evaluation on the UFD benchmark [38], where
+(LCM), and ControlNet-based conditional generators [61].                 all baseline results are obtained using officially released
+Metrics. Following previous work, we employ Accuracy                     models to ensure fair comparison. Notably, D3 [57] was
+Table 5. Performance comparison on GenImage in Acc. (%). Each row corresponds to a detection method, and each column to a generative
+model. The last column reports the mean Acc across all models. Red and blue colors indicate the best and second-best results, respectively.
+
+        Method             ADM      Midjourney     GLID      VQDM       SDv1.4                 SDv1.5         Wukong           BigGAN                     Mean Acc
+        CNNSpot [54]       58.77       52.58        55.00     53.67        51.58                51.83           50.25                   79.54              56.65
+        UnivFD [38]        66.87       56.13        62.46     85.31        63.66                63.49           70.93                   90.13              69.87
+        LGrad [50]         67.12       58.98        62.98     70.08        68.41                69.00           65.48                   81.32              67.92
+        NPR [52]           69.72       78.00        78.35     78.13        78.62                78.88           76.10                   80.30              77.26
+        FatFormer [33]     79.49       55.52        89.09     87.98        88.09                87.88           88.03                   98.67              84.34
+        VIB [60]           72.20       58.50        69.75     87.15        67.50                67.50           74.00                   88.55              73.14
+        ForgeLens [8]      80.65       64.18        94.92     89.30        95.87                95.53           94.16                   98.80              89.18
+        LTD(ours)          90.38       62.97        97.63     92.53        97.23                97.24           96.33                   98.61              91.62
+
+Table 6. Performance comparison on GenImage in AP. Each row corresponds to a detection method, and each column to a generative
+model. The last column reports the mean AP across all models. Red and blue colors indicate the best and second-best results, respectively.
+
+         Method            ADM       Midjourney     GLID     VQDM        SDv1.4                SDv1.5         Wukong            BigGAN                    Mean AP
+         CNNSpot [54]      71.10        55.94       66.19     61.96          56.91              51.83           50.25                   89.89              63.01
+         UnivFD [38]       86.81        74.00       83.81     96.53          86.14              85.84           91.07                   98.13              87.79
+         LGrad [50]        72.64        69.13       76.28     74.36          71.85              72.51           68.03                   88.83              74.20
+         NPR [52]          74.64        85.60       85.72     81.79          84.03              84.59           80.47                   88.40              83.16
+         FatFormer [33]    95.00        73.78       97.72     98.53          98.37              98.14           98.62                   99.93              95.01
+         VIB [60]          86.70        74.41       88.66     96.22          85.13              83.99           90.15                   97.29              87.82
+         ForgeLens [8]     95.64        83.72       99.03     98.09          99.24              99.19           99.19                   99.97              96.76
+         LTD(ours)         98.74        80.89       99.74     99.18          99.72              99.61           99.58                   99.89              97.17
+
+
+                                                                                   100                                                  100
+trained on a broad spectrum of generators (2 GANs and
+6 DMs). Other compared methods are primarily trained                                90                                                   90
+on ProGAN, covering either all 20 categories or at least                                                                                 80
+                                                                        Accuracy
+
+
+
+
+                                                                                                                             Accuracy
+                                                                                    80
+4 categories (car, cat, chair, horse). In contrast, our LTD                                    NPR                                       70         NPR
+                                                                                    70
+method requires only 2 categories (chair and tvmonitor)                                        DIRE                                                 DIRE
+                                                                                               ForgeLens                                 60         ForgeLens
+for training. As shown, our method outperforms all meth-                            60
+                                                                                               Ours                                                 Ours
+ods, which achieves the highest performance in mean Acc                                                                                  50
+                                                                                         100    90       80       70    60                    1.0   0.9    0.8 0.7    0.6   0.5
+(96.90%) and AP (99.51%), surpassing recent state-of-                                                JPEG Quality                                             Scale
+the-art baselines ForgeLens [8] and FatFormer [33] and by
+                                                                         Figure 5. Robust evaluation of our method and baselines under
+1.34% and 0.92% in mean Acc, respectively. Moreover,
+                                                                         (a) JPEG compression with different quality factors and (b) down-
+on the more challenging benchmark ADM that contains                      sampling with different downscaling factors. Our LTD validates
+high-fidelity generation and complex noise scheduling, our               superior robustness to different degradation types and levels.
+method achieves 88.00% in Acc and 96.83% in AP. Such
+comparisons validate the superior effectiveness, generaliz-              ited robustness to generation dynamics.
+ability, and training efficiency of our method.                          Comparisons on GenImage. Table 5 presents a com-
+Comparisons on DRCT-2M. The quantitative results are                     prehensive comparison between LTD and recent detection
+illustrated in Table 3 and Table 4. Overall, our LTD yields              methods on the GenImage benchmark, with all methods
+the best mean Acc of 99.54%, consistently exceeding all                  trained on the same UFD training set to ensure a fair evalu-
+prior baselines. Compared to ForgeLens [8] and Uni-                      ation. Our LTD achieves the best performance across most
+vFD [38], LTD acquires +1.32% and +10.20% gains in                       generators and demonstrates a clear superiority in both met-
+Acc. This demonstrates the generalization capability across              rics. As a result, LTD surpasses recent methods by signifi-
+both DM-based and controllable conditioned variants. Be-                 cant margins on average. showcasing over 2.44% improve-
+sides, as reported in Table 4, our LTD preserves perfect per-            ment in mean Acc over the second-best method ForgeLens.
+formance in mean AP (99.99%), while other methods (e.g.,                 Robustness Evaluation. In real-world scenarios, images
+AIDE [56] and VIB [60]) exhibit severe performance drops                 are frequently subject to post-processing operations such as
+when transferred from standard DMs (e.g. LDM) to refined                 compression and downsampling, particularly when shared
+or accelerated versions (e.g. LCM SDXL), suggesting lim-                 through social media platforms. To evaluate our method,
+Table 7. Ablation study on the layer transition consistency (LTD)   Table 8. Ablation study on the number of selected layers. Mean
+detection. Raw ML. denotes raw mid-level features and Pos. Enc.     Acc is reported across different datasets.
+denotes positional encoding, respectively.
+                                                                         Layer Selection        UFD     DRCT-2M   GenImage   Mean Acc
+ Raw mid-level   LTD   Pos. Enc.   UFD     DRCT-2M   Mean Acc.             Fixed(0-7)           62.87    82.12     45.70      63.56
+      ✓          ✗        ✗        84.92    92.75      88.84              Fixed(8-15)           95.78    98.98     90.38      95.50
+      ✓          ✗        ✓        94.22    96.12      95.17              Fixed(16-24)          92.62    97.57     79.78      89.99
+      ✗          ✓        ✗        86.42    93.50      89.96
+                                                                           Fixed(7-19)          94.89    88.67     90.72      91.43
+      ✗          ✓        ✓        92.43    94.01      93.22
+      ✓          ✓        ✓        96.90    99.54      98.22               Fixed(9-19)          95.02    95.75     91.34      94.04
+                                                                          Fixed(11-19)          96.26    97.44     91.63      95.11
+                                                                          Fiexed(13-19)         95.57    95.52     92.06      94.38
+                                                                            2 Layers            91.19    93.42     88.58      91.06
+we conduct experiments on the DRCT-2M dataset focus-                        4 Layers            96.14    95.55     90.07      93.92
+ing on two degradation types: (i) JPEG compression with              5 Layers (Final Setting)   96.90    99.54     91.62      96.02
+quality factors ranging from 100 to 60, and (ii) downsam-                   6 Layers            96.19    97.76     91.76      95.24
+                                                                            8 Layers            96.80    97.56     91.38      95.25
+pling with scale factors progressively reduced from 1.0 to
+0.5. As shown in Figure 5, our LTD validates the superior
+robustness against recent state-of-the-art methods. In par-
+                                                                    ure 2, where feature distinctions remain visible up to ap-
+ticular, with severe degradations, our method maintains a
+                                                                    proximately layer 19, beyond which discriminative struc-
+more stable detection performance across varying degrada-
+                                                                    ture gradually diminishes.
+tion levels, but other methods suffer from low accuracy.
+                                                                       We further investigate the optimal starting point for mid-
+4.3. Ablation Study                                                 level feature selection by fixing the upper bound at layer 19
+                                                                    (guided by t-SNE analysis of feature discriminability) and
+Effect of LTD. We conducted experiments to investigate              varying the lower bound from 7 to 13. Performance im-
+the effect of the proposed LTD approach by implementing 4           proves as the starting layer moves deeper, peaking at layer
+model variants: 1) The baseline model that performs the de-         11 before saturating or slightly declining. This suggests
+tection only using the selected raw mid-level features (Raw         that features spanning layers 11 to 19 capture the most dis-
+ML.); 2) Introducing positional encoding (Pos. Enc.) in 1);         tinctive inter-layer dynamics for distinguishing real from
+3) Replacing Raw ML. with our LTD features, which per-              generated content. Finally, we examine how the number
+forms detection only relying on the transition discrepancy;         of selected layers affects performance. Varying the selec-
+4) Introducing positional encoding in 3); 5) The full model         tion from 2 to 8 layers within the aforementioned optimal
+combines all components, which detects the real/fake im-            range (layers 11-19) reveals that performance consistently
+ages based on both raw mid-level and LTD features. As               improves with more layers, reaching its peak at 5 layers be-
+shown in Table 7, the baseline model yields the worst de-           fore marginal degradation occurs due to redundant informa-
+tection performance and the incorporation of positional en-         tion. These findings demonstrate that a compact yet diverse
+coding can significantly improve the accuracy as it can en-         subset of mid-level features provides the most discrimina-
+sure position awareness regarding to the original hierarchy,        tive representation while effectively mitigating overfitting.
+thereby enabling the model to implicitly capture the under-
+lying transition discrepancies across layers. We can also see
+                                                                    5. Conclusion
+that LTD is more effective than the raw features as it can
+characterize inter-layer variations while suppressing redun-        This work establishes that synthetic images exhibit de-
+dant irrelevant information. The combination of all compo-          tectable layer transition discrepancies (LTD) in frozen mid-
+nents demonstrates the best performance.                            level ViT models, while real images maintain stable fea-
+Impact of Layer Selection. In our method, before extract-           ture evolution across layers. Capitalizing on this finding,
+ing the LTD features, we conduct dynamic layer-wise se-             we propose the layer transition discrepancy (LTD) frame-
+lection on mid-level features. To study its influence, we           work, which employs dynamic layer selection to identify
+first analyze the discriminative power across different layer       the most discriminative mid-layer transitions and processes
+groups by partitioning all the 24 ViT layers into three non-        them through a dual-branch architecture. This design si-
+overlapping segments: Shallow (0–7), Middle (8–15), and             multaneously captures holistic feature consistency and am-
+Deep (16–23). As shown in the first three rows of Table 8,          plifies local inter-layer variations. Extensive experiments
+the results confirm that separability between real and syn-         validate that our approach achieves state-of-the-art perfor-
+thetic images is not uniformly distributed across layers. The       mance, demonstrating a significant accuracy improvement
+Middle group demonstrates the strongest discriminative ca-          over baseline methods while maintaining superior robust-
+pability, while the Deep layers remain moderately effective.        ness and generalization across diverse GAN and diffusion
+This observation aligns with our t-SNE visualization in Fig-        models with efficient implementation.
+Acknowledgements                                                           the IEEE/CVF Conference on Computer Vision and Pattern
+                                                                           Recognition, 2020. 2, 3
+This work was supported in part by the National Natu-                 [13] Ricard Durall, Margret Keuper, and Janis Keuper. Watch
+ral Science Foundation of China (62302141, 62331003,                       your up-convolution: Cnn based generative deep neural net-
+62472138, 62272141).                                                       works are failing to reproduce spectral distributions. In Pro-
+                                                                           ceedings of the IEEE/CVF Conference on Computer Vision
+References                                                                 and Pattern Recognition, pages 7890–7899, 2020. 2
+                                                                      [14] Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim
+ [1] Midjourney. In https://www.midjourney.com/                            Entezari, Jonas Müller, Harry Saini, Yam Levi, Dominik
+     home/, 2022. 12                                                       Lorenz, Axel Sauer, Frederic Boesel, Dustin Podell, Tim
+ [2] Wukong.        In https : / / xihe . mindspore . cn /                 Dockhorn, Zion English, and Robin Rombach. Scaling rec-
+     modelzoo/wukong, 2022. 12                                             tified flow transformers for high-resolution image synthesis.
+ [3] Kingma DP Ba J Adam et al. Adam: A method for stochas-                In Proceedings of the 41st International Conference on Ma-
+     tic optimization. In International Conference for Learning            chine Learning, pages 12606–12633, 2024. 1, 13
+     Representations, 2014. 6                                         [15] Qian Feng and Zhifeng Xu. Deepfake detection based on
+ [4] Andrew Brock, Jeff Donahue, and Karen Simonyan. Large                 single-domain data augmentation. International Journal of
+     scale GAN training for high fidelity natural image synthe-            Autonomous and Adaptive Communications Systems, 18(4):
+     sis. In International Conference on Learning Representa-              293–309, 2025. 1
+     tions, 2019. 1, 12                                               [16] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+ [5] George Cazenavette, Avneesh Sud, Thomas Leung, and Ben                cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+     Usman. Fakeinversion: Learning to detect images from un-              quency analysis for deep fake image recognition. In Interna-
+     seen text-to-image models by inverting stable diffusion. In           tional Conference on Machine Learning, pages 3247–3258,
+     Proceedings of the IEEE/CVF Conference on Computer Vi-                2020. 1, 2
+     sion and Pattern Recognition, pages 10759–10769, 2024. 2         [17] Ian J. Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing
+ [6] Lucy Chai, David Bau, Ser-Nam Lim, and Phillip Isola.                 Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and
+     What makes fake images detectable? understanding prop-                Yoshua Bengio. Generative adversarial nets. In Advances in
+     erties that generalize. In European Conference on Computer            Neural Information Processing Systems, 2014. 1
+     Vision, 2020. 1                                                  [18] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo
+ [7] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.               Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+     Drct: Diffusion reconstruction contrastive training towards           tor quantized diffusion model for text-to-image synthesis. In
+     universal detection of diffusion generated images. In Inter-          Proceedings of the IEEE/CVF Conference on Computer Vi-
+     national Conference on Machine Learning, 2024. 2, 5, 6,               sion and Pattern Recognition, pages 10696–10706, 2022. 1,
+     12                                                                    12
+ [8] Yingjian Chen, Lei Zhang, and Yakun Niu. Forgelens: Data-        [19] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+     efficient forgery focus for generalizable forgery image detec-        Deep residual learning for image recognition. In Proceed-
+     tion. In Proceedings of the IEEE/CVF International Confer-            ings of the IEEE Conference on Computer Vision and Pattern
+     ence on Computer Vision, pages 16270–16280, 2025. 2, 3,               Recognition (CVPR), pages 770–778, 2016. 14
+     5, 6, 7, 13                                                      [20] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising dif-
+ [9] Yunjey Choi, Minje Choi, Munyoung Kim, Jung-Woo Ha,                   fusion probabilistic models. In Advances in Neural Informa-
+     Sunghun Kim, and Jaegul Choo. Stargan: Unified genera-                tion Processing Systems, pages 6840–6851, 2020. 1
+     tive adversarial networks for multi-domain image-to-image        [21] Yonghyun Jeong, Doyeon Kim, Seungjai Min, Seongho Joe,
+     translation. In Proceedings of the IEEE Conference on Com-            Youngjune Gwon, and Jongwon Choi. Bihpf: Bilateral high-
+     puter Vision and Pattern Recognition, 2018. 1, 12                     pass filters for robust deepfake detection. In Proceedings of
+[10] Beilin Chu, Xuan Xu, Xin Wang, Yufei Zhang, Weike                     the IEEE/CVF Conference on Computer Vision and Pattern
+     You, and Linna Zhou. Fire: Robust detection of diffusion-             Recognition, pages 48–57, 2022. 1, 2
+     generated images via frequency-guided reconstruction error.      [22] Yonghyun Jeong, Doyeon Kim, Youngmin Ro, and Jongwon
+     In Proceedings of the Computer Vision and Pattern Recogni-            Choi. Frepgan: Robust deepfake detection using frequency-
+     tion Conference, pages 12830–12839, 2025. 2                           level perturbations. In Proceedings of the AAAI Conference
+[11] Prafulla Dhariwal and Alexander Nichol. Diffusion models              on Artificial Intelligence, pages 1060–1068, 2022. 1, 2
+     beat gans on image synthesis. In Advances in Neural Infor-       [23] Yonghyun Jeong, Doyeon Kim, Youngmin Ro, Pyounggeon
+     mation Processing Systems, pages 8780–8794, 2021. 1, 2,               Kim, and Jongwon Choi. Fingerprintnet: Synthesized fin-
+     12                                                                    gerprints for generated image detection. In European Con-
+[12] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,                ference on Computer Vision, pages 76–94, 2022. 1, 2
+     Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,              [24] Zexi Jia, Chuanwei Huang, Yeshuang Zhu, Hongyan Fei, Xi-
+     Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-              aoyue Duan, Zhiqiang Yuan, Ying Deng, Jiapei Zhang, Jin-
+     vain Gelly, et al. An image is worth 16x16 words: Trans-              chao Zhang, and Jie Zhou. Secret lies in color: Enhancing
+     formers for image recognition at scale. In Proceedings of             ai-generated images detection with color distribution analy-
+     sis. In Proceedings of the IEEE/CVF Conference on Com-              dia Information Processing and Retrieval, pages 384–389.
+     puter Vision and Pattern Recognition, pages 13445–13454,            2
+     2025. 2                                                        [37] Alexander Quinn Nichol, Prafulla Dhariwal, Aditya Ramesh,
+[25] Felix Juefei-Xu, Run Wang, Yihao Huang, Qing Guo, Lei               Pranav Shyam, Pamela Mishkin, Bob Mcgrew, Ilya
+     Ma, and Yang Liu. Countering malicious deepfakes: Sur-              Sutskever, and Mark Chen. GLIDE: Towards photorealis-
+     vey, battleground, and horizon. In International Journal of         tic image generation and editing with text-guided diffusion
+     Computer Vision, pages 1678–1734, 2022. 1                           models. In International Conference on Machine Learning,
+[26] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.          pages 16784–16804, 2022. 1, 12
+     Progressive growing of GANs for improved quality, stabil-      [38] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+     ity, and variation. In International Conference on Learning         versal fake image detectors that generalize across genera-
+     Representations, 2018. 1, 12                                        tive models. In Proceedings of the IEEE/CVF Conference
+[27] Tero Karras, Samuli Laine, and Timo Aila. A style-based             on Computer Vision and Pattern Recognition, pages 24480–
+     generator architecture for generative adversarial networks.         24489, 2023. 1, 2, 3, 5, 6, 7, 12, 13
+     In Proceedings of the IEEE/CVF Conference on Computer          [39] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-Yan
+     Vision and Pattern Recognition, 2019. 12                            Zhu. Semantic image synthesis with spatially-adaptive nor-
+[28] Tero Karras, Samuli Laine, Miika Aittala, Janne Hellsten,           malization. In Proceedings of the IEEE/CVF Conference on
+     Jaakko Lehtinen, and Timo Aila. Analyzing and improving             Computer Vision and Pattern Recognition, 2019. 1, 12
+     the image quality of stylegan. In IEEE/CVF Conference on       [40] Yiting Qu, Ziqing Yang, Yihan Ma, Michael Backes, Savvas
+     Computer Vision and Pattern Recognition, 2020. 1                    Zannettou, and Yang Zhang. Hate in plain sight: On the risks
+[29] Christos Koutlis and Symeon Papadopoulos. Leveraging rep-           of moderating ai-generated hateful illusions. In Proceedings
+     resentations from intermediate encoder-blocks for synthetic         of the IEEE/CVF International Conference on Computer Vi-
+     image detection. In European Conference on Computer Vi-             sion, pages 19617–19627, 2025. 1
+     sion, pages 394–411, 2024. 1, 2, 3                             [41] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+[30] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao             Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+     Hu, and Fuli Feng. Improving synthetic image detection              Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-
+     towards generalization: An image transformation perspec-            ing transferable visual models from natural language super-
+     tive. In Proceedings of the 31st ACM SIGKDD Conference              vision. In International Conference on Machine Learning,
+     on Knowledge Discovery and Data Mining V. 1, pages 2405–            pages 8748–8763, 2021. 2, 3
+     2414, 2025. 2                                                  [42] Maithra Raghu, Thomas Unterthiner, Simon Kornblith,
+[31] Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays,            Chiyuan Zhang, and Alexey Dosovitskiy. Do vision trans-
+     Pietro Perona, Deva Ramanan, Piotr Dollár, and C Lawrence          formers see like convolutional neural networks? In Advances
+     Zitnick. Microsoft coco: Common objects in context. In              in Neural Information Processing Systems, pages 12116–
+     European conference on computer vision, pages 740–755,              12128, 2021. 3
+     2014. 6                                                        [43] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott Gray,
+[32] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and              Chelsea Voss, Alec Radford, Mark Chen, and Ilya Sutskever.
+     Xinbo Gao. Detecting generated images by real images. In            Zero-shot text-to-image generation. In International Confer-
+     European Conference on Computer Vision, pages 95–110,               ence on Machine Learning, pages 8821–8831, 2021. 12
+     2022. 1, 2, 5                                                  [44] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-
+[33] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,               oblade: Training-free detection of latent diffusion images
+     Jingdong Wang, and Yao Zhao. Forgery-aware adaptive                 using autoencoder reconstruction error. In Proceedings of
+     transformer for generalizable synthetic image detection. In         the IEEE/CVF Conference on Computer Vision and Pattern
+     Proceedings of the IEEE/CVF Conference on Computer Vi-              Recognition, pages 9130–9140, 2024. 2
+     sion and Pattern Recognition, pages 10770–10780, 2024. 2,      [45] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     3, 5, 7                                                             Patrick Esser, and Björn Ommer. High-resolution image
+[34] Yuchen Luo, Yong Zhang, Junchi Yan, and Wei Liu. Gener-             synthesis with latent diffusion models. In Proceedings of
+     alizing face forgery detection with high-frequency features.        the IEEE/CVF Conference on Computer Vision and Pattern
+     In Proceedings of the IEEE/CVF Conference on Computer               Recognition, pages 10684–10695, 2022. 2, 12
+     Vision and Pattern Recognition, pages 16317–16326, 2021.       [46] Andreas Rossler, Davide Cozzolino, Luisa Verdoliva, Chris-
+     2                                                                   tian Riess, Justus Thies, and Matthias Niessner. Faceforen-
+[35] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.                 sics++: Learning to detect manipulated facial images. In
+     LaRE2 : Latent reconstruction error based method for                Proceedings of the IEEE/CVF International Conference on
+     diffusion-generated image detection. In Proceedings of              Computer Vision (ICCV), 2019. 12
+     the IEEE/CVF Conference on Computer Vision and Pattern         [47] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, San-
+     Recognition, pages 17006–17015, 2024. 2                             jeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy,
+[36] Francesco Marra, Diego Gragnaniello, Davide Cozzolino,              Aditya Khosla, Michael Bernstein, et al. Imagenet large
+     and Luisa Verdoliva. Detection of gan-generated fake im-            scale visual recognition challenge. International Journal of
+     ages over social networks. In IEEE Conference on Multime-           Computer Vision, 115(3):211–252, 2015. 12
+[48] Christoph Schuhmann, Richard Vencu, Romain Beaumont,                  Proceedings of the IEEE/CVF International Conference on
+     Robert Kaczmarczyk, Clayton Mullis, Aarush Katta, Theo                Computer Vision, pages 7556–7566, 2019. 1
+     Coombes, Jenia Jitsev, and Aran Komatsuzaki. Laion-400m:         [60] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li, Bo Liu,
+     Open dataset of clip-filtered 400 million image-text pairs. In        and Bin Xiao. Towards universal ai-generated image detec-
+     Data Centric AI NeurIPS Workshop 2021, 2021. 12                       tion by variational information bottleneck network. In Pro-
+[49] Amanpreet Singh, Ronghang Hu, Vedanuj Goswami, Guil-                  ceedings of the IEEE/CVF Conference on Computer Vision
+     laume Couairon, Wojciech Galuba, Marcus Rohrbach, and                 and Pattern Recognition, pages 23828–23837, 2025. 2, 3, 5,
+     Douwe Kiela. FLAVA: A foundational language and vision                6, 7
+     alignment model. In Proceedings of the IEEE/CVF Confer-          [61] Lvmin Zhang, Anyi Rao, and Maneesh Agrawala. Adding
+     ence on Computer Vision and Pattern Recognition, 2022. 14             conditional control to text-to-image diffusion models. In
+[50] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,                  Proceedings of the IEEE/CVF International Conference on
+     and Yunchao Wei. Learning on gradients: Generalized arti-             Computer Vision, pages 3836–3847, 2023. 2, 6, 12
+     facts representation for gan-generated images detection. In      [62] Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and
+     Proceedings of the IEEE/CVF Conference on Computer Vi-                Xinpeng Zhang. Patchcraft: Exploring texture patch for
+     sion and Pattern Recognition, pages 12105–12114, 2023. 1,             efficient ai-generated image detection.      arXiv preprint
+     2, 5, 6, 7, 13                                                        arXiv:2311.12397, 2023. 1, 2
+[51] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,             [63] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A.
+     Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-               Efros. Unpaired image-to-image translation using cycle-
+     tection: Improving generalizability through frequency space           consistent adversarial networks. In IEEE International
+     domain learning. In Proceedings of the AAAI Conference on             Conference on Computer Vision (ICCV), pages 2242–2251,
+     Artificial Intelligence, pages 5052–5060, 2024. 1, 2, 5               2017. 12
+[52] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,             [64] Mingjian Zhu, Hanting Chen, Qiangyu YAN, Xudong
+     Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-             Huang, Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu,
+     erations in cnn-based generative network for generalizable            and Yunhe Wang. Genimage: A million-scale benchmark for
+     deepfake detection. In Proceedings of the IEEE/CVF Con-               detecting ai-generated image. In Advances in Neural Infor-
+     ference on Computer Vision and Pattern Recognition, pages             mation Processing Systems, pages 77771–77782, 2023. 5,
+     28130–28139, 2024. 1, 2, 5, 6, 7, 13                                  12
+[53] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu,
+     Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip: Inject-
+     ing category common prompt in clip to enhance generaliza-
+     tion in deepfake detection. In Proceedings of the AAAI Con-
+     ference on Artificial Intelligence, pages 7184–7192, 2025. 2,
+     3, 5
+[54] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Owens, and Alexei A Efros. Cnn-generated images are
+     surprisingly easy to spot... for now. In Proceedings of
+     the IEEE/CVF Conference on Computer Vision and Pattern
+     Recognition, pages 8695–8704, 2020. 1, 2, 5, 6, 7, 13
+[55] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     diffusion-generated image detection. In Proceedings of the
+     IEEE/CVF International Conference on Computer Vision,
+     pages 22445–22455, 2023. 2, 6
+[56] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong
+     Jiang, Yao Hu, and Weidi Xie. A sanity check for ai-
+     generated image detection. In International Conference on
+     Learning Representations, 2025. 6, 7, 12, 13
+[57] Yongqi Yang, Zhihao Qian, Ye Zhu, Olga Russakovsky, and
+     Yu Wu. D3 : Scaling up deepfake detection by learning from
+     discrepancy. In Proceedings of the Computer Vision and Pat-
+     tern Recognition Conference, pages 23850–23859, 2025. 2,
+     5, 6
+[58] Fisher Yu, Ari Seff, Yinda Zhang, Shuran Song, Thomas
+     Funkhouser, and Jianxiong Xiao. Lsun: Construction of a
+     large-scale image dataset using deep learning with humans
+     in the loop. arXiv preprint arXiv:1506.03365, 2015. 6, 14
+[59] Ning Yu, Larry S Davis, and Mario Fritz. Attributing fake
+     images to gans: Learning and analyzing gan fingerprints. In
+A. Appendix
+In this supplementary material, we first provide a compre-
+hensive introduction to the datasets used in our experiments
+(Sec. B). Then, we conduct additional experiments on the
+Chameleon dataset [56] (Sec. C). More ablation studies re-             (a) Last Layer       (b) Selected Layers        (c) LTD
+lated to visualization analysis, different degradation factors,
+and alternative backbones are presented (Sec. D).                 Figure 1. t-SNE visualization of feature separability under dif-
+                                                                  ferent representations. Comparison among (a) the ViT last-layer
+                                                                  features, (b) the concatenated selected mid-layer features, and (c)
+B. Datasets                                                       our LTD-enhanced representations. While both (a) and (b) exhibit
+                                                                  limited separation between real and generated images, (c) shows
+UnivFD [38] contains synthetic images generated by a wide
+                                                                  clear and robust class separation, demonstrating the effectiveness
+range of models including: 1) GAN-based methods. Pro-
+                                                                  of our LTD.
+GAN [26], StyleGAN [27], BigGAN [4], CycleGAN [63],
+StarGAN [9], GauGAN [39], DeepFakes [46]; 2) Diffusion-
+based methods. ADM [11] trained on ImageNet, LDM [45],            imal, object, and scene), with resolutions ranging from
+Glide [37], DALL-E [43]; and 3) The variants of some              720P to 4K. The synthetic subset covers images generated
+diffusion models. LDM with different noise refinement             from widely adopted text-to-image models such as Mid-
+steps (e.g., 100 vs. 200, with or without classifier-free         journey, Stable Diffusion (v1.4 and v1.5), DALLE-2, and
+guidance) and Glide with multi-stage refinement (e.g., 100-       various LoRA-based fine-tuned models. In Chameleon, the
+27, 50-27, and 100-10). All samples are standardized to           real subset is drawn from open-license platforms (e.g., Un-
+256 × 256 resolution, with real counterparts sampled from         splash) to ensure distributional alignment.
+the LAION [48] and ImageNet [47] datasets.
+DRCT-2M [7] is a large-scale benchmark comprising 2               C. Comparisons on Chameleon
+million diverse synthetic images generated by state-of-the-
+art diffusion models (DMs), including Stable Diffusion            To further evaluate the robustness of our method in detect-
+variants (v1.4, v1.5, SDXL) [45], ControlNet-enhanced             ing realistic AI-generated content encountered in the wild,
+models (e.g., SDXL-Ctrl) [61], and high-speed inference           we conduct experiments on the Chameleon dataset, which
+variants (e.g., SD-Turbo, LCM-SD). Images are sourced             contains diverse and high-quality samples that are inher-
+from community platforms (Civitai, Discord) to reflect real-      ently challenging to human perception. The results are re-
+world generation practices, capturing natural variations in       ported in Table 1. We observe that all the models trained on
+prompt engineering, sampling configurations, and post-            ProGAN perform poorly, as the distributional gap between
+processing. Additionally, DRCT-2M contains a balanced             ProGAN-generated samples and the advanced generators
+subset of high-quality real photographs from established          used in Chameleon is substantial, resulting in near-random
+natural image collections to ensure comprehensive cover-          detection performance. In contrast, when training on more
+age of both authentic and synthetic content.                      recent generators such as SDXL-Turbo and LCM-SDv1.5,
+                                                                  the models achieve markedly improved performance, em-
+GenImage [64] is specifically designed for detecting syn-
+                                                                  phasizing the necessity of contemporary training data for
+thetic images produced by modern generative models,
+                                                                  generalizing to advanced synthetic media. Notably, our
+which involves 1,331,167 real images and 1,350,000 fake
+                                                                  method consistently exceeds all baselines in both training
+images, carefully balanced in terms of class distribution and
+                                                                  datasets, demonstrating superior adaptability across genera-
+image count. The training set consists of images generated
+                                                                  tive distributions and validating its strong potential for real-
+by Stable Diffusion v1.4 [45], paired with corresponding
+                                                                  world media forensics applications.
+ImageNet [47] labels to ensure semantic alignment be-
+tween real and synthetic data. During evaluation, the de-
+                                                                  D. Ablation Study
+tector is tested on a diverse range of generators, including
+both diffusion models (e.g., Stable Diffusion v1.5, GLIDE         Visualization of LTD. To demonstrate the effectiveness
+[37], ADM [11], VQDM [18], Wukong [2] ) and GAN-                  of our approach, we visualize the feature distributions us-
+based models (e.g., BigGAN [4]), as well as commercial            ing t-SNE across three different settings: (i) the ViT last-
+systems like Midjourney [1].                                      layer representation (Last Layer), (ii) the concatenated fea-
+Chameleon [56] provides a high-quality and diverse collec-        tures from our selected discriminative layers (Selected Lay-
+tion of real and AI-generated images designed for evaluat-        ers), and (iii) our LTD representations. As shown in fig-
+ing detection robustness in realistic scenarios. It contains      ure 1, both the last-layer and selected layers remain heavily
+approximately 26K samples, with 14.8K real and 11.1K              overlapped, exhibiting limited separability between real and
+fake images, spanning four broad categories (human, an-           synthetic images. In contrast, our full model LTD produces
+ Table 1. Accuracy (Acc.) of different detectors (columns) on the Chameleon dataset when trained with different sources (rows). For each
+ training dataset, the first row reports the overall classification accuracy, while the second row presents the class-wise accuracy split into
+ “fake/real” for a more detailed breakdown.
+
+            Training        CNNSpot          LGrad       UnivFD            NPR             AIDE            D3          ForgeLens          LTD
+            Dataset           [54]            [50]        [38]             [52]             [56]          [14]            [8]            (ours)
+                              57.31          59.41        57.36          59.83             58.38         56.63           57.71          58.27
+            ProGAN
+                            99.71/0.89     99.44/6.13   97.27/4.25     99.56/5.47        98.47/5.04    99.06/0.18     77.33/31.46     98.55/4.66
+                               57.09         55.76         63.78         58.37             56.78          72.96           49.22          73.98
+      SDXL-Turbo
+                            100.00/0.00    95.08/3.45   44.45/83.11    95.69/8.71        98.71/0.98    63.30/85.81     5.55/92.64     67.63/82.43
+                               61.96         53.30         68.00          60.28            62.60          70.50          57.09          75.66
+      LCM-SDv1.5
+                            96.16/16.45   73.81/26.00   54.94/81.06    87.98/23.41      86.66/30.68    72.99/67.18    100.00/0.00     80.6/69.09
+
+
+                                                                              Table 2. Robustness analysis against image degradations on the
+ForgeLens
+
+
+
+
+                                                                              Chameleon dataset. We evaluate the performance using average
+                                                                              accuracy (Acc.) and average precision (AP). The values in paren-
+                                                                              theses denote the performance drop compared to the clean base-
+                                                                              line.
+
+                                                                                  JPEG     Downsampling     Blur       Acc.(%)         AP (%)
+LTD
+
+
+
+
+                                                                                    ✗              ✗         ✗          75.66           78.00
+                                                                                    ✓              ✗         ✗       74.46 (1.20↓)   77.16 (0.84↓)
+                 Original                 JPEG           Downsampled
+                                                                                    ✗              ✓         ✗       75.48 (0.18↓)   77.41 (0.59↓)
+ Figure 2. t-SNE visualization of feature distributions on SD v1.4                  ✗              ✗         ✓       69.14 (6.52↓)   71.27 (6.73↓)
+ generated images. Columns show features for original images,                       ✓              ✓         ✓       70.89 (4.77↓)   70.63 (7.37↓)
+ (b) JPEG-compressed images, and downsampled iamges. Under
+ JPEG compression, ForgeLens suffers from severe cluster col-
+ lapse. Notably, under downsampling, while ForgeLens retains vi-
+ sual separability, it exhibits a significant distribution shift that is      these challenges, the overall robustness of LTD across var-
+ mismatched with with the classifier (resulting in 50% Acc).                  ious perturbations underscores its ability to capture coarse-
+                                                                              grained, degradation-tolerant artifacts that remain reliable
+                                                                              even when fine-grained frequency cues are severely dis-
+ a clearly separable embedding space, indicating that LTD                     rupted.
+ effectively exposes inter-layer discrepancies and bring out                     To more intuitively show the discriminative ability of
+ discriminative artifacts that are otherwise not captured by                  our LTD in dealing with realistic degradations, we visualize
+ the backbone alone.                                                          the t-SNE in feature space, where the most recent method
+ Robustness Against Realistic Degradations. To evaluate                       ForgeLens [8] is employed as a reference. As shown in fig-
+ the robustness of our method under realistic degradations,                   ure 2, in the ideal clean setting, both methods yield well-
+ we conduct perturbation experiments on the Chameleon,                        separated clusters between real and synthetic images. How-
+ using LCM-SDv1.5 as the training set. Specifically, we                       ever, substantial differences emerge once degradations are
+ consider three widely encountered distortions: JPEG com-                     applied. Under JPEG compression, LTD maintains a clear
+ pression with a quality factor of 80, downsampling with a                    separation, while ForgeLens collapses into heavily overlap-
+ scale factor of 0.5, and Gaussian blur with a kernel size                    ping clusters, showing almost no discriminative boundary.
+ of 3. Each degradation is applied individually to isolate                    This behavior is consistent with the underlying mechanism
+ its impact, and jointly to simulate more challenging com-                    of ForgeLens. ForgeLens is not a frequency-based detector,
+ pound distortions. As shown in Table 2, LTD maintains sta-                   as it does not employ explicit spectral transformations or
+ ble performance under JPEG compression and downsam-                          high-pass filtering. However, the method guides the frozen
+ pling, with only marginal decreases of 1.20% and 0.18% in                    ViT to focus on forgery-specific local artifacts, which of-
+ Acc., respectively. Blur introduces more substantial per-                    ten reside in relatively high-frequency regions of the image.
+ turbations, resulting in performance drops of 6.52% and                      Consequently, when high-frequency content is suppressed
+ 12.35%. When all distortions are combined, the accuracy                      by blur or corrupted by noise, these cues become less reli-
+ decreases by 4.77% in Acc. and 7.37% in AP. Despite                          able, leading to the observed performance degradation.
+                                                              CLIP:ViT-L/14        ImageNet:ViT-L/16              CLIP:ResNet-50
+                                                              CLIP:ViT-B/16        Flava                          CLIP:ResNet-101
+      100
+       80
+ACC
+
+
+
+
+       60
+       40   ProGAN   StyleGAN StyleGAN2   BigGAN   CycleGAN     StarGAN   GAUGAN   DeepFake     ADM   MidJourny     SDv1.4   GLID   SDv1.5   VQDM   wukong   BigGAN
+
+
+                                                              CLIP:ViT-L/14        ImageNet:ViT-L/16              CLIP:ResNet-50
+                                                              CLIP:ViT-B/16        Flava                          CLIP:ResNet-101
+      100
+       80
+AP
+
+
+
+
+       60
+       40   ProGAN   StyleGAN StyleGAN2   BigGAN   CycleGAN     StarGAN   GAUGAN   DeepFake     ADM   MidJourny     SDv1.4   GLID   SDv1.5   VQDM   wukong   BigGAN
+
+
+Figure 3. Backbone comparison across diverse generative models. Detection accuracy of four representative backbones, including CLIP
+ViT-L/14, CLIP ViT-B/16, ImageNet ViT-L/16, and Flava, evaluated over a wide range of GAN- and diffusion-based generators. The
+results highlight significant performance differences driven by pre-training strategy and model capacity.
+
+
+    For downsampling attacks, ForgeLens exhibits a signifi-                                   performs the worst, with accuracy dropping sharply across
+cant performance discrepancy under downsampling attacks,                                      nearly all sources. This performance gap is primarily due
+where the detection accuracy drops to random guessing (as                                     to the significant difference in pre-training data scale; the
+reported in the main manuscript) and the t-SNE visualiza-                                     limited volume of ImageNet-1K ( 1.28M images) prevents
+tion of the feature space reveals distinct, separable clusters.                               the model from developing the robust sensitivity to genera-
+This mismatch indicates that downsampling does not fun-                                       tive artifacts that emerges from CLIP’s much larger dataset
+damentally collapse the underlying feature distributions; in-                                 ( 400M image-text pairs). Similarly, Flava, although its
+stead, it disrupts the fine-grained local artifacts that Forge-                               multimodal training, remains inferior to CLIP, further con-
+Lens relies on to form its decision boundary. As these                                        firming that pre-training data scale is a important factor.
+high-frequency–sensitive cues are smoothed or removed,                                        CLIP’s extensive data provides a far superior prior for arti-
+the classifier trained on them becomes invalid, even though                                   fact sensitivity compared to the more limited datasets used
+coarser structural cues still induce separable feature clus-                                  for ImageNet or Flava. Furthermore, we observe a clear
+ters.                                                                                         scaling effect across architecture, CLIP:ResNet-101 con-
+    By comparison, LTD maintains clear separability un-                                       sistently outperforms CLIP:ResNet-50, and CLIP:ViT-L/14
+der both JPEG compression and downsampling, because its                                       exhibits greater stability than CLIP:ViT-B/16, which shows
+cross-layer consistency cues operate at a coarse granularity                                  moderate but unstable performance on complex models like
+that is inherently resistant to such degradations.                                            BigGAN and Stable Diffusion. These results prove that
+Impact of Different Backbones. To examine the influence                                       both increased model capacity and pre-training data scale
+of different backbones on AI-generated images detection,                                      are critical for developing a robust detector capable of han-
+we conduct experiments on several representative archi-                                       dling the diverse artifacts of modern generative models.
+tectures, including CLIP-based ViTs, ResNets, ImageNet-                                       Impact of Weight sharing To further investigate the ef-
+pretrained ViT, and Flava [49]. All backbones are trained                                     ficacy of the weight-sharing mechanism within our dual-
+on the 2-class training setting (chair, tvmonitor) described                                  branch architecture, we conducted an additional ablation
+in the main paper, utilizing 72k ProGAN-generated images                                      study comparing against a non-shared weight variant. In the
+and real images from LSUN [58]. For the ResNet vari-                                          non-shared setting, we assigned independent Transformer
+ants (CLIP:ResNet50 [19] and CLIP:ResNet101), since the                                       blocks to the selected raw feature branch and the LTD
+feature dimensions vary across different stages, we apply                                     branch, respectively. The quantitative results demonstrate
+Global Average Pooling to eliminate the spatial dimensions                                    that the non-shared configuration leads to a consistent per-
+and align the features and project multi-stage features into                                  formance degradation across all evaluated benchmarks: on
+a unified latent dimension. We summarize the performance                                      the UFD dataset , the accuracy dropped to 95.44%, which
+across sixteen generators, spanning both GANs and DMs,                                        is 1.46% lower than the weight-sharing baseline; on the
+as shown in Figure 3. the ImageNet-pretrained ViT-L/16                                        GenImage dataset , the performance decreased to 86.42%,
+Table 3. Ablation study on the selection endpoint (upper bound).
+
+ Layer Selection   UFD     DRCT-2M      GenImage    Mean Acc
+   Fixed(11-23)    95.99     91.26        91.70        92.98
+   Fixed(11-21)    94.47     87.09        94.55        92.04
+   Fixed(11-19)    95.11     91.63        97.44        94.73
+   Fixed(11-17)    97.03     91.11        94.72        94.29
+
+
+
+representing a margin of 3.20% below the shared setting;
+and on the DRCT-2M dataset, the accuracy fell to 94.73%,
+showing a substantial drop of 4.81% compared to the pro-
+posed model. These results validate the critical role of
+weight sharing in our framework.
+Impact of Weight sharing To further investigate the ef-
+ficacy of the weight-sharing mechanism within our dual-
+branch architecture, we conducted an additional ablation
+study comparing against a non-shared weight variant. In the
+non-shared setting, we assigned independent Transformer
+blocks to the selected raw feature branch and the LTD
+branch, respectively. The quantitative results demonstrate
+that the non-shared configuration leads to a consistent per-
+formance degradation across all evaluated benchmarks: on
+the UFD dataset , the accuracy dropped to 95.44%, which
+is 1.46% lower than the weight-sharing baseline; on the
+GenImage dataset , the performance decreased to 86.42%,
+representing a margin of 3.20% below the shared setting;
+and on the DRCT-2M dataset, the accuracy fell to 94.73%,
+showing a substantial drop of 4.81% compared to the pro-
+posed model. These results validate the critical role of
+weight sharing in our framework.
+Impact of Upper Bound To further refine the optimal
+search space, we fixed the starting layer at Layer 11 (the
+optimal lower bound determined in our main text) and var-
+ied the endpoint from Layer 17 to Layer 23. As demon-
+strated in Table 3, the detection performance consistently
+improves as the endpoint shifts from 23 towards 19. While
+extending the boundary to 17 yields the highest accuracy on
+the UFD dataset (97.03%), it results in a significant perfor-
+mance drop on DRCT-2M (94.29%) compared to the Layer
+19 configuration. This indicates that a narrower selection
+at Layer 17 leads to overfitting and limited generalization
+across diverse datasets.
+

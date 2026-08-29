@@ -1,0 +1,817 @@
+                    This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                 Except for this watermark, it is identical to the accepted version;
+                           the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+                   Towards Generalizable AI-Generated Image Detection via
+                             Image-Adaptive Prompt Learning
+
+        Yiheng Li1,2 , Zichang Tan4 , Guoqing Xu1,2 , Zhen Lei1,2,3,5 , Xu Zhou4 , Yang Yang1,2,†
+           1
+             School of Artificial Intelligence, University of Chinese Academy of Sciences
+                  2
+                     MAIS, Institute of Automation, Chinese Academy of Sciences
+  3
+    CAIR, HKISI, Chinese Academy of Sciences, 4 Sangfor Technologies Inc. 5 SCSE, FIE, M.U.S.T
+               {liyiheng2024, yangyang2013, zhen.lei}@ia.ac.cn, tanzichang@foxmail.com
+
+
+
+                           Abstract                                                                                                                 Image Encoder           Fake
+
+
+
+                                                                                                                               Testing Image
+
+
+
+
+                                                                      Training Data
+
+
+
+
+                                                                                                                        Loss
+                                                                                               Image Encoder                                         Fixed Prompt
+                                                                                      Real
+In AI-generated image detection, current cutting-edge                                                                                   (b) Inference Process of Existing Methods
+
+
+
+
+                                                                                      ...
+methods typically adapt pre-trained foundation models                                                            Optimize                           Image Encoder           Real
+                                                                                              Learnable Prompt
+through partial-parameter fine-tuning. However, these ap-
+                                                                                                                               Testing Image
+                                                                                                                                                   Dynamic Prompt
+proaches often struggle to generalize to forgeries from un-                           Fake
+                                                                                             (a) Training process                     Adjust
+
+seen generators, as the fine-tuned models capture only lim-                                                                               (c) Inference Process of Our Method
+
+ited patterns from training data and fail to reflect the evolv-    Figure 1. Comparison of the adaptability of prompts between
+ing traits of new ones. To overcome this limitation, we            our and existing methods when facing a testing image. (a) In
+propose Image-Adaptive Prompt Learning (IAPL), a novel             the training process, the parameters of learnable prompts are opti-
+paradigm that dynamically adjusts the prompts fed into the         mized via a training set that includes limited generative methods.
+encoder according to each testing image, rather than fixing        During inference, existing methods (b) keep the learned prompts
+them after training. This design significantly enhances ro-        fixed. In contrast, our method (c) dynamically adjusts the learned
+bustness and adaptability to diverse forged images. The dy-        prompts based on test images from unseen sources, thereby en-
+namic prompts integrate conditional information with test-         hancing generalization to novel test images.
+time adaptive tokens through a lightweight learnable scal-
+ing factor. The conditional information is produced by a
+Conditional Information Learner, which leverages CNN-              personalized media. However, the potential misuse of such
+based feature extractors to model both forgery-specific and        technologies raises serious security risks, threatening both
+general conditions. The test-time adaptive tokens are op-          public trust and individual privacy [34]. This duality high-
+timized during inference on a single sample by enforcing           lights the urgent need for robust and generalizable methods
+prediction consistency across multiple views, ensuring that        to detect AI-generated images.
+the parameters align with the current image. For the final            Several works have been proposed to detect and dis-
+decision, the optimal input with the highest prediction con-       tinguish between AI-generated images and authentic ones.
+fidence is selected. Extensive experiments show that IAPL          Some methods focus on detecting synthesized faces [35,
+achieves state-of-the-art performance, with mean accura-           66], while others focus on detecting synthesized natural im-
+cies of 95.61% and 96.7% on the widely used Universal-             ages [65, 71]. Beyond recognizing images generated by
+FakeDetect and GenImage datasets, respectively. Codes.             seen generators in the training set, a more important task
+                                                                   is detecting images produced by unseen generators. The
+                                                                   significance lies in improving the model’s generalizability
+1. Introduction                                                    to the ever-evolving generation methods emerging in real-
+                                                                   world scenarios. To this end, certain approaches find cues
+Driven by the rapid progress in generative AI, particu-            from the low-level traces in the images, such as frequency
+larly GAN [18] and diffusion models [55], generating high-         [57], neighborhood pixel [58], and gradients [56]. However,
+quality synthetic images has become remarkably effortless.         these methods rely on local details, to some extent over-
+These breakthroughs have opened vast opportunities and             looking the contribution of unrealistic semantic patterns and
+applications in digital content creation, virtual reality, and     overall style in AI-generated content.
+  † Corresponding author                                              Recent state-of-the-art (SOTA) approaches tend to fine-
+
+
+
+                                                              21262
+    real                   real                  real
+    seen fake              seen fake             seen fake
+                                                                               tional information, we further introduce the learnable scal-
+    unseen fake            unseen fake           unseen fake                   ing factor, a control module that adaptively regulates infor-
+                                                                               mation flow. It aggregates the two types of information us-
+                                                                               ing learnable coefficients, emphasizing relevant signals and
+                                                                               suppressing less informative ones. Moreover, to equip the
+           (a) FatFormer          (b) C2P-CLIP                 (c) Ours        pre-trained foundation model with enhanced task-specific
+                                                                               capabilities for AI-generated image detection, we also insert
+Figure 2. T-SNE visualization between real, seen fake and un-
+seen fake images on UniversalFakeDetect dataset. Compared to
+                                                                               some learnable parameters for fine-tuning, which will be
+C2P-CLIP and Fatformer, our approach yields features of unseen                 fixed after training. Here, we combine MLP-based adapters
+fake images that are more similar to those of seen fake images and             [9] and learnable tokens [69], enabling efficient adaptation
+more distinct from real images. As shown by the black dashed                   while preserving the generalization capability of the back-
+area, our method produces a more distinct boundary between the                 bone model. The former inserts learnable upsampling and
+features of unseen fake and real images. For FatFormer, we use                 downsampling matrices alongside the MLP module in the
+the augmented image features from Text-Guided Interactor.                      encoder blocks, which are placed at equal intervals through-
+                                                                               out the encoder. The latter is applied to the encoder blocks
+                                                                               from the 2nd to the Nt -th.
+tune visual foundation models, such as CLIP [46], to boost                         We conduct extensive experiments on two widely used
+detection performance. These pre-trained models encode                         datasets, UniversalFakeDetect [43] and GenImage [71],
+rich real-world knowledge, which serves as a valuable com-                     proving the effectiveness of our method. Specifically, it
+plement to the limited fake patterns present in training data.                 achieves 95.61% and 96.7% mAcc on these two datasets,
+Nevertheless, fine-tuned models often struggle to generalize                   respectively, reaching the new SOTA performance. Abla-
+effectively under domain shifts introduced by images from                      tion studies confirm that all proposed components play a
+unseen generators, revealing limitations in current adapta-                    role in enhancing performance. As shown in Fig. 2, our
+tion strategies. We contend that achieving stronger general-                   method achieves more distinct separation between real and
+ization requires learnable parameters that remain adaptable                    unseen fake images, demonstrating its strong generalization
+to diverse image characteristics. Since images synthesized                     ability. Contributions are as follows:
+by different models exhibit substantial variations in texture,                 • We propose a novel Image-Adaptive Prompt Learning
+semantics, and visual artifacts, relying on fixed model pa-                       strategy, aiming to enhance the model’s generalizability
+rameters is inadequate for capturing the essential discrimi-                      to wider images generated by unseen generators.
+native properties. In this view, we propose a novel Image-                     • We develop an efficient adaptation scheme for pre-trained
+Adaptive Prompt Learning (IAPL) method. As shown in                               vision-language models, combining lightweight MLP-
+Fig. 1, the existing methods [35, 52] keep the prompts                            based adapters with learnable tokens. This design main-
+learned during training fixed when inferring testing images                       tains the backbone’s ability to extract features while al-
+from unseen sources. In contrast, for IAPL, the prompts in-                       lowing flexible adaptation.
+put to the image encoder are dynamically adjusted based on                     • Extensive experiments demonstrate that our method ex-
+the traits of the image during inference, which enables the                       hibits strong generalizability across different generators.
+model to capture instance-specific cues and better handle
+variations introduced by different generative methods.                         2. Related Work
+   The image-adaptive prompts are input into the first en-
+                                                                               2.1. Face Forgery Detection
+coder block and consist of test-time adaptive tokens and
+conditional information. During training, test-time adaptive                   To ensure the privacy and security of users, face forgery de-
+tokens are optimized in the same way as standard learnable                     tection has become an important task. Most existing works
+tokens. At inference, however, they are adjusted based on a                    design sophisticated transformation functions to highlight
+single test image, minimizing entropy across different gen-                    the fake patterns in generated faces. These transforma-
+erated views to alleviate the uncertainty introduced by do-                    tions function includes frequency-domain transformation
+main shift [54]. The conditional information is processed by                   [15, 30], spatial-domain operation [62], reconstruction tech-
+the Conditional Information Learner, which leverages high-                     nique [4] and disentanglement [17]. Other works focus
+pass filters and CNN-based feature extractors to capture                       on capturing artifacts from facial regions with prominent
+both forgery-specific and general cues from local regions                      textures, such as the lips [20] and eyes [33]. For exam-
+rich in texture. These conditions are instance-dependent,                      ple, LAA-Net [41] targets small, artifact-prone regions and
+varying across images, and are injected into the detection                     propagates discriminative low-level features into the final
+pipeline to guide feature learning and capture subtle arti-                    output. Nevertheless, as the variety of generative models
+facts. To better fuse test-time adaptive token and condi-                      continues to expand, the effectiveness of methods in han-
+
+
+
+                                                                          21263
+dling forgeries from unseen sources remains limited. Thus,                                   Classifier                           S    ＋
+some works adopt techniques like blending [53] and adver-                                                              Down
+                                                                                                                                       MLP
+                                                                      Encoder Block with MLP-Based Adapter            Dropout
+sarial training [7] to enrich the training samples. For ex-                                                            ReLU
+                                                                                                                                    LayerNorm
+ample, by modeling and simulating intra-forgery and inter-                                                              Up
+forgery feature variations in the latent space, LSDA [66] en-                                                                          ＋
+larges the forgery space and mitigates the risk of the model                     Encoder Block                                      Multi-Head
+                                                                                                                                     Attention
+overfitting to forgery-specific artifacts.
+                                                                                                                                    LayerNorm
+2.2. AI-Generated Image Detection                                       ...            ...            ...
+In recent years, generative content has expanded beyond hu-           Encoder Block with MLP-Based Adapter
+                                                                                                                                  ＋
+man faces to areas like nature and art. Several approaches
+                                                                        ∽        ∽                                               MLP
+capture clues from low-level artifacts, including frequency-
+based features [23], reconstruction artifacts [63], spatial                                                                   LayerNorm
+pixel relationships [58], and gradients [56]. For example,
+                                                                                 Encoder Block                                    ＋
+BiHPF [23] leverages two high-pass filters in both the fre-
+                                                                                                                              Multi-Head
+quency and pixel domains to extract forgery cues. Another                                                                      Attention
+important paradigm [37, 38, 45] is to leverage the vision
+                                                                                                                                LayerNorm
+foundation models. These methods benefit from the exten-             Image-Adaptive
+                                                                                        Image Patchify
+                                                                     Prompt Learning
+sive pre-trained knowledge in visual foundation models and
+extract high-level forgery features. UniFD [43] is the pio-                                         S : Scale ∽ : Learnable Scaling Factor
+neer to use the CLIP [46] features for forgery detection. Fat-                                            : Learnable Token      : CLS token
+Former [36] conducts forgery-aware adapter with frequency                                                 : Image-Adaptive Prompt      : Image Token
+analysis to fine-tune CLIP. RINE [29] maps the intermediate
+features of CLIP to a learnable forgery-aware space through       Figure 3. Overview of the detection pipeline in our method.
+a lightweight network. C2P-CLIP [59] injects category-            The trainable parameters added to the original CLIP ViT in our im-
+related concepts to the encoder via contrastive learning.         age encoder fall into three categories: MLP-based adapters, learn-
+Effort [67] introduces orthogonal subspace decomposition          able tokens, and image-adaptive prompts. MLP-based adapters go
+to separate domain-specific and domain-invariant features.        into Na encoder blocks at regular intervals. Learnable tokens are
+                                                                  used from the 2nd to the Nt -th encoder blocks. Image-adaptive
+Additionally, some works [10, 65] combine low-level and
+                                                                  prompts, learned via their dedicated module, are applied as the
+high-level features for more robust representation.
+                                                                  first block’s input. After training, MLP-based adapters and learn-
+                                                                  able tokens are fixed, while image-adaptive prompts are adjusted
+2.3. Prompt Learning
+                                                                  based on the image during inference.
+Prompt learning is initially introduced to substitute hand-
+crafted text templates with learnable tokens [39, 69]. Sub-
+sequently, an increasing number of studies began to explore       do not generalize well to images generated by unseen gener-
+its effectiveness in the visual modality. VPT [24] inserts        ators. In this view, we propose an Image-Adaptive Prompt
+a small number of learnable tokens into the pretrained ViT        Learning strategy, which dynamically adjusts the learned
+[14] layers to adapt the model to downstream tasks. VP [1]        prompt based on the characteristics of the test image and
+uses a learnable image perturbation to be the visual prompt.      increases the adaptability to domain shift.
+Then, some multi-modal prompt learning methods are in-
+troduced for a visual-language model [27]. Moreover, to           3. Method
+improve generalization to broader unseen classes, methods
+like input-conditional learning and test-time adaptation [60]
+                                                                  3.1. Overview
+have been proposed. CoCoOp [68] adds input-conditional            The overview of our detection pipeline is shown in Fig.
+tokens to each instance and makes the model less sensitive        3. We design a flexible yet effective framework that tai-
+to class shift. TPT [54] is the pioneer to do Test-Time Tun-      lors the pre-trained CLIP [46] ViT for AI-generated im-
+ing in prompt learning by minimizing the averaged entropy         age detection by integrating three trainable components:
+to enforce consistent predictions across selected augmenta-       MLP-based adapters, learnable tokens, and image-adaptive
+tions. R-TPT [51] chooses to minimize pointwise entropy           prompts. These components preserve the backbone’s dis-
+to reduce conflicts.                                              criminative power while enabling instance-specific adapta-
+    Several prior studies have explored the application of        tion to improve robustness against unseen generators.
+prompt learning [35, 36] in the context of synthetic image           Given an input image, it is first fed into the Image-
+detection. However, the prompts learned by these methods          Adaptive Prompt Learning module to obtain image-
+
+
+
+                                                             21264
+                                              Test-Time Token Tuning                                                                                           Conditional Information Learner
+
+                                                                        Confidence Selection
+                                                                                                                                                                                                                         fake/real
+                                                                                 R                                                                                                                                      supervision
+
+
+
+
+                                                                                                                                                                                                           Extr actor
+                                                                               F
+
+
+
+
+                                                                                                                                                                                                            Featur e
+                                     View 1
+
+
+
+
+                                                                                                         Entropy Minimization
+                                                   Detection Pipeline
+                                                                                                                                                                                                                                      ∽
+
+
+
+
+                                                                                                                                 Patch Segmentation
+                       Mutli Views
+                                                                              View 1
+
+
+
+
+                                                                                                                                                                                       High-Pass Filters
+                       Generation                                                R
+                                                                                                                                                       Patch 1
+                                                                                                                                                                      Select via
+                                                                               F          Average                                                                    DCT Ranking
+                                     View 2
+                                      ...                                     View 2                                                                   Patch 2
+
+
+
+
+                                                                                                                                                                                                           Extr actor
+                                                                               ...                                                                      ...
+
+
+
+
+                                                                                                                                                                                                            Featur e
+    ∽ : Learnable Scaling Factor                                               F R                                                                                                                                                    ∽
+      : Test-time Adaptive Token                                                                                                                                        the most
+      : General Condition            View                                    View                                                                      Patch       informative patch
+      : Forgery-Specific Condition
+                                                                                                    ×T
+                                                                                       Back Propogation
+      : Image-Adaptive Prompt
+
+
+Figure 4. The overall architecture of Image-Adaptive Prompt Learning. It consists of Test-Time Token Tuning and Conditional Infor-
+mation Learner. The former dynamically adjusts test-time adaptive tokens based on the input image, while the latter extracts conditional
+information from the texture-rich region, providing forgery-specific and general guidance for prompt generation.
+
+
+adaptive prompts that encode image-oriented cues to guide                                                                       projection to enhance non-linearity and prevent overfitting.
+the backbone model. What’s more, following the vanilla                                                                          The adapter’s output is scaled by a factor s and subsequently
+CLIP, the input image is divided into multiple patches and                                                                      added to the original output. For parameter initialization,
+encoded into image tokens fimg ∈ RN ×D , where N and D                                                                          we follow LoRA [22]: the down-projection is initialized
+are the number of tokens and dimension, respectively. After                                                                     using Kaiming uniform initialization [21], while the up-
+that, the generated image-adaptive prompts, image tokens,                                                                       projection is initialized to zeros.
+and additional CLS token fcls ∈ R1×D , are fed into mul-                                                                           Learnable Token. Formally, in the j-th block (2 ≤
+tiple encoder blocks for feature extraction. In each block,                                                                     j ≤ Nt ), a set of learnable tokens T (j) ∈ RM ×D is fused
+                                                                                                                                                             (j−1)
+the pre-trained parameters of the original CLIP are fixed to                                                                    with the output prompts Po          ∈ RM ×D from the former
+preserve knowledge. MLP-based adapters are inserted at                                                                          block through a learnable scaling factor to produce the in-
+equal intervals into Na blocks, while learnable tokens are                                                                                      (j)
+                                                                                                                                put prompts Pi ∈ RM ×D of this block. Here, M denotes
+applied from the 2nd to the Nt -th block. In blocks with                                                                        the number of learnable tokens, and D is the embedding
+learnable tokens, the prompts from the previous block are                                                                       dimension. The learnable scaling factor is defined in Eq. 1.
+fused with the tokens via a learnable scaling factor to form
+                                                                                                                                                                  (j)
+the current input prompts, thereby propagating adaptive in-                                                                                                    Pi       = α(j) ∗ Po (j−1) + T (j) ,                                       (1)
+formation from the image-adaptive prompts and strength-                                                                                               (j)          D
+                                                                                                                                where α ∈ R denotes the channel-wise coefficients in
+ening forgery cue modeling in deeper layers. Finally, the                                                                       the j-th layer. These coefficients are initialized to small
+output CLS token from the last encoder block is used for                                                                        values and optimized during training. They are applied di-
+the result prediction via a trainable classifier.                                                                               rectly to the prompt, enabling fine-grained control over how
+3.2. Fixed Learned Parameters                                                                                                   information from the previous layer is integrated on a per-
+                                                                                                                                channel basis. In other words, α(j) modulates the contri-
+We first introduce the MLP-based adapters and learnable                                                                         bution of each channel in the fused prompt, allowing the
+tokens, which remain unchanged after training and do not                                                                        model to emphasize or suppress specific features dynami-
+vary with input images. Therefore, they are referred to as                                                                                                              (j)
+                                                                                                                                cally. Then, the generated prompts Pi are concatenated
+fixed learned parameters. It is worth noting that, although                                                                     with the image and CLS tokens and fed into the subsequent
+our paper emphasizes the importance of dynamic param-                                                                           encoder blocks for further representation learning.
+eters in capturing instance-specific forgery cues, the fixed
+learned parameters still play a crucial role: they provide a                                                                    3.3. Image-Adaptive Prompt Learning
+stable backbone for the model, allowing dynamic param-                                                                          While previously mentioned adapters and learnable tokens
+eters to focus on adaptive adjustments for each input im-                                                                       provide a stable backbone for detection, they lack the flex-
+age while preventing excessive flexibility that could com-                                                                      ibility to adapt to diverse image characteristics, especially
+promise overall inference accuracy.                                                                                             when encountering content generated by unseen models.
+    MLP-based Adapter. As shown in Fig. 3, we em-                                                                               Given that AI-generated images often vary in texture, se-
+ploy a simple yet effective MLP-based adapter [9]. It in-                                                                       mantics, and artifacts, relying solely on static parameters
+cludes a down-projection Wd ∈ RD×D̂ and a up-projection                                                                         makes the model vulnerable to domain shifts. In this view,
+Wd ∈ RD̂×D , where D̂ is the middle dimension and satis-                                                                        as shown in Fig. 4, we introduce Image-Adaptive Prompt
+fies D̂ ≪ D. A ReLU activation function and dropout tech-                                                                       Learning, which dynamically adjusts input prompts accord-
+nique are employed between the up-projection and down-                                                                          ing to the characteristics of each test image.
+
+
+
+                                                                                                                      21265
+   Test-Time Token Tuning. The dynamic adaptability of               Conditional Information Learner. To capture sub-
+this module is primarily embodied in the test-time adaptive      tle and varying cues in AI-generated images, we propose
+tokens. Each token is a trainable embedding that is op-          the Conditional Information Learner, which extracts condi-
+timized in the same manner as standard learnable tokens          tional information tailored to each input. The conditional
+during training. However, at inference time, its parame-         information is partitioned into forgery-specific and general
+ters are further adjusted according to a single testing image,   components, which act on the input prompt to enable the
+enabling instance-specific adaptation and enhancing robust-      model to focus on the distinct characteristics of various in-
+ness to domain shifts.                                           puts. Moreover, the condition is obtained from the most
+   Specifically, at the inference stage, the Test-Time To-       texture-rich region with a high-pass filter, emphasizing low-
+ken Tuning starts with generating multiple views V ∈             level patterns often overlooked by the high-level semantic
+RNv ×224×224×3 from the original image, where Nv is the          features of the pre-trained CLIP backbone.
+number of views. In particular, the generated views could            Specifically, for a given input image, we divide it into lo-
+be divided into a global view and multiple local views. For      cal patches Pl ∈ RNp ×32×32×3 , where Np is the number of
+a global view, we resize the entire image to the input size of   patches. We use the DCT score [65] to measure the texture
+CLIP, i.e. 224 × 224. For local views, we randomly crop          richness of each patch and select the patch with the high-
+Nv -1 224 × 224 sub-images followed by horizontal flipping       est DCT value for conditional information extraction. After
+augmentation. If the image is too small to crop Nv -1 dif-       that, the selected patches are input into high-pass filters [16]
+ferent sub-images, we randomly crop Nv -1 smaller square         to obtain the high-frequency pattern. Two CNN-based fea-
+patches and then resize these patches to 224 × 224. To re-       ture extractors with identical architectures but separate pa-
+duce the noise from randomly generated views, the Confi-         rameters are used to extract the forgery-specific condition
+dence Selection is conducted. We select m views with high        Cf and the general condition Cg , respectively. An auxiliary
+predicted confidence for subsequent tuning. The predicted        supervision branch is attached after a forgery-specific con-
+confidence Sci is calculated via Eq. 2.                          dition. It consists of a single-layer MLP, enabling the super-
+                                                                 vised branch to extract features strongly correlated with the
+                  Sci = 2 ∗ |σ(zi ) − 0.5|,               (2)    presence of forgery, while the unsupervised branch learns
+                                                                 more general features related to the image status. More-
+where zi is the logit of the i-th view. σ(.) is the Sigmoid      over, as the conditional information is extracted from a
+function that transform zi into (0, 1).                          small patch, this process is both time-efficient and memory-
+    Given the selected views, we tune the test-time adap-        efficient.
+tive tokens by minimizing entropy, while other parameters
+                                                                     After acquiring the conditional information Cg and Cf ,
+are frozen. The objective function mainly includes aver-
+                                                                 we fuse them with the test-time adaptive tokens A ∈ R2×D
+aged entropy loss [54] and pointwise entropy loss [51]. For
+                                                                 via the learnable scaling factor, to obtain the image-adaptive
+the averaged entropy loss, its purpose is to improve consis-
+                                                                 prompt P ∈ R2×D as shown in Eq. 6.
+tency among predictions across the generated views, and it
+is shown in Eq. 3 and Eq. 4.
+                                                                        P = {αf ∗ Cf + A[0, :], αg ∗ Cg + A[1, :]},          (6)
+      Lavg = −(p ∗ log(p) + (1 − p) ∗ log(1 − p)),        (3)
+                                                                 where αf and αg denote the learnable coefficients associ-
+                              m                                  ated with the forgery-specific and general conditional infor-
+                          1   X
+                     p=             σ(zk ),               (4)    mation, respectively, and { · , · } represents the concatena-
+                          m
+                              k=1                                tion operation.
+Here, zk is the logit calculated by the model of the k-th            Loss Function. In the train phase, the overall loss
+selected view. Some methods [51] adopt pointwise entropy         Loverall = Lcls + Laux . Lcls is the final classification loss
+loss to push the decision boundary away from low-entropy         in the classifier, while Laux is the auxiliary loss in the Con-
+regions. Its objective function is shown in Eq. 5.               ditional Information Learner. Both of them are computed
+                                                                 based on the binary cross-entropy loss. In the test phase,
+              m
+           1 X                                                   the averaged entropy loss Lavg is used to tune the test-time
+Lpoint =          −(pk ∗ log(pk ) + (1 − pk ) ∗ log(1 − pk )),   adaptive tokens.
+           m
+              k=1
+                                                          (5)
+                                                                 3.4. Optimal Input Selection
+where pk denotes σ(zk ) of k-th selected view. Based on
+the results in Tab. 8, we ultimately adopt the averaged en-      Since images generated by different models often vary con-
+tropy loss due to its superior performance across all exper-     siderably in resolution and aspect ratio, previous methods
+imental datasets. Additionally, the above tuning process is      typically adopt resizing or center cropping to standardize
+performed for a total of T steps.                                the input. However, such fixed preprocessing strategies may
+
+
+
+                                                             21266
+discard or distort critical artifacts, as the most discrimina-    learnable tokens M inserted in each block is set to 2. For
+tive regions for forgery detection differ across images. To       the Test-Time Token Tuning, the number of views Nv is set
+address this limitation, we propose Optimal Input Selection,      to 32, the number of selected confident views m is set to 6,
+which only occurs during inference. Specifically, we first        the tuning step number T is set to 2, and the learning rate
+generate diverse inputs for a single test image. After testing-   during Test-Time Token Tuning is set to 5 × 10−3 .
+time token tuning, these inputs are fed into the tuned model
+to yield predictions. Their confidence scores are computed         4.3. Main Results
+using the same procedure as Eq. 2, and the prediction with         We report the accuracy and average precision on the Uni-
+the highest score is taken as the final decision. Additionally,    versalFakeDetect dataset in Tab. 1 and Tab. 2, respec-
+we reuse the m views selected through confidence selection         tively. Our proposed method achieves SOTA results with
+as the inputs for convenience.                                     95.61% mAcc and 99.32% mAP across 19 diverse sub-
+                                                                   test sets, outperforming all existing methods. In terms of
+4. Experiments                                                     mAcc, we surpass the SOTA methods C2P-CLIP by 1.82%.
+                                                                   In terms of mAP, we surpass the SOTA methods RINE by
+4.1. Datasets and Metrics
+                                                                   0.53%. Furthermore, compared with the baseline UniFD,
+We conduct experiments on two widely used datasets, i.e.,          our method brings substantial improvements of 14.23% in
+UniversalFakeDetect Dataset [43] and GenImage Dataset              mAcc and 9.18% in mAP. These gains clearly demonstrate
+[71], to demonstrate the effectiveness of our framework.           that our model, when trained solely on GAN-generated data
+   UniversalFakeDetect Dataset. This dataset includes 20           [18], can generalize robustly to a wide range of challenging
+subsets of generated images. Following previous protocol           testing scenarios. Beyond the overall metrics, our method
+[43, 61], the real and fake images in ProGAN [25] are used         ranks first or second on 9 out of 19 sub-test sets in terms
+for training, while the testing set contains 19 subsets from       of mAcc. While previous approaches may excel on specific
+ProGAN and other 18 different generative models, includ-           generative models but degrade considerably on others, our
+ing CycleGAN [70], BigGAN [2], StyleGAN [26], Gau-                 method maintains consistently strong performance across
+GAN [44], StarGAN [11], DeepFakes [49], SITD [6], SAN              almost all synthesis types, highlighting its superior gener-
+[12], CRN [8], IMLE [31], Guided [13], LDM [48], Glide             alization ability. This is mainly attributed to our adaptive
+[42], and DALLE [47].                                              design, which enables the model to capture diverse artifacts
+   GenImage Dataset. This dataset mainly explores the              with minimal bias toward any specific generative family.
+Diffusion model for AI-generated image detection. Follow-              For the GenImage dataset, we report the overall accu-
+ing its original setting [71], we adopt SD v1.4 as the training    racy results in Tab. 3. Our method achieves 96.7% accuracy
+set and the remaining sets as the testing set, including Mid-      on the full test set, significantly surpassing recent meth-
+journey [40], SDv1.4 [48], SDv1.5 [48], ADM [13], GLIDE            ods ATTSD and MiraGe by 6.0% and 4.1%, respectively.
+[42], Wukong [64], VQDM [19], and BigGAN [2]. As the               In comparison with the SOTA approach C2P-CLIP, our
+varied image size of GenImage, following [59], we dupli-           method further improves the mean mAcc by 0.9%. More-
+cate the images whose size is smaller than 224 and crop            over, it outperforms the baseline UniFD by a large margin of
+them to 224 × 224 during training.                                 17.2% in mAcc. These results demonstrate that our method,
+   Metrics. Following the convention in C2P-CLIP[59],              trained on a diffusion-based synthetic dataset [55], exhibits
+we use average precision (AP) and classification accuracy          strong generalization capability across diverse types of test-
+(Acc) for evaluation on the UniversalFakeDetect dataset,           ing manipulations. Beyond the overall metrics, our method
+and only Acc on the GenImage dataset, with a 0.5 threshold         ranks first or second on 7 out of 8 sub-test sets, highlight-
+for Acc across all datasets.                                       ing its stability and generalization across diverse scenarios.
+                                                                   Results on both UniversalFake and GenImage datasets con-
+4.2. Implementation Details                                        firm the consistent performance of our method across vari-
+Following [43], we adopt CLIP ViT-L/14 as the image en-            ous forgeries and generators.
+coder. During training, we choose Adam [28] as the opti-
+                                                                   4.4. Ablation Study
+mizer with the learning rate of 5 × 10−5 . The batch size is
+set to 16 on UniversalFakeDetect and 32 on GenImage. The           Several ablation studies are conducted to verify the ef-
+model is trained on a single NVIDIA 3090 GPU with only             fectiveness of each key component of our method. All
+one epoch. The feature dimension D of the image encoder            the experiments are performed on the UniversalFakeDetect
+is set to 1024. Na is set to 6 and Nt is set to 9. For the MLP-    dataset. We report mAcc and mAP on the testing set.
+based adapter, the middle dimension D̂ is set to 64, and the          As shown in Tab. 4, we first verify the effective-
+scale factor s is set to 0.1. For the Conditional Information      ness of the four main modules of our method. It can
+Learner, the patch number Np is set to 192. The number of          be observed that the MLP-based adapter, learnable tokens,
+
+
+
+                                                              21267
+Table 1. Evaluation on the UniversalFakeDetect dataset [43] using Accuracy (%). The results of RINE are cited from their original
+report. The results of AIDE are reproduced by its official pre-trained model. Results of the other methods are cited from C2P-CLIP. ♣:
+evaluating based on the official pre-trained model. The 4-class ProGAN is used as the training data.
+
+                                GAN                         Low level Perceptual loss              LDM            Glide
+                                                     Deep
+    Methods       Pro- Cycle- Big- Style- Gau- Star-                                  Guided 200 200 100 100       50   100 Dalle mAcc
+                                                     fakes SITD SAN CRN IMLE
+                 GAN GAN GAN GAN GAN GAN                                                     steps w/cfg steps 27  27    10
+  UniFD [43] 100.00 98.50 94.50 82.00 99.50 97.00 66.60 63.00 57.50 59.50 72.00 70.03 94.19 73.76 94.36 79.07 79.85 78.14 86.78 81.38
+   LGrad [56]    99.84 85.39 82.88 94.83 72.45 99.62 58.00 62.50 50.00 50.74 50.78 77.50 94.20 95.85 94.80 87.40 90.70 89.55 88.35 80.28
+  FreqNet [57] 97.90 95.84 90.45 97.55 90.24 93.41 97.40 88.92 59.04 71.92 67.35 86.70 84.55 99.58 65.56 85.69 97.40 88.15 59.06 85.09
+    NPR [58]     99.84 95.00 87.55 96.23 86.57 99.75 76.89 66.94 98.63 50.00 50.00 84.55 97.65 98.00 98.20 96.25 97.15 97.35 87.15 87.56
+ FatFormer [36] 99.89 99.32 99.50 97.15 99.41 99.75 93.23 81.11 68.04 69.45 69.45 76.00 98.60 94.90 98.65 94.35 94.65 94.20 98.75 90.86
+   RINE [29]    100.00 99.30 99.60 88.90 99.80 99.50 80.60 90.60 68.30 89.20 90.60 76.10 98.30 88.20 98.60 88.90 92.60 90.70 95.00 91.31
+  AIDE♣ [65] 99.99 98.49 83.95 99.65 73.24 99.90 54.09 68.06 71.14 60.87 61.00 88.50 98.20 97.45 98.40 98.15 98.40 97.85 97.50 86.57
+ C2P-CLIP [59] 99.98 97.31 99.12 96.44 99.17 99.60 93.77 95.56 64.38 93.29 93.29 69.10 99.25 97.25 99.30 95.25 95.25 96.10 98.55 93.79
+  SAFE♣ [32]     99.86 98.87 89.73 98.04 91.52 99.90 93.10 85.56 95.91 50.10 50.10 82.35 98.80 98.65 98.80 95.75 96.60 97.25 97.50 90.44
+  MiraGe [52] 100.00 94.30 96.50 96.80 93.60 96.10 88.70 75.80 71.90 92.90 92.90 82.00 98.30 94.60 98.60 97.50 97.50 98.00 98.60 92.90
+      Ours      100.00 98.60 98.65 94.89 99.39 96.70 95.89 90.83 93.84 92.47 92.72 72.75 99.50 97.70 99.15 97.95 98.30 98.35 98.90 95.61
+
+
+Table 2. Evaluation on the UniversalFakeDetect dataset [43] using Average Precision (%). The results of previous methods are cited
+from the same sources as Table 1. The 4-class ProGAN is used as the training data.
+
+                                  GAN                          Low level Perceptual loss              LDM            Glide
+                                                        Deep
+   Methods       Pro- Cycle- Big- Style- Gau- Star-                                      Guided 200    200   100 100  50   100 Dalle mAP
+                                                        fakes SITD SAN CRN IMLE
+                 GAN GAN GAN GAN GAN GAN                                                        steps w/cfg steps 27  27    10
+  UniFD [43] 100.00 98.13 94.46 86.66 99.25 99.53 91.67 78.54 67.54 83.12 91.06 79.24 95.81 79.77 95.93 93.93 95.12 94.59 88.45 90.14
+   LGrad [56]   100.00 93.98 90.69 99.86 79.36 99.98 67.91 59.42 51.42 63.52 69.61 87.06 99.03 99.16 99.18 93.23 95.10 94.93 97.23 86.35
+  FreqNet [57] 99.92 99.63 96.05 99.89 99.71 98.63 99.92 94.42 74.59 80.10 75.70 96.27 96.06 100.00 62.34 99.80 99.78 96.39 77.78 91.95
+    NPR [58]    100.00 99.53 94.53 99.94 88.82 100.00 84.41 97.95 99.99 50.16 50.16 98.26 99.92 99.91 99.92 99.87 99.89 99.92 99.26 92.76
+ FatFormer [36] 100.00 100.00 99.98 99.75 100.00 100.00 97.99 97.94 81.21 99.84 99.93 91.99 99.81 99.09 99.87 99.13 99.41 99.20 99.82 98.16
+   RINE [29]    100.00 100.00 99.90 99.40 100.00 100.00 97.90 97.20 94.90 97.30 99.70 96.40 99.80 98.30 99.90 98.80 99.30 98.90 99.30 98.79
+  AIDE♣ [65] 100.00 99.89 94.44 100.00 97.69 100.00 76.35 83.60 88.82 90.73 99.94 97.28 99.29 99.12 99.34 99.30 99.25 99.19 99.03 95.96
+ C2P-CLIP [59] 100.00 100.00 99.96 99.50 100.00 100.00 98.59 98.92 84.56 99.86 99.95 94.13 99.99 99.83 99.98 99.72 99.79 99.83 99.91 98.66
+  SAFE♣ [32] 100.00 99.77 95.88 99.93 97.19 100.00 97.45 85.07 99.27 41.32 47.23 95.81 99.96 99.92 99.96 98.93 99.21 99.36 99.67 92.42
+  MiraGe [52] 100.00 100.00 99.90 99.80 99.90 99.90 96.00 93.90 84.70 99.90 100.00 96.40 99.90 99.10 99.90 99.80 99.70 99.80 99.90 98.30
+      Ours      100.00 99.99 99.95 99.75 100.00 100.00 97.59 97.27 98.12 99.97 100.00 96.25 99.86 99.60 99.74 99.40 99.73 99.86 99.95 99.32
+
+
+Table 3. Evaluation on the GenImage [71] dataset using Accuracy (%). The results of AIDE, DRCT, and ATTSD are cited for their
+original reports. ♠: re-implementing on SDv1.4 setting. The others are cited from C2P-CLIP. The SDv1.4 is used as the training set.
+
+     Methods            Venues         Midjourney    SDv1.4     SDv1.5      ADM      GLIDE      Wukong      VQDM       BigGAN       mAcc
+    UniFD [43]        CVPR 2023           91.5         96.4      96.1       58.1      73.4       94.5        67.8        57.7       79.5
+     NPR [58]         CVPR 2024           81.0        98.2       97.9       76.9      89.8       96.9        84.1        84.2       88.6
+   FreqNet [57]       AAAI 2024           89.6        98.8       98.6       66.8      86.5       97.3        75.8        81.4       86.8
+  FatFormer [36]      CVPR 2024           92.7        100.0      99.9       75.9      88.0       99.9        98.8        55.8       88.9
+     DRCT [5]         ICML 2024           91.5        95.0       94.4       79.4      89.2       94.7        90.0        81.7       89.5
+    AIDE [65]         ICLR 2025           79.4         99.7      99.8       78.5      91.8       98.7        80.3        66.9       86.9
+  C2P-CLIP [59]       AAAI 2025           88.2        90.9       97.9       96.4      99.0       98.8        96.5        98.7       95.8
+   SAFE ♠ [32]         KDD 2025           95.7         99.9      99.8       59.5      91.7       95.7        98.0        77.4       90.3
+    ATTSD [3]         ICCV 2025           91.8        94.7       93.8       85.0      97.3       91.4        81.2        90.2       90.7
+   MiraGe [52]       ACMMM 2025           83.2         98.8      98.5       82.7      91.3       97.6        92.4        96.5       92.6
+       Ours               –               95.1        99.9       99.8       85.4      95.9       99.8        98.8        98.7       96.7
+
+
+
+image-adaptive prompt, and Optimal Input Selection all sig-              improves performance, with the full configuration achiev-
+nificantly improve the detection performance. Using them                 ing the highest accuracy, average precision, real accuracy,
+together achieves the best performance. Importantly, even                and fake accuracy. As shown in Tab. 6, the three numbers
+with only simple MLP-based adapters and learnable tokens,                in the config represent the starting layer, the ending layer,
+our method surpasses prior approaches with heavy architec-               and the interval between inserted adapters. The results in-
+tural changes, such as Fatformer. As shown in Tab. 5, we                 dicate that evenly inserting adapters into six layers yields
+progressively evaluate the contributions of forgery-specific             better performance than placing them in the first six lay-
+condition (FSC.), general condition (GEC.), the learnable                ers, the last six layers, or inserting them into more layers.
+scaling factor (LSF.), Test-Time Token Tuning (TTT.), and                Moreover, inserting the adapter into 6 layers already yields
+Confidence Selection (CFS.). Each component consistently                 satisfactory performance, and further increasing the number
+
+
+
+                                                                  21268
+    Input
+    w/o IAPL
+    w/ IAPL
+
+
+
+
+                                 Real                                 DALLE         CycleGAN      CRN      DeepFake     Glide      ProGAN      SITD
+
+
+   Figure 5. Comparison of Grad-CAM beteween without (w/o) and with (w/) IAPL. Brighter colors represent the salient region.
+
+
+Table 4. Effectiveness of each proposed component. RAcc and                                    layer is replaced with learnable tokens. The results show
+FAcc denote mAcc for real and fake images.                                                     that using 9 tokens achieves the best performance, indicat-
+                                                                                               ing a balanced trade-off between model capacity and effi-
+ Component                              mAcc         mAP           RAcc           FAcc         ciency. Performance decreases slightly when using more or
+ Baseline                                84.19       93.52         87.24         81.15         fewer learnable tokens. As shown in Tab. 8, we conduct
+ +MLP-based Adapters                     89.02       97.66         86.76         91.28         experiments on the choice of loss used in Test-Time To-
+ +Learnable Tokens                       91.83       98.04         96.79         86.87
+ +Image-Adaptive Prompts                 94.88       98.72         97.07         92.68
+                                                                                               ken Tuning. It can be observed that using averaged entropy
+ +Optimal Input Selection                95.61       99.32         96.37         94.84         losses yields better results. This may be because the aver-
+                                                                                               aged entropy loss could be regarded as the sum of pointwise
+Table 5. Ablation of Image-Adaptive Prompt Learning. Default                                   entropy loss and the KL divergence term [51]. The KL di-
+configurations are indicated with a background in blue .                                       vergence term encourages consistent predictions among se-
+                                                                                               lected views. Improving prediction consistency across dif-
+ FSC.          GEC.    LSF.     TTT.    CFS.     mAcc         mAP       RAcc      FAcc         ferent views in forgery detection can reduce the interfer-
+                                                                                               ence of local misjudgments and enhance the model’s ability
+  ✓                                              92.38        97.88      94.86    89.90
+  ✓             ✓                                93.32        98.20      96.26    90.38        to detect images with ambiguous boundaries or low levels
+  ✓             ✓        ✓                       93.51        98.24      96.66    90.36        of forgery. As shown in Tab. 9, we present the effect of
+  ✓             ✓        ✓       ✓               94.58        98.57      96.94    92.22        varying the number of tuning steps (T ) on model perfor-
+  ✓             ✓        ✓       ✓       ✓       94.88        98.72      97.07    92.68        mance. As T increases from 1 to 3, both accuracy Acc and
+                                                                                               AP steadily improve. Finally, we set T = 2 for a balanced
+Table 6. Ablation of MLP-based Table 7. Number of layers                                       trade-off between efficiency and effectiveness. As shown in
+adapter.                       Nt with learnable tokens.                                       Fig. 5, we visualize the Grad-CAM [50] without and with
+                                                                                               IAPL. It could be observed that IAPL enables the model
+   Config               mAcc         mAP            Nt           mAcc            mAP
+                                                                                               to focus more precisely on forgery-related regions, whereas
+    [1, 6, 1]           78.27        95.16          12           89.91           96.96         the baseline tends to attend to irrelevant areas.
+  [18, 24, 1]           87.74        96.37           9           91.83           98.04
+   [4, 24, 4]           89.02        97.66           6           91.50           97.91
+   [3, 24, 3]           89.37        97.00           3           90.46           97.18         5. Conclusion
+                                                                                               In this paper, we propose Image-Adaptive Prompt Learn-
+Table 8. Entropy loss type. Table 9. Effect of tuning steps T .
+                                                                                               ing (IAPL), a novel strategy for generalizable AI-generated
+                                                                                               image detection. Unlike prior fine-tuning approaches that
+ Loss                 mAcc      mAP          T            1            2           3
+                                                                                               rely on fixed parameters and struggle with unseen forgeries,
+ Averaged             95.61     99.32        mAcc        94.47        94.88      94.94
+                                                                                               IAPL dynamically adapts prompts to each input image via a
+ Pointwise            95.35     99.30        mAP         98.53        98.72      98.80
+                                                                                               Conditional Information Learner and Test-Time Token Tun-
+                                                                                               ing. The former captures both forgery-specific and general
+of inserted layers brings only marginal improvements. As                                       cues, while the latter optimizes adaptive tokens during in-
+shown in Tab. 7, we validated the number of encoder blocks                                     ference by enforcing consistency across augmented views,
+Nt where learnable tokens are employed. Under the current                                      ensuring alignment with the characteristics of each image.
+experimental setup, the image-adaptive prompt in the first                                     Extensive experiments demonstrate its well performance.
+
+
+
+                                                                                          21269
+Acknowledgments                                                       [11] Yunjey Choi, Minje Choi, Munyoung Kim, Jung-Woo Ha,
+                                                                           Sunghun Kim, and Jaegul Choo. Stargan: Unified genera-
+This work was supported in part by the New Generation Ar-                  tive adversarial networks for multi-domain image-to-image
+tificial Intelligence-National Science and Technology Ma-                  translation. In Proceedings of the IEEE conference on
+jor Project (No. 2025ZD0123501), Chinese National Nat-                     computer vision and pattern recognition, pages 8789–8797,
+ural Science Foundation Projects U23B2054, 62276254,                       2018. 6
+the Science and Technology Development Fund of Macau                  [12] Tao Dai, Jianrui Cai, Yongbing Zhang, Shu-Tao Xia, and
+Project 0140/2024/AGJ, the Science and Technology Foun-                    Lei Zhang. Second-order attention network for single im-
+dation of Guangdong Province Project 2025A0505010025,                      age super-resolution. In Proceedings of the IEEE/CVF con-
+the China Postdoctoral Science Foundation 2025M771717.                     ference on computer vision and pattern recognition, pages
+                                                                           11065–11074, 2019. 6
+                                                                      [13] Prafulla Dhariwal and Alexander Nichol. Diffusion models
+References                                                                 beat gans on image synthesis. Advances in neural informa-
+ [1] Hyojin Bahng, Ali Jahanian, Swami Sankaranarayanan, and               tion processing systems, 34:8780–8794, 2021. 6
+     Phillip Isola. Exploring visual prompts for adapting large-      [14] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,
+     scale models. arXiv preprint arXiv:2203.17274, 2022. 3                Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,
+ [2] Andrew Brock, Jeff Donahue, and Karen Simonyan. Large                 Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-
+     scale gan training for high fidelity natural image synthesis.         vain Gelly, et al. An image is worth 16x16 words: Trans-
+     arXiv preprint arXiv:1809.11096, 2018. 6                              formers for image recognition at scale. arXiv preprint
+                                                                           arXiv:2010.11929, 2020. 3
+ [3] Yu Cai, Jiahe Tian, Xiaomeng Fu, Jiao Dai, Jizhong Han,
+                                                                      [15] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+     and Siwei Lyu. Adaptive test-time semantic debiasing for ai-
+                                                                           cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+     generated image detection. In Proceedings of the IEEE/CVF
+                                                                           quency analysis for deep fake image recognition. In Inter-
+     International Conference on Computer Vision, pages 1543–
+                                                                           national conference on machine learning, pages 3247–3258.
+     1552, 2025. 7
+                                                                           PMLR, 2020. 2
+ [4] Junyi Cao, Chao Ma, Taiping Yao, Shen Chen, Shouhong
+                                                                      [16] Jessica Fridrich and Jan Kodovsky. Rich models for steganal-
+     Ding, and Xiaokang Yang. End-to-end reconstruction-
+                                                                           ysis of digital images. IEEE Transactions on information
+     classification learning for face forgery detection. In Pro-
+                                                                           Forensics and Security, 7(3):868–882, 2012. 5
+     ceedings of the IEEE/CVF conference on computer vision
+                                                                      [17] Xinghe Fu, Zhiyuan Yan, Taiping Yao, Shen Chen, and Xi
+     and pattern recognition, pages 4113–4122, 2022. 2
+                                                                           Li. Exploring unbiased deepfake detection via token-level
+ [5] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.               shuffling and mixing. In Proceedings of the AAAI Confer-
+     Drct: Diffusion reconstruction contrastive training towards           ence on Artificial Intelligence, pages 3040–3048, 2025. 2
+     universal detection of diffusion generated images. In Forty-
+                                                                      [18] Ian J Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing
+     first International Conference on Machine Learning, 2024.
+                                                                           Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and
+     7
+                                                                           Yoshua Bengio. Generative adversarial nets. Advances in
+ [6] Chen Chen, Qifeng Chen, Jia Xu, and Vladlen Koltun.                   neural information processing systems, 27, 2014. 1, 6
+     Learning to see in the dark. In Proceedings of the IEEE con-     [19] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo
+     ference on computer vision and pattern recognition, pages             Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+     3291–3300, 2018. 6                                                    tor quantized diffusion model for text-to-image synthesis. In
+ [7] Liang Chen, Yong Zhang, Yibing Song, Lingqiao Liu, and                Proceedings of the IEEE/CVF conference on computer vi-
+     Jue Wang. Self-supervised learning of adversarial example:            sion and pattern recognition, pages 10696–10706, 2022. 6
+     Towards good generalizations for deepfake detection. In Pro-     [20] Alexandros Haliassos, Konstantinos Vougioukas, Stavros
+     ceedings of the IEEE/CVF conference on computer vision                Petridis, and Maja Pantic. Lips don’t lie: A generalisable
+     and pattern recognition, pages 18710–18719, 2022. 3                   and robust approach to face forgery detection. In Proceed-
+ [8] Qifeng Chen and Vladlen Koltun. Photographic image syn-               ings of the IEEE/CVF conference on computer vision and
+     thesis with cascaded refinement networks. In Proceedings of           pattern recognition, pages 5039–5049, 2021. 2
+     the IEEE international conference on computer vision, pages      [21] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+     1511–1520, 2017. 6                                                    Delving deep into rectifiers: Surpassing human-level perfor-
+ [9] Shoufa Chen, Chongjian Ge, Zhan Tong, Jiangliu Wang,                  mance on imagenet classification. In Proceedings of the
+     Yibing Song, Jue Wang, and Ping Luo. Adaptformer:                     IEEE international conference on computer vision, pages
+     Adapting vision transformers for scalable visual recogni-             1026–1034, 2015. 4
+     tion. Advances in Neural Information Processing Systems,         [22] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+     35:16664–16678, 2022. 2, 4                                            Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen, et al.
+[10] Siyuan Cheng, Lingjuan Lyu, Zhenting Wang, Xiangyu                    Lora: Low-rank adaptation of large language models. ICLR,
+     Zhang, and Vikash Sehwag. Co-spy: Combining seman-                    1(2):3, 2022. 4
+     tic and pixel features to detect synthetic images by ai. In      [23] Yonghyun Jeong, Doyeon Kim, Seungjai Min, Seongho Joe,
+     Proceedings of the Computer Vision and Pattern Recognition            Youngjune Gwon, and Jongwon Choi. Bihpf: Bilateral high-
+     Conference, pages 13455–13465, 2025. 3                                pass filters for robust deepfake detection. In Proceedings of
+
+
+
+
+                                                                 21270
+     the IEEE/CVF Winter Conference on Applications of Com-                transformer for generalizable synthetic image detection. In
+     puter Vision, pages 48–57, 2022. 3                                    Proceedings of the IEEE/CVF Conference on Computer Vi-
+[24] Menglin Jia, Luming Tang, Bor-Chun Chen, Claire Cardie,               sion and Pattern Recognition, pages 10770–10780, 2024. 3,
+     Serge Belongie, Bharath Hariharan, and Ser-Nam Lim. Vi-               7
+     sual prompt tuning. In European conference on computer           [37] Ruiqi Liu, Yi Han, Zhengbo Zhang, Liwei Yao, Zhiyuan
+     vision, pages 709–727. Springer, 2022. 3                              Yan, Jialiang Shen, ZhiJin Chen, Boyi Sun, Lubin Weng,
+[25] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.            Jing Dong, et al. Beyond artifacts: Real-centric envelope
+     Progressive growing of gans for improved quality, stability,          modeling for reliable ai-generated image detection. arXiv
+     and variation. arXiv preprint arXiv:1710.10196, 2017. 6               preprint arXiv:2512.20937, 2025. 3
+[26] Tero Karras, Samuli Laine, and Timo Aila. A style-based          [38] Ruiqi Liu, Manni Cui, Ziheng Qin, Zhiyuan Yan, Ruoxin
+     generator architecture for generative adversarial networks.           Chen, Yi Han, Zhiheng Li, Junkai Chen, ZhiJin Chen,
+     In Proceedings of the IEEE/CVF conference on computer vi-             Kaiqing Lin, et al. Mirror: Manifold ideal reference re-
+     sion and pattern recognition, pages 4401–4410, 2019. 6                constructor for generalizable ai-generated image detection.
+[27] Muhammad Uzair Khattak, Hanoona Rasheed, Muham-                       arXiv preprint arXiv:2602.02222, 2026. 3
+     mad Maaz, Salman Khan, and Fahad Shahbaz Khan.                   [39] Xiao Liu, Kaixuan Ji, Yicheng Fu, Weng Lam Tam, Zhengx-
+     Maple: Multi-modal prompt learning. In Proceedings of                 iao Du, Zhilin Yang, and Jie Tang. P-tuning v2: Prompt
+     the IEEE/CVF conference on computer vision and pattern                tuning can be comparable to fine-tuning universally across
+     recognition, pages 19113–19122, 2023. 3                               scales and tasks. arXiv preprint arXiv:2110.07602, 2021. 3
+[28] Diederik P Kingma and Jimmy Ba. Adam: A method for               [40] Midjourney. https://www.midjourney.com/home/. 2022. 6
+     stochastic optimization. arXiv preprint arXiv:1412.6980,
+                                                                      [41] Dat Nguyen, Nesryne Mejri, Inder Pal Singh, Polina
+     2014. 6
+                                                                           Kuleshova, Marcella Astrid, Anis Kacem, Enjie Ghorbel,
+[29] Christos Koutlis and Symeon Papadopoulos. Leveraging rep-             and Djamila Aouada. Laa-net: Localized artifact attention
+     resentations from intermediate encoder-blocks for synthetic           network for quality-agnostic and generalizable deepfake de-
+     image detection. In European Conference on Computer Vi-               tection. In Proceedings of the IEEE/CVF Conference on
+     sion, pages 394–411. Springer, 2024. 3, 7                             Computer Vision and Pattern Recognition, pages 17395–
+[30] Jiaming Li, Hongtao Xie, Jiahong Li, Zhongyuan Wang, and              17405, 2024. 2
+     Yongdong Zhang. Frequency-aware discriminative feature
+                                                                      [42] Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav
+     learning supervised by single-center loss for face forgery
+                                                                           Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever, and
+     detection. In Proceedings of the IEEE/CVF conference on
+                                                                           Mark Chen. Glide: Towards photorealistic image generation
+     computer vision and pattern recognition, pages 6458–6467,
+                                                                           and editing with text-guided diffusion models. arXiv preprint
+     2021. 2
+                                                                           arXiv:2112.10741, 2021. 6
+[31] Ke Li, Tianhao Zhang, and Jitendra Malik. Diverse image
+                                                                      [43] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+     synthesis from semantic layouts via conditional imle. In
+                                                                           versal fake image detectors that generalize across genera-
+     Proceedings of the IEEE/CVF International Conference on
+                                                                           tive models. In Proceedings of the IEEE/CVF Conference
+     Computer Vision, pages 4220–4229, 2019. 6
+                                                                           on Computer Vision and Pattern Recognition, pages 24480–
+[32] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao
+                                                                           24489, 2023. 2, 3, 6, 7
+     Hu, and Fuli Feng. Improving synthetic image detection
+     towards generalization: An image transformation perspec-         [44] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-Yan
+     tive. In Proceedings of the 31st ACM SIGKDD Conference                Zhu. Semantic image synthesis with spatially-adaptive nor-
+     on Knowledge Discovery and Data Mining V. 1, pages 2405–              malization. In Proceedings of the IEEE/CVF conference on
+     2414, 2025. 7                                                         computer vision and pattern recognition, pages 2337–2346,
+[33] Yuezun Li, Ming-Ching Chang, and Siwei Lyu. In ictu oculi:            2019. 6
+     Exposing ai created fake videos by detecting eye blinking. In    [45] Ziheng Qin, Yuheng Ji, Renshuai Tao, Yuxuan Tian, Yuyang
+     2018 IEEE International workshop on information forensics             Liu, Yipu Wang, and Xiaolong Zheng. Scaling up ai-
+     and security (WIFS), pages 1–7. Ieee, 2018. 2                         generated image detection with generator-aware prototypes.
+[34] Yiheng Li, Yang Yang, Zichang Tan, Huan Liu, Weihua                   arXiv preprint arXiv:2512.12982, 2025. 3
+     Chen, Xu Zhou, and Zhen Lei. Unleashing the potential            [46] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+     of consistency learning for detecting and grounding multi-            Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+     modal media manipulation. In Proceedings of the Computer              Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning
+     Vision and Pattern Recognition Conference, pages 9242–                transferable visual models from natural language supervi-
+     9252, 2025. 1                                                         sion. In International conference on machine learning, pages
+[35] Kaiqing Lin, Yuzhen Lin, Weixiang Li, Taiping Yao, and                8748–8763. PmLR, 2021. 2, 3
+     Bin Li. Standing on the shoulders of giants: Reprogram-          [47] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott Gray,
+     ming visual-language model for general deepfake detection.            Chelsea Voss, Alec Radford, Mark Chen, and Ilya Sutskever.
+     In Proceedings of the AAAI Conference on Artificial Intelli-          Zero-shot text-to-image generation. In International confer-
+     gence, pages 5262–5270, 2025. 1, 2, 3                                 ence on machine learning, pages 8821–8831. Pmlr, 2021. 6
+[36] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,            [48] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     Jingdong Wang, and Yao Zhao. Forgery-aware adaptive                   Patrick Esser, and Björn Ommer. High-resolution image
+
+
+
+
+                                                                 21271
+     synthesis with latent diffusion models. In Proceedings of           tion in deepfake detection. In Proceedings of the AAAI Con-
+     the IEEE/CVF conference on computer vision and pattern              ference on Artificial Intelligence, pages 7184–7192, 2025. 3,
+     recognition, pages 10684–10695, 2022. 6                             6, 7
+[49] Andreas Rossler, Davide Cozzolino, Luisa Verdoliva, Chris-     [60] Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Ol-
+     tian Riess, Justus Thies, and Matthias Nießner. Faceforen-          shausen, and Trevor Darrell. Tent: Fully test-time adaptation
+     sics++: Learning to detect manipulated facial images. In            by entropy minimization. arXiv preprint arXiv:2006.10726,
+     Proceedings of the IEEE/CVF international conference on             2020. 3
+     computer vision, pages 1–11, 2019. 6                           [61] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+[50] Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das,            Owens, and Alexei A Efros. Cnn-generated images are
+     Ramakrishna Vedantam, Devi Parikh, and Dhruv Batra.                 surprisingly easy to spot... for now. In Proceedings of
+     Grad-cam: Visual explanations from deep networks via                the IEEE/CVF conference on computer vision and pattern
+     gradient-based localization. In Proceedings of the IEEE in-         recognition, pages 8695–8704, 2020. 6
+     ternational conference on computer vision, pages 618–626,      [62] Tianyi Wang and Kam Pui Chow. Noise based deepfake de-
+     2017. 8                                                             tection via multi-head relative-interaction. In Proceedings of
+[51] Lijun Sheng, Jian Liang, Zilei Wang, and Ran He. R-tpt:             the AAAI Conference on Artificial Intelligence, pages 14548–
+     Improving adversarial robustness of vision-language mod-            14556, 2023. 2
+     els through test-time prompt tuning. In Proceedings of the     [63] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     Computer Vision and Pattern Recognition Conference, pages           Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     29958–29967, 2025. 3, 5, 8                                          diffusion-generated image detection. In Proceedings of the
+[52] Kuo Shi, Jie Lu, Shanshan Ye, Guangquan Zhang, and Zhen             IEEE/CVF International Conference on Computer Vision,
+     Fang. Mirage: Multimodal discriminative representation              pages 22445–22455, 2023. 3
+     learning for generalizable ai-generated image detection. In    [64] Wukong.        https://xihe.mindspore.cn/modelzoo/wukong.
+     Proceedings of the 33rd ACM International Conference on             2022. 6
+     Multimedia, pages 353–361, 2025. 2, 7                          [65] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xi-
+[53] Kaede Shiohara and Toshihiko Yamasaki. Detecting deep-              aolong Jiang, Yao Hu, and Weidi Xie.                A sanity
+     fakes with self-blended images. In Proceedings of the               check for ai-generated image detection. arXiv preprint
+     IEEE/CVF conference on computer vision and pattern                  arXiv:2406.19435, 2024. 1, 3, 5, 7
+     recognition, pages 18720–18729, 2022. 3                        [66] Zhiyuan Yan, Yuhao Luo, Siwei Lyu, Qingshan Liu, and
+[54] Manli Shu, Weili Nie, De-An Huang, Zhiding Yu, Tom                  Baoyuan Wu. Transcending forgery specificity with latent
+     Goldstein, Anima Anandkumar, and Chaowei Xiao. Test-                space augmentation for generalizable deepfake detection. In
+     time prompt tuning for zero-shot generalization in vision-          Proceedings of the IEEE/CVF Conference on Computer Vi-
+     language models. Advances in Neural Information Process-            sion and Pattern Recognition, pages 8984–8994, 2024. 1,
+     ing Systems, 35:14274–14289, 2022. 2, 3, 5                          3
+[55] Yang Song, Jascha Sohl-Dickstein, Diederik P Kingma, Ab-       [67] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     hishek Kumar, Stefano Ermon, and Ben Poole. Score-based             Chengchun Liu, Shen Chen, Taiping Yao, Shouhong Ding,
+     generative modeling through stochastic differential equa-           Baoyuan Wu, and Li Yuan. Orthogonal subspace decompo-
+     tions. arXiv preprint arXiv:2011.13456, 2020. 1, 6                  sition for generalizable ai-generated image detection. arXiv
+[56] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,                preprint arXiv:2411.15633, 2024. 3
+     and Yunchao Wei. Learning on gradients: Generalized arti-      [68] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei
+     facts representation for gan-generated images detection. In         Liu. Conditional prompt learning for vision-language mod-
+     Proceedings of the IEEE/CVF Conference on Computer Vi-              els. In Proceedings of the IEEE/CVF conference on com-
+     sion and Pattern Recognition, pages 12105–12114, 2023. 1,           puter vision and pattern recognition, pages 16816–16825,
+     3, 7                                                                2022. 3
+[57] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,           [69] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei
+     Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-             Liu. Learning to prompt for vision-language models. In-
+     tection: Improving generalizability through frequency space         ternational Journal of Computer Vision, 130(9):2337–2348,
+     domain learning. In Proceedings of the AAAI Conference on           2022. 2, 3
+     Artificial Intelligence, pages 5052–5060, 2024. 1, 7           [70] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A
+[58] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,                Efros. Unpaired image-to-image translation using cycle-
+     Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-           consistent adversarial networks. In Proceedings of the IEEE
+     erations in cnn-based generative network for generalizable          international conference on computer vision, pages 2223–
+     deepfake detection. In Proceedings of the IEEE/CVF Con-             2232, 2017. 6
+     ference on Computer Vision and Pattern Recognition, pages      [71] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     28130–28139, 2024. 1, 3, 7                                          Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+[59] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu,              Yunhe Wang. Genimage: A million-scale benchmark for de-
+     Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip: Inject-            tecting ai-generated image. Advances in Neural Information
+     ing category common prompt in clip to enhance generaliza-           Processing Systems, 36:77771–77782, 2023. 1, 2, 6, 7
+
+
+
+
+                                                               21272
+
