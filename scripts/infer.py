@@ -92,6 +92,8 @@ def main() -> None:
     parser.add_argument("--cache", type=Path, default=Path("work/hf-cache"))
     args = parser.parse_args()
 
+    if args.diagnostics and args.output.resolve() == args.diagnostics.resolve():
+        parser.error("output and diagnostics must differ")
     adapter = load_model(args.model, args.device, args.cache)
     rows, invalid = infer_directory(adapter, args.input)
     _write_json(args.output, rows)

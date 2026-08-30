@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import secrets
 import shutil
+import stat
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +21,7 @@ SAFE_TARGETS = (
     Path("work/predictions"),
     Path("work/reports"),
 )
+_DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 
 
 def _root(root: Path) -> Path:
@@ -64,24 +67,88 @@ def cleanup_targets(root: Path) -> list[Path]:
     return targets
 
 
-def _inventory(root: Path, targets: list[Path]) -> list[dict]:
+def _open_root(root: Path) -> int:
+    expected = root.stat(follow_symlinks=False)
+    descriptor = os.open(root, _DIRECTORY_FLAGS)
+    if not os.path.samestat(expected, os.fstat(descriptor)):
+        os.close(descriptor)
+        raise OSError("cleanup root changed while opening")
+    return descriptor
+
+
+def _open_relative_dir(root_descriptor: int, relative: Path, *, create=False) -> int:
+    descriptor = os.dup(root_descriptor)
+    try:
+        for part in relative.parts:
+            try:
+                child = os.open(part, _DIRECTORY_FLAGS, dir_fd=descriptor)
+            except FileNotFoundError:
+                if not create:
+                    raise
+                os.mkdir(part, mode=0o700, dir_fd=descriptor)
+                child = os.open(part, _DIRECTORY_FLAGS, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _anchor_targets(root_descriptor: int, root: Path, targets: list[Path]):
+    anchors = []
+    try:
+        for target in targets:
+            relative = target.relative_to(root)
+            parent_descriptor = _open_relative_dir(root_descriptor, relative.parent)
+            try:
+                target_descriptor = os.open(
+                    relative.name, _DIRECTORY_FLAGS, dir_fd=parent_descriptor
+                )
+            except BaseException:
+                os.close(parent_descriptor)
+                raise
+            anchors.append(
+                (relative, parent_descriptor, target_descriptor)
+            )
+        return anchors
+    except BaseException:
+        for _, parent_descriptor, target_descriptor in anchors:
+            os.close(target_descriptor)
+            os.close(parent_descriptor)
+        raise
+
+
+def _measure_directory(descriptor: int) -> tuple[int, int]:
+    byte_count = 0
+    file_count = 0
+    with os.scandir(descriptor) as iterator:
+        entries = list(iterator)
+    for entry in entries:
+        entry_stat = entry.stat(follow_symlinks=False)
+        if stat.S_ISDIR(entry_stat.st_mode):
+            child = os.open(entry.name, _DIRECTORY_FLAGS, dir_fd=descriptor)
+            try:
+                if not os.path.samestat(entry_stat, os.fstat(child)):
+                    raise OSError(f"inventory directory changed: {entry.name}")
+                child_bytes, child_files = _measure_directory(child)
+            finally:
+                os.close(child)
+            byte_count += child_bytes
+            file_count += child_files
+        else:
+            byte_count += entry_stat.st_size
+            file_count += 1
+    return byte_count, file_count
+
+
+def _inventory(anchors) -> list[dict]:
     records = []
-    for target in targets:
-        byte_count = 0
-        file_count = 0
-        for directory, directory_names, file_names in os.walk(
-            target, followlinks=False
-        ):
-            directory_path = Path(directory)
-            names = file_names + [
-                name for name in directory_names if (directory_path / name).is_symlink()
-            ]
-            for name in names:
-                byte_count += (directory_path / name).lstat().st_size
-                file_count += 1
+    for relative, _, target_descriptor in anchors:
+        byte_count, file_count = _measure_directory(target_descriptor)
         records.append(
             {
-                "path": target.relative_to(root).as_posix(),
+                "path": relative.as_posix(),
                 "byte_count": byte_count,
                 "file_count": file_count,
             }
@@ -89,40 +156,77 @@ def _inventory(root: Path, targets: list[Path]) -> list[dict]:
     return records
 
 
-def _safe_parent(root: Path, relative: Path) -> Path:
-    parent = root / relative
-    if parent.is_symlink():
-        raise ValueError(f"output directory is a symlink escape: {parent}")
-    parent.mkdir(parents=True, exist_ok=True)
-    if parent.resolve(strict=True) != parent:
-        raise ValueError(f"output directory escapes cleanup root: {parent}")
-    return parent
-
-
-def _write_json(path: Path, value: dict) -> None:
-    temporary = path.with_suffix(path.suffix + ".tmp")
+def _write_json_at(parent_descriptor: int, name: str, value: dict) -> None:
+    payload = json.dumps(value, indent=2) + "\n"
+    temporary = None
+    descriptor = None
     try:
-        with temporary.open("w", encoding="utf-8") as handle:
-            json.dump(value, handle, indent=2)
-            handle.write("\n")
+        for _ in range(32):
+            temporary = f".{name}.{secrets.token_hex(16)}.tmp"
+            try:
+                descriptor = os.open(
+                    temporary,
+                    os.O_WRONLY
+                    | os.O_CREAT
+                    | os.O_EXCL
+                    | os.O_NOFOLLOW
+                    | getattr(os, "O_CLOEXEC", 0),
+                    0o600,
+                    dir_fd=parent_descriptor,
+                )
+                break
+            except FileExistsError:
+                continue
+        else:
+            raise RuntimeError("cannot allocate exclusive cleanup JSON temp file")
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            descriptor = None
+            handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        os.replace(
+            temporary,
+            name,
+            src_dir_fd=parent_descriptor,
+            dst_dir_fd=parent_descriptor,
+        )
+        temporary = None
+        os.fsync(parent_descriptor)
     finally:
-        temporary.unlink(missing_ok=True)
+        if descriptor is not None:
+            os.close(descriptor)
+        if temporary is not None:
+            try:
+                os.unlink(temporary, dir_fd=parent_descriptor)
+            except FileNotFoundError:
+                pass
 
 
 def preview(root: Path) -> Path:
     root = _root(root)
     targets = cleanup_targets(root)
-    inventory = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "targets": _inventory(root, targets),
-    }
-    path = _safe_parent(root, Path("work")) / "cleanup-inventory.json"
-    _write_json(path, inventory)
+    root_descriptor = _open_root(root)
+    anchors = []
+    try:
+        anchors = _anchor_targets(root_descriptor, root, targets)
+        inventory = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "targets": _inventory(anchors),
+        }
+        work_descriptor = _open_relative_dir(
+            root_descriptor, Path("work"), create=True
+        )
+        try:
+            _write_json_at(work_descriptor, "cleanup-inventory.json", inventory)
+        finally:
+            os.close(work_descriptor)
+    finally:
+        for _, parent_descriptor, target_descriptor in anchors:
+            os.close(target_descriptor)
+            os.close(parent_descriptor)
+        os.close(root_descriptor)
     print(f"Preview only: {len(targets)} cleanup targets; deleted 0")
-    return path
+    return root / "work/cleanup-inventory.json"
 
 
 def delete_targets(root: Path, targets: list[Path]) -> None:
@@ -130,17 +234,43 @@ def delete_targets(root: Path, targets: list[Path]) -> None:
     validated = [_validate_target(root, Path(target)) for target in targets]
     if len(set(validated)) != len(validated):
         raise ValueError("duplicate cleanup target")
-    records = _inventory(root, validated)
-    output = _safe_parent(root, Path("outputs"))
-    for target in validated:
-        shutil.rmtree(target)
-    _write_json(
-        output / "data-deletion-attestation.json",
-        {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "deleted_targets": records,
-        },
-    )
+    if not getattr(shutil.rmtree, "avoids_symlink_attacks", False):
+        raise RuntimeError("platform lacks symlink-safe directory deletion")
+
+    root_descriptor = _open_root(root)
+    anchors = []
+    output_descriptor = None
+    try:
+        anchors = _anchor_targets(root_descriptor, root, validated)
+        records = _inventory(anchors)
+        output_descriptor = _open_relative_dir(
+            root_descriptor, Path("outputs"), create=True
+        )
+        for relative, parent_descriptor, target_descriptor in anchors:
+            current = os.stat(
+                relative.name, dir_fd=parent_descriptor, follow_symlinks=False
+            )
+            if not stat.S_ISDIR(current.st_mode) or not os.path.samestat(
+                current, os.fstat(target_descriptor)
+            ):
+                raise OSError(f"cleanup target changed before deletion: {relative}")
+        for relative, parent_descriptor, _ in anchors:
+            shutil.rmtree(relative.name, dir_fd=parent_descriptor)
+        _write_json_at(
+            output_descriptor,
+            "data-deletion-attestation.json",
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "deleted_targets": records,
+            },
+        )
+    finally:
+        if output_descriptor is not None:
+            os.close(output_descriptor)
+        for _, parent_descriptor, target_descriptor in anchors:
+            os.close(target_descriptor)
+            os.close(parent_descriptor)
+        os.close(root_descriptor)
 
 
 def main() -> None:

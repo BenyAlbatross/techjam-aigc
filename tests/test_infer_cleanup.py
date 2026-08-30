@@ -171,3 +171,144 @@ def test_cleanup_and_delete_reject_safe_target_symlink_escape(tmp_path):
         delete_targets(root, [root / "work/data"])
 
     assert (outside / "keep").read_text() == "keep"
+
+
+def test_delete_is_anchored_when_safe_target_parent_is_swapped(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "repo"
+    target = root / "work/data"
+    target.mkdir(parents=True)
+    (target / "inside").write_text("inside", encoding="utf-8")
+    outside = tmp_path / "outside"
+    (outside / "data").mkdir(parents=True)
+    (outside / "data/keep").write_text("keep", encoding="utf-8")
+    real_rmtree = shutil.rmtree
+
+    def swap_parent_then_delete(path, *args, **kwargs):
+        (root / "work").rename(root / "original-work")
+        (root / "work").symlink_to(outside, target_is_directory=True)
+        return real_rmtree(path, *args, **kwargs)
+
+    swap_parent_then_delete.avoids_symlink_attacks = True
+    monkeypatch.setattr(shutil, "rmtree", swap_parent_then_delete)
+
+    delete_targets(root, [target])
+
+    assert (outside / "data/keep").read_text() == "keep"
+    assert not (root / "original-work/data").exists()
+
+
+def test_delete_fails_closed_when_target_is_swapped_to_symlink(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    target = root / "work/data"
+    target.mkdir(parents=True)
+    (target / "inside").write_text("inside", encoding="utf-8")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep").write_text("keep", encoding="utf-8")
+    real_rmtree = shutil.rmtree
+
+    def swap_target_then_delete(path, *args, **kwargs):
+        target.rename(root / "work/original-data")
+        target.symlink_to(outside, target_is_directory=True)
+        return real_rmtree(path, *args, **kwargs)
+
+    swap_target_then_delete.avoids_symlink_attacks = True
+    monkeypatch.setattr(shutil, "rmtree", swap_target_then_delete)
+
+    with pytest.raises(OSError):
+        delete_targets(root, [target])
+
+    assert (outside / "keep").read_text() == "keep"
+    assert (root / "work/original-data/inside").read_text() == "inside"
+
+
+def test_delete_fails_closed_without_symlink_safe_rmtree(tmp_path, monkeypatch):
+    target = tmp_path / "work/data"
+    target.mkdir(parents=True)
+    (target / "inside").write_text("inside", encoding="utf-8")
+    monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
+
+    with pytest.raises(RuntimeError, match="symlink-safe"):
+        delete_targets(tmp_path, [target])
+
+    assert (target / "inside").read_text() == "inside"
+
+
+def test_preview_never_follows_predictable_temp_or_final_symlink(tmp_path):
+    work = tmp_path / "work"
+    work.mkdir()
+    outside_temp = tmp_path / "outside-temp"
+    outside_temp.write_text("temp sentinel", encoding="utf-8")
+    outside_final = tmp_path / "outside-final"
+    outside_final.write_text("final sentinel", encoding="utf-8")
+    (work / "cleanup-inventory.json.tmp").symlink_to(outside_temp)
+    inventory = work / "cleanup-inventory.json"
+    inventory.symlink_to(outside_final)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/cleanup.py"),
+            "preview",
+            "--root",
+            str(tmp_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "deleted 0" in result.stdout
+    assert outside_temp.read_text() == "temp sentinel"
+    assert outside_final.read_text() == "final sentinel"
+    assert inventory.is_file() and not inventory.is_symlink()
+
+
+def test_attestation_never_follows_predictable_temp_or_final_symlink(tmp_path):
+    target = tmp_path / "work/data"
+    target.mkdir(parents=True)
+    (target / "inside").write_text("inside", encoding="utf-8")
+    outputs = tmp_path / "outputs"
+    outputs.mkdir()
+    outside_temp = tmp_path / "outside-temp"
+    outside_temp.write_text("temp sentinel", encoding="utf-8")
+    outside_final = tmp_path / "outside-final"
+    outside_final.write_text("final sentinel", encoding="utf-8")
+    (outputs / "data-deletion-attestation.json.tmp").symlink_to(outside_temp)
+    attestation = outputs / "data-deletion-attestation.json"
+    attestation.symlink_to(outside_final)
+
+    delete_targets(tmp_path, [target])
+
+    assert not target.exists()
+    assert outside_temp.read_text() == "temp sentinel"
+    assert outside_final.read_text() == "final sentinel"
+    assert attestation.is_file() and not attestation.is_symlink()
+
+
+def test_cli_rejects_output_diagnostics_collision_before_model_load(tmp_path):
+    (tmp_path / "nested").mkdir()
+    output = tmp_path / "submission.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/infer.py"),
+            "--model",
+            "no-such-model",
+            "--input",
+            str(ROOT / "tests/fixtures"),
+            "--output",
+            str(output),
+            "--diagnostics",
+            str(tmp_path / "nested/../submission.json"),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "output and diagnostics must differ" in result.stderr
+    assert "KeyError" not in result.stderr
+    assert not output.exists()
