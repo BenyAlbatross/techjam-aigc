@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -8,10 +9,12 @@ import torch
 from PIL import Image
 
 import scripts.fetch_models as fetch_models
+import scripts.model_adapters as model_adapters
 from scripts.fetch_models import fetch_model
 from scripts.fetch_models import sha256_file
 from scripts.model_adapters import ModelAdapter
 from scripts.model_adapters import assert_parameter_limit
+from scripts.model_adapters import load_model
 
 
 def test_sha256_file(tmp_path: Path):
@@ -61,7 +64,7 @@ def test_hf_label_tokens_score_ai_and_retain_registry_metadata():
         processor=processor,
     )
 
-    [(probability_ai, raw_score)] = adapter.score_batch([Image.new("RGB", (1, 1))])
+    [(raw_score, probability_ai)] = adapter.score_batch([Image.new("RGB", (1, 1))])
 
     assert probability_ai == pytest.approx(0.880797)
     assert raw_score == 2.0
@@ -74,11 +77,15 @@ def test_hf_label_tokens_score_ai_and_retain_registry_metadata():
 @pytest.mark.parametrize(
     ("loader", "extra", "expected"),
     [
+        ("hf_ai_logit", {}, 0.731059),
         ("timm_ai_logit", {}, 0.731059),
         ("timm_real_logit", {"temperature": 0.595}, 0.157006),
+        ("torchvision_real_logit", {}, 0.268941),
     ],
 )
-def test_single_logit_direction(loader: str, extra: dict, expected: float):
+def test_single_logit_tuple_is_raw_then_ai_probability(
+    loader: str, extra: dict, expected: float
+):
     adapter = ModelAdapter(
         "detector",
         entry(loader, **extra),
@@ -87,10 +94,28 @@ def test_single_logit_direction(loader: str, extra: dict, expected: float):
         preprocess=lambda image: torch.zeros(1),
     )
 
-    [(probability_ai, raw_score)] = adapter.score_batch([Image.new("RGB", (1, 1))])
+    [(raw_score, probability_ai)] = adapter.score_batch([Image.new("RGB", (1, 1))])
 
     assert probability_ai == pytest.approx(expected, abs=1e-6)
     assert raw_score == 1.0
+
+
+class FakeDetector:
+    def __init__(self):
+        self.model = FakeModel([[0.0]])
+
+    def predict_images(self, images):
+        return [
+            SimpleNamespace(raw_score=-0.25, probability_ai=0.75)
+            for image in images
+        ]
+
+
+@pytest.mark.parametrize("loader", ["aidetector_hf", "aidetector_univfd"])
+def test_aidetector_tuple_is_raw_then_ai_probability(loader: str):
+    adapter = ModelAdapter("detector", entry(loader), FakeDetector(), "cpu")
+
+    assert adapter.score_batch([Image.new("RGB", (1, 1))]) == [(-0.25, 0.75)]
 
 
 def test_adapter_rejects_registry_parameter_mismatch():
@@ -120,7 +145,9 @@ def test_fetch_verifies_auxiliary_and_deletes_only_mismatch(tmp_path: Path, monk
         '[models.demo.auxiliary]\nfile="nested/aux.bin"\nsha256="' + "0" * 64 + '"\n'
     )
 
-    def local_snapshot_download(repo_id, revision, cache_dir, allow_patterns):
+    def local_snapshot_download(
+        repo_id, revision, cache_dir, allow_patterns, local_files_only=False
+    ):
         snapshots = {("owner/repo", "fixed"): snapshot}
         return str(snapshots[(repo_id, revision)])
 
@@ -132,6 +159,51 @@ def test_fetch_verifies_auxiliary_and_deletes_only_mismatch(tmp_path: Path, monk
 
     assert primary.exists()
     assert not auxiliary.exists()
+
+
+def test_offline_fetch_requires_an_existing_snapshot(tmp_path: Path, monkeypatch):
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    weight = snapshot / "model.bin"
+    weight.write_bytes(b"verified")
+    (tmp_path / "models.toml").write_text(
+        '[models.demo]\nstatus="approved"\nsubmission_status="review"\n'
+        'repository="owner/repo"\nrevision="fixed"\nfile="model.bin"\n'
+        f'sha256="{sha256_file(weight)}"\nlicense="MIT"\nthreshold=0.5\n'
+        'parameters=1\nloader="hf_ai_logit"\n'
+    )
+
+    def cached_snapshot_download(
+        repo_id, revision, cache_dir, allow_patterns, *, local_files_only
+    ):
+        if not local_files_only:
+            raise RuntimeError("network access remained enabled")
+        return str(snapshot)
+
+    monkeypatch.setattr(fetch_models, "ROOT", tmp_path)
+    monkeypatch.setattr(fetch_models, "snapshot_download", cached_snapshot_download)
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+
+    assert fetch_model("demo", tmp_path / "cache") == snapshot
+
+
+def test_load_model_sets_offline_before_fetch(monkeypatch, tmp_path: Path):
+    observed = []
+
+    class FetchObserved(RuntimeError):
+        pass
+
+    def observe_fetch(name, cache):
+        observed.append(os.environ.get("HF_HUB_OFFLINE"))
+        raise FetchObserved
+
+    monkeypatch.delenv("HF_HUB_OFFLINE", raising=False)
+    monkeypatch.setattr(model_adapters, "fetch_model", observe_fetch)
+
+    with pytest.raises(FetchObserved):
+        load_model("ateeqq_siglip", "cpu", tmp_path)
+
+    assert observed == ["1"]
 
 
 @pytest.mark.parametrize("script", ["scripts/fetch_models.py", "scripts/model_adapters.py"])

@@ -82,8 +82,8 @@ class ModelAdapter:
             probabilities = torch.softmax(logits, dim=-1)
             return [
                 (
-                    float(row[fake_indices].sum().item()),
                     float(raw[fake_indices].mean().item()),
+                    float(row[fake_indices].sum().item()),
                 )
                 for row, raw in zip(probabilities, logits, strict=True)
             ]
@@ -96,7 +96,7 @@ class ModelAdapter:
         else:
             raise RuntimeError(f"Unsupported score conversion: {self.kind}")
         return [
-            (float(probability.item()), float(raw.item()))
+            (float(raw.item()), float(probability.item()))
             for probability, raw in zip(probabilities, raw_values, strict=True)
         ]
 
@@ -106,7 +106,7 @@ class ModelAdapter:
         images = [ImageOps.exif_transpose(image).convert("RGB") for image in images]
         if self.kind in {"aidetector_hf", "aidetector_univfd"}:
             return [
-                (result.probability_ai, result.raw_score)
+                (result.raw_score, result.probability_ai)
                 for result in self.model.predict_images(images)
             ]
         if self.processor is not None:
@@ -224,8 +224,8 @@ def load_model(name: str, device: str, cache: Path) -> ModelAdapter:
     errors = check_models({name: entry}, [name], "benchmark")
     if errors:
         raise RuntimeError("\n".join(errors))
-    snapshot = fetch_model(name, cache)
     os.environ["HF_HUB_OFFLINE"] = "1"
+    snapshot = fetch_model(name, cache)
     kind = entry["loader"]
     if kind in {"hf_multiclass", "hf_ai_logit"}:
         model, processor = _hf_components(entry, device, cache)
@@ -266,7 +266,7 @@ def main() -> None:
     args = parser.parse_args()
     adapter = load_model(args.model, args.device, args.cache)
     with Image.open(args.image) as image:
-        probability_ai, raw_score = adapter.score_one(image)
+        raw_score, probability_ai = adapter.score_one(image)
     if not math.isfinite(probability_ai):
         raise RuntimeError("non-finite AI probability")
     print(

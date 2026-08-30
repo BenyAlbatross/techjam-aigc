@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 
 from huggingface_hub import snapshot_download
@@ -40,6 +41,7 @@ def fetch_model(name: str, cache: Path) -> Path:
         repo_id=entry["repository"],
         revision=entry["revision"],
         cache_dir=cache,
+        local_files_only=os.environ.get("HF_HUB_OFFLINE") == "1",
         allow_patterns=[
             *(asset["file"] for asset in assets),
             "config.json",
