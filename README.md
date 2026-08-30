@@ -11,8 +11,8 @@ including its artifact checks and copy-paste continuation prompt.
 ## Reproducible public gate
 
 The allowed public gate uses only the pinned SID_Set validation split. It selects
-the first 1,000 valid real rows and first 1,000 valid generated rows after
-sorting by stable sample ID, records content hashes, and excludes label 2 as
+the first 1,000 unique valid real rows and first 1,000 unique valid generated
+rows in the revision-pinned stream, records content hashes, and excludes label 2 as
 required by [`datasets.toml`](datasets.toml). No evaluation image is used to
 fine-tune, calibrate, ensemble, or change a published decision threshold.
 
@@ -43,6 +43,16 @@ pixi run --platform linux-aarch64-cpu python scripts/data_manifest.py build-sid 
   --output work/manifests/sid_set_1000x2.json
 pixi run --platform linux-aarch64-cpu python scripts/data_manifest.py validate \
   work/manifests/sid_set_1000x2.json
+```
+
+Build the non-ranking canonical shortcut-control panel from the native manifest.
+This applies the same metadata-free RGB conversion, 512×512 Lanczos fit, and
+PNG encoding to both classes:
+
+```bash
+pixi run python scripts/data_manifest.py canonicalize work/manifests/sid_set_1000x2.json \
+  --output work/manifests/sid_set_1000x2_canonical.json \
+  --image-dir work/data/sid_set_canonical/images --size 512
 ```
 
 Run CUDA inference offline and one model at a time. Each completed model must
@@ -130,9 +140,14 @@ selection, and exclusions are authoritative in
 | Community Forensics Eval | [`OwensLab/CommunityForensics-Eval@7d4a74a88d2cac93b513c0853bf92c260eaceea0`](https://huggingface.co/datasets/OwensLab/CommunityForensics-Eval/tree/7d4a74a88d2cac93b513c0853bf92c260eaceea0), blocked | CC BY-NC-SA 4.0 is not cleared for a prize competition |
 | NTIRE 2026 train | [`deepfakesMSU/NTIRE-RobustAIGenDetection-train@700b6d08a3268b1e7a191306dec7321dd953b12f`](https://huggingface.co/datasets/deepfakesMSU/NTIRE-RobustAIGenDetection-train/tree/700b6d08a3268b1e7a191306dec7321dd953b12f), review-blocked | no license or usage grant is declared |
 | Social-media robustness panel | unavailable revision, blocked | no license is declared; the user deferred this panel |
+| Data draft | [`Joshyxwa/data_draft@e800837`](https://huggingface.co/datasets/Joshyxwa/data_draft/tree/e800837135e10a2dca7cbfa49ecf0b5b68830537), blocked | mixed `other`; 5,000 WildFake files require a licence audit and public visibility conflicts with its private-only card |
+| ELSA 1M Track 1 | [`elsaEU/ELSA1M_track1@199bf76`](https://huggingface.co/datasets/elsaEU/ELSA1M_track1/tree/199bf769e2ddb673d68442a9756212ddd204426a), approved for AI-only stress testing, never ranking | CC BY 4.0 card; no packaged real class |
+| CIFAKE repack | [`yanbax/CIFAKE_autotrain_compatible@f67ae8d`](https://huggingface.co/datasets/yanbax/CIFAKE_autotrain_compatible/tree/f67ae8dedee6bb83e7523f6ce3b715a12147a200), review-blocked | MIT is asserted by a third-party repack; original image-rights chain needs confirmation |
+| AIGC Detection Benchmark repack | [`TheKernel01/AIGC-Detection-Benchmark@c91d902`](https://huggingface.co/datasets/TheKernel01/AIGC-Detection-Benchmark/tree/c91d9024a5a77ef06e2ec681b53f9caf08675663), review-blocked | Apache-2.0 is asserted without per-source image-rights evidence |
+| Synthbuster Plus | [`marco-willi/synthbuster-plus@dbfb72f`](https://huggingface.co/datasets/marco-willi/synthbuster-plus/tree/dbfb72f1ee96e953ee5cff80c58832fe89e1d2b5), review-blocked | no license declared |
 
 Community Forensics Eval, NTIRE, the social panel, competition COCO/DALL-E
-assets, and any WildFake addendum are outside this gate. Without written
+assets, Data Draft, and any WildFake addendum are outside this gate. Without written
 permission there is no download, transformation, benchmark, demo, or
 submission use of those datasets.
 

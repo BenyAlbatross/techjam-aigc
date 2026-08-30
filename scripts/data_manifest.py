@@ -72,6 +72,64 @@ def _image_bytes(image: object) -> tuple[bytes, str]:
     return image["bytes"], Path(str(image.get("path", ""))).suffix or ".img"
 
 
+def canonicalize_manifest(source: Path, output: Path, image_dir: Path, size: int) -> Path:
+    """Create a metadata-free, fixed-geometry RGB PNG evaluation panel."""
+    if size < 1:
+        raise ValueError("canonical size must be positive")
+    from PIL import Image, ImageOps
+
+    payload = json.loads(source.read_text())
+    source_root = source.parent.parent.resolve()
+    output_root = output.parent.parent.resolve()
+    destination = image_dir.resolve()
+    if not destination.is_relative_to(output_root):
+        raise ValueError("canonical images must stay under the output manifest root")
+    destination.mkdir(parents=True, exist_ok=True)
+    samples, hashes = [], {}
+    for row in sorted(payload.get("samples", []), key=lambda item: str(item["sample_id"])):
+        relative = Path(str(row["path"]))
+        path = (source_root / relative).resolve()
+        if relative.is_absolute() or not path.is_relative_to(source_root):
+            raise ValueError(f"{row['sample_id']}: source path must stay relative")
+        with Image.open(path) as opened:
+            canonical = ImageOps.fit(opened.convert("RGB"), (size, size), method=Image.Resampling.LANCZOS)
+            temporary = destination / f".{row['sample_id']}.{os.getpid()}.tmp.png"
+            canonical.save(temporary, format="PNG", compress_level=1)
+        digest = _digest(temporary)
+        if digest in hashes:
+            temporary.unlink()
+            raise ValueError(f"{row['sample_id']}: canonical bytes duplicate {hashes[digest]}")
+        hashes[digest] = row["sample_id"]
+        local = destination / f"{digest}.png"
+        os.replace(temporary, local)
+        samples.append({
+            **row,
+            "sample_id": digest,
+            "source_sample_id": row["sample_id"],
+            "path": str(local.relative_to(output_root)),
+            "sha256": digest,
+            "canonical_profile": f"rgb_png_c1_square_{size}_lanczos_v1",
+            "width": size,
+            "height": size,
+            "file_format": "PNG",
+        })
+    result = {
+        **{key: value for key, value in payload.items() if key != "samples"},
+        "panel": "canonical_shortcut_control",
+        "ranking_eligible": False,
+        "limitations": (
+            "Container and geometry are equalised, but source, content, and inherited "
+            "compression artifacts can still correlate with class."
+        ),
+        "canonical_profile": f"rgb_png_c1_square_{size}_lanczos_v1",
+        "samples": samples,
+    }
+    errors = validate_manifest(result, output_root)
+    if errors:
+        raise ValueError("; ".join(errors))
+    return _write_json(result, output)
+
+
 def build_sid(output: Path, per_class: int) -> Path:
     entry = _dataset(SID_NAME)
     from datasets import Image as HFImage, load_dataset
@@ -163,6 +221,11 @@ def main() -> int:
     ntire = commands.add_parser("build-ntire")
     ntire.add_argument("shard_dir", type=Path)
     ntire.add_argument("--output", type=Path, required=True)
+    canonical = commands.add_parser("canonicalize")
+    canonical.add_argument("manifest", type=Path)
+    canonical.add_argument("--output", type=Path, required=True)
+    canonical.add_argument("--image-dir", type=Path, required=True)
+    canonical.add_argument("--size", type=int, default=512)
     validate = commands.add_parser("validate")
     validate.add_argument("manifest", type=Path)
     args = parser.parse_args()
@@ -170,6 +233,8 @@ def main() -> int:
         build_sid(args.output, args.per_class)
     elif args.command == "build-ntire":
         build_ntire(args.shard_dir, args.output)
+    elif args.command == "canonicalize":
+        canonicalize_manifest(args.manifest, args.output, args.image_dir, args.size)
     else:
         errors = validate_manifest(json.loads(args.manifest.read_text()), args.manifest.parent.parent)
         if errors:

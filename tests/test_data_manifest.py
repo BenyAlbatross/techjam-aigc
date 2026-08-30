@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 import scripts.data_manifest as data_manifest
-from scripts.data_manifest import build_ntire, validate_manifest
+from scripts.data_manifest import build_ntire, canonicalize_manifest, validate_manifest
 
 
 FIXTURES = Path("tests/fixtures")
@@ -35,6 +35,46 @@ def test_fixture_manifest_validates(tmp_path: Path):
     assert validate_manifest(payload, tmp_path) == []
     payload["samples"][1]["sha256"] = "0" * 64
     assert "hash mismatch" in " ".join(validate_manifest(payload, tmp_path))
+
+
+def test_canonical_panel_equalises_format_and_geometry(tmp_path: Path):
+    work = tmp_path / "work"
+    manifests = work / "manifests"
+    native = work / "native"
+    canonical = work / "canonical"
+    manifests.mkdir(parents=True)
+    native.mkdir()
+    payload = fixture_payload(native)
+    for row in payload["samples"]:
+        row["path"] = str(Path("native") / row["path"])
+    source = manifests / "native.json"
+    source.write_text(json.dumps(payload))
+    output = manifests / "canonical.json"
+
+    canonicalize_manifest(source, output, canonical, 16)
+
+    result = json.loads(output.read_text())
+    assert result["panel"] == "canonical_shortcut_control"
+    assert result["ranking_eligible"] is False
+    assert len(result["samples"]) == 2
+    assert {row["file_format"] for row in result["samples"]} == {"PNG"}
+    assert {(row["width"], row["height"]) for row in result["samples"]} == {(16, 16)}
+    assert validate_manifest(result, work) == []
+
+
+def test_canonical_panel_rejects_output_outside_manifest_root(tmp_path: Path):
+    work = tmp_path / "work"
+    manifests = work / "manifests"
+    native = work / "native"
+    manifests.mkdir(parents=True)
+    native.mkdir()
+    payload = fixture_payload(native)
+    for row in payload["samples"]:
+        row["path"] = str(Path("native") / row["path"])
+    source = manifests / "native.json"
+    source.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="must stay under"):
+        canonicalize_manifest(source, manifests / "out.json", tmp_path / "outside", 16)
 
 
 def test_manifest_validation_rejects_invalid_rows(tmp_path: Path):

@@ -31,3 +31,57 @@ revision = "unavailable"
 split = "all"
 license = "UNDECLARED"
 reason = "User deferred this gated benchmark."
+
+[datasets.data_draft]
+status = "blocked"
+repository = "Joshyxwa/data_draft"
+revision = "e800837135e10a2dca7cbfa49ecf0b5b68830537"
+split = "train,dev,calibration"
+license = "MIXED-OTHER"
+license_url = "https://huggingface.co/datasets/Joshyxwa/data_draft/blob/e800837135e10a2dca7cbfa49ecf0b5b68830537/README.md"
+use = "pipeline_smoke_test_only"
+reason = "Contains 5,000 WildFake-derived files marked licence_audit_required; the card grants no aggregate reuse rights. The public Hub visibility also conflicts with the card's private-only restriction."
+
+[datasets.elsa_1m_track1]
+status = "approved"
+repository = "elsaEU/ELSA1M_track1"
+revision = "199bf769e2ddb673d68442a9756212ddd204426a"
+split = "train"
+license = "CC-BY-4.0"
+license_url = "https://huggingface.co/datasets/elsaEU/ELSA1M_track1/blob/199bf769e2ddb673d68442a9756212ddd204426a/README.md"
+use = "ai_only_external_stress"
+ranking_eligible = false
+reason = "Rights-cleared generated-image cohort, but it has no packaged real class and cannot support balanced accuracy or AUROC alone."
+
+[datasets.cifake]
+status = "review"
+repository = "yanbax/CIFAKE_autotrain_compatible"
+revision = "f67ae8dedee6bb83e7523f6ce3b715a12147a200"
+split = "train"
+license = "MIT-CLAIMED-BY-REPACK"
+license_url = "https://huggingface.co/datasets/yanbax/CIFAKE_autotrain_compatible/blob/f67ae8dedee6bb83e7523f6ce3b715a12147a200/README.md"
+use = "low_resolution_diagnostic"
+ranking_eligible = false
+reason = "Useful 32x32 class-balanced diagnostic, but this is a third-party repack and the image-level rights chain must be confirmed from the original publisher."
+
+[datasets.aigc_detection_benchmark]
+status = "review"
+repository = "TheKernel01/AIGC-Detection-Benchmark"
+revision = "c91d9024a5a77ef06e2ec681b53f9caf08675663"
+split = "test"
+license = "APACHE-2.0-CLAIMED-BY-REPACK"
+license_url = "https://huggingface.co/datasets/TheKernel01/AIGC-Detection-Benchmark/blob/c91d9024a5a77ef06e2ec681b53f9caf08675663/README.md"
+use = "generator_breadth_candidate"
+ranking_eligible = false
+reason = "The card aggregates 17 generator/real sources but does not document per-source image rights or a reproducible provenance chain."
+
+[datasets.synthbuster_plus]
+status = "review"
+repository = "marco-willi/synthbuster-plus"
+revision = "dbfb72f1ee96e953ee5cff80c58832fe89e1d2b5"
+split = "test"
+license = "UNDECLARED"
+license_url = "https://huggingface.co/datasets/marco-willi/synthbuster-plus/blob/dbfb72f1ee96e953ee5cff80c58832fe89e1d2b5/README.md"
+use = "modern_generator_candidate"
+ranking_eligible = false
+reason = "Promising modern-generator mixture, but its Hub card declares no license or source-level usage grant."
