@@ -336,24 +336,39 @@ def _comparison_supported(first: dict, second: dict) -> bool:
 def _ranking_resolution(pairs: list[dict], ranking: list[str]) -> dict:
     by_model = {item["model"]: item for item in pairs}
     ordered = [by_model[model] for model in ranking]
+    neighbors = {item["model"]: set() for item in ordered}
+    for index, first in enumerate(ordered):
+        for second in ordered[index + 1:]:
+            if not _comparison_supported(first, second):
+                neighbors[first["model"]].add(second["model"])
+                neighbors[second["model"]].add(first["model"])
     unresolved_groups = []
-    if ordered:
-        group = [ordered[0]["model"]]
-        for first, second in zip(ordered, ordered[1:]):
-            if _comparison_supported(first, second):
-                if len(group) > 1:
-                    unresolved_groups.append(group)
-                group = [second["model"]]
-            else:
-                group.append(second["model"])
-        if len(group) > 1:
-            unresolved_groups.append(group)
+    seen = set()
+    for item in ordered:
+        model = item["model"]
+        if model in seen or not neighbors[model]:
+            continue
+        component = {model}
+        pending = [model]
+        while pending:
+            pending.extend(neighbors[pending.pop()] - component)
+            component.update(pending)
+        seen.update(component)
+        unresolved_groups.append([
+            candidate["model"] for candidate in ordered
+            if candidate["model"] in component
+        ])
     winner_supported = (
         None if not ordered
-        else len(ordered) == 1 or _comparison_supported(ordered[0], ordered[1])
+        else all(_comparison_supported(ordered[0], item) for item in ordered[1:])
     )
     boundary_supported = (
-        _comparison_supported(ordered[2], ordered[3]) if len(ordered) >= 4 else None
+        None if not ordered
+        else len(ordered) <= 3 or all(
+            _comparison_supported(selected, excluded)
+            for selected in ordered[:3]
+            for excluded in ordered[3:]
+        )
     )
     return {
         "unresolved_groups": unresolved_groups,

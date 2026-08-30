@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+import scripts.report as report
 from scripts.benchmark import CONDITIONS
 from scripts.report import build_summary
 from scripts.report import grouped_bootstrap
@@ -247,6 +248,18 @@ def approved_registry(*models: str, **overrides) -> dict:
     return registry
 
 
+def ranked_pair(model: str, balanced: float, interval: list[float]) -> dict:
+    return {
+        **summary_row(model, worst_condition_balanced_accuracy=balanced),
+        "ranking_confidence_intervals": {
+            "worst_condition_balanced_accuracy": interval,
+            "worst_real_source_fpr": [0.2, 0.2],
+            "worst_ai_source_fnr": [0.3, 0.3],
+            "aggregate_roc_auc": [0.8, 0.8],
+        },
+    }
+
+
 def test_rank_models_excludes_contaminated_and_unapproved_pairs():
     summary = [
         summary_row("clean"),
@@ -394,6 +407,64 @@ def test_ranking_resolution_has_no_winner_when_no_pair_is_eligible():
     assert summary["ranking"] == []
     assert summary["ranking_resolution"]["winner_supported"] is None
     assert summary["ranking_resolution"]["selected_winner"] is None
+
+
+def test_winner_must_be_supported_against_nonadjacent_competitor():
+    pairs = [
+        ranked_pair("a", 0.9, [0.85, 0.95]),
+        ranked_pair("b", 0.8, [0.75, 0.84]),
+        ranked_pair("c", 0.7, [0.60, 0.90]),
+    ]
+
+    resolution = report._ranking_resolution(pairs, ["a", "b", "c"])
+
+    assert resolution["winner_supported"] is False
+    assert resolution["selected_winner"] is None
+    assert any(
+        {"a", "c"} <= set(group)
+        for group in resolution["unresolved_groups"]
+    )
+
+
+def test_top_three_boundary_checks_every_member_against_every_model_below():
+    pairs = [
+        ranked_pair("a", 0.95, [0.50, 1.00]),
+        ranked_pair("b", 0.90, [0.85, 0.95]),
+        ranked_pair("c", 0.80, [0.75, 0.84]),
+        ranked_pair("d", 0.70, [0.65, 0.74]),
+        ranked_pair("e", 0.60, [0.40, 0.90]),
+    ]
+
+    resolution = report._ranking_resolution(pairs, ["a", "b", "c", "d", "e"])
+
+    assert resolution["top_three_boundary_supported"] is False
+    assert resolution["selected_top_three"] == []
+
+
+@pytest.mark.parametrize(
+    ("count", "winner_supported", "selected_winner", "boundary", "selected"),
+    [
+        (0, None, None, None, []),
+        (1, True, "a", True, ["a"]),
+        (2, True, "a", True, ["a", "b"]),
+        (3, True, "a", True, ["a", "b", "c"]),
+    ],
+)
+def test_ranking_resolution_handles_top_up_to_three_without_below_boundary(
+    count, winner_supported, selected_winner, boundary, selected
+):
+    models = [chr(ord("a") + index) for index in range(count)]
+    pairs = [
+        ranked_pair(model, 1.0 - index / 10, [0.99 - index / 10, 1.0 - index / 10])
+        for index, model in enumerate(models)
+    ]
+
+    resolution = report._ranking_resolution(pairs, models)
+
+    assert resolution["winner_supported"] is winner_supported
+    assert resolution["selected_winner"] == selected_winner
+    assert resolution["top_three_boundary_supported"] is boundary
+    assert resolution["selected_top_three"] == selected
 
 def _report_summary() -> dict:
     return {
