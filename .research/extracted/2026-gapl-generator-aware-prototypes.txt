@@ -1,0 +1,1162 @@
+                                            Scaling Up AI-Generated Image Detection with Generator-Aware Prototypes
+
+                                                  Ziheng Qin1,2,3∗ , Yuheng Ji1,3∗ , Renshuai Tao2 , Yuxuan Tian1,3 , Yuyang Liu1,3 , Yipu Wang1,4 , Xiaolong Zheng1,3,4,B
+                                                                                         1
+                                                                                             Institute of Automation, Chinese Academy of Sciences
+                                                                                     2
+                                                                                         Institute of Information Science, Beijing Jiaotong University
+                                                                           3
+                                                                               School of Artificial Intelligence, University of Chinese Academy of Sciences
+                                                                  4
+                                                                      School of Advanced Interdisciplinary Sciences, University of Chinese Academy of Sciences
+arXiv:2512.12982v2 [cs.CV] 12 Apr 2026
+
+
+
+
+                                                          real image           generated image        generator-aware
+                                                          embedding              embedding               prototype           decision boundary
+                                                                                                                                                                           GAPL(Ours)
+
+
+                                                                                                                                                                          D3(CVPR’25)
+
+                                                                       gen.A
+                                            generated      real                                      thousand                                                            UFD(CVPR’23)
+
+                                                                       gen.B                           gens
+                                                                                             real
+                                                               scaling                           scaling
+                                             (a) original                        benefit                     conflict            GAPL(Ours)              (b) Number of Generators
+
+                                         Figure 1. Illustration of the “benefit then conflict” phenomenon we identify. As more generators added to train the detector, it first benefit
+                                         from the new domain knowledge but eventually degrades due to inseparable embedding. Our proposed method, GAPL, resolves this issue
+                                         by learning generator-aware prototypes, leading to a substantial mAP improvement over existed detectors in the scaling up settings.
+
+
+                                                                        Abstract                                         experiments, we demonstrate that GAPL achieves state-of-
+                                                                                                                         the-art performance, showing superior detection accuracy
+                                         The pursuit of a universal AI-generated image (AIGI) de-                        across a wide variety of GAN and diffusion-based gener-
+                                         tector often relies on aggregating data from numerous gen-                      ators. Code is available at https://github.com/
+                                         erators to improve generalization. However, this paper                          UltraCapture/GAPL
+                                         identifies a paradoxical phenomenon we term the “Ben-
+                                         efit then Conflict” dilemma, where detector performance
+                                         stagnates and eventually degrades as source diversity ex-
+                                                                                                                         1. Introduction
+                                         pands. Our systematic analysis, diagnoses this failure by
+                                         identifying two core issues: severe data-level heterogene-                      The increasing sophistication of generative models [3, 54,
+                                         ity, which causes the feature distributions of real and syn-                    72] necessitates the development of reliable AI-generated
+                                         thetic images to increasingly overlap, and a critical model-                    image (AIGI) detectors to mitigate risks such as misinfor-
+                                         level bottleneck from fixed, pretrained encoders that can-                      mation. An ideal detector must generalize to generated im-
+                                         not adapt to the rising complexity. To address these chal-                      ages from a wide array of generators. To this end, a com-
+                                         lenges, we propose Generator-Aware Prototype Learning                           mon strategy is to expand the training dataset by aggregat-
+                                         (GAPL) , a framework that constrain representation with                         ing data from multiple sources [49, 75] to turn the common
+                                         a structured learning paradigm. GAPL learns a compact                           Train on one to Train on many.
+                                         set of canonical forgery prototypes to create a unified, low-                      However, in the process of directly scaling up existing
+                                         variance feature space, effectively countering data hetero-                     AIGI detector [48, 75], performance does not always in-
+                                         geneity. To resolve the model bottleneck, it employs a two-                     crease as we wish. Instead, we observe a paradoxical phe-
+                                         stage training scheme with Low-Rank Adaptation, enhanc-                         nomenon of Benefit then Conflict in scaling up experi-
+                                         ing its discriminative power while preserving valuable pre-                     ments; as illustrated in Fig. 1 while aggregating data from
+                                         trained knowledge. This approach establishes a more robust                      a few generators is beneficial, the detector’s efficacy di-
+                                         and generalizable decision boundary. Through extensive                          minishes as the diversity of training sources expands. This
+                                             ∗ Equal contribution.                                                       counterintuitive outcome reveals fundamental limitations in
+                                             B Corresponding author.                                                     scaling current AIGI detectors. To understand the under-
+lying reason for this phenomenon, we construct a series               （a）Real & ProGAN        （b）Real & Thousand Generators
+
+of datasets equal number of generated images, but varying
+numbers of generators. Then we use a Linear Discriminant
+Analysis (LDA) model to assess the intrinsic separability
+in existing detectors, revealing two conclusions: (1) scal-
+ing itself causes data towards inseparable, (2) training in
+an end to end manner, which thought usually to be overfit-
+ting in domain, outperforms pretrained-based ones in scal-                                                               overlapped
+ing up setting. Based on these findings, we identify two pri-                                                          representation
+
+mary challenges: (1) Data-Level Heterogeneity: The fea-
+ture distributions of images from different generators are      Figure 2. T-SNE visualization on CLIP Embeddings. (a) Com-
+highly diverse thereby amplifying the intrinsic difficulty of   parison between images generated by a single generator and real
+the classification task. As shown in Fig. 1(a), this insep-     images. (b) Comparison between images generated by thousands
+arability cause a irregular decision boundary in detectors.     of diverse generators and real images.
+(2) Model-Level Bottleneck: Many state-of-the-art detec-
+tors [37, 48, 60, 71, 73] rely on fixed, pre-trained encoders
+(e.g., CLIP [52]) for feature extraction. While these mod-        shared space of forgery prototypes.
+els provide powerful semantic priors to achieve generaliza-     • Our method overcomes the limitations of fixed feature ex-
+tion when training on single source, these priors may be          tractors by explicitly training a model to map diverse ar-
+contradictory when learning from heterogeneous data. As           tifacts to a set of canonical forgery concepts, enabling a
+shown in Fig. 2, with only one generator, the fixed CLIP          more robust and well-defined decision boundary.
+embedding space shows a clear decision boundary. How-           • Through extensive experiments, we demonstrate that
+ever, when the number of generators increases to thousands,       GAPL achieves state-of-the-art performance, showing a
+the features exhibit significant embedding overlap.               consistent detection across benchmark with a mean ac-
+    To address these challenges, we propose Generator-            curacy of 90.4% across 55 test subsets in 6 benchmarks,
+Aware Prototype Learning (GAPL), following a struc-               outperforms existing detectors.
+tured Turn Thousands into a Few philosophy. Rather than
+treating all forgery sources equally, GAPL learns a compact     2. Related Works
+representation of forgery. To handle data-level heterogene-
+ity, it learns a small set of prototypes from a few canon-      2.1. Generalized AI-Generated Image Detection
+ical generators, where each prototype captures a canonical      Generalized AIGI detection seeks to train a model that can
+forgery pattern. The Prototype Mapping (PM) mechanism           generalize to unseen generative model from a single training
+reconstructs image embeddings as a linear combination of        source. The primary approach can be divided into two cat-
+prototypes weighted by similarity, constraining feature vari-   egories. The first category is to extract a low-level artifact
+ation within the prototype-defined space. To address the        pattern, and detection is via recognizing this artifact pat-
+model-level bottleneck, GAPL adopts a two-stage training        tern. This generalized pattern is from different domains, in-
+scheme that injects forgery cues while preserving the pre-      cluding data augmentation [68] and local pixel dependency
+trained encoder’s generalization. In Stage 1, an MLP is         [36, 59] in the common RGB domain. In frequency domain,
+trained to make the feature space forgery-aware; in Stage       high frequency component is widely used [26, 34, 58], other
+2, LoRA [25] tunes a low-rank subspace that works syner-        domains like reconstruction error [44, 70] and VAE intro-
+gistically with the PM mechanism. Across six benchmarks,        duced artifact [12, 38, 53] prove that AIGI artifacts widely
+GAPL achieves 90.4% average accuracy and 94.9% aver-            exist. The second is through semantic-level artifact, based
+age precision, outperforming the previous state of the art by   on the fact that generative models often fail to maintain se-
+3.5%. Moreover, in-depth experiments demonstrate the ex-        mantic consistency, which can be detected via a pretrained
+cellent robustness of our detector against post processing,     image encoder. UniFD [48] first explored this direction us-
+thoroughly highlighting its applicability in real world.        ing a frozen CLIP image encoder. Following works exploit
+    Our contributions are summarized as follows:                the ability of pretrained encoders in AIGI detection via in-
+• We identify and analyze the “Benefit then Conflict” para-     serting adapter in CLIP [35, 37] , creating tunable subspace
+   dox in scaling up setting, revealing the core challenges     [39, 74, 76], injecting forgery concept [60] and extract hy-
+   that impede the scalability of current AIGI detectors.       brid feature for detection [13, 73]. However, these detectors
+• We introduce Generator-Aware Prototype Learning               often fail to maintain consistency performance under do-
+   (GAPL), a novel framework that effectively manages the       main gap due to the fingerprint or inconsistency they aim to
+   high heterogeneity of AI-Generated images by learning a      extract does not appear in all generative models.
+2.2. Curated datasets for AIGI Detection                          distribution by maximizing likelihood on this dataset:
+
+Existed AIGI detectors were trained on a paired dataset,                                          K
+                                                                                                  X
+usually comprise of only one generator or one with its vari-        {x|(x, 0)} ∼ Preal =                  πk N (µk , Σk )
+ant [11, 12, 22, 68]. To address the generalization chal-                                             k
+                                                                                                  G            K
+                                                                                                                                             (2)
+lenges, some efforts have begun attempting the use of data                                        X            X
+from a more diverse source [71, 73, 75] to build a more              {x|(x, 1)} ∼ Pgen =                  wi        πi,j N (µi,j , Σi,j ),
+convincing detector. However, their approach to curate                                                i         j
+the dataset is just simply concatenate the existing datasets,
+                                                                  then, according to the law of total variance, the covariance
+which still lacks breadth and diversity. On the other hand,
+                                                                  matrix can be calculated with:
+a series of work recognizes the importance of generator di-
+versity, focusing on building large-scale datasets. Specifi-      Σreal = E(Σ) + Var(µ),
+cally, RED series [4, 23] curated datasets from hundreds of       Σgen = EG [Var(X|G)] + VarG [E(X|G)]
+generators, while Community Forensics [49] expanded this
+to the thousand-generator level. These works still leaves               = EM [Var(X|Gi , M )|Gi ] + VarM [E(X|Gi , M )|Gi ]
+                                                                          |                       {z                     }
+a gap: they are either aimed at tasks other than AIGI de-                                             generator fitting variance
+tection [4, 23], or they train a detector [49] with common              + VarG [E(X|G)] ,
+vision architecture without specialized design to effectively             |     {z    }
+                                                                           cross generator variance
+utilize heterogeneous data. To our knowledge, we are the
+                                                                                                                            (3)
+first to simultaneously consider both model-level and data-
+                                                                  where M denotes mode in GMM. The first two terms reflect
+level challenges in AIGI detection.
+                                                                  variance in the learned distribution, which correspond to the
+                                                                  terms of the real covariance. The third term, reflects cross
+                                                                  generator variance which grows as generator diverse.
+3. Scaling-up AIGI Detectors
+                                                                     To validate our proposal, we conducted an experiment
+In this section, we will delve into the paradox of Benefit        where we collected a series of datasets from GenImage [78].
+then conflict, explain how it occurs in scaling up settings       In each dataset, there are a total number of 8,000 images
+in a qualitative way and introduce how the proposed GAPL          from ImageNet [16] and the same number of images gen-
+solves the challenges.                                            erated with several models trained on ImageNet, with the
+                                                                  number of models varying from 1 to 8. We also uses a
+                                                                  dataset with thousands of generative models to further pro-
+3.1. Challenges in Scaling Up Setting                             vide large scale setting. For detailed information of these
+                                                                  datasets and our experiment, please refer to Appendix.A.
+A common AIGI detector works in the following way. We
+                                                                  To estimate the heterogeneity in the dataset, we use scatter
+denote a paired dataset D = {X , Y} , where X is the im-
+                                                                  matrix of image feature as a proxy for covariance matrix Σ.
+ages set X = {x1 , x2 , ...xn }, xi ∈ R3×H×W with corre-
+                                                                  For a set C, its scatter matrix is calculated by:
+sponding label Y = {y0 , y1 , ..., yn }, yi = {0, 1}.
+                                                                                         X                    T
+   To avoid overfitting, common approach [48, 75] uses                             S=       (f − µ) (f − µ) ,               (4)
+an pretrained encoder to extract image embedding fi =                                      f ∈C
+ϕ(xi ) ∈ RD , where ϕ(·) denotes image encoder, and the
+                                                                  where µ = N1
+                                                                                   P
+image embedding refer to its [CLS] token. Subsequently, a                             f is the mean feature of the extracted fea-
+classifier G is applied to predict its log-likelihood, with its   tures in this set. We calculate the trace of this scatter matrix
+parameter θ optimized via cross entropy loss on dataset D:        tr(S) to evaluate total variance of real and generated im-
+                                                                  ages.
+                                                                     Results are presented Fig. 3 (a). The figure illustrates
+                           ŷ =Gθ (f ) ,                          that: for the first four datasets, the variance of the gener-
+                       h                              i
+θ = arg min E(x,y)∈D − y log(ŷ) + (1 − y) log(1 − ŷ) .          ated images exhibits a clear upward trend that scales with
+        θ                                                         the number of generators. Conversely, the variance of real
+                                                           (1)    images is highly consistent. In the last dataset, which in-
+   Scaling up data itself causes increasing heterogene-           corporates real and generated images from diverse sources,
+ity. The discrepancy in the capacity of generative models         the variance of the generated distribution is still markedly
+to approximate the true distribution leads to an increased        higher than that of the real distribution. This confirms our
+variance in the combined distribution of different genera-        hypothesis: the heterogeneity of real images remain stable
+tive models. We consider a dataset distributed according          whereas the heterogeneity of generated images increases as
+to a gaussian mixture, a series of generative models fit this     more generators are introduced.
+                                                                                                       The results are presented in Fig. 3(b). Results reveal
+                                                                                                   that first, Fisher ratio and detection accuracy drops as more
+                                                                                                   diverse data adds. Second, an end-to-end detector has a
+                                                                                                   higher Fisher ratio on the same data scale compared to the
+                                                                                                   pretrained-based one. Although they achieve good general-
+                                                                                                   ization by training on single source with a relatively small
+                                                                                                   Fisher ratio, they seemed to be indistinguishable to more
+  1 Gen   2 Gens   4 Gens   8 Gens   Thousands   1 Gen   2 Gens   4 Gens    8 Gens   Thousands
+                    (a)                Gens
+                                             v                        (b)              Gens        generators. This lead us to reflect that the reliance of pre-
+                                                                                                   trained encoder in prevalent AIGI detectors may fundamen-
+Figure 3. Results of the experiment on a series of datasets com-                                   tally impose an upper bound on achievable performance
+prise of different number of generators. (a) Trace of the scatter                                  when scaling up AIGI detection.
+matrix from generated images is significantly higher than that from
+real images. (b) Accuracy of validation and Fisher ratio J be-                                     3.2. Scaling Up with Generator-Aware Prototypes
+tween end-to-end (E) and frozen-encoder models (F), end-to-end
+                                                                                                   Up to now, we have identified key challenges in building a
+models tend to have a higher separability and accuracy, especially
+                                                                                                   scaling up AIGI detector: (1) To lower inner heterogeneity
+in scaling up settings. “Gen(s)” denotes “Generator(s)”.
+                                                                                                   of generated images, we need to achieve a compact repre-
+                                                                                                   sentation for the generated images. (2) Fixed embedding
+    Reliance on a frozen encoder sets bottleneck to model                                          space should be abandoned. Relying on a static embedding
+performance. Common AIGI detectors leverage a pre-                                                 space like a frozen CLIP is fundamentally limiting.
+trained encoder to avoid overfitting and enhance generaliza-                                          To tackle the two challenges, we propose GAPL for scal-
+tion, This dependency indicates that when training images                                          ing up AIGI detection. we adopt a philosophy called Turn
+on novel generators, the model can only push their repre-                                          Thousand into a Few, the GAPL learns a compact shared
+sentations towards the real or generated classes in the fea-                                       prototype space to distill thousands of generators into a few,
+ture space, rather than learning the new generative artifacts.                                     representative prototypes. This process is via a two-stage
+This often results in a poor decision boundary and lower dis-                                      learning framework, we first leverage pretrained encoder to
+criminability. To investigate the intrinsic discriminability of                                    construct prototype, then we let prototypes guide the en-
+the feature space, we analyze the embeddings using Linear                                          coder to learn and project to this prototype space. The
+Discriminant Analysis (LDA) [19]. LDA seeks to create                                              framework of GAPL is shown in Fig. 4.
+a linear projection space and provides a quantitative mea-                                            STAGE I: Creating Forensic-Realated Space and
+sure Fisher ratio of this class separability, allowing us to                                       Generator-Aware Prototypes.
+assess how well the pre-trained embeddings can inherently                                             The objective of this stage is to perform a supervised
+distinguish between real and generated images. Moreover,                                           projection, creating a forgery-related subspace based on the
+its optimization can be given in closed form:                                                      pretrained embedding space. Since most pretrained encoder
+                                                                                                   are highly correlated with semantic information due to its
+                                                                                                   pretraining objective, we aim to endow the encoder with a
+                                                         wT Sb w
+                   w = arg max J(w) =                                                              basic understanding of generated images, enabling it to cap-
+                                 w                       wT Sw w                             (5)   ture representative concepts.
+                           −1
+                       = kSw  (µ0 − µ1 ) ,                                                            Specifically, We select an amount of M images each
+                                                                                                   from ProGAN[31], Stable Diffusion v1.4 [54], and Mid-
+where Sb , Sw are scatter between classes and within class
+                                                                                                   journey [1], sourced from the ForenSynths [68] and GenIm-
+matrices, respectively, which can be calculated by
+                                                                                                   age [78] as they represent GANs, Latent diffusion models
+                                 C
+                                 X                                                                 and Commercial APIs to form a prototype set. We also pair
+                      Sw =             Si                                                          the same amount of real images accordingly. Then, an MLP
+                                 i=0
+                                                                                             (6)
+                                                                                                   was attached after the encoder to project dimension and get
+                      Sb = (µ0 − µ1 )(µ0 − µ1 )T                                                   logits for classification, the projection and MLP can be for-
+                                                                                                                                      ′
+                                                                                                   mulated with gproj : RD →   − RD and MLP : RD →   − R. This
+We designed an experiment with the datasets introduced                                             process can be formulated as follow:
+above in the following steps: (1) For each dataset, train an
+end-to-end classifier, simultaneously, train a classification                                                     f = ϕ(x),
+head based on an frozen image encoder of CLIP. (2) Extract                                                                                                   (7)
+                                                                                                                  ŷ = MLP (Normalize(f )) ,
+penultimate representation from the two models on valida-
+tion set, estimate J based on eqs. (5) and (6) and classify                                        where ϕ(·) is the image encoder. In the first stage, the image
+them with a threshold of 0.5. We report detection accuracy                                         encoder keeps frozen, we only train this MLP with binary
+and Fisher ratio J as metrics.                                                                     crossentropy as loss function on the prototype set.
+                                                                       Prototype
+                              STAGE I                                                                          STAGE 2
+
+                                           MLP                                `                                               Wv
+
+
+
+
+                                                                              …
+  Prototype Set                                                                                                                                       Real
+                                                   Real / Fake                                                                                         or
+   • GANs                                  LCE                                            Scaling-Up                                                  Fake
+                                                   embeddings         top K
+                                    head
+                                                                                          Generators
+                                                                                                                              Wk
+   • Diffusions
+
+
+
+
+                                                                                                                                        softmax
+            `              Image                                  P                                                                ⊗              ⊗
+
+
+
+
+                                                                                                                                                      FC
+                                                                  C                                          Image
+                          Encoder                                                                                             Wq
+
+
+
+
+                                                                            …
+                                                      …
+   • APIs                                                         A                                         Encoder
+                                                                                         4.7k+ Generators                              LCE
+                                           proj.
+                                                         frozen       trainable         LoRA-finetune
+
+Figure 4. The overall framework of our GAPL. We train the GAPL in two stages. In the first stage, we train a MLP and extract
+embeddings for PCA decomposition, we only retain top N components as prototypes; in the second stage, we uses LoRA to finetune the
+encoder and map image embedding to prototypes to get the final logits.
+
+
+   Subsequently, we utilize the intermediate layer of the                         encoder. Given that our primary objective is to enforce fea-
+MLP to extract forgery-related embeddings to build proto-                         ture in a low variance way, we posit that a good approach
+types. Ff = [f1f , f2f , ..., fM
+                               f               r    r         r
+                                 ×3 ] , Fr = [f1 , f2 , ..., fM ×3 ],             is to represent each image’s features into a dynamic linear
+          ′
+f ∈ RD , denotes the real and generated subset of these                           combination of these learned prototypes. It should create
+embeddings. We then perform principle component analy-                            a map from the diverse feature space onto a low-variance
+sis (PCA) separately on the two subsets for prototype con-                        prototype space. Therefore, we adopt a simple yet effective
+structing, and select the top N/2 principal components from                       cross-attention [67] mechanism as this mapping to perform
+each subset as Generator-Aware Prototypes:                                        feature fusion, where the image embedding act as queries
+                                                                                  and the prototypes serve as keys and values. It can be ex-
+                      1                  T                                        pressed as follows:
+                C=         (Ff − 1µ̄) (Ff − 1µ̄) ,
+                   3M − 1
+                            Cvi = λi vi ,                             (8)
+                                                                                            f˜ = Attn (Wq f, Wk P, Wv P)
+                                        T         ′
+                Pf = v1 , v2 , ..., vN/2 ∈ R(N/2)×D ,
+                     
+                                                                                                              (f Wq )(PWk )T                           (10)
+                                                                                               = sof tmax(         √         ) · PWv
+                      ′                                                                                               D′
+where µ̄ ∈ R1×D is mean vector of the embeddings in F.
+1T3M ∈ R3M denotes all-one vector. We concatenate real                                                                ′   ′
+
+and generated prototypes to form the final prototype matrix                          Where Wq , Wk , Wv ∈ RD ×D is the respective affine
+P = [Pr ; Pf ] ∈ RN ×D .
+                         ′
+                                                                                  matrix. We feed this re-organized feature f˜ into a linear
+   We adopt this selection strategy based on the assump-                          classifier to predict its final logits and train the whole model
+tion that, PCA decomposes the covariance matrix, the com-                         with binary crossentropy.
+ponents with larger variance capture more general forgery-
+related information, while those with smaller variance re-                        4. Experiments
+flect generator-specific characteristics. The remaining com-
+ponents, which contribute little to the overall variance, are                     In this section, we evaluate the proposed GAPL to validate
+mainly task-irrelevant noise and thus discarded.                                  the followng Reseach Questions (RQs) :
+   STAGE II: Map Generators to Prototypes for Large                               • RQ.1: How well does the proposed GAPL in detecting
+Scale AIGI Detection. In the second stage, we further en-                           generated images from any generator?
+hance the model’s capability, adhering to our principle of                        • RQ.2: How well is the inherent potential of proposed
+not relying on a fixed embedding space. To maintain as                              GAPL in model architecture?
+much knowledge as possible in pretrained image encoder,                           • RQ.3: Why is the designed Prototype Learning and two-
+this adaptation is performed using LoRA [25].                                       stage training useful?
+                                                                                  • RQ.4: How does the number of prototypes and selection
+                          f = gproj (ϕlora (x)) .                     (9)           of prototype sets affect performance?
+   Furthermore, we aim to solve how to effectively integrate                      • RQ.5: How well is the proposed GAPL’s robustness in
+the extracted prototype with the image feature from image                           handling post processing?
+                        Training          ForenSynths          UFD         GenImage        SynthBuster   Chameleon     CommFor         Mean
+ Method
+                       Class/Num.
+                                          Acc      AP       Acc     AP     Acc      AP     Acc    AP     Acc    AP     Acc    AP     Acc    AP
+ GAN-Generalized
+ CNNDet [68]           ProGAN/720k        75.3     91.8    53.1    71.1    51.3     65.6   50.3   53.9   57.0   42.6   51.5   53.7   56.4   63.1
+ NPR [59]              ProGAN/144k        90.8     91.8    95.1    97.4    86.2     91.6   38.9   45.4   57.4   47.7   73.8   74.7   73.7   74.8
+ UniFD [48]            ProGAN/720k        89.4     96.7    82.2    95.7    70.0     88.3   67.6   78.0   57.2   46.2   54.0   58.3   70.1   77.2
+ SAFE [34]             ProGAN/144k        96.2     98.6    95.7    99.1    95.5     99.3   44.7   44.7   59.2   50.6   50.0   48.3   73.6   79.2
+ AIDE [73]             ProGAN/720k        88.4     96.0    96.7    99.0    92.0     97.5   48.0   49.9   58.4   50.1   49.9   47.1   72.2   73.3
+ Diffusion-Generalized
+ DRCT [11]             SD2.1/473k         50.0     49.7    70.0    79.2    78.0     94.0   77.6   84.7   79.8   85.2   49.6   49.4   67.5   73.7
+ Co-SPY [13]           SD1.4/320k         65.6     75.9    76.8    84.3    78.0     94.1   77.4   91.6   68.8   68.8   67.9   79.2   72.4   82.3
+ B-Free [22]           SD2.1/360k         81.1     94.2    87.1    95.3    87.3     97.7   94.9   98.8   78.2   85.2   81.5   91.8   85.0   93.8
+ Scaling-Ups
+ AIDE [73]             8gens/1.3M         85.3     93.8    98.5    99.9    99.7    100.0   52.7   56.0   65.8   69.7   50.1   48.2   75.4   77.9
+ D3 [75]               9gens/2M           93.0     97.9    94.8    99.0    95.4     99.2   81.3   89.5   61.0   56.5   73.6   86.0   83.2   88.0
+ CommForen [49]        4.7Kgens/5M        92.3     98.2    94.0    97.0    84.0     93.4   87.0   94.7   77.5   83.5   86.8   93.9   86.9   93.4
+ GAPL(Ours)            4.7Kgens/550k      97.2     99.5    97.2    99.8    96.7     99.6   91.1   97.2   71.0   75.6   89.4   97.8   90.4   94.9
+
+Table 1. Overall performance of different detectors across benchmarks. GAN-Generalized means that these models were trained on GAN-
+generated images, Diffusion-Generalized means diffsuion-generated images accordingly. Scaling-ups means that these model have the
+access to all kinds of images. We also report each detector’s generator type and number of images of their training set.
+
+
+ Dataset                         #Real/#Fake   # Models   Type of models          still unseen by the detector. See Appendix. B for detailed
+ ForenSynths [68]                  31k/31k       8           GAN                  introduction of these benchmarks.
+ UniversalFakeDetect [48]           8k/8k        8          Diffusion
+ GenImage [78]                     48k/48k       8        GAN&Diffusion               Implementation Details. We use the image encoder of
+ Synthbuster [7]                    1k/9k        9          Diffusion             CLIP-ViT:L [18, 52] for finetuning. We select M = 2000
+ Chamelon [73]                   14.9k/11.2k      -         Unknown
+ Community-Forensics Eval [49]     25k/25k       21         Diffusion             images each from 3 generators as prototype set, along with
+                                                                                  the same amount of real images. The dimension of projec-
+Table 2. The selected 6 AIGI benchmarks to evaluate the methods.                  tion is set to be D′ = 128, and the number of prototypes
+                                                                                  is N = 64. The experiment was conducted on 2 GeForce
+                                                                                  RTX 4090 GPUs. More details are in Appendix. E
+4.1. Experiment Details
+                                                                                  4.2. Comprehensive evaluation of detection perfor-
+Training set. In our GAPL, prototype set and scaling up
+                                                                                        mance across generators (RQ.1)
+set are used for training. In the prototype set used in first
+stage, we select M = 2000 images generated by ProGAN                              To evaluate the overall detection performance of the pro-
+[31], SDv1.4 [54] and Midjourney [1]. These images are                            posed GAPL, we conduct test on the 6 selected benchmarks.
+sampled from Forensynths and GenImage. As for scaling                             The results are shown in Tab. 1. The results reveal the fol-
+up dataset, we choose the Community-Forensic [49]. This                           lowing: (1) Generalized AIGI detectors fail to maintain
+dataset manually chose 12 GANs, 3 pixel diffusion models                          performance. Generalized detectors can achieve a promis-
+and collected about 4000 latent diffusion models on hug-                          ing performance on only one or two benchmarks. Detec-
+gingface, constituting a large and diverse datasets that cov-                     tors like SAFE [34], achieve an over 95% accuracy on the
+ers most generative architectures. We use a small version,                        previous 3 benchmarks, but fails on the latter 3 with about
+compared to the original dataset of 5.4M images, the small                        50% accuracy, which demonstrates that it is hard to build a
+version only contains 550k images while the total number                          well generalized detector on one training source. (2) GAPL
+of generative models remains the same.                                            exhibits consistent and promising performance. The pro-
+   Testing set. We select six benchmarks to evaluate our                          posed GAPL achieves a 90.4% average accuracy across 55
+method’s generalization, covering a spectrum of common                            test subsets in 6 benchmarks, with a 3.5% average accuracy
+and advanced generative models developed over the last                            improvement over the previous detectors. Additionally, we
+decade. Tab. 2 lists some information about the bench-                            reach a 94.9% average precision and over 90% mAP in most
+marks. Note that despite the use of a large scale training                        benchmarks, which further validates our promising detec-
+set, more than half of generative models in testing set are                       tion against generated images.
+ Method             Venue       FS    UFD    GI     SB     Mean                                           Module                              Metrics
+                                                                             Group
+ General Vision Models                                                                       PCA           PM          LoRA             MAcc             MAp
+ ResNet [24]       CVPR2015    73.8   79.9   66.4   73.0   73.3
+ CLIP:ViT [52]     ICML2021    78.3   74.8   73.8   65.8   73.2
+                                                                               1                  ✗        ✗              ✗              60.05           66.07
+ ConvNext [41]     CVPR2022    94.5   93.7   85.7   70.8   86.2                2                  ✗        ✓              ✗              68.59           72.43
+ Swin-T [40]       ICCV2021    93.3   95.6   89.8   80.2   89.7                3                  ✗        ✗              ✓              88.52           97.91
+ AIGI Detectors
+                                                                               4                  ✓        ✓              ✗              71.88           82.18
+                                                                               5                  ✗        ✓              ✓              90.35           95.40
+ Co-SPY [13]       CVPR2025    49.4   50.0   51.9   50.0   50.4
+ PatchForen [10]   ECCV2020    54.4   55.0   50.7   60.6   55.2              Ours                 ✓        ✓              ✓              95.54           98.97
+ NPR [59]          CVPR2024    51.1   57.5   56.4   56.5   55.4
+ UniFD [48]        CVPR2023    62.4   50.1   63.6   63.3   59.8     Table 4. Ablation study regarding the designed modules. All the
+ D3 [75]           CVPR2025    75.0   57.0   59.2   72.2   65.9     results reported are mean of the 4 benchmarks.
+ Effort [74]       ICML2025    84.4   66.3   71.4   88.0   77.5
+ AIDE [73]         ICLR2025    86.8   90.5   96.6   67.0   85.2                    Number of Prototypes                         Number of Generators in Prototype Set
+ GAPL (Ours)             -     97.2   97.2   96.7   91.1   95.5                                             mAcc                 mAcc                      98.97
+                                                                                                            mAp                  mAp                                  98.66
+
+                                                                                                                                    96.89      97.18
+Table 3. Comparison on different model architecture. We re-          98.98                98.99                98.97
+                                                                                                                                                           95.54      95.29
+implement these detection method on exactly the same data as                                                            95.4
+                                                                                                                                                94.1
+                                                                                                                                    93.67
+ours, including prototype set and scaling up set and report their    95.28                95.31                95.54
+binary accuracy and mean accuracy on 4 benchmarks.
+                                                                                                                       90.35
+                                                                      16                   32                   64     random       1type      2types     3types     4types
+4.3. Cross-Model Comparison in scaling up setting
+      (RQ.2)                                                        Figure 5. Ablation study regarding the strategy of extracting proto-
+                                                                    types. We compare number of prototypes retain in PCA and types
+To ensure fair comparison and evaluate the inherent abil-           of generators in Prototype Set.
+ity of the proposed architecture, we conduct an experi-
+ment where all methods are trained on the same dataset
+with ours. Apart from AIGI detectors, we also select some           proves 3.28% by injecting concepts related to generators.
+general vision models, including CNN-based [24, 41] and             (2) PM and LoRA work cooperatively to effectively inject
+Transformer-based [40, 52] as baselines. The results in             large scale generative knowledge to pretrained encoder.
+Tab. 3 reveal the following: (1) GAPL has the best mean             By comparing the performance of group 2,3 and 5, we ob-
+performance in scaling up setting. Among the all detec-             serve a gradual performance improvement. This indicates
+tors, GAPL was the best in terms of accuracy. This indi-            that while the PM module provides the core structure for
+cates our design, integrating priors of pretrained encoder          prototype matching, LoRA finetuning is also essential to
+and forgery-related knowledge, is beneficial in scaling up          adapt encoder to this prototype space, enabling it to effec-
+setting. (2) Common AIGI detectors perform even worse               tively align with the extracted generator-aware prototypes.
+when data scales. Previous AIGI detectors not only per-
+form worse than general vision models, but also worse than          4.5. Exploration of selecting Prototype Set (RQ.4)
+the counterpart that trained on single source. This indicates
+                                                                    To explore the influence of the number of prototypes re-
+that previous AIGI detectors are often tailored to specific ar-
+                                                                    tain in PCA and the selection of prototype set, we con-
+tifact (e.g VAE decode artifact), rendering them ineffective
+                                                                    duct experiment in multiple group of settings. The results
+at scale where diver generative model dilute these priors.
+                                                                    are presented in Fig. 5. Results reveal that: (1) Number
+                                                                    of prototypes slightly affect performance. Model perfor-
+4.4. Effect of the designed modules (RQ.3)
+                                                                    mance slightly improves as N increases, starting from 16
+To evaluate the impact of the designed modules, we conduct          prototypes with a 95.28% accuracy, keep doubling the num-
+ablation studies on the three components in the proposed            ber improves it by 0.03% and 0.23%. (2) More gener-
+GAPL: (PCA) creating extracting prototype from generator            ator to build prototypes yield performance gains. Ran-
+via PCA, prototype matching via cross attention (PM) and            domly generating some prototype vector has a performance
+LoRA finetuning. The results are shown in Tab. 4. From              of 90.35%, while adding more generator gains performance
+the results, we can infer that: (1) PCA proposed in STAGE           by 3.22%, 0.42% and 1.44%. But as we try to add genera-
+I effectively extracts generator-aware concepts. Compare            tors, the performance goes down, this indicates that the “a
+performance in group 1,2 and 4, prototype mapping gain              few” in turn thousand into a few should not be too many,
+an accuracy performance by 8.54% while PCA further im-              three or four is abundant for the model to adjust.
+                     Ours          Ojha         SAFE       NPR          AIDE                            #50.oversmooth material surface
+                            JPEG Compress                 Gaussian Blur
+
+                90                               90
+Mean Accuracy
+
+
+
+
+                80                               80                                                           #36.distortion lines
+
+                70                               70
+                60                               60
+                                                                                                          #13.consistent portrait light
+                50                               50
+                  100         80           60         0    1           2   3
+                            Quality Factor                     Sigma
+
+Figure 6. Comparison of Robustness performance regarding post                                              #4.complex natural scene
+process on GenImage dataset. Our model achieve the best overall
+performance on post process with the minimum degradation.
+
+
+4.6. Evaluation on robustness (RQ.5)
+                                                                               Figure 7. Average attention scores on the validation set. Column
+We evaluate robustness under two common post-processing
+                                                                               in red and green means prototypes extracted with real images and
+operations, JPEG compression and Gaussian blur. We com-                        generated images, respectively. We collected images that exhibit
+pare GAPL with representative AIGI detectors on GenIm-                         high attention score for a specific prototype and discovered that
+age, using checkpoints trained on the SD1.4 subset to en-                      they have visual features in common.
+sure a comparable starting point. Fig. 6 shows that: (1)
+GAPL remains the most robust. It achieves the best over-
+all performance, with only 11.09% and 25.12% degradation
+under extreme JPEG compression and Gaussian blur, re-
+                                                                               5. Conclusion
+spectively. (2) Frequency-based detectors are highly frag-                     In this paper, we study AI-generated image detection in the
+ile to post-processing. Methods such as AIDE and SAFE                          scaling-up regime. We identify the key challenges of scal-
+degrade severely under JPEG compression, with even mild                        ing detector training with diverse generators and highlight
+compression reducing performance to near chance level, in-                     the limitations of existing methods. To address these issues,
+dicating limited reliability in real-world settings.                           we propose GAPL, which is designed to better exploit data
+                                                                               from a wide range of generators. Extensive experiments
+4.7. Visualization on learned prototypes
+                                                                               show that scaling up training is essential for building detec-
+To validate how our model utilizes prototypes, we calcu-                       tors that generalize across diverse generative models, and
+late the average attention scores between prototypes and im-                   that GAPL delivers consistent performance under this set-
+ages on the validation set, we plot the results in Fig. 7. From                ting, taking a step toward universal AIGI detection.
+the figure, (1) certain prototypes are consistently utilized                       Limitation. Although our method achieves strong and
+by the model. This indicates that some pattern were com-                       consistent performance on existing benchmarks, its behav-
+mon in generated images and real images. Subsequently,                         ior on truly unseen domains remains unclear, especially
+to uncover what hide behind these frequently utilized pro-                     for future generative models built upon fundamentally new
+totypes, we clustered the images that exhibited particularly                   techniques. Whether such models will still leave detectable
+high attention scores for a specific prototype. We find that                   artifacts, or become increasingly difficult to distinguish
+(2) images pay extreme attention to a certain prototype                        from real images, remains an open problem for future re-
+share some visual characteristics. In generated images,                        search.
+those feature distorted objects and unrealistic lines pay high
+attention to Prototype #36, images pay attention to Proto-
+type # 50 usually contain over smooth material surface. As                     Acknowledgments
+for real images, complex natural scene and consistent por-
+trait light make them look real, which frequently exist in                     This work was supported in part by the National Natural
+clusters of Prototype #4 and Prototype #13. This finding in-                   Science Foundation of China under Grant 72434005, Grant
+dicates that our method indeed learned some sort of pattern                    72225011 , Grant 72293575, Grant U24B20179 and Grant
+and the mapping between image with these prototypes.                           62336001.
+References                                                               Shippole. Scalable high-resolution pixel-space image syn-
+                                                                         thesis with hourglass diffusion transformers. In Proceedings
+ [1] Midjourney. Inhttps://www.midjourney.com/                           of the 41st International Conference on Machine Learning,
+     home/, 2022. 4, 6, 1                                                pages 9550–9575. PMLR, 2024. 1
+ [2] Wukong, 2022. 5. Inhttps://xihe.mindspore.cn/
+                                                                    [16] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,
+     modelzoo/wukong, 2022. 5. 1
+                                                                         and Li Fei-Fei. Imagenet: A large-scale hierarchical image
+ [3] Adobe. Adobe firefly. https://firefly.adobe.                        database. In 2009 IEEE Conference on Computer Vision and
+     com/, 2025. Accessed: 2025-11-04. 1                                 Pattern Recognition, pages 248–255, 2009. 3, 1
+ [4] Vishal Asnani, Xi Yin, Tal Hassner, and Xiaoming Liu. Re-
+                                                                    [17] Prafulla Dhariwal et al. Diffusion models beat gans on im-
+     verse engineering of generative models: Inferring model hy-
+                                                                         age synthesis. Advances in Neural Information Processing
+     perparameters from generated images. IEEE Transactions on
+                                                                         Systems, 34:8780–8794, 2021. 1
+     Pattern Analysis and Machine Intelligence, 45(12):15477–
+                                                                    [18] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,
+     15493, 2023. 3
+                                                                         Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,
+ [5] Songran Bai, Yuheng Ji, Yue Liu, Xingwei Zhang, Xiaolong
+                                                                         Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-
+     Zheng, and Daniel Dajun Zeng. Alleviating performance
+                                                                         vain Gelly, Jakob Uszkoreit, and Neil Houlsby. An image is
+     disparity in adversarial spatiotemporal graph learning under
+                                                                         worth 16x16 words: Transformers for image recognition at
+     zero-inflated distribution. In Proceedings of the AAAI Con-
+                                                                         scale. ICLR, 2021. 6
+     ference on Artificial Intelligence, pages 11436–11444, 2025.
+     4                                                              [19] R. A. Fisher. The use of multiple measurements in taxonomic
+                                                                         problems. Annals of Eugenics, 7(2):179–188, 1936. 4
+ [6] Shuanghao Bai, Wenxuan Song, Jiayi Chen, Yuheng Ji,
+     Zhide Zhong, Jin Yang, Han Zhao, Wanqi Zhou, Wei Zhao,         [20] Google, Inc. Nano banana. https://www.nano-
+     Zhe Li, et al. Towards a unified understanding of robot             banana.com/, 2025. Accessed: 2025-08-29. 4
+     manipulation: A comprehensive survey. arXiv preprint           [21] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo
+     arXiv:2510.10903, 2025. 4                                           Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-
+ [7] Quentin Bammey. Synthbuster: Towards detection of diffu-            tor quantized diffusion model for text-to-image synthesis. In
+     sion model generated images. IEEE Open Journal of Signal            Proceedings of the IEEE/CVF Conference on Computer Vi-
+     Processing, 5:1–9, 2024. 6, 1                                       sion and Pattern Recognition, pages 10696–10706, 2022. 1
+ [8] Black Forest Labs. FLUX.1: Speeding up text-to-image gen-      [22] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+     eration. https://blackforestlabs.ai, 2025. Ac-                      Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+     cessed: 2025-11-26. 4                                               training paradigm for more general ai-generated image de-
+ [9] Andrew Brock et al. Large scale gan training for high fi-           tection. In Proceedings of the Computer Vision and Pattern
+     delity natural image synthesis. In International Conference         Recognition Conference (CVPR), pages 18685–18694, 2025.
+     on Learning Representations, 2018. 1                                3, 6, 2, 5
+[10] Lucy Chai, David Bau, Ser-Nam Lim, and Phillip Isola.          [23] Xiao Guo, Vishal Asnani, Sijia Liu, and Xiaoming Liu.
+     What makes fake images detectable? understanding prop-              Tracing hyperparameter dependencies for model parsing via
+     erties that generalize. In European Conference on Computer          learnable graph pooling network. In Advances in Neural In-
+     Vision, 2020. 7                                                     formation Processing Systems, pages 116899–116932. Cur-
+[11] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.             ran Associates, Inc., 2024. 3
+     Drct: Diffusion reconstruction contrastive training towards    [24] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+     universal detection of diffusion generated images. In Forty-        Deep residual learning for image recognition. In Proceed-
+     first International Conference on Machine Learning, 2024.           ings of the IEEE conference on computer vision and pattern
+     3, 6, 2, 5                                                          recognition, pages 770–778, 2016. 7
+[12] Ruoxin Chen, Junwei Xi, Zhiyuan Yan, Ke-Yue Zhang,             [25] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+     Shuang Wu, Jingyi Xie, Xu Chen, Lei Xu, Isabel Guan, Taip-          Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen.
+     ing Yao, and Shouhong Ding. Dual data alignment makes ai-           LoRA: Low-rank adaptation of large language models. In In-
+     generated image detector easier generalizable. In Advances          ternational Conference on Learning Representations, 2022.
+     in Neural Information Processing Systems, 2025. 2, 3                2, 5
+[13] Siyuan Cheng, Lingjuan Lyu, Zhenting Wang, Xiangyu             [26] Yonghyun Jeong, Doyeon Kim, Seungjai Min, Seongho Joe,
+     Zhang, and Vikash Sehwag. Co-spy: Combining seman-                  Youngjune Gwon, and Jongwon Choi. Bihpf: Bilateral
+     tic and pixel features to detect synthetic images by ai. In         high-pass filters for robust deepfake detection. In 2022
+     Proceedings of the Computer Vision and Pattern Recognition          IEEE/CVF Winter Conference on Applications of Computer
+     Conference, pages 13455–13465, 2025. 2, 6, 7, 5                     Vision (WACV), pages 2878–2887, 2022. 2
+[14] Yunjey Choi et al. Stargan: Unified generative adversarial     [27] Yuheng Ji, Yue Liu, Zhicheng Zhang, Zhao Zhang, Yuting
+     networks for multi-domain image-to-image translation. In            Zhao, Xiaoshuai Hao, Gang Zhou, Xingwei Zhang, and Xi-
+     Proceedings of the IEEE Conference on Computer Vision               aolong Zheng. Enhancing adversarial robustness of vision-
+     and Pattern Recognition, pages 8789–8797, 2018. 1                   language models through low-rank adaptation. In Proceed-
+[15] Katherine Crowson, Stefan Andreas Baumann, Alex Birch,              ings of the 2025 International Conference on Multimedia Re-
+     Tanishq Mathew Abraham, Daniel Z Kaplan, and Enrico                 trieval, pages 550–559, 2025. 4
+[28] Yuheng Ji, Huajie Tan, Cheng Chi, Yijie Xu, Yuting Zhao,         [41] Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feicht-
+     Enshen Zhou, Huaihai Lyu, Pengwei Wang, Zhongyuan                     enhofer, Trevor Darrell, and Saining Xie. A convnet for the
+     Wang, Shanghang Zhang, et al. Mathsticks: A benchmark                 2020s. Proceedings of the IEEE/CVF Conference on Com-
+     for visual symbolic compositional reasoning with matchstick           puter Vision and Pattern Recognition (CVPR), 2022. 7
+     puzzles. arXiv preprint arXiv:2510.00483, 2025. 4                [42] Ilya Loshchilov and Frank Hutter. Decoupled weight decay
+[29] Yuheng Ji, Huajie Tan, Jiayu Shi, Xiaoshuai Hao, Yuan                 regularization. arXiv preprint arXiv:1711.05101, 2017. Sub-
+     Zhang, Hengyuan Zhang, Pengwei Wang, Mengdi Zhao, Yao                 mitted November 14, 2017; revised January 4, 2019. 2
+     Mu, Pengju An, et al. Robobrain: A unified brain model for       [43] Simian Luo, Yiqin Tan, Suraj Patil, Daniel Gu, Patrick von
+     robotic manipulation from abstract to concrete. In Proceed-           Platen, Apolinário Passos, Longbo Huang, Jian Li, and Hang
+     ings of the Computer Vision and Pattern Recognition Con-              Zhao. Lcm-lora: A universal stable-diffusion acceleration
+     ference, pages 1724–1734, 2025. 4                                     module. arXiv preprint arXiv:2311.05556, 2023. 1
+[30] Yuheng Ji, Yipu Wang, Yuyang Liu, Xiaoshuai Hao, Yue Liu,        [44] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.
+     Yuting Zhao, Huaihai Lyu, and Xiaolong Zheng. Visualtrans:            Lareˆ2: Latent reconstruction error based method for
+     A benchmark for real-world visual transformation reasoning.           diffusion-generated image detection. In Proceedings of
+     arXiv preprint arXiv:2508.04043, 2025. 4                              the IEEE/CVF Conference on Computer Vision and Pattern
+[31] Tero Karras et al. Progressive growing of gans for improved           Recognition (CVPR), pages 17006–17015, 2024. 2
+     quality, stability, and variation. In International Conference   [45] Huaihai Lyu, Chaofan Chen, Yuheng Ji, and Changsheng
+     on Learning Representations, 2018. 4, 6, 1                            Xu. Egoprompt: Prompt pool learning for egocentric action
+[32] Tero Karras et al. A style-based generator architecture               recognition. arXiv preprint arXiv:2508.03266, 2025. 4
+     for generative adversarial networks. In Proceedings of           [46] Midjourney, Inc. Midjourney v6. https : / / www .
+     the IEEE/CVF Conference on Computer Vision and Pattern                midjourney.com, 2025. AI model version 6.0, Ac-
+     Recognition, pages 4401–4410, 2019. 1                                 cessed: 2025-11-26. 4
+[33] Kvikontent.                    Kvikontent-midjourney       v6.   [47] Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav
+     https://huggingface.co/Kvikontent/midjourney-v6, 2023. 1              Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever, and
+                                                                           Mark Chen. Glide: Towards photorealistic image generation
+[34] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao
+                                                                           and editing with text-guided diffusion models. arXiv preprint
+     Hu, and Fuli Feng. Improving synthetic image detection
+                                                                           arXiv:2112.10741, 2021. 1
+     towards generalization: An image transformation perspec-
+                                                                      [48] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+     tive. In Proceedings of the 31st ACM SIGKDD Conference
+                                                                           versal fake image detectors that generalize across genera-
+     on Knowledge Discovery and Data Mining V. 1, pages 2405–
+                                                                           tive models. In Proceedings of the IEEE/CVF Conference
+     2414, 2025. 2, 6, 5
+                                                                           on Computer Vision and Pattern Recognition, pages 24480–
+[35] Yiheng Li, Zichang Tan, Xu Guoqing, Zhen Lei, Xu Zhou,                24489, 2023. 1, 2, 3, 6, 7, 5
+     and Yang Yang. Towards generalizable ai-generated image
+                                                                      [49] Jeongsoo Park and Andrew Owens. Community forensics:
+     detection via image-adaptive prompt learning. arXiv preprint
+                                                                           Using thousands of generators to train fake image detectors.
+     arXiv:2508.01603, 2025. 2
+                                                                           In Proceedings of the Computer Vision and Pattern Recog-
+[36] Shuqiao Liang, Jian Liu, Renzhang Chen, and Quanlong                  nition Conference (CVPR), pages 8245–8257, 2025. 1, 3, 6,
+     Guan. Ferretnet: Efficient synthetic image detection via local        5
+     pixel dependencies, 2025. 2                                      [50] Taesung Park et al. Semantic image synthesis with spatially-
+[37] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,                 adaptive normalization. In Proceedings of the IEEE/CVF
+     Jingdong Wang, and Yao Zhao. Forgery-aware adaptive                   Conference on Computer Vision and Pattern Recognition,
+     transformer for generalizable synthetic image detection. In           pages 2337–2346, 2019. 1
+     Proceedings of the IEEE/CVF Conference on Computer Vi-           [51] Pablo Pernias, Dominic Rampas, Mats Leon Richter,
+     sion and Pattern Recognition, pages 10770–10780, 2024. 2              Christopher Pal, and Marc Aubreville. Würstchen: An ef-
+[38] Ruiqi Liu, Yi Han, Zhengbo Zhang, Liwei Yao, Zhiyuan                  ficient architecture for large-scale text-to-image diffusion
+     Yan, Jialiang Shen, ZhiJin Chen, Boyi Sun, Lubin Weng,                models. In The Twelfth International Conference on Learn-
+     Jing Dong, et al. Beyond artifacts: Real-centric envelope             ing Representations, 2023. 1
+     modeling for reliable ai-generated image detection. arXiv        [52] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+     preprint arXiv:2512.20937, 2025. 2                                    Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+[39] Ruiqi Liu, Manni Cui, Ziheng Qin, Zhiyuan Yan, Ruoxin                 Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning
+     Chen, Yi Han, Zhiheng Li, Junkai Chen, ZhiJin Chen,                   transferable visual models from natural language supervi-
+     Kaiqing Lin, et al. Mirror: Manifold ideal reference re-              sion. In International conference on machine learning, pages
+     constructor for generalizable ai-generated image detection.           8748–8763. PmLR, 2021. 2, 6, 7
+     arXiv preprint arXiv:2602.02222, 2026. 2                         [53] Anirudh Sundara Rajan, Utkarsh Ojha, Jedidiah Schloesser,
+[40] Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng                and Yong Jae Lee. Aligned datasets improve detection of
+     Zhang, Stephen Lin, and Baining Guo. Swin transformer:                latent diffusion-generated images. In The Thirteenth Inter-
+     Hierarchical vision transformer using shifted windows. In             national Conference on Learning Representations, 2025. 2
+     Proceedings of the IEEE/CVF International Conference on          [54] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     Computer Vision (ICCV), 2021. 7                                       Patrick Esser, and Björn Ommer. High-resolution image
+     synthesis with latent diffusion models. In Proceedings of            Pengwei Wang, Enshen Zhou, et al. Robobrain 2.0 technical
+     the IEEE/CVF Conference on Computer Vision and Pattern               report. arXiv preprint arXiv:2507.02029, 2025. 4
+     Recognition (CVPR), pages 10684–10695, 2022. 1, 4, 6, 2         [66] DeciAI Research Team. Decidiffusion 2.0, 2024. 1
+[55] Andreas Rossler et al. Faceforensics++: Learning to detect      [67] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-
+     manipulated facial images. In Proceedings of the IEEE/CVF            reit, Llion Jones, Aidan N Gomez, Ł ukasz Kaiser, and Illia
+     International Conference on Computer Vision, pages 1–11,             Polosukhin. Attention is all you need. In Advances in Neu-
+     2019. 1                                                              ral Information Processing Systems. Curran Associates, Inc.,
+[56] Arseniy Shakhmatov, Anton Razzhigaev, Aleksandr                      2017. 5
+     Nikolich, Vladimir Arkhipkin, Igor Pavlov, Andrey               [68] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Kuznetsov, and Denis Dimitrov. Kandinsky 2.2. https:                 Owens, and Alexei A Efros. Cnn-generated images are
+     //github.com/ai-forever/Kandinsky-2, 2023.                           surprisingly easy to spot... for now. In Proceedings of
+     1                                                                    the IEEE/CVF conference on computer vision and pattern
+[57] Zirui Song, Guangxian Ouyang, Mingzhe Li, Yuheng Ji,                 recognition, pages 8695–8704, 2020. 2, 3, 4, 6, 1, 5
+     Chenxi Wang, Zixiang Xu, Zeyu Zhang, Xiaoqing Zhang,            [69] Yipu Wang, Yuheng Ji, Yuyang Liu, Enshen Zhou, Ziqiang
+     Qian Jiang, Zhenhao Chen, et al. Maniplvm-r1: Rein-                  Yang, Yuxuan Tian, Ziheng Qin, Yue Liu, Huajie Tan,
+     forcement learning for reasoning in embodied manipula-               Cheng Chi, Zhiyuan Ma, Daniel Dajun Zeng, and Xiaolong
+     tion with large vision-language models. arXiv preprint               Zheng. Towards cross-view point correspondence in vision-
+     arXiv:2505.16517, 2025. 4                                            language models. arXiv preprint arXiv:2512.04686, 2025.
+[58] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,                 4
+     Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-         [70] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     tection: Improving generalizability through frequency space          Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire
+     domain learning. In Proceedings of the AAAI Conference on            for diffusion-generated image detection. arXiv preprint
+     Artificial Intelligence, pages 5052–5060, 2024. 2                    arXiv:2303.09295, 2023. 2
+[59] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,            [71] Siwei Wen, Junyan Ye, Peilin Feng, Hengrui Kang, Zichen
+     Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-            Wen, Yize Chen, Jiang Wu, Wenjun Wu, Conghui He, and
+     erations in cnn-based generative network for generalizable           Weijia Li. Spot the fake: Large multimodal model-based
+     deepfake detection. In Proceedings of the IEEE/CVF Con-              synthetic image detection with artifact explanation. arXiv
+     ference on Computer Vision and Pattern Recognition, pages            preprint arXiv:2503.14905, 2025. 2, 3
+     28130–28139, 2024. 2, 6, 7, 1, 5                                [72] Chenfei Wu, Jiahao Li, Jingren Zhou, Junyang Lin, Kaiyuan
+[60] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu,               Gao, Kun Yan, Sheng ming Yin, Shuai Bai, Xiao Xu, Yilei
+     Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip: Inject-             Chen, Yuxiang Chen, Zecheng Tang, Zekai Zhang, Zhengyi
+     ing category common prompt in clip to enhance generaliza-            Wang, An Yang, Bowen Yu, Chen Cheng, Dayiheng Liu, De-
+     tion in deepfake detection. In Proceedings of the AAAI Con-          qing Li, Hang Zhang, Hao Meng, Hu Wei, Jingyuan Ni, Kai
+     ference on Artificial Intelligence, pages 7184–7192, 2025. 2         Chen, Kuan Cao, Liang Peng, Lin Qu, Minggang Wu, Peng
+[61] Huajie Tan, Yuheng Ji, Xiaoshuai Hao, Xiansheng Chen,                Wang, Shuting Yu, Tingkun Wen, Wensen Feng, Xiaoxiao
+     Pengwei Wang, Zhongyuan Wang, and Shanghang Zhang.                   Xu, Yi Wang, Yichang Zhang, Yongqiang Zhu, Yujia Wu,
+     Reason-rft: Reinforcement fine-tuning for visual reasoning           Yuxuan Cai, and Zenan Liu. Qwen-image technical report,
+     of vision language models. In The Thirty-ninth Annual Con-           2025. 1
+     ference on Neural Information Processing Systems. 4             [73] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xi-
+[62] Huajie Tan, Cheng Chi, Xiansheng Chen, Yuheng Ji,                    aolong Jiang, Yao Hu, and Weidi Xie.               A sanity
+     Zhongxia Zhao, Xiaoshuai Hao, Yaoxu Lyu, Mingyu Cao,                 check for ai-generated image detection. arXiv preprint
+     Junkai Zhao, Huaihai Lyu, et al. Roboos-next: A unified              arXiv:2406.19435, 2024. 2, 3, 6, 7, 1, 5
+     memory-based framework for lifelong, scalable, and robust       [74] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     multi-robot collaboration. arXiv preprint arXiv:2510.26536,          Chengchun Liu, Shen Chen, Taiping Yao, Shouhong Ding,
+     2025. 4                                                              Baoyuan Wu, and Li Yuan. Orthogonal subspace decompo-
+[63] Ming Tao, Hao Tang, Fei Wu, Xiao-Yuan Jing, Bing-Kun                 sition for generalizable ai-generated image detection. arXiv
+     Bao, and Changsheng Xu. Df-gan: A simple and effec-                  preprint arXiv:2411.15633, 2024. 2, 7
+     tive baseline for text-to-image synthesis. In Proceedings of    [75] Yongqi Yang, Zhihao Qian, Ye Zhu, Olga Russakovsky, and
+     the IEEE/CVF conference on computer vision and pattern               Yu Wu. D3: Scaling up deepfake detection by learning from
+     recognition, pages 16515–16525, 2022. 1                              discrepancy. In Proceedings of the IEEE/CVF Conference
+[64] Ming Tao, Bing-Kun Bao, Hao Tang, and Changsheng Xu.                 on Computer Vision and Pattern Recognition, 2025. 1, 3, 6,
+     Galip: Generative adversarial clips for text-to-image synthe-        7, 2, 5
+     sis. In Proceedings of the IEEE/CVF Conference on Com-          [76] Haifeng Zhang, Qinghui He, Xiuli Bi, Weisheng Li, Bo Liu,
+     puter Vision and Pattern Recognition, pages 14214–14223,             and Bin Xiao. Towards universal ai-generated image detec-
+     2023. 1                                                              tion by variational information bottleneck network. In Pro-
+[65] BAAI RoboBrain Team, Mingyu Cao, Huajie Tan, Yuheng                  ceedings of the Computer Vision and Pattern Recognition
+     Ji, Xiansheng Chen, Minglan Lin, Zhiyu Li, Zhou Cao,                 Conference, pages 23828–23837, 2025. 2
+[77] Jun-Yan Zhu et al. Unpaired image-to-image translation us-
+     ing cycle-consistent adversarial networks. In Proceedings
+     of the IEEE International Conference on Computer Vision,
+     pages 2223–2232, 2017. 1
+[78] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Yunhe Wang. Genimage: A million-scale benchmark for de-
+     tecting ai-generated image. Advances in Neural Information
+     Processing Systems, 36, 2024. 3, 4, 6, 1
+   Scaling Up AI-Generated Image Detection with Generator-Aware Prototypes
+                                                 Supplementary Material
+   We organize the supplementary in the following way:            Forensic Synthetic [68] contains a series of CNN-
+• Sec. A: Detailed information of the introduced series of        generated images, we select its GAN variants, including
+  dataset build in previous section.                              ProGAN [31], StyleGAN [32], StyleGAN2, CycleGAN
+• Sec. B: Details of the 6 selected benchmarks.                   [77], StarGAN [14], GauGAN [50], BigGAN [9], and
+• Sec. C: Introduction to the selected baselines.                 Deepfake [55] for forgery face.
+• Sec. D: Detailed results of each test subsets.
+• Sec. E: Implementation details of the proposed method.          UFD [48] datasets expand the dataset above by introduc-
+• Sec. F: Additional derivation and analysis.                     ing several early diffusion models and commercial APIs, in-
+• Sec. G: Future perspectives towards reasoning-driven and        cluding latent diffusion model [54], Glide [47] and Guided
+  embodied forensics.                                             [17] diffusion model.
+                                                                  GenImage [78] provide a dataset trained on ImageNet-1k.
+A. Settings of the toy dataset                                    It has 8 generative models in both GANs, Diffusion Mod-
+In Sec.3, we introduce a series of datasets, comprising gen-      els and Commercial APIs, including BigGAN [9], VQDM
+erated images from different numbers of generators. In this       [21], Stable Diffusions, Wukong [2], ADM [17] and Mid-
+section we will give the constructing procedure of these          journey [1].
+datasets.                                                         SynthBuster [7] provide an aligned dataset, where real im-
+   First, there are 8 generators in GenImage [78] dataset, in     ages and generated images are all in PNG format, which
+each generator subset, there are 1000 types of object mir-        makes it challenging for AIGI detectors that leverage for-
+roring the 1000 categories of ImageNet-1k [16]. We se-            mat shortcut. Moreover the generated images are also from
+lect generator subset composed of ng generators based on          popular latent diffusions, including DALL-E, Stable Diffu-
+Tab. 5. For each of the 1000 categories, we randomly sam-         sions, Firefly[3] and Glide.
+ple ns images in each generator subset. To pair real images,
+we randomly sample ns × ng images from the original Ima-          Chameleon [73] provides a sanity check for AI-generated
+geNet dataset. ns is determined via 1000×ns ×ng = 8000.           image detection. They build a high quality dataset where
+   For the last dataset, which consist of thousands of gen-       generated images are source from internet and some un-
+erators, we leverage Community-Forensics training dataset         known source. All images in this benchmark are said to
+[49] for collecting, which is the same as our training dataset.   be indistinguishable by human. Since all images are gather
+we randomly sample 2 images from each generator in it,            from the unknown source, there’s only one subset in this
+which consist of about 9000 generated images. Then we             benchmark.
+randomly sample 8,000 real images as before to construct
+                                                                  Community Forensics Evaluation Set [49] is build
+the last dataset in the series.
+                                                                  to evaluate the model’s ability to generalize to un-
+     group     ng                Generator(s)                     seen generators that trained in Community Forensics
+                                                                  dataset. This evaluation dataset is also the most up-
+        1       1               SDv1.4                            to-date dataset, containing generators like Deci Diffu-
+        2       2          SDv1.4, BigGAN                         sion V2 [66], GALIP [64], KandinskyV2.2 [56], Kvikon-
+        3       4    SDv1.4, BigGAN, VQDM, Glide                  tent [33], LCM-LoRA-SDv1.5, LCM-LoRA-SDXL, LCM-
+        4       8            All GenImage                         LoRA-SSD1B [43], Stable Cascade [51], DF-GAN [63],
+                                                                  and HDiT [15].
+         Table 5. Generators used to build our datasets.
+                                                                     Above all, we have 55 subsets for testing. Given the large
+                                                                  scale of our training data, the training domain overlaps with
+                                                                  several previously constructed datasets. Consequently, our
+B. Benchmarks                                                     evaluation comprises 29 completely unseen generator sub-
+We select 6 benchmarks to represent most existed genera-          sets, the rest, even though seen in training set, still have a
+tive models to evaluate the methods. Though some subsets          different generated condition. Sample images from the test
+have same or similar architecture, their training condition,      set are shown in Fig. 8.
+sampling strategy and semantic content are not quite the             Metrics. Following prior works [48, 59, 68], we com-
+same. Thus we preserve all subsets that have same name            pute a threshold-free metric, mean average precision (AP),
+to simulate a variety of generated images.                        and a threshold-based metric, binary accuracy (Acc). When
+                        （a）In Domain                                                         （b）Out of Domain
+
+
+
+
+           StyleGAN2                  Stable DiffusionV1.4                         DALLE-2                           Firefly
+
+
+
+
+            ProGAN                             Guided                              Imagen3                       MidjourneyV6
+
+ Figure 8. Examples of test subsets, we visualize some in-domain datasets with our training set along with some out-of-distribution sets.
+
+
+computing accuracy, the threshold was set to 0.5.                       C.3. Scaling-Ups
+                                                                        Scaling up detectors use a training dataset from a more di-
+C. Baselines                                                            verse source. To solve the sanity check for AIGI detection,
+                                                                        AIDE [73] provide another checkpoint that trained a clas-
+In this section, we will give a brief introduction to the base-         sifier with all images in GenImage, including both GANs
+lines for comparison.                                                   and Diffusions. D3 [75] proposed a dual feature extraction
+                                                                        branch, a original image and a patch-shuffled image to learn
+C.1. GAN-Generalized                                                    comprehensive traces, it uses a training dataset consist of
+                                                                        GenImage and CNNDetection. Community Forensics con-
+CNNDetection [68] uses a ResNet-50 as a classifier with                 struct a large dataset with thousands of generators and use
+data augmentation to detect CNN-generated images. NPR                   it to train classifier with a standard ViT.
+[59] rethink up-sampling operation in most generative ar-
+chitecture and detect them via a interpolation pattern.                 D. Detailed results of experiments
+UniFD [48] leverage the image encoder of CLIP for fea-
+ture extraction, it takes image embeddings for classification           The following tables show detailed results for the selected 6
+with simple KNN or linear layer. SAFE[34] extracts high                 benchmarks. All baselines are evaluated with their provided
+frequency band as artifact with various data augmentation to            checkpoints. Tab. 6 shows results of ForenSynths, Tab. 7
+build a CNN classifier. AIDE uses a hybrid feature of both              shows results of UFD, Tab. 8 shows results of GenImage,
+CLIP image embedding , high and low frequency patches                   Tab. 9 shows results of SynthBuster, Tab. 10 and Tab. 11
+via DCT scoring, and concatenate them for final decision.               shows results of Community Forensics evaluation set.
+These baselines are all trained on GAN generated images
+provided by the training set of CNNDetection [68].                      E. Implementation Details
+                                                                        To validate the reproducibility, we present our implementa-
+C.2. Diffusion-Generalized
+                                                                        tion details in this section.
+In the diffusion era [54], more method aim to detect gen-                  Network Design The image encoder we use is
+erated images with a more realistic diffusion generated im-             CLIP:ViT-L with a patch size of 14 × 14. The MLP is
+ages. DRCT [11] construct a diffusion reconstruct dataset               composed of two hidden layer with dimensions 1024 →     −
+and used it to train a classifier with classification objective         128 −→ 1. In the second stage, we discard the second layer
+and contrastive learning objective. We use its Conv-B vari-             to make the MLP 1024 −     → 128, then we apply LoRA [25]
+ant trained on SDv2.1. Co-SPY [13] also uses a hybrid fea-              in q proj, k proj, v proj of image encoder with
+ture for classification, but a combination of CLIP embed-               LoRA parameter r = 16, α = 32, dropout = 0.1.
+ding and VAE-reconstruct residual. B-Free [22] proposed a                  Training For image in training set, we apply Random-
+paradigm that generated images should come from inpaint-                Crop to 224 × 224, and to those image whose resolution is
+ing models rather than unconditional generators or T2Is to              smaller than this, we apply 0-padding to make it enough to
+prevent semantic bias. It trained an end-to-end classifier              crop. We automatically separate 5% samples of dataset to
+with proposed dataset.                                                  form a validation set. We use AdamW [42] optimizer with
+a learning rate of 10−4 and a weight decay of 0.01 in the                Thus, the total variance can be expressed as:
+two stages. In the first stage, training last for 20 epochs.
+                                                                                  G          M
+In the second stage. we train until the validation accuracy                       X          X
+reaches 99.9% or do not improve for 3 epochs to prevent                  Σgen =         wi        πi,j Σi,j
+                                                                                    i         j
+performance degradation.
+                                                                                  G
+                                                                                  X          M
+                                                                                             X
+   Testing For images in testing sets, we apply CenterCrop                    +         wi        πi,j (µi,j − µ̄)(µi,j − µ̄)T
+to 224 × 224, which is the same as most baselines, except                           i        j
+for B-Free, who uses a resolution of 504×504 and Co-SPY                           G
+                                                                                  X
+uses a 384×384, to best excel their performance, we did not                   +         wi (µi − µ̄)(µi − µ̄)T
+modify their model but directly report their performance on                         i
+original resolution.                                                           = EM [Var(X|Gi , M )|Gi ] + VarM [E(X|Gi , M )|Gi ]
+                                                                                 |                       {z                     }
+                                                                                                             generator fitting variance
+
+F. Additional Derivation and Analysis                                         + VarG [E(X|G)] ,
+                                                                                |     {z    }
+                                                                                  cross generator variance
+In this section, we provide supplementary materials to sub-                                                                               (13)
+stantiate the claims made in the main text. Specifically,                                PM                        PG
+we present a rigorous mathematical derivation modeling the               where µi =         j πi,j µi,j , and µ̄ =   i µi denotes the
+data heterogeneity in scaling-up settings (Sec. F.1) and offer           mean within a generator and the global mean across the en-
+qualitative visualizations of the attention maps to demon-               tire dataset, respectively.
+strate how our method alters the encoder’s focus (Sec. F.2).                 How do prototypes limit variance growth?
+                                                                             Having established that variance increases with gener-
+                                                                         ator diversity, we now show how our prototype mapping
+F.1. Detailed Derivation of Theory                                       strategy mitigates this issue. In prototype mapping, the fea-
+                                                                         ture embedding is reorganized into a linear combination of
+Recall that in Sec. 3 of the main paper, we identified the               prototypes; this operation effectively sets an upper bound
+“Benefit then Conflict” dilemma, attributing it to the severe            on the embedding’sPvariance.
+data-level heterogeneity that arises when aggregating multi-                 We have f˜ =        wi vi where wi is the attention score
+ple generators. To theoretically quantify this phenomenon,               and vi is a prototype vector. Let F be the random variable
+we model the distribution of real and generated images and               of this reorganized embedding. Its variance is given by:
+analyze the behavior of feature variance.
+                                                                                         V ar(F ) = E ||F − E(F )||2 ,
+                                                                                                                     
+                                                                                                                                  (14)
+   Why GMM? How to calculate variance in GMM?
+   We adopt the Gaussian Mixture Model (GMM) as a                        where V ar(·) here denotes its trace in the covariance ma-
+proxy for the real-world data distribution. This choice is               trix, i.e., tr(Σ). To proceed, we introduce an independent
+motivated by the structure of commonly used datasets like                identically distributed random variable F ′ to reformulate
+ImageNet, which consist of distinct categories. Specifically,            this term as:
+we model the image features within each category as a mul-                                            1 
+                                                                                                        E ||F − F ′ ||2
+                                                                                                                        
+tivariate Gaussian distribution. While this is a simplified                             V ar(F ) =
+                                                                                                      2                                   (15)
+assumption, it remains theoretically robust and yields con-                                           1X
+clusions consistent with more complex scenarios. The total                                          =       wi wj ||vi − vj ||2 ,
+                                                                                                      2
+variance of the generated distribution is derived as follows:
+                                                                         Assume D = maxv∈P ||vi − vj ||. Since all the prototypes
+                                                                         are determined and fixed, this maximum distance  P is a con-
+       Σgen = EG [Var(X|G)] + VarG [E(X|G)] ,                     (11)   stant. Due to the fact that wi , wj ∈ [0, 1] and   wi = 1,
+                                                                         this variance term can be bounded by:
+For the i-th generator, its variance is computed by:                                                                    1 2
+                                                                                                   V ar(F ) ≤             D .             (16)
+                                                                                                                        4
+  V ar(X|G = i) = Σigen                                                  This derivation confirms that regardless of the number of
+       M                   M                                             source generators, the variance of the features mapped to
+       X                   X                                      (12)
+   =         πi,j Σi,j +         πi,j (µi,j − µi )(µi,j − µi )T          the prototype space remains bounded by the geometry of
+       j=1                 j=1                                           the prototype set.
+F.2. Visualization of Attention Maps                             models is their frequent violation of 3D geometry and phys-
+                                                                 ical laws. While GAPL effectively learns 2D prototypes,
+To provide interpretability for our model’s performance, we
+                                                                 it does not explicitly model the underlying 3D structure of
+move beyond theoretical bounds to empirical visualization.
+                                                                 the scene. Incorporating spatial intelligence [29, 65, 69]
+We compare the attention maps from both the original CLIP
+                                                                 could serve as a powerful orthogonal check. Models
+image encoder and the encoder fine-tuned by our proposed
+                                                                 equipped with 3D-aware representations or spatial reason-
+GAPL.
+                                                                 ing capabilities can detect geometric implausibilities—such
+   These attention maps represent the attention scores be-
+                                                                 as “Escher-like” structures or inconsistent depth cues—that
+tween the [CLS] token and all spatial patch tokens. The im-
+                                                                 purely 2D generative models fail to resolve. This aligns
+age encoder consists of 24 ViT blocks; in our visualization,
+                                                                 with our observation of “Benefit then Conflict,” suggesting
+we sample 8 blocks, with block indices ascending from left
+                                                                 that physical laws could serve as the ultimate invariant fea-
+to right (shallow to deep). For visual clarity, bicubic inter-
+                                                                 ture across diverse generators.
+polation is applied to the raw attention maps. As shown in
+Fig. 9 and Fig. 10, the comparisons demonstrate two key
+findings: (1) Our encoder preserves rich semantic informa-       Trustworthy Perception in Embodied AI. Finally, the
+tion in the shallow layers, maintaining the generalization ca-   utility of AIGI detection extends beyond digital media
+pability of the pre-trained model; (2) In deeper layers, com-    forensics into the physical world. As we deploy au-
+pared to the original CLIP, our model effectively leverages      tonomous agents, ensuring trustworthy perception is criti-
+more patches to form a more comprehensive artifact pattern.      cal. Embodied agents operating in the real world must dis-
+Visually, this manifests as more pronounced and focused          tinguish between authentic sensory inputs and potentially
+bright spots in the deeper layers, indicating that GAPL has      manipulated streams (e.g., adversarial projections or deep-
+successfully learned to attend to generator-specific traces.     fakes in video feeds) [5, 27]. Furthermore, robust detec-
+                                                                 tion models like GAPL can act as quality filters for Embod-
+G. Future Perspectives                                           ied AI [6, 30, 45, 62], particularly in Sim-to-Real pipelines
+                                                                 where agents are trained on synthetic data. By rigorously
+While our proposed GAPL framework achieves state-                curating high-fidelity synthetic data that adheres to physical
+of-the-art performance by managing data heterogeneity            realism, we can ensure that embodied agents develop robust
+through generator-aware prototypes, we recognize that the        representations that generalize better to physical reality.
+arms race between generation and detection is evolving. As
+generative models (e.g., Flux [8], Midjourney v6 [46], Nano
+Banana Pro [20]) increasingly mitigate low-level statistical
+artifacts, relying solely on texture or frequency cues may
+face diminishing returns. We envision that the next gener-
+ation of AIGI detectors must integrate higher-level cogni-
+tive capabilities. Specifically, we identify three promising
+avenues where our scaling-up principles can intersect with
+broader AI domains:
+
+From Artifact Detection to Visual Reasoning. Cur-
+rent forensic methods predominantly focus on signal-level
+anomalies. However, highly realistic AI-generated images
+often retain subtle semantic or logical inconsistencies (e.g.,
+impossible shadows, mismatched reflections, or counting
+errors) that are invisible to standard classifiers. Future
+work should explore integrating Visual Reasoning frame-
+works [28, 30, 57, 61] into the detection pipeline. By lever-
+aging neuro-symbolic approaches or chain-of-thought rea-
+soning, a detector could move beyond binary classification
+to provide interpretable evidence based on compositional
+logic, effectively identifying “why” an image violates real-
+ity even when pixel statistics appear perfect.
+
+Incorporating Spatial Intelligence and Physical Con-
+straints. A persistent weakness in current generative
+                    ProGAN           StyleGAN         StyleGAN2        StarGAN          GauGAN           CycleGAN           BigGAN          Deepfake                Mean
+ Method
+                  Acc       AP      Acc      AP      Acc      AP      Acc      AP      Acc       AP      Acc      AP      Acc      AP      Acc     AP        Acc             AP
+ CNNDet [68]      100.0    100.0    74.3    98.4     76.3     92.1    81.1    95.3     80.1     98.0     81.1     96.4    59.5     88.2    51.0   66.1    75.3 ± 13.9    91.8 ± 10.3
+ NPR [59]          99.8     99.9    97.3    99.9     99.5     100     99.7     100     79.1     80.2     94.5     97.6    83.6     84.7    73.7   72.5     90.1 ± 9.9    91.8 ± 10.3
+ UniFD [48]        99.8    100.0    85.4    97.5     74.5     97.6    96.0    99.5     99.4    100.0     98.3     99.8    94.7     99.2    67.5   80.3    89.4 ± 11.6     96.7 ± 6.3
+ SAFE [34]         99.8    100.0    97.6    99.8     98.7    100.0    99.8    100.0    92.2     96.9     99.1     99.8    89.5     95.1    93.2   97.2     96.2 ± 3.7     98.6 ± 1.8
+ AIDE [73]         96.3     99.8    97.2    99.7     98.1     99.8    98.4    99.9     76.9     96.0     95.6     99.4    78.3     96.7    54.2   68.7    86.8 ± 14.9    95.0 ± 10.0
+ DRCT [11]         50.2     50.2    49.1    49.1     49.3     45.3    38.3    38.7     49.9     43.2     49.3     44.6    49.7     47.8    64.7   78.4     50.1 ± 6.7    49.6 ± 11.4
+ Co-SPY [13]       74.7     78.1    63.7    69.8     59.7     62.9    62.1    94.3     69.6     83.4     58.5     55.8    71.6     83.9    64.9   78.7     65.6 ± 5.4    75.9 ± 11.6
+ B-Free [22]       95.6     99.3    74.8    93.6     71.1     89.4    81.1     93.5    96.0     99.8     65.4     90.5    91.5     98.9    73.7   89.2    81.2 ± 11.1     94.3 ± 4.2
+ AIDE† [73]        92.7     98.8    88.6     95.1    93.6     98.6    88.0     99.0    87.7     98.9     92.0     98.9    84.9     97.7    54.8   63.2    85.3 ± 11.8    93.8 ± 11.6
+ D3 [75]           99.8    100.0    93.5    99.1     95.8     99.5    93.5    98.7     98.7    100.0     95.9     99.5    99.6    100.0    67.5   87.0     93.0 ± 9.9     98.0 ± 4.2
+ CommForen [49]    92.8     99.8    93.1    99.3     92.7     99.5    98.8     99.9    98.8     99.9     95.5     99.8    99.6    100.0    66.8   88.9    92.2 ± 10.0     98.2 ± 3.6
+ GAPL(Ours)        99.9    100.0    98.1    100.0    99.5    100.0    97.0     99.9    99.6    100.0     98.2     99.9    98.6    100.0    88.2   96.8     97.2 ± 3.6     99.5 ± 1.1
+
+
+Table 6. Detaild results on the benchmark ForenSynth [68]. we only select its GAN variant. AIDE† denotes its scaling up checkpoint
+trained on 8 generators.
+
+
+
+
+                   DALL-E          Glide-50-27      Glide-100-10     Glide-100-27       Guided          LDM-100           LDM-200         LDM-200-cfg               Mean
+ Method
+                  Acc      AP      Acc      AP      Acc      AP      Acc      AP      Acc     AP       Acc       AP      Acc      AP      Acc      AP         Acc            AP
+ CNNDet [68]      52.9    68.4     55.7     78.0    54.3     74.3    53.3     73.7    52.8    68.1     52.0      68.7    51.5     68.2    52.2     69.6    53.1 ± 1.3     71.1 ±3.5
+ NPR [59]         90.3    97.4     97.2     99.2    97.6     99.2    96.9     99.1    87.1    92.6     97.4      99.1    97.6     99.2    97.4     99.0    95.2 ± 3.8    98.1 ± 2.2
+ UniFD [48]       87.5    97.7     79.2     96.0    78.0     95.5    78.7     95.8    70.0    88.3     95.2      99.3    94.5     99.4    74.2     93.2    82.2 ± 8.7     95.7± 3.4
+ SAFE [34]        97.5    99.7     96.6     99.2    97.3     99.4    95.8     98.9    82.4    95.8     98.8     100.0    98.8    100.0    98.7     99.9    95.7 ±5.1     99.1 ± 1.3
+ AIDE [73]        89.7    99.6     89.9     99.8    89.8     99.6    89.9     99.8    94.2    98.9     90.1      99.9    90.1     99.9    90.1     99.9    90.5 ±1.4     99.7 ± 0.3
+ DRCT [11]        55.6    57.8     56.2     62.6    61.0     70.4    56.2     62.7    62.6    89.3     88.8      96.6    88.9     96.7    90.3     97.5   70.0 ± 15.2    79.2 ±16.3
+ Co-SPY [13]      81.8    87.2     69.0     74.6    76.7     81.7    73.5     78.2    62.7    87.4     82.7      86.9    83.1     87.5    85.2     91.0    76.8 ±7.4      84.3 ±5.2
+ B-Free [22]      93.2    97.9     78.6     90.2    81.8     91.9    77.9     89.4    74.6    93.6     97.2      99.9    97.1     99.8    96.9     99.8    87.1 ±9.2     95.3 ± 4.2
+ AIDE† [73]       98.7    99.9     99.0    100.0    99.1    100.0    99.0    100.0    95.5    99.9     99.1     100.0    99.1    100.0    99.1    100.0   98.6 ± 1.1     100.0 ± 0
+ D3 [75]          94.0    98.7     95.8     99.3    95.8     99.4    95.7     99.5    95.9    99.6     96.1      99.7    95.8     99.7    89.3     96.5    94.8 ± 2.2    99.0 ± 1.0
+ CommForen [49]   98.4    99.9     97.1     99.6    98.2     99.8    96.8     99.6    66.1    76.6     98.5      99.9    98.7     99.9    98.5     99.9   94.0 ± 10.5      96.9 7.6
+ GAPL(Ours)       97.8    100.0    97.7     99.9    97.8     100     97.7    100.0    93.4    98.6     97.8     100.0    97.9    100.0    97.9     100     97.2 ± 1.5    99.8 ± 0.5
+
+
+                   Table 7. Detaild results on the benchmark UFD. We refer this set to the diffusion part that [48] added.
+
+
+
+
+                    VQDM             SDv1.4           BigGAN           Wukong           SDv1.5                Glide       Midjourney             ADM                Mean
+ Method
+                  Acc      AP      Acc      AP      Acc      AP      Acc      AP      Acc      AP       Acc       AP      Acc      AP      Acc     AP         Acc            AP
+ CNNDet [68]      52.1     68.8    50.5     59.8    51.2     78.6    50.8     59.3    50.7     60.6     52.3      67.6    51.3     64.7    51.5    65.6    51.3 ± 0.6     65.6 ± 5.9
+ NPR [59]         89.6     94.1    92.1     95.0    70.1     80.3    88.0     93.0    91.7     95.4     93.2      96.5    79.7     86.5    85.7    91.7    86.2 ± 7.3     91.6 ± 5.1
+ UniFD [48]       84.0     96.3    64.1     87.4    89.8     98.5    71.8     91.2    64.4     86.0     61.6      84.6    57.2     75.5    67.1    86.8    70.0 ± 10.6    88.3 ± 6.7
+ SAFE [34]        96.1     99.6    99.4    100.0    97.6     99.8    98.1     99.8    98.8     99.9     97.2      99.6    95.5     99.5    81.5    96.4     95.5 ± 5.4    99.3 ± 1.1
+ AIDE [73]        98.4     99.9    98.3     99.9    98.9     99.9    97.3     99.8    98.1     99.8     98.6      99.9    86.4     96.6    96.8    99.5    96.6 ± 3.9     99.4 ± 1.1
+ DRCT [11]        61.3     85.4    97.9     99.8    52.3     86.3    95.9     99.6    97.9     99.8     60.1      91.2    98.2     99.9    60.0    90.2    78.0 ± 20.0    94.0 ± 6.0
+ Co-SPY [13]      72.2     93.9    93.1     99.2    64.7     90.8    91.2     98.8    93.0     99.0     81.4      96.5    70.0     91.0    58.8    84.3    78.0 ± 12.7    94.2 ± 4.9
+ B-Free [22]      88.2     98.3    99.4    100.0    76.5     96.8    99.4    100.0    99.3    100.0     69.7      93.8    94.1     99.3    72.5    93.7    87.4 ± 11.9    97.7 ± 2.5
+ AIDE† [73]       99.9    100.0    99.8    100.0    99.9    100.0    99.6    100.0    99.8    100.0     99.8     100.0    99.0    100.0    99.5   100.0    99.7 ± 0.2     100.0± 0
+ D3 [75]          98.3     99.9    98.1     99.8    97.1     99.7    97.7     99.8    97.7     99.8     98.3      99.8    79.7     95.8    96.8    99.6    95.5 ± 6.0     99.3 ± 1.3
+ CommForen [49]   90.9     99.7    90.6     99.2    71.5     81.6    91.0     99.1    90.5     99.2     89.4      98.4    77.5     86.8    72.9    83.5    84.3 ± 8.1     93.4 ± 7.5
+ GAPL(Ours)       98.2     100     98.2     100     97.9     99.8    98.1     99.9    98.0     99.9     98.1      99.9    90.3     97.6    95.0    99.2     96.7± 2.6     99.6 ± 0.7
+
+
+                                                    Table 8. Detaild results on the benchmark GenImage.
+                      Real     DALLE-2         Firefly           SDv1.4                 SDXL            DALLE-3          Glide             MJ-v5            SDv1.3                SDv2                      Mean
+ Method
+                      Acc      Acc     AP    Acc    AP          Acc       AP         Acc        AP     Acc     AP      Acc     AP       Acc       AP      Acc       AP       Acc         AP          Acc             AP
+ CNNDet [68]          96.5     7.0    64.8   14.4   74.9         1.5     49.9         5.2      59.0     0.1    36.2     1.8    46.9      1.2     44.8      1.3     49.3      4.8      96.5     50.3 ± 2.1      54.0 ± 17.9
+ NPR [59]             5.6      98.4   49.6    5.2   33.3        94.3     50.6         100      54.7    15.5    31.0    91.6    50.8     80.5     46.1      94.3     50.0     70.4      42.7    38.9 ±17.1        45.4±7.7
+ UniFD [48]           93.5     77.0   95.2   86.0   97.4        45.6     85.3         41.4     83.5     0.7    41.2    11.5    63.5     10.4     61.0      44.8     85.3     58.6      89.9    67.6 ±14.0      78.0 ± 17.6
+ SAFE [34]            15.5     92.0   42.2    4.3   31.0        91.8     55.9         87.4     37.1    44.5    34.7    58.1    36.0     97.0     54.8      91.0     53.9     99.5      56.5     44.7±15.1       44.7 ± 9.8
+ AIDE [73]            66.7     45.7   57.0    0.0   30.8        95.1     94.8         98.2     94.3     2.8    35.9    96.7    95.7     75.3     80.3      95.8     95.3     95.6      93.3    67.0 ± 19.3     75.3 ±25.3
+ DRCT [11]            96.1     4.1    53.6   11.4   60.7        88.2     97.9        89.6      98.2    35.6    80.8    14.1    72.9     99.4     99.9     89.6     98.2      99.9     100.0    77.6 ± 19.6     84.7± 17.3
+ Co-SPY [13]          97.6     48.5   90.8   43.6   87.5        74.7     96.4         44.1     87.9    73.7    96.5    80.6    97.8     35.2     85.0      74.5     96.7     40.0      85.4     77.4 ± 8.6      91.6 ± 5.0
+ B-Free [22]          98.5     88.5   98.9   99.2   99.9        99.8     99.9        100.0     100.0   93.1    99.4    42.7    91.8     98.9     99.9     100.0    100.0     99.5      99.9     94.9± 8.8       98.9 ± 2.5
+ AIDE† [73]           32.8     27.3   35.8    0.3   31.5        99.0     64.4         98.6     64.8    34.8    43.4    97.1    66.8     98.6     75.0      99.7     65.8     96.7      57.0    52.7 ± 18.8     56.0 ± 14.5
+ D3 [75]              82.0     87.7   92.6   92.0   95.3        96.5     97.9         89.4     93.6    28.6    61.3    90.6    95.3     62.6     81.2      96.4     97.7     82.6      90.8    81.3 ± 10.4     89.5 ± 11.0
+ CommForen [49]       84.6     83.9   91.6   93.1   96.6        94.7     97.4         98.5     98.3    76.1    88.4    90.0    96.0     80.6     91.4      95.7     97.7     92.9      95.3     87.1 ±3.6       94.8 ± 3.3
+ GAPL(Ours)           90.0     94.0   97.5   94.3   98.2        98.1     99.3         99.8      99.8   60.1    85.3    97.6    99.2     92.0     97.4      98.2     99.3     96.4      98.7     91.1 ± 5.8      97.2 ±4.3
+
+
+Table 9. Detailed results on the benchmark SynthBuster [7]. In this benchmark, all generated images are pair with exactly the same real
+images. Thus we report the real images accuracy and each generator’s fake accuracy independently. We pair the metrics of real and each
+generators to get the final mean metrics .
+
+
+
+
+                      DFGAN             MJv6         Kandinsky                  SDcas.               MJv5         Firefly2            Firefly3          GALIP         LCM-lora-sdxl           Hourglass        Kvikontent
+ Method
+                  Acc         AP      Acc    AP     Acc          AP           Acc      AP       Acc     AP      Acc      AP      Acc        AP      Acc       AP      Acc           AP        Acc      AP     Acc         AP
+ NPR [59]         96.6       100.0    98.6   99.0   57.7        56.1          57.4     56.4     96.7    98.3    49.2    45.0     49.6      52.4     51.7     48.0     39.9          41.6      88.6    91.6    58.6    56.3
+ SAFE [34]        50.3        44.8    49.9   45.0   49.6        53.2          49.9     51.0     49.9    45.1    50.0    51.3     50.1      51.2     49.5     53.9     49.5          52.3      50.1    45.2    50.2    51.5
+ AIDE [73]        49.9        43.9    49.8   44.7   49.9        50.1          50.2     52.6     49.9    44.4    50.2    46.2     50.2      46.8     49.7     53.0     49.7          46.1      49.8    46.1    50.1    54.1
+ DRCT [11]        49.9        45.9    49.6   47.0   49.6        53.1          49.4     52.7     49.7    50.5    49.6    49.1     49.9      47.0     50.2     56.6     50.0          49.0      50.0    46.9    49.6    52.2
+ Co-SPY [13]      50.0        84.5    70.1   86.5   68.4        74.8          71.0     76.7     63.0    80.8    68.6    86.4     86.7      95.8     38.4     34.1     43.1          38.8      52.8    59.1    74.4    84.8
+ B-Free [22]      92.2        96.5    76.7   84.9   85.7        99.4          86.1     99.3     86.2    97.2    82.9    92.7     81.8      91.7     81.8     91.9     85.0          97.6      57.6    65.6    86.6    99.5
+ AIDE† [73]       49.9       56.4     49.7   46.9   50.4        53.3          50.8     53.8     50.2    47.5    49.7    50.7     50.0      47.8     50.4     55.9     50.4          51.8      50.0    44.7    50.3    48.1
+ D3 [75]          98.4       100.0    69.5   81.0   67.9        84.5          71.5     90.0     76.7    87.0    80.0    90.8     78.6      88.7     70.8     90.8     63.0          77.7      68.3    83.1    74.9    95.7
+ GAPL(Ours)       99.0        100     87.1   97.3   93.0        99.1          93.3     99.6     88.6    99.3    87.3    96.2     85.1      93.7     90.6     98.1     88.2          95.8      78.5    89.4    94.5    99.8
+
+
+Table 10. Detailed results on the benchmark Community forensic evaluation. This is the first part. Note that the results of CNNDet, UniFD
+and CommForen are directly cited from the original paper [49] and dataset repository, whose detailed results are not available.
+
+
+
+
+               DALL-E 2         DALL-E 3     LCM-lora-sdv1.5            DeciDiff.       FLUX-dev       FLUX-schnell     IdeogramV2        IDeogramV1         Imagen3       LCM-lora-ssd1b                    Mean
+ Method
+               Acc       AP     Acc    AP    Acc         AP            Acc      AP      Acc      AP    Acc      AP       Acc     AP       Acc      AP       Acc     AP      Acc          AP           Acc            AP
+ NPR [59]      91.7    97.6    96.5   99.2   53.6        50.1          43.9     44.1    98.1    98.9   97.8     99.0    96.4     98.8     96.5     98.5     98.6    98.7   32.3        38.4     73.8 ± 24.0     74.7 ± 25.0
+ SAFE [34]     50.7    44.8    50.1   45.1   49.7        50.8          49.7     50.5    49.9    45.1   50.1     45.0    50.1     45.0     49.9     45.1     50.1    44.9   50.0        53.2      50.0 ± 0.3     48.3 ± 3.5
+ AIDE [73]     49.6    44.2    50.0   45.2   50.1        52.4          50.0     48.5    49.9    44.9   49.8     44.5    50.0     44.4     49.9     44.7     49.8    45.0   50.0        47.7      49.9 ± 0.2     47.1 ± 3.2
+ DRCT [11]     49.3    46.8    49.5   49.0   49.8        51.5          49.6     51.8    48.4    46.8   48.6     47.0    50.0     49.1     49.6     49.4     49.0    49.0   49.2        46.9      49.5 ± 0.4     49.4 ± 0.7
+ Co-SPY [13]   77.4    91.3    85.2   96.0   67.2        74.1          71.7     79.8    80.1    93.5   71.8     87.6    71.2     88.3     75.6     90.8     77.0    91.8   61.0        68.3     67.9 ± 12.4     79.2 ± 16.6
+ B-Free [22]   74.3    81.3    86.5   98.9   85.5        99.0          86.0     99.3    73.8    82.7   79.0     88.2    81.2     89.2     81.8     91.4     74.6    83.0   87.0        98.2      81.5 ± 7.1     91.8 ± 8.4
+ AIDE† [73]    49.3    47.4    49.9   45.1   50.6        48.2          50.4     50.7    49.9    40.9   50.1     41.7    50.0     42.9     50.0     43.7     50.1    44.4   50.0        51.8     50.1 ± 0.3      48.3 ± 4.4
+ D3 [75]       87.5    95.0    90.1   96.6   67.0        80.6          62.1     76.4    79.3    89.7   73.5     83.8    67.2     77.5     67.6     78.6     70.7    83.1   61.5        74.5      73.6 ± 9.3       86.0 7.1
+ GAPL(Ours)    88.4    97.5    88.9   99.6   93.9        99.7          92.3     99.1    87.3    98.9   88.0     98.2    88.0     98.2     87.7     98.7     87.0    95.9   90.4        97.6      89.4± 4.0       97.8± 2.4
+
+
+                          Table 11. Detailed results on the benchmark Community forensic evaluation. This is the second part.
+               Generated
+
+
+
+
+                                                                        Original CLIP
+
+
+
+
+                                                                             Ours
+
+
+
+
+               Generated
+
+
+
+
+                                                                        Original CLIP
+
+
+
+
+                                                                             Ours
+Figure 9. Self-Attention map between original CLIP backbone and our finetuned backbone. There are 24 ViT blocks in the image encoder,
+we plot 8 blocks in each row, with indices increasing from left to right. For clarity of visualization, we use bicubic interpolation between
+image patches. In the shallow layers, we preserve most semantic features, in deep layers, our attention includes a wider range compared to
+original CLIP.
+                  Real
+
+
+
+
+                                                                          Original CLIP
+
+
+
+
+                                                                              Ours
+
+
+
+
+                  Real
+
+
+
+
+                                                                          Original CLIP
+
+
+
+
+                                                                              Ours
+Figure 10. Self-Attention map between original CLIP backbone and our finetuned backbone. There are 24 ViT blocks in the image
+encoder, we plot 8 blocks in each row, with indices increasing from left to right. For clarity of visualization, we use bicubic interpolation
+between image patches. In the shallow layers, we preserve most semantic features, in deep layers, our attention includes a wider range
+compared to original CLIP.
+

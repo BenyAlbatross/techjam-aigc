@@ -1,0 +1,778 @@
+                    This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                 Except for this watermark, it is identical to the accepted version;
+                           the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+ Cross-modal Representation Learning for Diffusion-generated Image Detection
+
+                 Tao Gong 1, 2 , Dayong Wang 1, 2 , Qi Chu 1, 2 * , Bin Liu1, 2 , Nenghai Yu1, 2
+       1
+         School of Cyber Science and Technology, University of Science and Technology of China
+                          2
+                            Anhui Province Key Laboratory of Digital Security
+                 {tgong, qchu, flowice, ynh}@ustc.edu.cn, cndywang@mail.ustc.edu.cn
+
+
+                          Abstract                                editing and generation tools for applications, such as dig-
+                                                                  ital creation, commercial advertising, and social entertain-
+    The astonishing proficiency and unprecedented level of        ment. However, rapid advancements in synthetic technolo-
+realism of diffusion models in creating and manipulating          gies have raised significant concerns regarding their poten-
+images have undoubtedly drawn concerns. Many methods              tial implications, such as information security and personal
+have been proposed to detect generated images. Typically,         privacy. Therefore, there is an urgent need to develop tech-
+they usually take RGB images as input, and use backbones          nologies for detecting generated images.
+like ResNet, CLIP visual encoder to extract features. Even            Numerous studies have explored various aspects of dif-
+though these backbones are capable to detect fake images,         fusion models, including controllable generation [52], op-
+they are mainly designed to extract the high-level semantic       timizing generative architectures [24, 39], accelerating the
+information, rather than inherently designed for fake im-         generation process [12, 41], and much more. The wide di-
+age detection. To this end, in this paper, we want to op-         versity of image generative models has raised a consider-
+timize the embedding space tailored for detecting fake im-        able challenge to the generalizability of detection methods.
+ages via representation learning. We notice that Neighbor-        It demands that generated image detectors should be able to
+ing Pixel Relationships (NPR) is capable to capture the in-       identify images produced by not only the known generative
+trinsic forgery clues, which means that NPR may be a good         models, but also the newly developed models that have not
+input to perform representation learning that aims at learn-      been involved in the training of detectors.
+ing the embedding space tailored for detecting fake images.           Recent advancements aimed at enhancing this gener-
+Therefore, we leverage features from both RGB modality            alization ability include the refinement of detection algo-
+and NPR modality to perform two proposed representa-              rithms [9, 21, 23, 26, 32, 50] and the development of pre-
+tion learning methods, Cross-Modal Contrastive Learning           trained models [4, 10, 33, 40, 42, 51]. Typically, these meth-
+(CMCL) and Cross-Modal Mutual Distillation (CMMD), in             ods usually take RGB images as input, and use backbones
+order to learn the forgery-aware embedding space. The             like ResNet, CLIP visual encoder to extract features for fake
+CMCL boosts the discrimination of features between real           image detection. However, even though these backbones
+and fake images, while the CMMD simultaneously transfers          are capable to detect fake images, they are mainly designed
+the learned knowledge between two modalities, being able          to extract the high-level semantic information, rather than
+to learn compact features within the intra-class. CMCL and        inherently designed for fake images detection. CoDE [2]
+CMMD work collaboratively so that each modality learns            make a simple attempt towards embedding space tailored
+a more comprehensive forgery-aware representation to dis-         for generated image detection, verifying the effectiveness of
+tinguish real and fake images. Extensive experiments on           building forgery-aware embedding space. However, CoDE
+GenImage, DRCT-2M, and Co-Spy-Bench datasets show                 simply utilizes conventional contrastive learning with only
+that our method achieves state-of-the-art results.                RGB as input. In the paper, we explore a more effec-
+                                                                  tive way to optimize the embedding space specially tailored
+                                                                  for detecting fake images via representation learning, i.e, a
+1. Introduction                                                   forgery-aware embedding for distinguishing fake and real
+                                                                  images.
+In recent years, diffusion-based image generation technolo-
+gies have shown impressive results in generating realistic            Previous works have shown that RGB is a good input to
+images. These technologies have provided efficient content        detect fake images. However, a conspicuous gap remains in
+                                                                  the lack of source-invariant representation exploited from
+  * Correponding Author                                           the generator pipeline for generated image detection. [44]
+
+
+
+                                                            36092
+      RGB image                                                       RGB feature of real image          RGB feature of real image
+                                    RGB Feature
+                     RGB Encoder
+                                                                                      Neg pairs
+                                                                      Pos pair                                                            Mutual
+                                                                                                                           Similarity
+                                                                                                                                         Distillation
+                                                   CMCL&                                                                  Distribution
+           Compute
+             NPR                                   CMMD
+                                                                       NPR feature         NPR feature    NPR feature
+                     NPR Encoder                                       of real image     of fake image    of real image
+                                     NPR Feature                                  (a) CMCL                                (b) CMMD
+     NPR modality
+                                                                   Figure 2. The overview of the proposed CMCL and CMMD with
+Figure 1. Overview of the proposed detector with CMCL and          the RGB feature of a real image as an example.
+CMMD.
+
+
+focuses on achieving source-invariant fake image detec-            NPR modality to boost the discrimination of the RGB fea-
+tion by rethinking artifacts stemming from the up-sampling         ture and NPR feature between real images and fake images.
+component of common generation models. They propose a              However, the CMCL can not model the relationships within
+simple but effective artifact representation, termed Neigh-        the real images (or fake images). Taking real images as
+boring Pixel Relationships (NPR), aimed at achieving gen-          an example, the knowledge in each modality is not been
+eralized fake image detection. NPR is capable to capture the       fully explored. Therefore, we propose CMMD to utilize
+intrinsic forgery clues, and shows good generalization capa-       the knowledge in each modality. Specifically, as shown in
+bilities across different generation models. Therefore, NPR        Figure 2 (b), the neighboring similarity distribution is first
+may be a good input to perform representation learning that        extracted in each modality. It describes the relationship of
+aims at learning the forgery-aware embedding space.                the sample embedding with respect to its nearest neighbors
+                                                                   in the customized feature space. Based on the relational in-
+    To this end, in this paper, as shown in Figure 1, we lever-
+                                                                   formation, bidirectional knowledge distillation between the
+age features from both RGB modality and NPR modality
+                                                                   two modalities is performed via explicit cross-modal con-
+to perform two proposed representation learning methods,
+                                                                   sistency constraints.
+Cross-Modal Contrastive Learning (CMCL) and Cross-
+Modal Mutual Distillation (CMMD), in order to learn the                The CMCL utilizes the cross-modal feature between real
+forgery-aware embedding space. Specifically, the CMCL              images and fake images to boost the discrimination of fea-
+aims at increasing the inter-class separability (real class vs     tures, while the CMMD utilizes the cross-modal feature
+fake class) by contrastive learning, while the CMMD is able        within the real images (or fake images) to transfer learned
+to learn compact features within the intra-class (real class or    knowledge between RGB and NPR modalities. CMCL and
+fake class) by modeling the relationships within the same          CMMD run synchronously and cooperatively so that each
+class. The CMCL and CMMD are aimed at learning a com-              modality learns a more comprehensive forgery-aware rep-
+prehensive forgery-aware embedding space tailored for fake         resentation.
+image detection, rather than the high-level semantic fea-              Our contributions are summarized as follows:
+tures.                                                             1. To optimize a forgery-aware embedding space tailored
+    Intuitively, taking the RGB feature of a real image as             for fake image detection, we leverage the RGB features
+an example, the RGB features and the corresponding NPR                 and NPR features to perform the proposed Cross-Modal
+features of the same real image should be closer than the              Contrastive Learning (CMCL). CMCL can boost the dis-
+RGB feature of the real image and NPR feature of other                 crimination of the RGB features and NPR features be-
+fake images. Therefore, we propose CMCL to optimize the                tween real and fake images. (Note that NPR is not
+RGB embedding space tailored for distinguishing real and               claimed as our contribution, since it has been proposed
+generated images. Specifically, as shown in Figure 2 (a),              in [44])
+the RGB feature and the NPR feature from the same real             2. To fully utilize the neighboring similarity distribution
+image constitute the positive sample pair, while the RGB               in each modality of real images (or fake images), we
+feature of the real image and the NPR features from other              propose Cross-Modal Mutual Distillation (CMMD) to
+fake images constitute the negative sample pairs. CMCL                 transfer the learned knowledge between RGB and NPR
+uses contrastive loss to optimize the positive sample pair             modalities. The proposed CMMD can learn more com-
+and negative sample pairs, in order to boost the discrimi-             pact embedding within the intra-class.
+nation of the RGB feature between real and fake images.            3. We propose a Strong Diffusion-generated Image Detec-
+Similarly, CMCL can boost the discrimination of the NPR                tor (SDID) by taking advantage of two different but com-
+feature between real and fake images.                                  plementary representation learning methods CMCL and
+    The above CMCL utilizes the RGB modality and the                   CMMD. Extensive experiments on three benchmarks,
+
+
+
+                                                              36093
+   GenImage, DRCT-2M, and Co-Spy-Bench, verify the                as a positive pair, and samples from different instances are
+   effectiveness of the proposed SDID, and show that our          considered to be negative. In MoCo [17] and MoCo v2 [7],
+   method achieves state-of-the-art results on diffusion-         the negative samples are taken from previous batches and
+   generated image detection.                                     stored in a queue-based memory bank. In contrast, Sim-
+                                                                  CLR [6] and MoCo v3 [8] rely on a larger batch to pro-
+2. Related Work                                                   vide enough negative samples. Pairwise relationships has
+                                                                  been shown to be useful information in relational knowl-
+2.1. AI-Generated Image Detection                                 edge distillation [34, 36, 45]. In PKT [35], CompRess [1],
+Early approaches, such as [29–31] demonstrated limited            and SEED [13], knowledge distillation is performed on the
+generalizability as generative models advanced. CNNSpot           relationships of each sample with respect to a set of an-
+[47] made significant progress by showing that a classifier       chors, which models the structural information of the data.
+trained only on ProGAN outputs could generalize to unseen         In this paper, we utilize the cross-modal (RGB and NPR)
+GAN architectures. Subsequent work FreqFD [14] revealed           features to explore cross-modal representation learning to
+frequency-domain artifacts in GAN-generated images.               learn forgery-aware embedding space tailored for fake im-
+    Recent advances have explored more sophisticated de-          age detection.
+tection paradigms to enhance generalization. DIRE [3, 28,
+38, 48] proposed a novel approach using differences be-           3. Method
+tween images and their reconstructions from a pretrained
+reconstruction model as discriminative features. PatchCraft       3.1. Framework Overview
+[53] achieved state-of-the-art generalization by analyzing       Figure 3 illustrates the overall pipeline of our framework.
+inter-pixel correlation discrepancies between rich-texture       We only use the real images as examples to illustrate the
+and poor-texture patches. Several studies have success-          proposed CMCL and CMMD for convenience. The CMCL
+fully leveraged large pretrained models: UnivFD [33]             and CMMD for fake images are similar to those of real im-
+combined CLIP features with nearest-neighbor classifica-         ages, since the architecture is symmetric.
+tion, FatFormer [23] incorporated a forgery-aware adapter            Firstly, the NPR modality of real image Ireal  NP R
+                                                                                                                           is com-
+into CLIP to integrate local manipulation traces, De-fake        puted by the RGB modality of real image Ireal      RGB
+                                                                                                                          . Then,
+[40] employed CLIP-based multimodal fusion, CLIPMoLE               RGB
+                                                                 Ireal          NP R
+                                                                         and Ireal     are passed through the RGB image en-
+[26] adopted a combination of shared and separate LoRAs          coder E   RGB
+                                                                                  and the NPR image encoder E N P R to ex-
+within an MoE-based structure in deeper ViT blocks, and          tract the RGB feature Freal  RGB
+                                                                                                    and the NPR feature FrealNP R
+                                                                                                                                   ,
+AIDE [49] extended this approach by using multiple ex-                                    RGB           NP R
+                                                                 respectively. The Freal and Freal are stored in queue
+pert modules to simultaneously capture visual artifacts and      QRGB             NP R                           RGB          NP R
+                                                                   real and Qreal , respectively. Both Qreal and Qreal
+noise patterns. Co-Spy [9] enhances and integrates exist-        are defined on the fly with the current batch enqueued and
+ing CLIP-based semantic features and artifact features ex-       the oldest batch dequeued, during training. Similarly, we
+tracted by VAE. CoDE [2] only utilizes contrastive learn-        can get the IfRGB        NP R     RGB       NP R   RGB       NP R
+                                                                                  ake , If ake , Ff ake , Ff ake , Qf ake , Qf ake
+ing with RGB as inputs to train an embedding designed for        belonging to the fake images.
+generated image detection. The above methods usually take            The FrealRGB        NP R
+                                                                                   , Freal    , and QN      PR
+                                                                                                         f ake are used to per-
+the RGB image as input, while [44] proposes a simple but         form Cross-Modal Contrastive Learning (CMCL). Simi-
+effective artifact representation, termed Neighboring Pixel                NP R
+                                                                 larly, Freal        RGB
+                                                                                 , Freal   , and QRGBf ake are used to perform
+Relationships (NPR), to achieve source-invariant fake im-        CMCL. These two CMCL aim to boost the discrimination
+age detection. NPR is better than RGB to capture the in-              RGB
+                                                                 of Freal           NP R
+                                                                             and Freal    between real images and fake images.
+trinsic forgery clues. [55] is the first work using both RGB     However, the CMCL can only boost the feature discrim-
+and NPR modalities. However, [55] focuses on leveraging          ination between real and fake images, and cannot model
+MLLM with RGB and NPR features for the explanations of           the relationships within the real images. Therefore, we
+fake images. In this paper, we explore leveraging features              RGB
+                                                                 use Freal        NP R
+                                                                              , Freal   , QRGB            NP R
+                                                                                            real , and Qreal to perform Cross-
+from both RGB and NPR modality to optimize a forgery-            Modal Mutual Distillation (CMMD) in order to transfers the
+aware embedding space via representation learning.               learned knowledge between RGB and NPR modalities. Fi-
+                                                                                                          RGB        NP R
+                                                                 nally, we concatenate the feature Freal       and Freal   , which
+2.2. Representation Learning
+                                                                 are already enhanced by the proposed CMCL and CMMD,
+Contrastive learning [6, 17, 19] aims to learn feature repre-    to predict the label of the real image with cross-entropy loss
+sentation via instance discrimination. It pulls positive pairs   Lcls . After training, only the E RGB and E N P R are re-
+closer and pushes negative pairs away. Since no labels are       served for generated image detection. The features from
+available during self-supervised contrastive learning, two       E RGB and E N P R are concatenated to predict whether the
+different augmented versions of the same sample are treated      input image is real or fake.
+
+
+
+                                                             36094
+                                                         𝑁𝑃𝑅
+                      𝑁𝑃𝑅
+            Real NPR 𝐼𝑟𝑒𝑎𝑙                              𝐹𝑟𝑒𝑎𝑙
+                                                                                                                                 Distribution of
+                                                                                                                                       𝑁𝑃𝑅
+                                                                                                                                    𝐾𝑟𝑒𝑎𝑙   in
+                                                                                      Real NPR
+                             NPR Encoder 𝐸 𝑁𝑃𝑅                                               𝑁𝑃𝑅
+                                                                                                                                      𝑅𝐺𝐵
+                                                                                                                                𝐶𝑜𝑠(𝐹𝑟𝑒𝑎𝑙     𝑅𝐺𝐵
+                                                                                                                                          , 𝑄𝑟𝑒𝑎𝑙 )
+                                                                                     Queue 𝑄𝑟𝑒𝑎𝑙
+
+                                                 𝐿𝑐𝑙𝑠     C                                 CMMD                                       The same
+          Compute NPR                                                                                       KL Divergence                    𝑁𝑃𝑅
+                                                                                                                                       Top 𝐾𝑟𝑒𝑎𝑙
+
+                                                                                      Real RGB
+                                                                                             𝑅𝐺𝐵                                 Distribution of
+                             RGB Encoder 𝐸 𝑅𝐺𝐵                                       Queue 𝑄𝑟𝑒𝑎𝑙                                        𝑁𝑃𝑅
+                                                                                                                                  Top 𝐾𝑟𝑒𝑎𝑙  in
+                                                                                                                                      𝑁𝑃𝑅    𝑁𝑃𝑅
+                                                    𝑅𝐺𝐵           +             +                                               𝐶𝑜𝑠(𝐹𝑟𝑒𝑎𝑙 , 𝑄𝑟𝑒𝑎𝑙 )
+                      𝑅𝐺𝐵                          𝐹𝑟𝑒𝑎𝑙                                                  𝑡𝑎𝑟𝑔𝑒𝑡 𝑑𝑖𝑠𝑡𝑟𝑖𝑏𝑢𝑡𝑖𝑜𝑛
+            Real RGB 𝐼𝑟𝑒𝑎𝑙   Share    Share
+                                                                CMCL       CMCL
+                             weight   weight
+                      𝑅𝐺𝐵
+            Fake RGB 𝐼𝑓𝑎𝑘𝑒                          𝑅𝐺𝐵
+                                                   𝐹𝑓𝑎𝑘𝑒          -              -                                               Distribution of
+                                                                                                                                       𝑅𝐺𝐵
+                                                                                                                                     𝐾𝑟𝑒𝑎𝑙  in
+                                                                                                                                      𝑁𝑃𝑅     𝑁𝑃𝑅
+                                                                                      Fake RGB                                  𝐶𝑜𝑠(𝐹𝑟𝑒𝑎𝑙 , 𝑄𝑟𝑒𝑎𝑙 )
+                             RGB Encoder 𝐸 𝑅𝐺𝐵                                              𝑅𝐺𝐵
+                                                                                     Queue 𝑄𝑓𝑎𝑘𝑒
+                                                                                                                                       The same
+                                                                                                            KL Divergence                    𝑅𝐺𝐵
+          Compute NPR                            𝐿𝑐𝑙𝑠     C                                                                            Top 𝐾𝑟𝑒𝑎𝑙
+
+                                                                                                                                 Distribution of
+                                                                                      Fake NPR                                          𝑅𝐺𝐵
+                                                                                                                                  Top 𝐾𝑟𝑒𝑎𝑙  in
+                             NPR Encoder 𝐸 𝑁𝑃𝑅                                              𝑁𝑃𝑅                                       𝑅𝐺𝐵    𝑅𝐺𝐵
+                                                                                     Queue 𝑄𝑓𝑎𝑘𝑒                                𝐶𝑜𝑠(𝐹𝑟𝑒𝑎𝑙 , 𝑄𝑟𝑒𝑎𝑙 )
+                                                                                                          𝑡𝑎𝑟𝑔𝑒𝑡 𝑑𝑖𝑠𝑡𝑟𝑖𝑏𝑢𝑡𝑖𝑜𝑛
+                      𝑁𝑃𝑅                                𝑁𝑃𝑅
+            Fake NPR 𝐼𝑓𝑎𝑘𝑒                              𝐹𝑓𝑎𝑘𝑒                           C   : Concat               𝐶𝑜𝑠 ∙,∙ : Cosine Similarity
+
+Figure 3. The overall pipeline of SDID. We only use the real images as examples to illustrate the proposed CMCL and CMMD for
+convenience. The CMCL and CMMD for fake images are similar to those of real images, since the architecture is symmetric.
+
+
+3.2. Neighboring Pixel Relationships                                              We use InfoNCE [6, 17] loss as contrastive loss. In-
+                                                                               foNCE loss seeks to simultaneously pull close positive
+Neighboring Pixel Relationships (NPR) was first proposed
+                                                                               views from the same sample and push away negative sam-
+in [44] to develop a generalizable artifacts representation
+                                                                               ples. The loss function of InfoNCE loss for the RGB feature
+for generated image detection. Their findings reveal that                        RGB
+                                                                               Freal  of the real image is :
+the up-sampling operator can produce generalized forgery
+artifacts. Existing works typically consider its influence                              RGB     NP R
+                                                                               LCM CL (Freal ; Freal ; QN  PR
+                                                                                                        f ake ) =
+on the whole image in the frequency domain. In contrast,
+                                                                                                             RGB    NP R
+they explore the trace of the up-sampling layer from the lo-                                          exp(Freal  · Freal /τ )
+                                                                               − log                              N
+cal image pixels, and present a simple but effective artifact                               RGB     N P R                       RGB
+                                                                                                               P   Q
+                                                                                       exp(Freal · Freal /τ ) + qi ∈QN P R exp(Freal · qi /τ )
+                                                                                                                                      f ake
+representation NPR to achieve generalized generated image
+                                                                                                                                        (1)
+detection. Please refer to [44] for detailed motivation and
+                                                                           where log denotes the log operation, and τ is the temper-
+theory.
+                                                                           ature constant, which is set to 0.07. NQ is the number of
+    The NPR of an image is computed from its RGB modal-                    features stored in the queue QN       PR          RGB      NP R
+                                                                                                              f ake . The Freal · Freal
+ity. Specifically, the RGB image is divided into non-                      of the same real image constitute the positive pair, and the
+overlapping patches with patch sizes l × l (l = 2 as sug-                    RGB
+                                                                           Freal    · qi (qi ∈ QN  PR
+                                                                                                f ake ) constitute the negative pairs. Due
+gested by [44]). Each pixel in a patch subtracts the value
+                                                                           to the limitation of GPU memory, the QN        PR
+                                                                                                                       f ake are defined on
+of the top-left pixel per channel in the same patch. We can
+                                                                           the fly with the current batch enqueued and the oldest batch
+get the NPR modality of the image after preprocessing all
+                                                                           dequeued, during training.
+patches. Please refer to [44] for more technical details.
+                                                                               The final CMCL loss is defined as:
+3.3. Cross-modal Contrastive Learning                                                                   RGB
+                                                                                       LCM CL =LCM CL (Freal    NP R
+                                                                                                             ; Freal ; QN  PR
+                                                                                                                        f ake )
+                                     RGB                                                                          NP R    RGB
+Intuitively, taking the RGB feature Freal of a real image as                                           + LCM CL (Freal ; Freal ; QRGB
+                                                                                                                                  f ake )
+                    RGB
+an example, the Freal and the corresponding NPR feature                                                                                               (2)
+  NP R                                                 RGB                                             + LCM CL (FfRGB     NP R     NP R
+                                                                                                                    ake ; Ff ake ; Qreal )
+Freal   of the same real image should be closer than Freal
+of the real image and the NPR features of other fake images                                            + LCM CL (FfNake
+                                                                                                                     PR
+                                                                                                                        ; FfRGB     RGB
+                                                                                                                             ake ; Qreal )
+in QN   PR
+     f ake . Therefore, we propose Cross-Modal Contrastive
+Learning (CMCL) to boost the discrimination of RGB fea-                       With the proposed CMCL, we can boost the discrimina-
+tures between real images and fake images, increasing the                  tion of both RGB and NPR features between real images
+inter-class separability (real class vs fake class)                        and fake images.
+
+
+
+                                                                       36095
+3.4. Cross-modal Mutual Distillation                                    lowing KL divergence:
+                                                                                   RGB
+With the proposed CMCL and cross-entropy loss Lcls , the                 LCM M D (Freal ; QRGB     NP R    NP R
+                                                                                           real ; Freal ; Qreal )
+                                                                                  RGB
+                                                                                       , QRGB        NP R    NP R
+                                                                                                                   
+model could learn a forgery-aware embedding space tai-                    = KL p(Freal    real )||p(Freal , Qreal )
+lored for fake image detection. However, it would be unrea-                   K                                     RGB      RGB
+sonable to just ignore potential information interaction be-
+                                                                              X
+                                                                                       RGB      RGB          pi (Freal   , (qreal  )i )
+                                                                          =       pi (Freal , (qreal )i ) · log    N P R     N  P R
+                                                                                                                                         .
+tween different modalities of samples within the same class                i=1
+                                                                                                             pi (Freal , (qreal )i )
+(such as real class), since they belong to the same class. In                                                                           (4)
+                                                                                RGB
+other words, taking real images as an example, the knowl-            where (qreal    )i ∈ QRGB
+                                                                                             real  and  (q NP R
+                                                                                                           real  )i  ∈  Q  NP R
+                                                                                                                           real  .  Since
+edge in each modality of the real class has not been fully ex-       the knowledge distillation works bidirectionally, knowledge
+plored. Therefore, we propose Cross-Modal Mutual Distil-             distillation from modality NPR to modality RGB is defined
+                                                                                      NP R
+lation (CMMD) to model the learned knowledge and trans-              as LCM M D (Freal     ; QN PR     RGB       RGB
+                                                                                              real ; Freal ; Qreal ).
+fer the biased knowledge between complementary modal-                   Similarly, we can get the distillation loss for fake images.
+ities. Note that we limit the mutual distillation within the         Therefore, the overall CMMD loss is defined as:
+real images (or fake images), which means that there is no                                  RGB
+distillation between real images and fake images. CMMD                   LCM M D =LCM M D (Freal ; QRGB     NP R    NP R
+                                                                                                    real ; Freal ; Qreal )
+                                                                                                   NP R
+is able to learn compact forgery-aware features within the                             + LCM M D (Freal ; QN PR    RGB     RGB
+                                                                                                           real ; Freal ; Qreal )
+intra-class (real class or fake class).
+                                                                                       + LCM M D (FfRGB     RGB      NP R     NP R
+                                                                                                     ake ; Qf ake ; Ff ake ; Qf ake )
+    To perform knowledge distillation between modalities,                              + LCM M D (FfNake
+                                                                                                      PR
+                                                                                                         ; QN  PR    RGB      RGB
+                                                                                                            f ake ; Ff ake ; Qf ake )
+we first need to model the knowledge learned in each                                                                               (5)
+modality in a proper way. It needs to take advantage
+of the existing cross-modal contrastive learning frame-             3.5. Training Loss
+work to avoid introducing excessive computational over-             The features from E RGB and E N P R are concatenated to
+head. We utilize the pairwise relationship between sam-             predict whether the input image is real or fake. The corre-
+ples for modality-specific knowledge modeling. Specifi-             sponding classification loss Lcls is the cross-entropy loss.
+cally, given an embedding z and a set of anchors A =                The final loss function to train the proposed SDID is the
+{ai }i=1,2,··· ,K , we compute the cosine similarities between      combination of Lcls , LCM CL , and LCM M D :
+them as cos(z, ai ) = z · ai , i = 1, 2, · · · , K. The queues
+in contrastive learning store a handful of embeddings of the                       L = Lcls + λ1 LCM CL + λ2 LCM M D                   (6)
+same modality. We can easily obtain the required anchors
+without additional model inference. We select the top K             where λ1 and the λ2 is used to balance the loss among Lcls ,
+nearest neighbors of z as the anchors. The resulting pair-          LCM CL , and LCM M D . After training, only the E RGB and
+wise similarities are further converted into probability dis-       E N P R are reserved for generated image detection.
+tributions with the temperature constant τ :
+                                                                    4. Experiment
+                                                                    4.1. Datasets and Implementation Details
+                  exp(cos(z, ai )/τ )
+  pi (z, ai ) = PK                       , i = 1, 2, · · · , K.     Experiments are conducted on three benchmarks: GenIm-
+                 j=1 exp(cos(z, aj )/τ )
+                                                                    age [56], DRCT-2M [4], and Co-Spy-Bench [9]. The evalu-
+                                                              (3)
+                                                                    ation metric is measured in accuracy, with a decision thresh-
+The obtained p(z, A) = {pi (z, ai )}i=1,2,··· ,K describes the
+                                                                    old of 0.5.
+distribution characteristic around the embedding z in the
+                                                                        The RGB encoder network is the pre-trained Dinov2-
+customized feature space of each modality.
+                                                                    ViT-L-14 with LoRA [18] to finetune. The NPR encoder
+    Based on the aforementioned probability distributions,          is the ResNet-101 [16] pretrained on ImageNet [11]. The
+an intuitive way to perform knowledge distillation would be         length NQ of each queue used in CMCL is set to 2048, and
+to directly establish consistency constraints between RGB           the Top K nearest neighbors in Equation 3 is set to 128. The
+and NPR modalities. Different from previous knowledge               loss weight λ1 and λ2 are experimentally set to 0.1.
+distillation approaches that transfer the knowledge of a fixed
+and well-trained teacher model to the student model, in our         4.2. Main Results
+approach, the knowledge is continuously updated during              We compare our method with other methods on the GenIm-
+training, and each modality acts as both student and teacher.       age, DRCT-2M, and Co-Spy-Bench datasets, respectively,
+Knowledge distillation from modality RGB to modality                as shown in Table 1, 2, 3. Table 1 shows that the proposed
+NPR for real images is performed by minimizing the fol-             SDID outperforms all other methods by at least 2 points.
+
+
+
+                                                                36096
+            Method        Midjourney    SDv1.4     SDv1.5     ADM      GLIDE     Wukong    VQDM       BigGAN     Avg.
+         CNNSpot [47]         84.9        99.8      99.7      53.4      53.8      99.6       55.5       49.9      74.6
+           F3Net [37]         77.8        98.9      99.0      51.2      54.8      97.9       58.9       49.2      73.5
+         GramNet [25]         73.6        98.8      98.7      51.5      55.3      95.3       55.1       49.4      72.2
+          DeFake [40]         79.8        98.6      98.6      71.5      78.0      98.4       78.3       74.3      84.7
+          UnivFD [33]         91.4        96.4      96.1      58.0      73.4      94.5       67.8       57.7      79.4
+           DIRE [48]          50.4        99.9      99.9      52.3      67.2      99.9       50.1       49.9      71.2
+          LaRE2 [28]          74.0        99.9      99.9      61.7      88.5      99.9       97.2       68.7      86.2
+           DRCT [4]           91.5        95.0      94.4      79.4      89.1      94.6       90.0       81.6      89.4
+            ESSP [5]          82.6        99.2      99.3      78.9      88.9      98.6       96.0       73.9      90.6
+           CoDE [2]           86.8        99.0      99.2      80.0      92.8      98.8       97.0       94.3      93.5
+           DLFE [54]          95.5        96.1      96.3      95.9      96.0      96.4       96.0       95.7      96.0
+            CoD [20]          96.0        99.7      99.8      85.2      95.9      98.2       96.8       98.3      96.2
+         SDID (ours)          96.9        99.9      99.9      95.9      98.7      99.1       98.0       98.8      98.4
+
+Table 1. Performance comparison on GenImage. Methods are trained on GenImage/SDv1.4 following [56] and evaluated on different
+testing subsets. The evaluation metric is averaged accuracy with a 0.5 threshold.
+
+
+                           CNNSpot      F3Net    GramNet      DeFake    UnivFD     DIRE     DRCT      DLFE      SDID
+            Methods
+                             [47]        [37]      [25]        [40]      [33]      [48]      [4]       [54]     (ours)
+             LDM             99.9       99.9       99.4        92.1       98.3      98.2     96.7      97.1      97.6
+            SDv1.4           99.9       99.8       99.0        99.5       96.2      99.9     96.3      97.1      96.9
+            SDv1.5           99.9       99.8       98.8        99.5       96.3      99.9     96.3      97.1      96.6
+             SDv2            97.5       88.7       95.3        89.7       93.8      68.2     94.9      97.1      97.2
+             SDXL            66.3       55.9       62.6        64.0       91.0      53.8     96.2      97.1      93.7
+         SDXL-Refiner        86.5       87.4       80.7        69.2       93.9      71.9     93.5      97.1      94.4
+           SD-Turbo          86.2       68.3       71.2        92.0       86.4      58.9     93.4      97.1      93.2
+         SDXL-Turbo          72.4       63.7       69.3        93.9       85.9      54.3     92.9      97.1      96.8
+         LCM-SDv1.5          98.3       97.4       93.1        99.1       90.4      99.8     91.2      97.1      96.3
+          LCM-SDXL           61.7       55.0       57.0        70.9       89.0      59.7     95.0      97.1      91.3
+           SDv1-Ctrl         98.0       98.0       90.0        59.0       90.4      99.6     95.6      97.1      97.0
+           SDv2-Ctrl         85.9       72.4       75.6        62.3       81.1      64.2     92.7      96.8      95.7
+           SDXL-Ctrl         82.8       82.0       82.7        66.7       89.1      59.1     92.0      94.7      96.6
+           SDv1-DR           60.9       65.4       51.2        50.1       52.0      52.0     94.1      92.3      86.7
+           SDv2-DR           51.4       50.4       50.0        50.2       51.0      50.0     69.6      51.8      75.9
+           SDXL-DR           50.3       50.3       50.1        50.0       50.5      50.0     57.4      49.7      71.9
+              Avg.           81.1       77.1       76.6        75.5       83.5      71.2     90.5      90.9      92.4
+
+Table 2. Performance comparison on DRCT-2M. Methods are trained on DRCT-2M/SDv1.4 following DRCT [4] and evaluated on different
+testing subsets. The evaluation metric is averaged accuracy with a 0.5 threshold.
+
+
+Specifically, SDID performs significantly better than most        show the superiority of the proposed SDID.
+of the methods on the more challenged Midjourney, ADM,
+and BigGAN test-sets. In Table 2, we find that the pro-           4.3. Ablation Study
+posed SDID outperforms all other methods by at least 1.5
+points. Especially, the SDID performs significantly better        SDID. As shown in Table 4, when concatenating both RGB
+than most methods on the diffusion models like SD-v2-DR           and NPR features, the detector achieves 90.1% accuracy,
+and SDXL-DR, since they are challenging test sets where           which is better than the detector that only uses RGB fea-
+images are reconstructed by diffusion models from real im-        tures (86.7%) or NPR features (88.5%). This shows that
+ages rather than random noise. As shown in Table 3, the           both RGB and NPR modalities have advantages in gener-
+proposed SDID outperforms all other methods by at least           ated image detection. Furthermore, CMCL boosts perfor-
+9 points. The proposed SDID achieves more than 95% on             mance from 90.1% to 95.4%, showing the effectiveness of
+most test-sets, except for the PG-v2-256, FLUX.1-sch, and         CMCL. Finally, CMMD improves performance from 95.4%
+FLUX.1-dev test-sets. Overall, the results on Table 1, 2, 3       to 98.4%, indicating the effectiveness of CMMD.
+                                                                     Different Inputs. We also validate the effectiveness of
+
+
+
+                                                            36097
+                         CNNSpot      FreqFD      LNP      UnivFD    DIRE        FreqNet   NPR    DRCT    CO-SPY      SDID
+            Methods
+                           [47]         [14]      [22]      [33]     [48]          [43]    [44]    [4]      [9]       (ours)
+              LDM            77.6        54.2     84.9      79.1     66.3         74.9     84.3   79.3       95.0      97.5
+            SD-v1.4          90.0        62.9     95.9      80.9     83.5         69.2     90.9   81.2       92.0      97.6
+            SD-v1.5          90.0        62.6     96.2      80.9     83.8         68.9     91.3   81.1       91.3      97.6
+            SSD-1B           66.6        49.7     79.1      76.5     56.6         49.2     47.9   75.8       83.2      96.2
+             tiny-sd         66.4        52.1     81.5      77.0     63.6         63.6     88.4   80.0       84.8      97.5
+          SegMoE-SD          74.4        51.7     86.6      83.1     66.0         64.4     93.8   75.1       89.5      97.5
+            small-sd         70.1        52.6     80.7      77.4     68.4         65.4     89.1   81.2       85.8      97.5
+             SD-2-1          68.1        49.9     57.2      81.7     65.2         51.6     51.3   76.1       88.5      97.1
+         SD-3-medium         60.7        50.0     53.7      78.4     56.8         49.6     50.0   75.0       82.9      95.0
+          SDXL-turbo         88.7        61.3     83.5      84.3     73.0         66.6     83.6   80.4       95.4      96.1
+              SD-2           65.7        49.8     54.6      73.8     60.1         50.6     51.2   75.1       83.7      96.3
+             SDXL            61.8        49.7     80.3      63.6     51.9         48.8     47.7   75.2       74.1      95.5
+         PG-v2.5-1024        53.6        49.7     79.1      78.2     52.3         48.7     47.7   71.3       88.7      94.8
+          PG-v2-1024         63.5        49.7     52.5      78.5     56.6         48.8     48.4   66.6       89.1      96.4
+           PG-v2-512         57.9        49.9     49.4      58.9     53.6         49.1     49.1   77.6       64.9      96.0
+           PG-v2-256         63.3        50.2     54.8      63.0     60.3         49.4     49.7   73.5       72.9      90.5
+         PAXL-2-1024         56.3        49.8     53.4      80.1     54.8         49.4     51.2   71.8       93.9      96.4
+          PAXL-2-512         65.4        52.2     74.2      80.3     62.2         57.2     81.3   75.5       94.9      97.3
+           LCM-sdxl          81.5        52.4     85.5      78.0     68.6         62.3     50.9   81.1       96.2      97.4
+         LCM-sdv1-5          92.3        68.2     90.9      79.7     79.0         76.2     93.7   79.6       97.1      97.5
+          FLUX.1-sch         56.0        50.0     54.4      72.9     56.3         50.4     53.1   68.4       85.2      93.9
+          FLUX.1-dev         57.4        50.0     54.1      75.9     56.3         49.1     50.7   70.7       86.1      93.6
+             Avg.            69.4        53.1     71.9      76.5     63.4         57.4     65.7   76.0       87.1      96.1
+
+Table 3. Performance comparison on Co-Spy-Bench. Methods are trained on DRCT-2M/SDv1.4 following CO-SPY [9] and evaluated on
+different testing subsets. The evaluation metric is averaged accuracy with a 0.5 threshold.
+
+
+      RGB     NPR     CMCL          CMMD        GenImage                 Input                    CMCL      CMMD         GenImage
+       ✓                                          86.7                   RGB & RGB                                            86.9
+                ✓                                 88.5                   RGB & RGB                 ✓                          93.0
+       ✓        ✓                                 90.1                   RGB & RGB                 ✓           ✓              93.2
+       ✓        ✓        ✓                        95.4                   RGB & High Freq                                      88.3
+       ✓        ✓        ✓           ✓            98.4                   RGB & High Freq           ✓                          93.8
+                                                                         RGB & High Freq           ✓           ✓              95.5
+Table 4. Ablation study of SDID. All models are trained on the
+GenImage/SDv1.4 dataset, and the averaged accuracy (%) is re-            RGB & NPR                                            90.1
+ported on all test sets of GenImage.                                     RGB & NPR                 ✓                          95.4
+                                                                         RGB & NPR                 ✓           ✓              98.4
+
+                                                                      Table 5. Ablation of different inputs on GenImage. Note that the
+the proposed CMCL and CMMD on different inputs. As                    ”RGB & RGB” with CMCL degenerates to the conventional con-
+shown in Table 5, ”RGB & RGB” denotes that we change                  trastive learning.
+the NPR input of SDID to another RGB input with ran-
+dom augmentation. Note that, in this setting, ”RGB &
+RGB” with CMCL degenerates to the conventional con-                   image detection.
+trastive learning. We also notice that CMMD not works                    CMCL and CMMD. The differences between Table 6
+well in ”RGB & RGB” setting, since there is only the RGB              and Table 4 are that only the RGB features are used to
+modality. ”RGB & High Freq” means that we change the                  predict whether the input image is real or fake. The NPR
+NPR input to the high frequency component of the image,               features are only used to perform CMCL and CMMD. As
+since there are evidences that the high frequency of the im-          shown in Table 6, the proposed CMCL boosts the perfor-
+age is useful to detect fake images [15, 27, 43]. Table 5             mance from 86.7% to 93.6% by 6.9 points, while the pro-
+shows that the proposed CMCL and CMMD can consis-                     posed CMMD further boosts the performance from 93.6%
+tently boost the performance of the detector under different          to 96.4% by 2.8 points. Note that all experiments in Ta-
+inputs, and the NPR modality has advantages in generated              ble 6 only use the RGB encoder to detect generated images
+
+
+
+                                                                 36098
+                                                                                                                           Real
+                                                                                                                           ADM
+                                                                                                                           BigGAN
+                                                                                                                           Glide
+                                                                                                                           VQDM
+                                                                                                                           Wukong
+                                                                                                                           MidJourney
+                                                                                                                           SDv1.5
+                                                                                                                           SDv1.4
+
+      (a) SDID w/o CMCL&CMMD                      (b) SDID w/o CMMD                              (c) SDID
+
+Figure 4. The t-SNE visualization of embeddings. ”SDID w/o CMCL&CMMD” denotes not using CMCL and CMMD. The dark red color
+denotes the real images.
+
+
+          RGB      CMCL       CMMD        GenImage                             RGB     NPR      CMCL        CMMD      GenImage
+            ✓                                 86.7                              ✓                                        81.3
+            ✓         ✓                       93.6                                       ✓                               88.5
+            ✓         ✓          ✓            96.4                              ✓        ✓                               89.3
+                                                                                ✓        ✓        ✓                      93.2
+Table 6. Ablation study of CMCL and CMMD. The differences                       ✓        ✓        ✓           ✓          95.5
+between this Table and Table 4 are that only the RGB features are
+used to predict whether the input image is real or fake. The NPR         Table 7. Generalized to different RGB encoder. The differ-
+features are only used to perform CMCL and CMMD. All models              ences between this Table and Table 4 are that the RGB encoder
+are trained on the GenImage/SDv1.4 dataset, and the averaged ac-         is changed to the CLIP image encoder. All models are trained on
+curacy (%) is reported on all test sets of GenImage.                     the GenImage/SDv1.4 dataset, and the averaged accuracy (%) is
+                                                                         reported on all test sets of GenImage.
+
+without any new model architecture involved. The proposed
+CMCL and CMMD with NPR modality can boost the per-                       the performance from 93.2% to 95.5% by 2.3 points.
+formance of vanilla RGB encoder by 9.7 points without in-
+creased time cost during testing.                                        5. Conclusion
+   We also apply t-SNE [46] to show the embedding                        In this paper, to optimize the embedding space tailored
+distribution among ”SDID w/o CMCL&CMMD”, ”SDID                           for fake image detection, we leverage the RGB and NPR
+w/o CMMD”, and ”SDID” on the GenImage benchmark.                         modalities to learn forgery-aware embedding space via two
+From Figure 4 (a) and Figure 4 (b), we can see that                      proposed representation learning methods, Cross-Modal
+the embeddings extracted from ”SDID w/o CMMD” have                       Contrastive Learning (CMCL) and Cross-Modal Mutual
+better inter-class separability compared with ”SDID w/o                  Distillation (CMMD). CMCL aims at boosting the discrim-
+CMCL&CMMD”, further indicating that CMCL can learn                       ination of features between real and fake images by con-
+more discriminative features. Figure 4 (c) and Figure 4 (b)              trastive learning. CMMD transfers the learned knowledge
+show that the embeddings of real images extracted from                   between two modalities, which is capable to learn compact
+”SDID” have better intra-class compactness compared with                 features within the intra-class (real class or fake class). The
+”SDID w/o CMMD”, further indicating that CMMD is ca-                     proposed CMCL and CMMD are complementary and work
+pable to model the relationships within the real images.                 collaboratively so that each modality learns a more com-
+   Generalized to different RGB encoders. To validate                    prehensive forgery-aware representation to distinguish real
+that the proposed method can be generalized to different                 and fake images. The proposed method is evaluated on var-
+RGB encoders, we change the RGB encoder from Di-                         ious benchmarks with extensive experiments, and achieves
+nov2 to the CLIP image encoder in Table 7. The Table                     state-of-the-art results on all of them.
+7 shows the proposed method could still boost the perfor-                Acknowledgements
+mance when using the CLIP image encoder as the RGB                       This work was supported by the National Natural Science Foun-
+encoder. For example, the CMCL boosts the performance                    dation of China (No. 62472396) and the Anhui Provincial Natural
+from 89.3% to 93.2% by 3.9 points, and the CMMD boosts                   Science Foundation (2508085QF212).
+
+
+
+
+                                                                    36099
+References                                                             [14] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+                                                                            cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+ [1] Soroush Abbasi Koohpayegani, Ajinkya Tejankar, and                     quency analysis for deep fake image recognition. In Inter-
+     Hamed Pirsiavash. CompRess: Self-supervised learning                   national conference on machine learning, pages 3247–3258.
+     by compressing representations. In Proceedings of the Ad-              PMLR, 2020. 3, 7
+     vances in Neural Information Processing Systems (NeurIPS),
+                                                                       [15] Jie Gao, Zhaoqiang Xia, Gian Luca Marcialis, Chen Dang,
+     pages 12980–12992, 2020. 3
+                                                                            Jing Dai, and Xiaoyi Feng. Deepfake detection based on
+ [2] Lorenzo Baraldi, Federico Cocchi, Marcella Cornia,
+                                                                            high-frequency enhancement network for highly compressed
+     Lorenzo Baraldi, Alessandro Nicolosi, and Rita Cucchiara.
+                                                                            content. Expert Systems with Applications, 249:123732,
+     Contrasting deepfakes diffusion via contrastive learning and
+                                                                            2024. 7
+     global-local similarities. In European Conference on Com-
+     puter Vision, pages 199–216. Springer, 2024. 1, 3, 6              [16] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+                                                                            Deep residual learning for image recognition. In Proceed-
+ [3] George Cazenavette, Avneesh Sud, Thomas Leung, and Ben
+                                                                            ings of the IEEE conference on computer vision and pattern
+     Usman. Fakeinversion: Learning to detect images from un-
+                                                                            recognition, pages 770–778, 2016. 5
+     seen text-to-image models by inverting stable diffusion. In
+     Proceedings of the IEEE/CVF Conference on Computer Vi-            [17] Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross
+     sion and Pattern Recognition, pages 10759–10769, 2024. 3               Girshick. Momentum contrast for unsupervised visual repre-
+                                                                            sentation learning. In Proceedings of the IEEE/CVF Confer-
+ [4] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.
+                                                                            ence on Computer Vision and Pattern Recognition (CVPR),
+     Drct: Diffusion reconstruction contrastive training towards
+                                                                            pages 9729–9738, 2020. 3, 4
+     universal detection of diffusion generated images. In Forty-
+     first International Conference on Machine Learning, 2024.         [18] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+     1, 5, 6, 7                                                             Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen, et al.
+ [5] Jiaxuan Chen, Jieteng Yao, and Li Niu. A single simple                 Lora: Low-rank adaptation of large language models. ICLR,
+     patch is all you need for ai-generated image detection. arXiv          1(2):3, 2022. 5
+     preprint arXiv:2402.01123, 2024. 6                                [19] Zhicheng Huang, Xiaojie Jin, Chengze Lu, Qibin Hou,
+ [6] Ting Chen, Simon Kornblith, Mohammad Norouzi, and Ge-                  Ming-Ming Cheng, Dongmei Fu, Xiaohui Shen, and Jiashi
+     offrey Hinton. A simple framework for contrastive learning             Feng. Contrastive masked autoencoders are stronger vision
+     of visual representations, 2020. 3, 4                                  learners. IEEE Transactions on Pattern Analysis and Ma-
+                                                                            chine Intelligence, 2023. 3
+ [7] Xinlei Chen, Haoqi Fan, Ross Girshick, and Kaiming He.
+     Improved baselines with momentum contrastive learning.            [20] Zexi Jia, Chuanwei Huang, Yeshuang Zhu, Hongyan Fei, Xi-
+     arXiv preprint arXiv:2003.04297, 2020. 3                               aoyue Duan, Zhiqiang Yuan, Ying Deng, Jiapei Zhang, Jin-
+ [8] Xinlei Chen, Saining Xie, and Kaiming He. An empiri-                   chao Zhang, and Jie Zhou. Secret lies in color: Enhancing
+     cal study of training self-supervised vision transformers. In          ai-generated images detection with color distribution anal-
+     Proceedings of the IEEE/CVF International Conference on                ysis. In Proceedings of the Computer Vision and Pattern
+     Computer Vision (ICCV), pages 9640–9649, 2021. 3                       Recognition Conference, pages 13445–13454, 2025. 6
+ [9] Siyuan Cheng, Lingjuan Lyu, Zhenting Wang, Xiangyu                [21] Dong Li, Jiaying Zhu, Xueyang Fu, Xun Guo, Yidi Liu,
+     Zhang, and Vikash Sehwag. Co-spy: Combining seman-                     Gang Yang, Jiawei Liu, and Zheng-Jun Zha. Noise-assisted
+     tic and pixel features to detect synthetic images by ai. In            prompt learning for image forgery detection and localization.
+     Proceedings of the Computer Vision and Pattern Recognition             In European Conference on Computer Vision, pages 18–36.
+     Conference, pages 13455–13465, 2025. 1, 3, 5, 7                        Springer, 2024. 1
+[10] Xinjie Cui, Yuezun Li, Ao Luo, Jiaran Zhou, and Junyu             [22] Bo Liu, Fan Yang, Xiuli Bi, Bin Xiao, Weisheng Li, and
+     Dong. Forensics adapter: Adapting clip for generalizable               Xinbo Gao. Detecting generated images by real images. In
+     face forgery detection. In Proceedings of the Computer                 European Conference on Computer Vision, pages 95–110.
+     Vision and Pattern Recognition Conference, pages 19207–                Springer, 2022. 7
+     19217, 2025. 1                                                    [23] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,
+[11] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,                 Jingdong Wang, and Yao Zhao. Forgery-aware adaptive
+     and Li Fei-Fei. Imagenet: A large-scale hierarchical image             transformer for generalizable synthetic image detection. In
+     database. In 2009 IEEE conference on computer vision and               Proceedings of the IEEE/CVF Conference on Computer Vi-
+     pattern recognition, pages 248–255. Ieee, 2009. 5                      sion and Pattern Recognition, pages 10770–10780, 2024. 1,
+[12] Prafulla Dhariwal and Alexander Nichol. Diffusion models               3
+     beat gans on image synthesis. Advances in neural informa-         [24] Luping Liu, Yi Ren, Zhijie Lin, and Zhou Zhao. Pseudo
+     tion processing systems, 34:8780–8794, 2021. 1                         numerical methods for diffusion models on manifolds. ICLR,
+[13] Zhiyuan Fang, Jianfeng Wang, Lijuan Wang, Lei Zhang,                   2022. 1
+     Yezhou Yang, and Zicheng Liu. Seed: Self-supervised dis-          [25] Zhengzhe Liu, Xiaojuan Qi, and Philip HS Torr. Global tex-
+     tillation for visual representation. In Proceedings of the In-         ture enhancement for fake face detection in the wild. In Pro-
+     ternational Conference on Learning Representations (ICLR),             ceedings of the IEEE/CVF conference on computer vision
+     2021. 3                                                                and pattern recognition, pages 8060–8069, 2020. 6
+
+
+
+
+                                                                  36100
+[26] Zihan Liu, Hanyi Wang, Yaoyu Kang, and Shilin Wang. Mix-        [39] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     ture of low-rank experts for transferable ai-generated image         Patrick Esser, and Bjorn Ommer. High-resolution image
+     detection. arXiv preprint arXiv:2404.04883, 2024. 1, 3               synthesis with latent diffusion models. In 2022 IEEE/CVF
+[27] Yuchen Luo, Yong Zhang, Junchi Yan, and Wei Liu. Gener-              Conference on Computer Vision and Pattern Recognition
+     alizing face forgery detection with high-frequency features.         (CVPR), 2022. 1
+     In Proceedings of the IEEE/CVF conference on computer vi-       [40] Zeyang Sha, Zheng Li, Ning Yu, and Yang Zhang. De-fake:
+     sion and pattern recognition, pages 16317–16326, 2021. 7             Detection and attribution of fake images generated by text-
+[28] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.                  to-image generation models. In Proceedings of the 2023
+     Lareˆ 2: Latent reconstruction error based method for                ACM SIGSAC conference on computer and communications
+     diffusion-generated image detection. In Proceedings of               security, pages 3418–3432, 2023. 1, 3, 6
+     the IEEE/CVF Conference on Computer Vision and Pattern          [41] Jiaming Song, Chenlin Meng, and Stefano Ermon.
+     Recognition, pages 17006–17015, 2024. 3, 6                           Denoising diffusion implicit models.          arXiv preprint
+[29] Scott McCloskey and Michael Albright. Detecting gan-                 arXiv:2010.02502, 2020. 1
+     generated imagery using color cues.           arXiv preprint    [42] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     arXiv:1812.08247, 2018. 3                                            and Yunchao Wei. Learning on gradients: Generalized arti-
+[30] Scott McCloskey and Michael Albright. Detecting gan-                 facts representation for gan-generated images detection. In
+     generated imagery using saturation cues. In 2019 IEEE in-            Proceedings of the IEEE/CVF Conference on Computer Vi-
+     ternational conference on image processing (ICIP), pages             sion and Pattern Recognition, pages 12105–12114, 2023. 1
+     4584–4588. IEEE, 2019.                                          [43] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+                                                                          Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-
+[31] Lakshmanan Nataraj, Tajuddin Manhar Mohammed, Shiv-
+                                                                          tection: Improving generalizability through frequency space
+     kumar Chandrasekaran, Arjuna Flenner, Jawadul H Bappy,
+                                                                          domain learning. In Proceedings of the AAAI Conference on
+     Amit K Roy-Chowdhury, and BS Manjunath. Detecting gan
+                                                                          Artificial Intelligence, pages 5052–5060, 2024. 7
+     generated fake images using co-occurrence matrices. arXiv
+                                                                     [44] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     preprint arXiv:1903.06836, 2019. 3
+                                                                          Ping Liu, and Yunchao Wei. Rethinking the up-sampling op-
+[32] Dat Nguyen, Nesryne Mejri, Inder Pal Singh, Polina
+                                                                          erations in cnn-based generative network for generalizable
+     Kuleshova, Marcella Astrid, Anis Kacem, Enjie Ghorbel,
+                                                                          deepfake detection. In Proceedings of the IEEE/CVF Con-
+     and Djamila Aouada. Laa-net: Localized artifact attention
+                                                                          ference on Computer Vision and Pattern Recognition, pages
+     network for quality-agnostic and generalizable deepfake de-
+                                                                          28130–28139, 2024. 1, 2, 3, 4, 7
+     tection. In Proceedings of the IEEE/CVF Conference on
+                                                                     [45] Frederick Tung and Greg Mori. Similarity-preserving knowl-
+     Computer Vision and Pattern Recognition, pages 17395–
+                                                                          edge distillation. In Proceedings of the IEEE/CVF Interna-
+     17405, 2024. 1
+                                                                          tional Conference on Computer Vision (ICCV), pages 1365–
+[33] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-              1374, 2019. 3
+     versal fake image detectors that generalize across genera-
+                                                                     [46] Laurens Van der Maaten and Geoffrey Hinton. Visualizing
+     tive models. In Proceedings of the IEEE/CVF Conference
+                                                                          data using t-sne. Journal of machine learning research, 9
+     on Computer Vision and Pattern Recognition, pages 24480–
+                                                                          (11), 2008. 8
+     24489, 2023. 1, 3, 6, 7
+                                                                     [47] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+[34] Wonpyo Park, Dongju Kim, Yan Lu, and Minsu Cho.                      Owens, and Alexei A Efros. Cnn-generated images are
+     Relational knowledge distillation. In Proceedings of the             surprisingly easy to spot... for now. In Proceedings of
+     IEEE/CVF Conference on Computer Vision and Pattern                   the IEEE/CVF conference on computer vision and pattern
+     Recognition (CVPR), pages 3967–3976, 2019. 3                         recognition, pages 8695–8704, 2020. 3, 6, 7
+[35] Nikolaos Passalis and Anastasios Tefas. Learning deep rep-      [48] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     resentations with probabilistic knowledge transfer. In Pro-          Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     ceedings of the European Conference on Computer Vision               diffusion-generated image detection. In Proceedings of the
+     (ECCV), pages 268–284, 2018. 3                                       IEEE/CVF International Conference on Computer Vision,
+[36] Baoyun Peng, Xiao Jin, Jiaheng Liu, Dongsheng Li, Yichao             pages 22445–22455, 2023. 3, 6, 7
+     Wu, Yu Liu, Shunfeng Zhou, and Zhaoning Zhang. Correla-         [49] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xi-
+     tion congruence for knowledge distillation. In Proceedings           aolong Jiang, Yao Hu, and Weidi Xie.                A sanity
+     of the IEEE/CVF International Conference on Computer Vi-             check for ai-generated image detection. arXiv preprint
+     sion (ICCV), pages 5007–5016, 2019. 3                                arXiv:2406.19435, 2024. 3
+[37] Yuyang Qian, Guojun Yin, Lu Sheng, Zixuan Chen, and Jing        [50] Xiao Yu, Kejiang Chen, Kai Zeng, Han Fang, Zijin Yang,
+     Shao. Thinking in Frequency: Face Forgery Detection by               Xiuwei Shang, Yuang Qi, Weiming Zhang, and Nenghai Yu.
+     Mining Frequency-aware Clues, page 86–103. 2020. 6                   Semgir: Semantic-guided image regeneration based method
+[38] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aer-               for ai-generated image detection and attribution. In Proceed-
+     oblade: Training-free detection of latent diffusion images           ings of the 32nd ACM International Conference on Multime-
+     using autoencoder reconstruction error. In Proceedings of            dia, pages 8480–8488, 2024. 1
+     the IEEE/CVF Conference on Computer Vision and Pattern          [51] Zeqin Yu, Jiangqun Ni, Yuzhen Lin, Haoyi Deng, and Bin Li.
+     Recognition, pages 9130–9140, 2024. 3                                Diffforensics: Leveraging diffusion prior to image forgery
+
+
+
+
+                                                                36101
+     detection and localization. In Proceedings of the IEEE/CVF
+     Conference on Computer Vision and Pattern Recognition,
+     pages 12765–12774, 2024. 1
+[52] Lvmin Zhang, Anyi Rao, and Maneesh Agrawala. Adding
+     conditional control to text-to-image diffusion models, 2023.
+     1
+[53] Nan Zhong, Yiran Xu, Zhenxing Qian, and Xinpeng Zhang.
+     Rich and poor texture contrast: A simple yet effective ap-
+     proach for ai-generated image detection. CoRR, 2023. 3
+[54] Nan Zhong, Haoyu Chen, Yiran Xu, Zhenxing Qian, and
+     Xinpeng Zhang. Beyond generation: A diffusion-based low-
+     level feature extractor for detecting ai-generated images. In
+     Proceedings of the Computer Vision and Pattern Recognition
+     Conference, pages 8258–8268, 2025. 6
+[55] Ziyin Zhou, Yunpeng Luo, Yuanchen Wu, Ke Sun, Jiayi
+     Ji, Ke Yan, Shouhong Ding, Xiaoshuai Sun, Yunsheng Wu,
+     and Rongrong Ji. Aigi-holmes: Towards explainable and
+     generalizable ai-generated image detection via multimodal
+     large language models. In IEEE International Conference
+     on Computer Vision (ICCV), 2025. 3
+[56] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Yunhe Wang. Genimage: A million-scale benchmark for de-
+     tecting ai-generated image. Advances in Neural Information
+     Processing Systems, 36:77771–77782, 2023. 5, 6
+
+
+
+
+                                                                 36102
+

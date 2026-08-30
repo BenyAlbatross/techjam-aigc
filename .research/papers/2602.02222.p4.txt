@@ -1,0 +1,82 @@
+                                                                                                                                  Easy Fakes
+
+
+
+
+                                                                                   High Confusion   High Confusion &          High Confusion Fakes
+                                                                                                       Deception
+
+
+                                                                                                                       High Confusion and Deception Fakes
+
+
+                                                                                       Easy         High Deception
+                                                                                                                             High Deception Fakes
+
+
+
+      (a) Impact of Reference Priors   (b) Impact of Expertise Priors          (c) Human-Imperceptible Subset
+
+Figure 3: Psychophysical Analysis on the Human-AIGI Benchmark. Results are obtained from controlled psychophysical
+experiments on AI-generated images from 27 generators. (a) Reference Priors. Providing explicit reference images shifts hard
+samples (red) from high uncertainty with long response times to a higher-confidence regime (blue). (b) Expertise Priors. CV
+experts (green) consistently outperform lay users (red), reflecting the benefit of stronger internal perceptual priors. (c) Human-
+Imperceptible Subset. The Hard subset (red) includes samples with high deception or confusion, measured by confidence and
+response time; unlike Easy Fakes (gray), these images preserve high visual fidelity and define a rigorous benchmark.
+
+vision experts (though not forensic experts), relying solely on             found in the real-world distribution. To ensure the generated
+priors acquired through prolonged exposure to real images,                  Ideal Reference remains faithful to Mreal , we project the
+substantially outperform lay user (see Fig. 3(b)). These find-              input features F onto the subspace spanned by M using a
+ings indicate that human superiority arises not from artifact               cross-attention mechanism with a Top-k sparsity constraint:
+memorization, but from the choice of a stable decision anchor.
+                                                                                                            QK ⊤
+                                                                                                                
+By grounding detection in the stable real-image distribution,                     A = Softmax Top-k √                 , F̂ = AV, (2)
+generated image detection becomes a problem of consistency                                                     D
+verification, yielding stronger cross-generator generalization
+                                                                            where Q is derived from F , and K, V are derived from M.
+than conventional artifact-driven methods.
+                                                                            The Top-k operation ensures that F̂ is a sparse linear combina-
+   Inspired by this insight, we introduce MIRROR, which
+                                                                            tion of real-world prototypes, effectively filtering out patterns
+explicitly models the real-image manifold and constructs a
+                                                                            that do not belong to the real-image manifold.
+manifold-consistent Ideal Reference for each input. Detection
+                                                                               The training of Phase 1 is conducted exclusively on real
+is then performed by measuring the Comparison Residual
+                                                                            images using the following objective:
+between the observation and its reference, resulting in a robust,
+generator-agnostic framework.                                                         LP hase1 = ∥F − F̂ ∥22 + λ∥MM⊤ − I∥F ,                                (3)
+
+                                                                            where the first term minimizes the reconstruction error to en-
+4     Methodology                                                           sure the Ideal Reference F̂ accurately reflects the input’s
+                                                                            real components, while the second term enforces orthogo-
+Our MIRROR formalizes the human reference–comparison                        nality among prototypes to maximize the diversity and non-
+paradigm into a learnable two-stage framework (see Fig.4):                  redundancy of the encoded reality priors.
+first encoding stable Reality Priors from real images to con-
+struct a Manifold-consistent Ideal Reference, and then per-
+forming robust detection by analyzing the Comparison Resid-                 4.2 Phase 2: Reference-Comparison-Based De-
+ual between the input and its reference.                                        tection
+                                                                            In Phase 2, we freeze the memory bank M and the projection
+4.1    Phase 1: Encoding Reality Priors                                     module defined in Eq. 2 to ensure that the learned Reality
+                                                                            Priors remain independent of the forgery distribution. We
+Phase 1 aims to learn a latent feature space that approximates
+                                                                            perform detection by evaluating the consistency between the
+the real-image manifold Mreal . To capture the local geometry
+                                                                            input feature F and its Ideal Reference F̂ through two com-
+and fine-grained textures essential for physical consistency,
+                                                                            plementary signals. Specifically, the Reconstruct Perplexity
+we utilize a frozen DINO[32] encoder E to extract patch-level
+                                                                            characterizes the uncertainty in prototype retrieval when an
+features:
+                                                                            input lacks typical real-world patterns, while the Compari-
+                     F = E(I) ∈ RN ×D ,                    (1)
+                                                                            son Residual captures the irreconstructible details that fall
+where N denotes the number of patches and D is the feature                  outside the real-image manifold. We derive the perplexity
+dimension. We encode reality priors into a discrete memory                  from the attention matrix A (Eq.2) using the maximum atten-
+bank M ∈ RK×D containing K orthogonal prototypes. Each                      tion score smax and entropy sent , and calculate the residual
+prototype is optimized to represent a frequent, stable pattern              as ∆F = F − F̂ to quantify manifold deviations. These
+
+
+                                                                        4
+

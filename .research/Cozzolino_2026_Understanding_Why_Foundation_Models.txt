@@ -1,0 +1,911 @@
+                                         Understanding Why Foundation Models Work for
+                                              Diffusion-Generated Image Detection
+
+                                                 Davide Cozzolino      , Giovanni Poggi      , and Luisa Verdoliva
+
+                                                         University Federico II of Naples, 80125 Naples, Italy
+                                                          {davide.cozzolino,poggi,verdoliv}@unina.it
+
+
+
+                                               Abstract. Vision foundation models have recently emerged as power-
+                                               ful feature extractors for detecting AI-generated images, achieving strong
+                                               generalization across generators and robustness to common image degra-
+                                               dations. However, the reason behind their effectiveness is poorly under-
+arXiv:2608.12155v1 [cs.CV] 12 Aug 2026
+
+
+
+
+                                               stood. In this work, we investigate what cues are exploited by foundation-
+                                               model-based detectors to distinguish real images from diffusion-generated
+                                               ones. To this end, we design an ad hoc analysis protocol based on DDIM
+                                               inversion. Given a real image we generate a sequence of synthetic copies
+                                               by changing the depth of DDIM inversion. Even though most copies are
+                                               semantically identical to the real reference, the detector score varies sig-
+                                               nificantly across them due to subtle traces introduced by the diffusion
+                                               synthesis, showing that its decision is not primarily driven by semantic
+                                               failures. Through a frequency-swapping analysis, we further reveal that
+                                               the discriminative cues exploited by the detectors are mainly localized in
+                                               the low-to-mid frequency range, rather than only in the high-frequency
+                                               range, as is the case for artifacts commonly associated with generative
+                                               models. Finally, a latent-space analysis shows that regenerated images
+                                               exhibit reduced variance and effective dimensionality, indicating that dif-
+                                               fusion models do not fully reproduce the variability of real data. Overall,
+                                               our results suggest that foundation-model-based detectors succeed by
+                                               capturing non-semantic low-to-mid frequency distributional discrepan-
+                                               cies between real and diffusion-generated images. These findings provide
+                                               new insight into the robustness and generalization of such detectors and
+                                               suggest directions for more interpretable forensic methods.
+
+
+                                         1   Introduction
+
+                                         Detecting whether an image is real or synthetically generated has become in-
+                                         creasingly important, as modern generative models can produce highly realistic
+                                         visual content that may be misused for disinformation [4,5]. Accordingly, a large
+                                         body of work has focused on designing detectors capable of distinguishing real
+                                         from generated images [2,33]. Beyond obvious visual failures, such as clear asym-
+                                         metries, inconsistent perspective or implausible object geometry, that can be
+                                         analyzed by vision-language models [48, 49], synthetic images often contain sub-
+                                         tle statistical traces. As generative models produce increasingly realistic images,
+                                         such hidden artifacts become more relevant to design effective detectors.
+2          Cozzolino et al.
+
+    real image   VAE-laundered   0.04T      0.16T        0.40T        0.60T        1.00T
+     0.14           0.20         0.47      0.54         0.60         0.71         1.00
+
+
+
+
+Fig. 1: Visualization of diffusion-induced traces across regeneration timesteps. The first
+row shows the original real image, its VAE-laundered version, and DDIM-regenerated
+images obtained from increasing inversion timesteps k, together with the corresponding
+detector scores. The second row reports the pixel-wise difference with respect to the
+previous image, while the third row shows the corresponding power spectra. As k
+increases, the detector score progressively shifts toward the fake class, and the difference
+maps reveal increasingly structured artifacts. Notably, these traces are visible not only
+at high frequencies but especially in the low-frequency region of the spectrum.
+
+
+
+    Early works have shown that synthetic images exhibit telltale artifacts in
+the Fourier domain [62] such as pronounced peaks at harmonic frequencies and
+anomalous shapes of the power spectrum. These artifacts are typically referred to
+as low-level traces, since they are not related to the semantic content of the image
+but arise from the image generative process itself. For example, in generative ad-
+versarial networks, spectral peaks are due to common architectural components
+that perform the necessary upsampling operations [17, 19]. Likewise, similar ar-
+tifacts appear in images generated by diffusion models (DM), introduced in the
+final decoding process from the latent space. In addition, power spectrum anoma-
+lies have been also observed at the medium and high frequencies, especially along
+diagonal directions [10]. These are precious cues for discrimination, largely ex-
+ploited, either explicitly or implicitly, by a plethora of dedicated models proposed
+in recent years for AI-generated content detection [11, 21, 28, 31, 32]. However,
+relying on high-frequency artifacts is a double-edged sword: it yields strong per-
+formance under ideal conditions but leads to a drastic drop in performance when
+these traces are attenuated by low-pass filtering. This often occurs in real-world
+settings, where images shared on social networks are resized and compressed,
+removing many low-level cues. As a result, detectors suffer from poor robustness
+and limited generalization, making them unreliable in the wild [50].
+    In this challenging scenario, detectors based on foundation models stand out
+as a notable exception. Recent studies have shown that frozen pre-trained large
+Vision Foundation Models (VFMs) provide remarkably effective and robust rep-
+                             Understanding Why Foundation Models Work           3
+
+resentations for detecting AI-generated images. A simple linear classifier work-
+ing on features extracted from foundation models provides excellent results and
+strong generalization across different generative models, often outperforming de-
+tectors specifically trained for the real-versus-fake task [37]. Furthermore, this
+simple detector proves robust to common low-level perturbations and even laun-
+dering attacks, suggesting that it does not rely primarily on spectral peaks or
+high-frequency artifacts, but that alternative discriminating features come into
+play. This was explicitly shown in [13], where CLIP features were found to be
+largely independent of, and complementary to, low-level forensic traces. Further
+evidence comes from experiments on more recent models, such as MetaCLIP 2
+and DINOv3, which show better performance and greater robustness than previ-
+ous models, even on more challenging in-the-wild datasets [26, 64]. Nevertheless,
+the reasons underlying this success are not yet fully understood. Shedding light
+on this mechanism is the primary goal of this paper.
+    We will show that diffusion models introduce artifacts at the medium and
+low frequencies of the spectrum, besides those already well-known at the high
+frequencies. Furthermore, we show that foundation model-based detectors rely
+on these artifacts to make their decision. To support this conclusion, we design a
+testing strategy based on DDIM inversion. Given a real image, we apply DDIM
+inversion [46] to derive a noise-like seed that once fed to the DDIM generation
+process, allows us to re-generate an image very similar to the original image. In
+this way, we obtain two images, one real and one generated by a diffusion model,
+which are semantically identical, but whose different origins are not lost to the
+detector. Continuing along this path, we run the DDIM generation multiple
+times, starting form different timesteps, thus generating a sequence of semanti-
+cally coherent images that change very gradually along the process, which allows
+us to study in detail when and where artifacts appear and how they impact on
+the detector decision. Fig. 1 shows an example subsequence. The rightmost im-
+age is generated with full DDIM inversion (1.00T ) and is the only one that, due
+to process imperfections, differs semantically from the real image (the leftmost
+one). With partial inversion (≤0.60T ) semantic consistency is always ensured,
+yet the detector provides high (fake) scores down to values close to 0 (≤0.04T ).
+The difference images show that artifacts appear throughout the entire process,
+not just at the end, and the corresponding spectra prove that they are mainly
+localized at low frequencies.
+    Overall, this work provides new insights into the behavior of foundation-
+model-based detectors and makes the following contributions:
+
+ – We design a testing strategy based on DDIM inversion to expose the non-
+   semantic artifacts introduced by diffusion models and arguably exploited by
+   foundation models to detect synthetic images;
+ – We reveal a clear distributional gap between real and DM-generated im-
+   ages, with the most relevant differences emerging at mid and low spectral
+   frequencies;
+ – We introduce several latent-space measures to quantify experimentally the
+   inconsistencies observed in diffusion-based generative models.
+4       Cozzolino et al.
+
+2   Related Work
+
+Forensic detectors based on large VFMs. The advent of large language
+and vision models, with their unprecedented representation ability, has stimu-
+lated intense research in the computer vision community, including image foren-
+sics, where they have demonstrated strong potential [13, 37, 43]. CLIP features
+have proven highly effective for distinguishing real images from synthetic ones,
+even based on a simple nearest-neighbor or linear classifier [37], and even when
+trained on just a few images [13]. These properties hold even more true for recent
+pretrained large models, such as MetaCLIP2, DINOv3, PE-Core [8, 26, 30, 64].
+In particular, simple detectors based on VFM features consistently achieve bet-
+ter generalization and improved robustness than more sophisticated detectors
+working on dedicated features [53]. Especially significant is the high robustness
+to blurring, resizing and JPEG compression, as well as to low-level fingerprint
+injection, which suggests that these features do not capture (only) traditional
+high-frequency artifacts but deeper low-frequency cues [13,23,26,64]. These cues
+have often been referred to as “semantic” in the literature, but their true nature
+remains poorly understood. In this work, we shed light on this issue and inves-
+tigate which image components are exploited by foundation-model-based detec-
+tors, revealing a distribution mismatch between real and generated images that
+extends to medium and low frequencies and is unrelated to image semantics.
+
+Diffusion-generated vs real images. Assessing whether generated images
+follow the distribution of real images is inherently difficult. The target distri-
+bution is accessible only through sampling, while the distribution learned by a
+generative model is often specified only implicitly, preventing exact likelihood
+evaluation. On the other hand, even likelihood-based criteria are only partially
+informative, since high-likelihood samples are not typical in high-dimensional
+spaces [12], that is, high-likelihood images are not perceptually pleasing or real-
+istic [51]. Diffusion models, in particular, suffer from known mismatch: the distri-
+bution reached at the end of the (finite) forward noising process does not exactly
+match the distribution used to start the reverse sampling, usually a white Gaus-
+sian noise. This prior mismatch causes the generated samples to deviate from
+the true data distribution, even when the score model is learned accurately [56].
+Practical evidence comes from studies on synthetic dataset: models trained on
+generated images underperform those trained on real data when evaluated on
+real test sets, suggesting that synthetic images do not fully capture real-world
+variability [1, 20, 44]. Furthermore, direct measurements on spectral distribu-
+tions show that diffusion-generated images differ significantly from real images
+at high frequencies [1,10]. The present work provides evidence that this spectral
+mismatch extends well beyond this, involving also medium-low frequencies.
+
+Diffusion-based image inversion. In the context of diffusion models, image
+inversion is a process that takes an image x and derives a noise vector z that,
+when used as a seed by a given diffusion model, allows it to regenerate x exactly.
+In practice, regeneration is never perfect for a variety of reasons, but image in-
+                                                   Understanding Why Foundation Models Work                           5
+
+version can still be leveraged to perform important forensic tasks. In particular,
+DIRE [57] observes that diffusion-generated images are typically reconstructed
+better than real images by a pre-trained diffusion model and uses the recon-
+struction error as a decision statistic. DIRE’s good results suggest that real and
+generated images occupy different regions with respect to the dynamics learned
+by a diffusion model and that generated images may be closer to the manifold
+learned by the model than real images. This basic idea has been further explored
+in subsequent works, through analysis of the latent space [6], considering inter-
+mediate reconstruction steps [54, 58], adopting a single denoising step [35, 55],
+forcing the detection network to predict the reconstruction error [63]. Unlike all
+these works, we do not blindly use reconstruction error as decision statistics,
+but instead force the inversion to ensure semantic identity with the original im-
+age. Under this constraint, we study the appearance and structure of forensic
+artifacts and their impact on the decision of foundation model-based detectors.
+
+
+3            Motivation
+This section reviews the evidence supporting the use of current vision founda-
+tion models as excellent feature extractors for AI-generated image detection. We
+consider multiple pretrained models: OpenCLIP [27,40], MetaCLIP 1 [59], Meta-
+CLIP 2 [9], DINOv3 [45], as feature extractors. Only for DINOv3 we also explore
+different backbones together with a version based on LoRA [25]. We demonstrate
+that detectors based on these features deliver state-of-the-art performance. Fur-
+thermore, even when trained on images from a single diffusion model, they gen-
+eralize well to images generated by all other unseen diffusion models. Finally,
+they prove extremely robust to all common types of image degradation, including
+distortions that strongly affect high-frequency content.
+
+Generalization analysis. For all models, input images are resized to 224 ×
+224 pixels, with no data augmentation, backbone parameters are frozen, and a
+linear head is optimized for binary classification (training at 2 epochs, AdamW
+optimizer, learning rate 10−3 , batch size 128). The training set is taken from
+the unbiased GenImage dataset [22], with 162K fake images generated using
+Stable Diffusion 1.4 [41], and as many real images taken from the ImageNet
+dataset [15]. For testing, real images are taken from a different dataset, the
+
+
+                            Table 1: AUC performance of VFM-based detectors.
+
+              AUC         SD 1.4   SD 2.1   SDXL     SD 3   Flux   DALL·E   Firefly   Midj.   Scale-   Pixel   AVG
+                                                                     3                        RAE      DiT
+             OpenCLIP      89.6     76.2    72.7     87.9   84.7    95.0     89.5     77.7    91.6     83.6    84.9
+             MetaCLIP 1    97.4     88.8    95.1     82.2   94.6    97.3     85.1     93.7    97.0     95.1    92.6
+             MetaCLIP 2    98.9     97.5    99.1     93.6   96.7    96.9     92.9     96.5    99.5     96.8    96.9
+             ConvNeXt B    90.2     86.2    95.3     76.0   92.2    98.0     64.2     90.7    94.8     94.5    88.2
+             ConvNeXt L    93.5     92.7    97.7     80.5   94.5    98.5     68.5     93.6    98.9     97.1    91.5
+    DINOv3
+
+
+
+
+             ViT-B/16      86.0     81.6    93.0     79.6   96.4    98.8     73.2     93.4    96.3     97.3    89.6
+             ViT-L/16      97.9     97.3    98.7     81.1   96.1    99.5     76.9     94.6    99.9     98.9    94.1
+             ViT-7B/16     100.     99.9    100.     96.2   99.6    100.     92.2     99.7    100.     100.    98.8
+             + LoRA        100.     100.    100.     98.7   99.2    99.9     97.4     99.7    100.     100.    99.5
+  6                    Cozzolino et al.
+
+                          Blurring                            Resizing                             JPEG                              AWGN
+         100                                 100                                100                                 100
+
+          90                                  90                                 90                                  90
+
+          80                                  80                                 80                                  80
+DINOv3
+
+
+
+          70                                  70                                 70                                  70
+
+          60       TNR                        60       TNR                       60         TNR                      60       TNR
+                   TPR                                 TPR                                  TPR                               TPR
+                   bAcc                                bAcc                                 bAcc                              bAcc
+          50                                  50                                 50                                  50
+               0   1       2    3    5   7         50% 80% 90% 100% 125% 200%         100    90     85    75   55         0   1      3    5     10   25
+                    standard deviation                        scale factor                          QF                         standard deviation
+
+  Fig. 2: Performance of a DINOv3-based detector under different post-processing op-
+  erations. Results are in terms of true positive rate (TPR), true negative rate (TNR),
+  and balanced Accuracy (bAcc). Shaded bands indicate 95% confidence intervals (CIs).
+  The detector is robust to all degradations over a wide range of parameter values.
+
+
+
+  RAISE dataset [14], to reduce the risk of dataset-specific bias. The analysis
+  covers ten generators: SD 1.4, SD 2 [41], SDXL [39], SD3 [47], Flux [29], DALL-
+  E 3 [38], Firefly [18], Midjourney [36], Scale-RAE [52], and PixelDiT [60]. Such
+  synthetic images are taken from [3, 23], except for Scale-RAE, and PixelDiT
+  images which we generated ourselves.
+       Table 1 presents all results in terms of Area Under the ROC Curve (AUC).
+  Only the first (gray) column shows the results for a model seen in training, while
+  all the others refer to out-of-training models and demonstrate generalization abil-
+  ity. Overall, performance improves steadily along the rows, that is, with model
+  size and backbone capacity. Smaller models, such as OpenCLIP and MetaCLIP,
+  already perform well, but generalize poorly on some DMs (SDXL, Flux, Fire-
+  fly, and PixelDiT). In contrast, larger models show much higher transferability.
+  Among the DINOv3 variants, performance increases steadily from ConvNeXt-
+  B to ViT-7B/16, with the latter achieving an average AUC close to 99. LoRA
+  achieves the best overall generalization, with an average AUC of 99.5 and near-
+  perfect performance on most generators.
+       It is worth underlining that Scale-RAE and PixelDiT adopt substantially dif-
+  ferent architectures than Stable Diffusion 1.4. Scale-RAE replaces the traditional
+  latent-space VAE with a Representation Autoencoder based on pre-trained vi-
+  sual representations, while PixelDiT removes the autoencoder altogether and
+  performs diffusion directly in the pixel space using a two-level transformer ar-
+  chitecture. Furthermore, these models are very recent: PixelDiT was released in
+  November 2025 and Scale-RAE in January 2026. This means that the excellent
+  performance observed on these generators cannot be explained by direct or in-
+  direct data leakage from the detector’s training set. Rather, they suggest that
+  the generated images share common features that foundation models are able to
+  capture and exploit even when the detector is trained only on SD 1.4 images.
+
+  Robustness analysis. We now turn to analyzing robustness to image distor-
+  tions, with a focus on degradations that remove or severely attenuate high-
+  frequency content. This is particularly relevant in digital forensics, as images
+  shared online are commonly resized, compressed, or otherwise processed by so-
+                              Understanding Why Foundation Models Work            7
+
+cial media platforms. Conventional detectors often experience significant per-
+formance degradation following these operations, suggesting they rely heavily
+on subtle forensic traces that can be easily weakened or removed by standard
+post-processing [50].
+    Figure 2 shows the performance of the detector based on the DINOv3 (Vit-
+7B/16 backbone) features on the same test set used in the previous paragraph,
+under four common image degradations: blurring, resizing, JPEG compression,
+and white Gaussian noise addition. Overall, the detector is remarkably stable un-
+der moderate perturbations, with TNR, TPR, and balanced accuracy remaining
+close to the original values in most settings. For JPEG compression and resiz-
+ing, the balanced accuracy remains relatively stable even under severe distortions
+(e.g., JPEG quality factor 55). Significant impairments are observed only under
+strong blurring and noising, when the TPR decreases noticeably. A possible
+interpretation is that such severe degradations corrupt the features that most
+qualify the image as synthetic. In general, these results support the idea that the
+detector does not rely only on mid- and high-frequency artifacts. If it did, perfor-
+mance would worsen under compression or resizing. Instead, the relatively stable
+behavior indicates that the model captures more robust cues that are degraded
+only when distortions become severe enough to alter broader image structures
+or suppress informative spectral components. Remarkably, the detector achieves
+an almost negligible false alarm rate in all situations.
+    It is also worth noting that this behavior makes the detector robust to biases
+introduced by image coding or post-processing pipelines. Because these distor-
+tions primarily affect high-frequency components, they have limited influence
+on decisions that appear to be based on deeper discrepancies between real and
+synthetic images, as shown in [64]. For the same reason, the detector is largely
+insensitive to traces left by the auto-encoder alone [13], since these also reside
+primarily in the high-frequency portion of the image spectrum. Indeed a laun-
+dering operation using the VAE of SD 1.4 reduces the true negative rate of
+DINOv3-based detector from 97.9% to 95.5%.
+
+
+4   What Do Foundation Models See?
+
+In the previous sections we argued that foundation models are able to see dis-
+criminative traces that reveal the synthetic nature of images generated by dif-
+fusion models, and that such traces reside in the low- to mid-frequency range of
+the spectrum. However, just because of their low-frequency nature, such traces
+are not easily visualized. At low frequencies, the image spectrum is dominated
+by the semantic content, and conventional filtering techniques are unable to
+separate these two components, image and artifacts, nor can they extract one
+component without disrupting the other. To overcome this limitation and gain
+insights into what cues the foundation models see, we design a custom strategy
+based on the DDIM inversion procedure [46]. Given a real test image, we use a
+diffusion model to generate a stream of images that all share the same semantic
+content but exhibit appreciable differences. Then, we extract various statistics
+8       Cozzolino et al.
+
+
+
+
+                                                                             DDIM inversion
+                                                                             DDIM generation
+
+
+
+
+Fig. 3: Diffusion process for an image sample. Starting from a real image (top-right),
+noise is progressively added in latent space using the DDIM inversion procedure [46],
+obtaining noisy samples at various timesteps t (first row), until the sample approaches
+an almost pure-noise distribution at t = 1.0T . For each selected timestep k (following
+rows) the reverse denoising process produces a different regenerated image.
+
+
+from these differences and study how they relate to the detector score, gaining
+eventually further evidence in support of our initial claim. In the remainder of
+this section, we first recall the basic concepts of the DDIM generation process
+and its inversion, and then present the proposed analysis.
+
+4.1   Background
+Diffusion models learn to synthesize images by gradually reversing a forward
+noise-corruption process. In the forward process, noise is progressively added to
+a clean image until it becomes approximately white Gaussian noise. To invert
+this process, a denoiser is trained to predict the noise added at each timestep,
+thus allowing the generation of new samples starting from pure noise.
+    Denoising Diffusion Implicit Models (DDIMs) [46] transform noise into a
+clean image adopting a deterministic sampling strategy. The DDIM generation
+process starts from a sufficiently large timestep t = T (e.g., T = 1000) and
+proceeds until t = 0. Each timestep is associated with a monotonic cumulative
+noise strength βt , where β0 = 0 and βT ≈ 1. The initial sample xT is randomly
+drawn from a normal distribution. Then, at each step, a new sample xτ , with
+τ < t, is generated as:
+
+               \begin {split} x_\tau &= \sqrt {1-\beta _\tau } \cdot \left ( \frac {x_t - \sqrt {\beta _t} \cdot \hat {\epsilon }_{\theta }(x_t, t)}{ \sqrt {1-\beta _t }} \right ) + \sqrt {\beta _\tau } \cdot \hat {\epsilon }_{\theta }(x_t, t) \\ \end {split} \label {equ:DDIM}    (1)
+
+where ϵ̂θ (xt , t) is the output of a pretrained denoising model, which predicts
+the noise added to sample xt at a known timestep t. Then the new timestep τ
+becomes the current timestep t and the iterations proceed until t = 0, where x0
+represents the generated sample.
+                                           Understanding Why Foundation Models Work                         9
+
+ real image VAE-laundered   k=0.04T   k=0.16T   k=0.20T   k=0.40T   k=0.50T   k=0.60T   k=0.70T   k=1.00T
+
+
+
+
+Fig. 4: Examples of DDIM-based regeneration sequences. Starting from a real image,
+we apply DDIM inversion up to different timesteps k, and then regenerate the image
+through the corresponding DDIM sampling process. For small and intermediate values
+of k, the regenerated images preserve the semantic content of the original sample, while
+progressively introducing diffusion-related traces. For large values of k, especially close
+to T , stronger deviations from the original content may appear.
+
+
+
+    Compared to previous diffusion sampling strategies, DDIMs allow image gen-
+eration with fewer denoising steps while preserving high sample quality. Its more
+relevant peculiarity, however, is that the noise added at each step is not random
+but strictly deterministic. As a consequence, with DDIM, the same initial noise
+sample always produces the same output image. This property allows us to re-
+verse this path and recover the initial noise sample from a given real image.
+In [46] an approximate strategy was also proposed to this end, known as DDIM
+inversion. In this case, x0 is the initial sample and xT the target, but new samples
+xτ , with τ > t, keep being generated using Eq. (1).
+
+
+4.2     Methodology
+
+Our objective, here, is to generate a sequence of DM images all semantically
+identical to a reference real image but all different from it at pixel level, so as to
+study which non-semantic artifacts drive the decisions of a VFM-based detec-
+tor. For each real image, we generate multiple reconstructed versions by apply-
+ing DDIM inversion at various depths followed by the corresponding generation
+procedure. With reference to Figure 3, the first row shows the DDIM inversion
+process where noise is gradually added to the reference image1 (top-right) until
+at the final timestep, k = T , the noisiest sample is obtained (top-left). Now,
+starting from this sample we can use the standard DDIM generation process to
+produce a clean image (bottom row) which should be identical to the original
+image. However, the DDIM inversion process is only approximate and starting
+1
+    Note that all processes described here take place in the latent space, in the figure
+    we show the corresponding images obtained after decoding.
+10                Cozzolino et al.
+
+                    PSNR                             LPIPS                            prediction SD 1.4                      prediction SD 2.1
+28                                                                       1.00                                   1.00
+                                   0.40
+26                                 0.35                                  0.75                                   0.75
+                                   0.30
+24
+                                   0.25                                  0.50                                   0.50
+22                                 0.20
+                                   0.15                                  0.25                                   0.25
+20                                                                                                DINOv3                                 DINOv3
+         SD 1.4                    0.10                         SD 1.4                            DINOv3+LoRA                            DINOv3+LoRA
+         SD 2.1                                                 SD 2.1                            MetaCLIP 2                             MetaCLIP 2
+                                   0.05                                  0.00                                   0.00
+     0   0.2T 0.4T 0.6T 0.8T   T          0   0.2T 0.4T 0.6T 0.8T    T          0   0.2T 0.4T 0.6T 0.8T     T          0   0.2T 0.4T 0.6T 0.8T     T
+                  timestep k                       timestep k                            timestep k                             timestep k
+
+Fig. 5: Effect of the inversion timestep k on image reconstruction and detector re-
+sponse. Left: PSNR and LPIPS between the original real images and their DDIM-
+regenerated versions for SD 1.4 and SD 2.1. Both metrics remain relatively stable for
+small and intermediate values of k, then degrade as k approaches T , indicating stronger
+deviations from the original image. Right: average detector prediction for images re-
+generated with SD 1.4 and SD 2.1. The detector score increases sharply with k well
+before the onset of appreciable objective degradations (PSNR, LPIPS), suggesting that
+diffusion-related traces are introduced before semantic changes become visible. Shaded
+bands indicate 95% confidence intervals (CIs).
+
+
+
+from this very noisy sample the result is very often different from the original,
+not only at pixel level but also semantically. So, to overcome this problem, we
+select closer starting points, k < T , to run DDIM generation (intermediate rows
+in the figure), ending up with images more similar to the original. These gen-
+erated images are shown in the rightmost column of the figure. Some of them,
+typically, those with remote starting points k ≃ T , will differ semantically from
+the reference image, but the majority, with closer starting points, k ≪ T , will
+exhibit the same semantic content.
+    In Figure 4 we show some examples of the generated sequences. For low
+values of k, the regenerated images are almost identical to the reference. In con-
+trast, when k = T , the regenerated image differs significantly from it, while still
+preserving its high-level (textual) semantics and overall visual style. Interme-
+diate values of k provide a sequence of regenerated variants of the same real
+image, with progressively increasing traces of their synthetic origin. To study
+systematically the effects of such traces, we experiment on 1,000 pristine images
+of size 512 × 512 pixels extracted from the MS-COCO dataset [34]. We consider
+two diffusion models, Stable Diffusion 1.4 (SD 1.4) and Stable Diffusion 2.1 (SD
+2.1). In both cases, the maximum number of steps is 50, and the process is text-
+conditioned using the caption associated with the pristine image, with guidance
+scale of 1. Higher guidance values tend to overly degrade the inversion result,
+reducing its semantic consistency with the reference real image [24, 61].
+    In Figure 5 (left), we report PSNR and LPIPS as a function of the inver-
+sion timestep k. They remain almost stable for k < 0.5T and then exhibit a
+decreasing trend. This confirms that, for low values of k, the regenerated images
+are nearly identical to the original image. In Figure 5 (right), we also show that
+the detector response increases steadily, and often very fast, as k grows, with
+prediction exceeding 0.5 (synthetic) even for low values of k. Since regenerated
+                                    Understanding Why Foundation Models Work                       11
+
+                  DDIM inversion
+
+
+
+
+                                                                                            REAL
+                                                                Foundation Model Detector
+                                                     lowpass
+                                                       filter
+
+
+
+
+                                                     highpass
+                                                       filter
+
+
+
+
+                                                                                            FAKE
+                  DDIM generation
+
+
+Fig. 6: Overview of the frequency domain analysis. Starting from a real image and its
+regenerated version at k = 0.4T with SD 2.1. Hybrid images are constructed by combin-
+ing the low-frequency components of real image with the high-frequency components of
+the genereted one. On the right, the response of the VFM-based detector as a function
+of the cutoff frequency shows that the detector relies mainly on low-frequency image
+cues to make the decision.
+
+
+images are not part of the training data of detector, the observed response is
+unlikely to be driven by artifacts specific to the inversion procedure. Instead, it
+suggests that the detector is responding to traces introduced by the generative
+process itself. Moreover, the detector does not seem to rely on style and seman-
+tics to make its decision, considering that for low values of k the regenerated
+images closely resemble the original ones under these aspects. In the following,
+we carry out additional analyses to understand what makes synthetic images
+distinguishable from real ones.
+
+4.3   Analysis in the frequency domain
+In this section, we aim to identify the frequency components that are most rel-
+evant for the classification decision. To this end, we consider each real image
+together with its near-identical corresponding regenerated version at k = 0.4T
+with SD 2.1. We then construct hybrid images in the frequency domain by ex-
+changing low- and high-frequency components between the real and regenerated
+samples, see Figure 6. Note that the high similarity between the two source
+images reduces the risk that the exchange process introduces artifacts into the
+hybrid image. Specifically, we combine the low-frequency content of the real im-
+age with the high-frequency content of the regenerated one, and vice versa. The
+resulting images are then evaluated by the VFM-based detectors to assess which
+frequency bands carry the most discriminative cues. This analysis is restricted
+to those samples for which the regenerated image is classified as fake more than
+50% of the total.
+    Figure 7 reports the detector predictions obtained on the hybrid images as a
+function of the cutoff frequency for DINOv3, DINOv3+LoRA and MetaCLIP2.
+The red curve corresponds to a fake image (fc = 0) that is progressively modi-
+fied so as to include low-frequency components of the real image extracted with
+a filter with cut-off frequency equal to fc , while the blue curve corresponds to
+   12                      Cozzolino et al.
+
+                                      DINOv3                                                         DINOv3+LoRA                                                            MetaCLIP 2
+             1.00                                                               1.00                                                                  1.00
+
+
+             0.75                                                               0.75                                                                  0.75
+prediction
+
+
+
+
+                                                                   prediction
+
+
+
+
+                                                                                                                                         prediction
+             0.50                                                               0.50                                                                  0.50
+
+
+             0.25                                                               0.25                                                                  0.25
+
+
+             0.00                                                               0.00                                                                  0.00
+                    0.0    0.1      0.2      0.3       0.4   0.5                       0.0   0.1      0.2      0.3       0.4       0.5                       0.0   0.1      0.2      0.3       0.4   0.5
+                                 cutoff frequency fc                                               cutoff frequency fc                                                   cutoff frequency fc
+                                                             real [0, fc]; fake [fc, 0.5]                                fake [0, fc]; real [fc, 0.5]
+
+
+   Fig. 7: Frequency-based analysis of the detectors response. We build hybrid images
+   by exchanging low- and high-frequency components between real images and their
+   regenerated counterparts at k = 0.4T with SD 2.1. The red curves correspond to
+   images with real low frequencies and regenerated high frequencies, while the blue curves
+   correspond to regenerated low frequencies and real high frequencies.
+
+
+
+   the inverse combination. Across all considered detectors, the response is mainly
+   driven by the low-frequency content. When the low-frequency components are
+   taken from the generated image and the high-frequency components from the real
+   image, the prediction rapidly increases as the cutoff frequency grows, up to the
+   frequency of 0.25 where it remains constant. Likewise, when the low-frequency
+   components are taken from the real image and only the high-frequency compo-
+   nents from the generated one, the detector output tends to decrease, indicating a
+   classification in the real class. These results suggest that the synthetic traces ex-
+   ploited by the these detectors are primarily localized in the lower-frequencies of
+   the image. It is particularly interesting that injecting frequencies within the lim-
+   ited range ([0, 0.05]) shifts the model’s decision from fake to real. This indicates
+   that the generation process produces low-frequency components that are not
+   fully coherent with the natural image manifold. This is also consistent with [23],
+   where training data are built from real images and their self-conditioned coun-
+   terparts. Since these pairs differ at the lowest frequencies, detectors can exploit
+   inconsistencies across a broad frequency range rather than relying only on high-
+   frequency traces.
+
+
+   4.4                    Analysis in the latent space
+
+   Here we evaluate several measures in latent-space. We start from the re-generated
+   latent samples zki ∈ RNb ×Nr ×Nc , where i is the image index, k is the inversion
+   timestep, and Nb , Nr and Nc are the number of channels, rows and columns of
+   latent vector. We compute the effective dimensionality [42] of the latent repre-
+   sentations. This measure estimates the intrinsic dimensionality of data and is
+   therefore useful to quantify their variability. In detail, we evaluate the effective
+   dimensionality on latent-space blocks of size Nb × s × s, with s ∈ {1, 2, 4, 8, 16}.
+   For each block-size s and inversion timestep k, we consider all blocks of our
+                                                                          Understanding Why Foundation Models Work                                                                                      13
+
+            normalized Effective Dimensionality SD 1.4                              normalized Effective Dimensionality SD 2.1                                            Variance in latent space
+1.000                                                                1.000
+                                                                                                                                                    47
+0.975                                                                0.975
+0.950                                                                0.950                                                                          46
+
+0.925                                                                0.925                                                                          45
+0.900                                                                0.900                                                                          44
+0.875                                                                0.875                                                                          43
+0.850          Nb× 1× 1                                              0.850             Nb× 1× 1
+               Nb× 2× 2                                                                Nb× 2× 2                                                     42
+0.825          Nb× 4× 4                                              0.825             Nb× 4× 4
+               Nb× 8× 8                                                                Nb× 8× 8                                                                   SD 1.4
+               Nb× 16× 16                                                              Nb× 16× 16                                                   41            SD 2.1
+0.800                                                                0.800
+        0         0.2T      0.4T    0.6T        0.8T         T                  0         0.2T       0.4T       0.6T        0.8T         T                 0         0.2T         0.4T    0.6T   0.8T    T
+                             timestep k                                                               timestep k                                                                   timestep k
+
+Fig. 8: Latent-space variability analysis as a function of the inversion timestep k. Left
+and Middle: normalized effective dimensionality for SD 1.4 and SD 2.1, respectively,
+computed on latent blocks of different spatial sizes. In both models, the effective di-
+mensionality decreases with k, indicating that the regenerated samples span a lower-
+dimensional latent distribution than the original real images. Right: average latent
+variance for SD 1.4 and SD 2.1, showing a progressive reduction as k increases.
+
+
+
+dataset and compute the associated covariance matrix Cs,k ∈ RD×D , with di-
+mensionality D = s2 Nb . Let λ1 , λ2 , . . . , λD be the eigenvalues of Cs,k , the effec-
+tive dimensionality (ED), proposed in [42], is then defined as
+
+
+
+                                     \mathrm {ED} = \exp \left (-\sum _{j=1}^{D} p_j \ln p_j \right ) \;\;\; \mathrm {with} \;\; p_j = \lambda _j / \sum _{i=1}^{D} \lambda _i                          (2)
+
+
+
+If the variance is uniformly distributed across all directions, the effective dimen-
+sionality equals D. Conversely, if most of the variance is concentrated along a few
+dominant directions, the ED is much lower than D. Figure 8 (left-mid) reports
+the effective dimensionality as a function of the inversion timestep k for both
+SD 1.4 and SD 2.1. Specifically, values are normalized to the value for k = 0, to
+allow comparison across different block sizes s. For both models, the normalized
+value decreases as k increases, reaching a minimum around k ≃ 0.75. It then
+partially recovers, but never returns to its initial value at k = 0. This increase
+at large k, where the denoising process starts from highly noisy latent states, is
+likely due to stronger alterations of the original image content during generation.
+    To further prove this effect, we consider the averaged variance of blocks of
+dimension Nb × 4 × 4 (other dimensions follow the same trend). In Figure 8
+(right), we can observe that variance decreases as k increases, implying a lower
+variability of the generated data. Overall, these results suggest that the gener-
+ation process does not fully reproduce the variability present in real data, but
+concentrates content in a reduced number of dominant directions. This obser-
+vation is consistent with recent studies [16, 44] showing that generative models
+often cover only a subset of the real data distribution, producing samples with
+lower diversity and missing parts of the distributional tail.
+14      Cozzolino et al.
+
+5    Discussion
+
+
+Conclusions. Our analyses provide evidence that the strong performance of
+foundation-model-based detectors is only marginally related to semantic visual
+failures or high-frequency artifacts. Instead, it mostly relies on traces at the mid-
+low frequency range of the spectrum originated by the DM generation process.
+By exploiting DDIM inversion, we generate image sequences that preserve the
+content of the original real image while progressively introducing the effect of the
+diffusion generation process. The detector response increases with the inversion
+timestep even when the generated images are semantically close to the original
+ones, suggesting that the decision is not driven by semantic traces but rather by
+high-level scene inconsistencies.
+    The frequency-swapping analysis shows that detector responses are mainly
+driven by the low-frequency components of regenerated images. When the low
+frequencies come from the generated image, the sample is still classified as fake;
+when they come from the real image, the prediction shifts toward real. This sug-
+gests that foundation models exploit distributional discrepancies between real
+and diffusion-generated images that extend beyond high frequencies to the low-
+and mid-frequency ranges. The latent-space analysis provides complementary
+evidence. As the inversion timestep increases, both average latent variance and
+effective dimensionality decrease, indicating that regeneration does not fully pre-
+serve the variability of real data but uses a smaller number of dominant direc-
+tions. This supports the view that diffusion-generated images occupy a restricted
+region of the natural-image distribution. These findings help explain why detec-
+tors based on large vision foundation models generalize well across generators
+and remain robust to common image degradations. They are mostly unaffected
+by resizing, compression, blurring, or laundering operations simply because their
+decisions are not driven by subtle high-frequency artifacts.
+
+Future work. This work focuses on diffusion-generated images and on detectors
+built from frozen vision foundation models followed by a simple classifier. Al-
+though this setting allows us to isolate the role of pretrained representations, it
+is limited to two variants of Stable Diffusion generators. Future work will extend
+the analysis to older GAN-based generators and to more recent diffusion-based
+generation pipelines, including those that apply the diffusion process directly in
+the pixel space [7,60]. Although experiments show (see Table 1) that these latter
+generators are successfully detected as well, suggesting the existence of similar
+statistical signatures, it is important to understand whether the same or differ-
+ent cues are exploited. Furthermore, our results suggest the existence of common
+low-to-mid frequency statistical features shared by diffusion-generated images,
+but they do not yet provide a complete mathematical characterization of such
+traces. Understanding their origin in the diffusion process is an open problem.
+Answering this question could improve both the interpretability of foundation-
+model-based detectors and the design of more robust forensic methods for future
+generations of synthetic images.
+                                Understanding Why Foundation Models Work               15
+
+References
+ 1. Adamkiewicz, K., Moser, B.B., Frolov, S., Nauen, T.C., Raue, F., Dengel, A.:
+    When Pretty Isn’t Useful: Investigating Why Modern Text-to-Image Models Fail
+    as Reliable Training Data Generators. In: CVPR. pp. 36660–36669 (2026)
+ 2. Amerini, I., Barni, M., Battiato, S., Bestagini, P., Boato, G., Bruni, V., Caldelli,
+    R., De Natale, F., De Nicola, R., Guarnera, L., Mandelli, S., Majid, T., Marcialis,
+    G.L., Micheletto, M., Montibeller, A., Orrù, G., Ortis, A., Perazzo, P., Puglisi,
+    G., Purnekar, N., Salvi, D., Tubaro, S., Villari, M., Vitulano, D.: Deepfake Media
+    Forensics: Status and Future Challenges. Journal of Imaging 11(3), 73 (2025)
+ 3. Bammey, Q.: Synthbuster: Towards detection of diffusion model generated images.
+    IEEE Open Journal of Signal Processing (2023)
+ 4. Barrett, C., Boyd, B., Burzstein, E., Carlini, N., Chen, B., Choi, J., Chowd-
+    hury, A.R., Christodorescu, M., Datta, A., Feizi, S., Fisher, K., Hashimoto, T.,
+    Hendrycks, D., Jha, S., Kang, D., Kerschbaum, F., Mitchell, E., Mitchell, J.,
+    Ramzan, Z., Shams, K., Song, D., Taly, A., Yang, D.: Identifying and Mitigat-
+    ing the Security Risks of Generative AI. Now Foundations and Trends (2024)
+ 5. Bontcheva, K., Papadopoulous, S., Tsalakanidou, F., Gallotti, R., Dutkiewicz, L.,
+    Krack, N., Teyssou, D., Nucci, F.S., Spangenberg, J., Srba, I., Aichroth, P., Cuc-
+    covillo, L., Verdoliva, L.: Generative AI and disinformation: recent advances, chal-
+    lenges, and opportunities (2024)
+ 6. Cazenavette, G., Sud, A., Leung, T., Usman, B.: FakeInversion: Learning to De-
+    tect Images from Unseen Text-to-Image Models by Inverting Stable Diffusion. In:
+    CVPR. pp. 10759–10769 (June 2024)
+ 7. Chen, Z., Zhu, J., Chen, X., Zhang, J., Chen, J., Zeng, Z., Zhang, W., Wang, C.,
+    Yang, J., Tai, Y.: L2P: Unlocking Latent Potential for Pixel Generation. arXiv
+    preprint arXiv:2605.12013 (2026)
+ 8. Choi, H., Lee, J., Cozzolino, D., Verdoliva, L., Woo, S.S.: Anchor-Regularized
+    Adaptation for Generalizable AI-Generated Image Detection with DINOv3. In:
+    ACM Multimedia (2026)
+ 9. Chuang, Y.S., Li, Y., Wang, D., Yeh, C.F., Lyu, K., Raghavendra, R., Glass, J.,
+    Huang, L., Weston, J.E., Zettlemoyer, L., Chen, X., Liu, Z., Xie, S., Yih, S., Li,
+    S.W., Xu, H.: MetaCLIP2: A Worldwide Scaling Recipe. NeurIPS 38, 48009–48036
+    (2025)
+10. Corvi, R., Cozzolino, D., Poggi, G., Nagano, K., Verdoliva, L.: Intriguing properties
+    of synthetic images: from generative adversarial networks to diffusion models. In:
+    CVPR Workshops. pp. 973–982 (2023)
+11. Corvi, R., Cozzolino, D., Prashnani, E., Mello, S.D., Nagano, K., Verdoliva, L.:
+    Seeing What Matters: Generalizable AI-generated Video Detection with Forensic-
+    Oriented Augmentation. In: NeurIPS (2025)
+12. Cover, T.M., Thomas, J.A.: Elements of Information Theory. Wiley-Interscience,
+    2 edn. (2009)
+13. Cozzolino, D., Poggi, G., Corvi, R., Nießner, M., Verdoliva, L.: Raising the Bar of
+    AI-generated Image Detection with CLIP. In: CVPR Workshops. pp. 4356–4366
+    (2024)
+14. Dang-Nguyen, D.T., Pasquini, C., Conotter, V., Boato, G.: RAISE: a raw images
+    dataset for digital image forensics. In: ACM Multimedia Systems Conference. p.
+    219–224 (2015)
+15. Deng, J., Dong, W., Socher, R., Li, L.J., Li, K., Fei-Fei, L.: ImageNet: A large-scale
+    hierarchical image database. In: CVPR. pp. 248–255 (2009)
+16      Cozzolino et al.
+
+16. Dombrowski, M., Zhang, W., Cechnicka, S., Reynaud, H., Kainz, B.: Image gener-
+    ation diversity issues and how to tame them. In: CVPR (2025)
+17. Durall, R., Keuper, M., Keuper, J.: Watch Your Up-Convolution: CNN Based
+    Generative Deep Neural Networks Are Failing to Reproduce Spectral Distributions.
+    In: CVPR (2020)
+18. Firefly, A.: https : / / www . adobe . com / sensei / generative - ai / firefly . html
+    (2023)
+19. Frank, J., Eisenhofer, T., Schönherr, L., Fischer, A., Kolossa, D., Holz, T.: Lever-
+    aging frequency analysis for deep fake image recognition. In: ICML (2020)
+20. Geng, S., Hsieh, C.Y., Ramanujan, V., Wallingford, M., Li, C.L., Koh, P.W., Kr-
+    ishna, R.: The unmet promise of synthetic training images: Using retrieved real
+    images performs better. In: NeurIPS (2024)
+21. Gong, T., Wang, D., Chu, Q., Liu, B., Yu, N.: Cross-modal Representation Learning
+    for Diffusion-generated Image Detection. In: CVPR. pp. 36092–36102 (2026)
+22. Grommelt, P., Weiss, L., Pfreundt, F.J., Keuper, J.: Fake or JPEG? Revealing
+    Common Biases in Generated Image Detection Dataset. In: ECCV Workshops.
+    pp. 80–95 (2024)
+23. Guillaro, F., Zingarini, G., Usman, B., Sud, A., Cozzolino, D., Verdoliva, L.: A
+    Bias-Free Training Paradigm for More General AI-generated Image Detection. In:
+    CVPR (2025)
+24. Han, L., Wen, S., Chen, Q., Zhang, Z., Song, K., Ren, M., Gao, R., Stathopoulos,
+    A., He, X., Chen, Y., et al.: ProxEdit: Improving Tuning-Free Real Image Editing
+    with Proximal Guidance . In: WACV. pp. 4279–4289 (2024)
+25. Hu, E.J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen,
+    W.: LoRA: Low-Rank Adaptation of Large Language Models. In: ICLR (2022)
+26. Huang, Z., Li, J., Wen, H., Li, T., Yang, X., Qi, L., Peng, B., Huang, X., Yang,
+    M.H., Cheng, G.: Rethinking Cross-Generator Image Forgery Detection through
+    DINOv3. arXiv preprint arXiv:2511.22471v1 (2025)
+27. Ilharco, G., Wortsman, M., Wightman, R., Gordon, C., Carlini, N., Taori, R., Dave,
+    A., et al.: Openclip https://doi.org/10.5281/zenodo.5143773 (Jul 2021)
+28. Karageorgiou, D., Papadopoulos, S., Kompatsiaris, I., Gavves, E.: Any-Resolution
+    AI-Generated Image Detection by Spectral Learning. In: CVPR (2025)
+29. Labs, B.F.: https://github.com/black-forest-labs/flux (2024)
+30. Lee, S., Kim, B., Nam, J., Lee, K., Shin, J.: SSAFE: Simple and Strong
+    AI-Generated Image Detection via Frozen Vision Encoders. arXiv preprint
+    arXiv:2606.08634v1 (2026)
+31. Li, X., Zhang, J., Li, Y., Cao, Y., Wang, W.: Spectral Tail Auxiliary Learning for
+    AI-Generated Image Detection. arXiv preprint arXiv:2605.22751 (2026)
+32. Li, Y., Bammey, Q., Gardella, M., Nikoukhah, T., Morel, J.M., Colom, M.,
+    Grompone von Gioi, R.: MaskSim: Detection of Synthetic Images by Masked Spec-
+    trum Similarity Analysis. In: CVPR Workshops. pp. 3855–3865 (2024)
+33. Lin, L., Gupta, N., Zhang, Y., Ren, H., Liu, C.H., Ding, F., Wang, X., Li, X.,
+    Verdoliva, L., Hu, S.: Detecting multimedia generated by large AI models: A survey.
+    arXiv preprint arXiv:2402.00045 (2024)
+34. Lin, T.Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., Dollár,
+    P., Zitnick, C.L.: Microsoft COCO: Common Objects in Context. In: ECCV. pp.
+    740–755 (2014)
+35. Luo, Y., Du, J., Yan, K., Ding, S.: LaRE2 : Latent reconstruction error based
+    method for diffusion-generated image detection. In: CVPR. pp. 17006–17015 (2024)
+36. Midjourney: https://www.midjourney.com/home (2023)
+                                Understanding Why Foundation Models Work              17
+
+37. Ojha, U., Li, Y., Lee, Y.J.: Towards universal fake image detectors that generalize
+    across generative models. In: CVPR. pp. 24480–24489 (2023)
+38. OpenAI: https://openai.com/dall-e-3 (2023)
+39. Podell, D., English, Z., Lacey, K., Blattmann, A., Dockhorn, T., Müller, J., Penna,
+    J., Rombach, R.: SDXL: Improving Latent Diffusion Models for High-Resolution
+    Image Synthesis. In: ICLR. vol. 2024, pp. 1862–1874 (2024)
+40. Radford, A., Kim, J.W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G.,
+    Askell, A., Mishkin, P., Clark, J., Krueger, G., Sutskever, I.: Learning transferable
+    visual models from natural language supervision. In: ICML (2021)
+41. Rombach, R., Blattmann, A., Lorenz, D., Esser, P., Ommer, B.: https://github.
+    com/CompVis/stable-diffusion (2022)
+42. Roy, O., Vetterli, M.: The Effective Rank: a Measure of Effective Dimensionality.
+    In: EUSIPCO. pp. 606–610 (2007)
+43. Sha, Z., Li, Z., Yu, N., Zhang, Y.: DE-FAKE: Detection and Attribution of Fake
+    Images Generated by Text-to-Image Diffusion Models. In: ACM SIGSAC Confer-
+    ence on Computer and Communications Security. p. 3418–3432 (2023)
+44. Shumailov, I., Shumaylov, Z., Zhao, Y., Papernot, N., Anderson, R., Gal, Y.: AI
+    models collapse when trained on recursively generated data. Nature 631, 755–759
+    (2024)
+45. Siméoni, O., Vo, H.V., Seitzer, M., Baldassarre, F., Oquab, M., Jose, C., Khalidov,
+    V., Szafraniec, M., Yi, S., Ramamonjisoa, M., Massa, F., Haziza, D., Wehrstedt,
+    L., Wang, J., Darcet, T., Moutakanni, T., Sentana, L., Roberts, C., Vedaldi, A.,
+    Tolan, J., Brandt, J., Couprie, C., Mairal, J., Jégou, H., Labatut, P., Bojanowski,
+    P.: DINOv3. arXiv preprint arXiv:2508.10104 (2025)
+46. Song, J., Meng, C., Ermon, S.: Denoising Diffusion Implicit Models. In: ICLR
+    (2021)
+47. Stable Diffusion 3: https://stability.ai/news/stable-diffusion-3 (2024)
+48. Sun, X., Zhang, R., Huang, J., Burgess, J., Yeung-Levy, S.: SalArt-VQA: Diag-
+    nosing Whether VLMs Understand Salient Artifacts in Generated Images. arXiv
+    preprint arXiv:2606.12671 (2026)
+49. Tan, C., Wang, J., Ming, X., Tao, R., Wei, Y., Zhao, Y., Lu, Y.: ForenDeX: Unlock-
+    ing Forensic Insights for Explainable AI-Generated Image Detection. In: CVPR.
+    pp. 6592–6601 (2026)
+50. Tariang, D., Corvi, R., Cozzolino, D., Poggi, G., Nagano, K., Verdoliva, L.: Syn-
+    thetic Image Verification in the Era of Generative AI: What Works and What Isn’t
+    There Yet. IEEE Security & Privacy 22, 37–49 (2024)
+51. Theis, L., van den Oord, A., Bethge, M.: A note on the evaluation of generative
+    models. In: ICLR (2016)
+52. Tong, S., Zheng, B., Wang, Z., Tang, B., Ma, N., Brown, E., Yang, J., Fergus, R.,
+    LeCun, Y., Xie, S.: Scaling Text-to-Image Diffusion Transformers with Represen-
+    tation Autoencoders. arXiv preprint arXiv:2601.16208 (2026)
+53. Uhlenbrock, L., Bergmann, S., Riess, C.: Latent Landscapes: Topology of the CLIP
+    Feature Space for Synthetic Image Detection. In: EUSIPCO (2025)
+54. Vasilcoiu, A., Najdenkoska, I., Geradts, Z., Worring, M.: LATTE: Latent Tra-
+    jectory Embedding for Diffusion-Generated Image Detection. arXiv preprint
+    arXiv:2507.03054v2 (2025)
+55. Wang, X., Kalogeiton, V.: Your Diffusion Model is an Implicit Synthetic Image
+    Detector. In: ECCV Workshops. vol. 15643, pp. 418–434 (2025)
+56. Wang, Z., Li, S., Che, J., Wang, C., Jui, S., Lei, N., Luo, Z.: Solving Prior Dis-
+    tribution Mismatch in Diffusion Models via Optimal Transport. arXiv preprint
+    arXiv:2410.13431 (2024)
+18      Cozzolino et al.
+
+57. Wang, Z., Bao, J., Zhou, W., Wang, W., Hu, H., Chen, H., Li, H.: DIRE for
+    diffusion-generated image detection. In: ICCV. pp. 22445–22455 (2023)
+58. Wu, Y., Zhang, F., Shi, T., Yin, R., Wang, Z., Gan, Z., Wang, X., Lv, C., Zheng,
+    X., Huang, X.: Explainable Synthetic Image Detection Through Diffusion Timestep
+    Ensembling. In: AAAI. vol. 40, pp. 10844–10852 (2026)
+59. Xu, H., Xie, S., Tan, X., Huang, P.Y., Howes, R., Sharma, V., Li, S.W., Ghosh, G.,
+    Zettlemoyer, L., Feichtenhofer, C.: Demystifying CLIP Data. In: ICLR. vol. 2024,
+    pp. 47812–47831 (2024)
+60. Yu, Y., Xiong, W., Nie, W., Sheng, Y., Liu, S., Luo, J.: PixelDiT: Pixel Diffusion
+    Transformers for Image Generation. In: CVPR. pp. 14273–14282 (2026)
+61. Zeng, Y., Hosoya, Y., Tran, H.T., Okatani, T.: When Does High-CFG Diffusion
+    Inversion Fail? A Controlled Study of Prompt–Latent Interactions. arXiv preprint
+    arXiv:2607.04731 (2026)
+62. Zhang, X., Karaman, S., Chang, S.F.: Detecting and Simulating Artifacts in GAN
+    Fake Images. In: WIFS (2019)
+63. Zhong, N., Chen, H., Xu, Y., Qian, Z., Zhang, X.: Beyond Generation: A Diffusion-
+    based Low-level Feature Extractor for Detecting AI-generated Images. In: CVPR.
+    pp. 8258–8268 (2025)
+64. Zhou, Y., He, X., Lin, K., Fan, B., Ding, F., Li, B.: Simplicity Prevails: The Emer-
+    gence of Generalizable AIGI Detection in Visual Foundation Models. arXiv preprint
+    arXiv:2602.01738v2 (2026)
+

@@ -1,0 +1,34 @@
+{
+   "stamp" : true,
+   "sources" : [
+      {
+         "usage" : "toplevel",
+         "filename" : "main.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "fig/freq_ratio_chart.png"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "fig/pixel-comparison.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "fig/vae_heatmap.png"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "neurips_2025.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "ref.bib"
+      }
+   ],
+   "spec_version" : 1,
+   "texlive_version" : "2025",
+   "process" : {
+      "compiler" : "pdflatex"
+   }
+}

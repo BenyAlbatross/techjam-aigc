@@ -1,0 +1,706 @@
+                      This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                   Except for this watermark, it is identical to the accepted version;
+                             the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+   PPM-CLIP: Probabilistic Prompt Modeling for Generalizable AI-Generated
+                              Image Detection
+
+                       Xinyuan Wang1 *, Yingxin Lai1∗ , Zhiming Luo1,2†, Zhihui Liu3
+                  1
+                   Department of Artificial Intelligence, Xiamen University, Xiamen, China
+                2
+                  Key Laboratory of Multimedia Trusted Perception and Efficient Computing,
+                    Ministry of Education of China, Xiamen University, Xiamen, China
+                              3
+                                Truesight Technology Co. Ltd, Xiamen, China
+
+
+                           Abstract
+
+The rapid rise of highly realistic AI-generated images ne-
+cessitates reliable and generalizable detection methods.
+However, existing methods are constrained by their dis-
+criminative nature: by learning a single static decision
+boundary, they tend to memorize generator-specific arti-               (a)Single Discrimina0ve Boundary    (b)Ours Multiple Generative Hypotheses
+facts and consequently fail to generalize to the unseen dis-
+tributions of new generative models. To overcome this limi-
+tation, we propose PPM-CLIP, a new framework that shifts
+from static classification to conditional generative model-
+ing based on the CLIP vision-language model. Instead of
+learning a fixed decision boundary, a Probabilistic Prompt
+Modeling (PPM) module is used as a generator that pro-
+                                                                      (c)A Single, Unreliable Hypothesis        (d)The Ensemble's Consensus
+duces an adaptive distribution of prompts according to the
+input image. This allows the model to flexibly capture novel
+                                                                    Figure 1. PCA visualization of text embeddings, where prompts
+artifacts, rather than matching them against fixed tem-
+                                                                    are selected according to the image’s ground truth (“real” prompt
+plates. In addition, to enhance the visual encoder’s sensi-         for real images, “fake” prompt for fake images). Distributions are
+tivity to subtle artifacts, a Patch-Wise Contrastive Learning       computed on the GenImage dataset by visualizing the text em-
+(PWCL) strategy is introduced. Extensive experiments on             beddings of a large batch of inputs. (a) Single Discriminative
+Ojha, GenImage, and DRCT benchmarks demonstrate that                Boundary: Derived from FatFormer, this shows that conventional
+our generative paradigm significantly outperforms state-            methods relying on a single, static boundary often fail to create a
+of-the-art methods, especially in cross-domain detection.           separable feature space. (b) Our Multiple Generative Hypotheses:
+The code will be released at https://github.com/                    Displaying a subset of our generated prompt pairs, our genera-
+bandaidssssss/PPM_CLIP.                                             tive approach produces a distribution of hypotheses, revealing the
+                                                                    underlying data structure. (c) A Single, Unreliable Hypothesis:
+                                                                    Illustrating a single, randomly sampled prompt pair, we observe
+                                                                    that an individual hypothesis from the distribution is often unreli-
+1. Introduction                                                     able and leads to poor separation. (d) The Ensemble Consensus:
+With the rapid advancement of image generation tech-                By averaging all hypotheses, the final prediction effectively can-
+nologies, particularly Generative Adversarial Networks              cels out the noise from individual hypotheses to achieve final class
+                                                                    separation.
+(GANs) [4, 9, 10] and diffusion-based models [5, 6, 18, 24],
+producing high-fidelity forged images has become alarm-
+ingly feasible. The potential misuse of these technologies
+poses significant societal risks, ranging from fabricating          ing in political elections [25, 37, 42]. Consequently, devel-
+disinformation to manipulating public opinion and interfer-         oping robust detection methods for AI-generated images is
+  * Equal contribution
+                                                                    critical to protect the integrity of online information.
+  † Corresponding author: zhiming.luo@xmu.edu.cn                        To tackle this challenge, researchers have developed var-
+
+
+
+                                                              21316
+ious techniques including pixel-level and semantic-level ap-       egy that refines the visual encoder by leveraging frequency-
+proaches. Pixel-level methods [3, 35] primarily focus on           domain cues to enhance its sensitivity to the subtle, high-
+detecting low-level artifacts and achieve high accuracy on         frequency artifacts. This refinement ensures that PPM oper-
+known generators. However, their reliance on learning              ates on a feature space enriched with the fine-grained foren-
+fixed patterns from training artifacts often leads to overfit-     sic details necessary for reliable detection.
+ting and poor cross-generator generalization. In contrast,            The contributions of this work are three-fold:
+semantic-level approaches leverage Vision-Language Mod-            • A New Generative Perspective. We shift from the
+els (VLMs) such as CLIP [21] to spot high-level inconsis-            static discriminative paradigm to a generative-powered
+tencies [7, 12, 23, 27]. Within this stream, several stud-           approach, which first models the forgery distribution and
+ies [13, 31] have specifically explored the role of the text         then performs a robust probabilistic inference. We have
+prompt by learning adaptive textual features to guide detec-         initially explored how generation and discrimination can
+tion. Despite architectural variations, these methods remain         be unified.
+fundamentally constrained by a discriminative paradigm             • Synergistic Model Design. We propose a PPM module,
+that relies on a single decision boundary.                           a generative core that produces a diverse ensemble of hy-
+   The inherent fragility of these discriminative methods is         potheses, and a PWCL strategy that grounds them in fine-
+starkly visualized in Figure 1. Even with a meticulously             grained visual evidence.
+designed prompt pair, the feature space remains entangled,         • State-of-the-Art Performance. PPM-CLIP sets a new
+demonstrating that a single, static decision boundary is of-         state-of-the-art in accuracy and, critically, in cross-
+ten insufficient to handle the nuanced differences between           generator robustness, empirically validating our genera-
+real and generated images. This failure stems from a fun-            tive, probabilistic paradigm.
+damental flaw in the static, discriminative paradigm: by
+forcing the model to find a single, optimal separation, it         2. Related Work
+inevitably learns to “memorize” a fixed set of generator-
+specific artifacts. However, the landscape of image gener-         Pixel-level Detection Methods: Early methods primar-
+ation is a diverse and rapidly evolving ecosystem. A static        ily detect low-level artifacts in the spatial or frequency do-
+template is inherently ill-equipped for this diversity, leading    mains. Spatial approaches train classifiers directly on pix-
+to a performance collapse against unseen generators.               els [33] or specific patch anomalies [43]. Frequency-aware
+   To overcome this generalization bottleneck, we pro-             methods [3, 12, 38] target spectral inconsistencies invisible
+pose a crucial shift in perspective, inspired by how human         to the human eye. Another major stream, reconstruction-
+experts operate. Instead of searching for a single, per-           based detection [1, 17, 35], identifies forgeries via the
+fect forgery cue, an expert reasons about an image’s au-           reconstruction error of pre-trained generators. However,
+thenticity from multiple, diverse perspectives. To realize         by training models to learn fixed discriminative patterns
+this expert-inspired reasoning process, we introduce PPM-          from these low-level cues, these methods inevitably memo-
+CLIP, a framework that shifts from static classification to        rize source-specific artifacts, leading to poor generalization
+dynamic, probabilistic reasoning. The core of our approach,        against novel generative paradigms.
+the Probabilistic Prompt Modeling (PPM) module, acts as a
+conditional generator, producing a tailored distribution of        Semantic-level Detection Methods: To improve gener-
+semantic hypotheses for any given image. Grounded in               alization, recent studies leverage pre-trained models such
+our hierarchical Prompt Flow formulation, each “hypothe-           as CLIP [21]. UnivFD [19] applies a simple classifier on
+sis” corresponds to a probabilistically sampled text prompt        frozen CLIP features. Subsequent works have successfully
+that dynamically synthesizes three distinct semantic levels:       employed Parameter-Efficient Fine-Tuning (PEFT) [16, 36,
+image-generic structural priors, image-specific visual evi-        41] to fine-tune CLIP’s behavior, while others have ex-
+dence, and class-indicative semantics. While any single hy-        plored sophisticated prompting strategies [13, 31, 40] to
+pothesis may be unreliable, the ensemble’s consensus, ob-          guide the detection. Furthermore, other studies have ex-
+tained by averaging their outcomes, marginalizes out noise         tended this paradigm by leveraging different pre-trained
+and converges on a highly robust and accurate final deci-          models [26] or by integrating knowledge from multiple
+sion. This approach allows our model to adaptively reason          models [34] to enhance detection capabilities. However,
+about novel artifacts on the fly, rather than failing to match     these methods remain bound by a discriminative frame-
+them against a fixed, outdated template.                           work. Whether optimizing a static adapter or a fixed prompt
+   On the other hand, the standard visual encoder trained          vector, they fundamentally compress the complex forgery
+on high-level semantics often overlooks the subtle traces of       landscape into a rigid decision boundary. This deterministic
+digital forgery. To address this limitation, we further in-        mapping lacks the capacity to handle the diversity of unseen
+troduce a Patch-Wise Contrastive Learning (PWCL) strat-            domains. In contrast, our framework shifts to a generative
+
+
+
+                                                              21317
+                                         Image Encoder                                                                                                       B×N×2
+                                                                             PW C L                                                                 0.56                          0.44
+                                                                                                                                                                                                                                Real                                             Element-Wise Sum
+                                                                                                                                                                                                   Average
+
+
+
+
+                                        Block
+                                                  Block
+
+                                                               Block
+                                                                                                       Xcls                   C                     0.49                          0.51                                                or                             C           Cosine Similarity
+
+
+
+
+                                                                       Lora
+                                                                       Lora
+
+                                                                                      Lora
+                                                                                                                                                                                                                                                                                 Trainable/Frozen
+
+                                         0          1          11 12 13               23                                                            0.53                          0.47
+                                                                                                                                                                                                                               Fake
+
+          Probabilistic Prompt Modeling                                                                           Real Prompt Repository                                                                                                                    Text Embedding
+                                                                                                        1     2    LLgg 1 2 LLss 1 2                            LLcc
+                                                                        g      g        g
+              Xg                   PFM                                 φ1     φ2       φn                                                                                 B
+                                                                                                        1     2    LLgg   1   2     LLs s       1       2       LLcc
+
+
+
+
+                                                                                                                                                                                                                                                                                                      B×N
+             Xcls                  PFM                                 φs1    φs2      φsn                                                                                                               Text
+                                                                                                               g
+                                                                                                              φn              φsn             φrn φfn
+              Xr                   PFM                                 φr1    φr2      φrn
+                                                                                                                                                                                                        Encoder
+                                                                                                        1     2    LLgg   1   2     LLss        1       2       LLcc
+
+
+
+
+                                                                                                                                                                                                                                                                                                       B×N
+              Xf                   PFM                                  f      f        f                                                                                 B
+                                                                       φ1     φ2       φn               1     2    LLgg   1   2     LLs s       1       2       LLcc
+
+                                                                                N                                 Fake Prompt Repository
+
+                                                                                                                                                 Complex
+    Prompt Flow Module                                                                                                                                                                     PWCL:Patch-wise Contrastive Learning
+                                                           Simple distribution               Φ0   Φ1     Φ2           ΦK−1    ΦK                distribution
+                                                                                                                                                                                                                                                                                                       Pull close
+                                                                                    Monte                                                                                                                                                                                                              Push far
+                    SoftPlus
+
+
+
+                                             SoftPlus
+
+
+
+
+                                                                                    Carlo
+          Linear
+
+
+
+                               Linear
+
+
+
+                                                          Linear
+
+
+
+
+                                                                                                                                                                                                                                                                                                       Anchor
+                                                                                                                                                                                                                                            Margin=1
+                                                                               Sampling
+
+
+
+                                                          q0(Φ0)∼N(μ ξ ,Σ ξ )                                                               qK(ΦK)≈P(ΦK|D)
+
+
+
+Figure 2. Overview of PPM-CLIP. An input image is processed by a visual encoder enhanced by Patch-Wise Contrastive Learning
+(PWCL), yielding a feature vector, Xcls , that is rich in fine-grained forensic details. Concurrently, the Prompt Flow Module learns a
+probabilistic distribution from its conditioning inputs and generates N prompt samples from it via Monte Carlo sampling. These samples
+are fused with a repository of B base prompt sets, yielding B × N text embeddings. The final prediction is determined by averaging the
+cosine similarities between the visual token (Xcls ) and the resulting text embeddings.
+
+
+paradigm, modeling the distribution of forgery prompts to                                                                             3.1. Patch-wise Contrastive Learning
+enable robust probabilistic inference.
+                                                                                                                                      To supply our Probabilistic Prompt Modeling (PPM) mod-
+                                                                                                                                      ule with the necessary fine-grained visual details, a stan-
+                                                                                                                                      dard visual encoder is insufficient as it often overlooks sub-
+3. Methodology                                                                                                                        tle forgery artifacts. Therefore, we propose Patch-Wise
+                                                                                                                                      Contrastive Learning (PWCL), an auxiliary strategy to re-
+As illustrated in Figure 2, our PPM-CLIP consists of two                                                                              fine the encoder. As shown in Figure 2, PWCL leverages
+modules. First, an input image I ∈ Rh×w×3 is processed by                                                                             frequency-domain cues to guide the encoder’s focus toward
+a visual encoder enhanced by our Patch-Wise Contrastive                                                                               high-frequency patterns within local patches, which is a
+Learning (PWCL) strategy (Sec. 3.1), yielding a final visual                                                                          known indicator of digital forgery [2, 43]. This yields a
+feature vector, Xcls .                                                                                                                visual backbone highly sensitive to the forensic details re-
+   Concurrently, our core innovation is the Probabilistic                                                                             quired by our generative hypotheses.
+Prompt Modeling (PPM) framework. Departing from prior                                                                                    For a given RGB image, we first view it as a grid of
+discriminative methods, the Prompt Flow Module employs                                                                                non-overlapping patches, denoted as I = {p1 , p2 , . . . , pn },
+a generative approach to produce adaptive adjustment vec-                                                                             where pi ∈ RM ×M ×3 . We employ the AIDE [38] method
+tors. These dynamically generated vectors are fused with                                                                              to compute the frequency score for each image patch using
+a two-class prompt repository and passed through a frozen                                                                             the following equation, with full details in Appendix 6:
+text encoder, yielding two distinct sets of text embeddings:
+one for “real” and one for “fake”.
+                                                                                                                                              \small { G_m = \sum _{k=0}^{N_f-1} 2^k \cdot \sum _{c=0}^{2} \sum _{i=0}^{M-1} \sum _{j=0}^{M-1} F^{(k)}_{i,j} \cdot \log \left ( \left | p^{\text {dct}}_m(i,j,c) \right | + 1 \right ), } 
+   Finally, the prediction is determined by aligning the vi-
+sual feature Xcls with both sets of text embeddings. The                                                                                                                                                                                                                                                                           (1)
+classification of the image as real or fake is determined by                                                                          where |pdct
+                                                                                                                                              m (i, j, c)| is the absolute DCT coefficient of the
+which set yields a higher average cosine similarity score.                                                                            m-th patch, and Nf is the number of frequency band-pass
+
+
+
+                                                                                                                          21318
+                                                                            (k)
+filters. The term Fi,j ∈ {0, 1} is a binary indicator for the                                                                                                                                                                                                to generate class-indicative adjustments that steer the
+k-th frequency band.                                                                                                                                                                                                                                         prompt towards either a “real” or “fake” classification.
+    We rank all patches by their frequency scores and use a                                                                                                                                                                                               Notably, for ICD, the two distinct learnable vectors, Xr
+selection ratio, α, to partition them into a high-frequency                                                                                                                                                                                               (“real”) and Xf (“fake”), are processed by a shared-weight
+set (top n × α) and a low-frequency set. Within the high-                                                                                                                                                                                                 encoder. This deliberate strategy compels the model to learn
+frequency set, the highest-scoring serves as the anchor,                                                                                                                                                                                                  a unified representation space for authenticity, where “real”
+while the others become positive samples. All patches in                                                                                                                                                                                                  and “fake” are treated as opposing semantic poles.
+the low-frequency set are treated as negative samples.                                                                                                                                                                                                        As shown in the bottom-left portion of Figure 2, the
+    A distance-based contrastive learning objective is then                                                                                                                                                                                               process begins with Monte Carlo sampling N times from
+applied to the embeddings of these patches to pull the an-                                                                                                                                                                                                this base distribution. To ensure proper gradient back-
+chor closer to its positive peers and push it away from the                                                                                                                                                                                               propagation after discrete sampling, the reparameterization
+negative ones. This encourages the model to learn dis-                                                                                                                                                                                                    method [11] is employed during the optimization process.
+criminative representations that focus on informative, high-                                                                                                                                                                                              These samples are then passed through the main flow, which
+frequency forgery artifacts.                                                                                                                                                                                                                              consists of a sequence of K learnable and invertible trans-
+                                                                                                                                                                                                                                                          formations. The transformation sequence is formally de-
+                                                                                                                                                                                                                                                          fined as follows:
+   \small { \mathcal {L}_{\text {con}} = \sum _{\mathbf {e}_p \in \mathcal {P}} ||\mathbf {e}_a - \mathbf {e}_p||_2^2 + \sum _{\mathbf {e}_n \in \mathcal {N}} \max (0, m - ||\mathbf {e}_a - \mathbf {e}_n||_2^2), } \label {eq:contrastive_loss} 
+                                                                                                                                                                                                                                                                                                    \Phi _{i+1} = \Phi _{i} + \mathbf {u}\mathbf {h}\left ( \mathbf {w}^{\top } \Phi _{i} + \mathbf {b} \right ),                                                                                                        (3)
+                                                                                                                                                                                                                                            (2)
+where ea is the anchor embedding (the highest-scoring                                                                                                                                                                                                      where i = 0, 1, · · · , K −1, h(·) is tanh activation function,
+patch), P is the set of positive embeddings (other top-                                                                                                                                                                                                    and w, u ∈ Rd , b ∈ R are trainable parameters. After
+scoring patches), and N is the set of negative embeddings                                                                                                                                                                                                  K transformations, the log-probability density of the final
+(bottom-scoring patches). The m represents the margin, and                                                                                                                                                                                                 distribution, log qK (ΦK ), is given by:
+|| · ||22 denotes the squared L2-distance.
+                                                                                                                                                                                                                                                                \log q_{K}(\Phi _{K})=\log q_{0}(\Phi _{0})-\sum _{k=1}^{K}\log \left |1+\mathbf {u}_{k}^{\mathrm {T}}\phi (\Phi _{k})\right | , \label {eq:log_q_k}  (4)
+3.2. Probabilistic Prompt Modeling
+Our Probabilistic Prompt Modeling (PPM) framework is
+                                                                                                                                                                                                                                                           where ϕ(Φ) = h′ (wT Φ + b)w. The output of this
+designed to generate a diverse ensemble of image-adaptive
+                                                                                                                                                                                                                                                           PFM is a set of N compact adjustment vectors, denoted as
+prompts (hypotheses). It consists of two core, synergistic
+                                                                                                                                                                                                                                                           {φgn , φsn , φrn , φfn }N
+                                                                                                                                                                                                                                                                                   n=1 .
+components: Prompt Flow Module (PFM), a generative
+model that produces dynamic, length-1 adjustment vectors                                                                                                                                                                                                   3.2.2. Prompt Repository and Dynamic Fusion
+tailored to the input image. Prompt Repository, which                                                                                                                                                                                                      To provide a structural foundation for our prompts, we es-
+provides the stable, full-length structural templates neces-                                                                                                                                                                                               tablish a learnable Prompt Repository containing B distinct
+sary to ensure prompt diversity and coherence.                                                                                                                                                                                                             baseline templates. As illustrated in the center of Figure 2,
+3.2.1. Prompt Flow Module:                                                                                                                                                                                                                                 these templates provide the essential scaffolding for full-
+                                                                                                                                                                                                                                                           length prompts. The structure of the b-th template pair is
+Inspired by normalizing flows [22], the Prompt Flow Mod-                                                                                                                                                                                                   defined as:
+ule is designed to construct a highly expressive and complex
+prompt distribution. To this end, the module takes different                                                                                                                                                                                                                                 \begin {aligned} g_{b}^{r} &= [\mathbf {G}_{b,1..L_g}][\mathbf {S}_{b,1..L_s}][\mathbf {C}_{b,1..L_c}^{r}], \\ g_{b}^{f} &= [\mathbf {G}_{b,1..L_g}][\mathbf {S}_{b,1..L_s}][\mathbf {C}_{b,1..L_c}^{f}]. \end {aligned} 
+conditioning inputs to generate three distinct yet comple-                                                                                                                                                                                                                                                                                                                                                                                                                                                               (5)
+mentary distributions, which collectively form a hierarchi-
+cal representation of semantic information:                                                                                                                                                                                                               Each template is composed of three distinct sequences of
+• Image-Generic Distribution (IGD): This distribution is                                                                                                                                                                                                  learnable vectors, which are designed to serve as the static
+  conditioned on a single learnable vector (Xg ) and is                                                                                                                                                                                                   base for our three dynamic distributions:
+  designed to capture coarse-grained, universal attributes                                                                                                                                                                                                • Generic Context (Gb,1..Lg ): A sequence of Lg learnable
+  common to all prompts, such as syntactic structure.                                                                                                                                                                                                       vectors that provide a stable, shared foundation for the
+• Image-Specific Distribution (ISD): In contrast, this dis-                                                                                                                                                                                                 Image-Generic adjustment (φg ).
+  tribution is directly conditioned on the input image’s vi-                                                                                                                                                                                              • Specific Content (Sb,1..Ls ): A sequence of Ls learnable
+  sual features (Xcls ). Its role is to provide the fine-grained,                                                                                                                                                                                           vectors that form the stable content backbone, ready to be
+  adaptive details necessary to describe the unique visual                                                                                                                                                                                                  modulated by the Image-Specific adjustment (φs ).
+  evidence within each specific input.                                                                                                                                                                                                                    • Class-Indicative Concepts (Crb,1..Lc and Cfb,1..Lc ): Two
+• Image-Class Distribution (ICD): Conditioned on two dis-                                                                                                                                                                                                   distinct sequences of Lc vectors, establishing a stable,
+  tinct learnable vectors (Xr and Xf ), this distribution fo-                                                                                                                                                                                               discriminative base for the “real” (φr ) and “fake” (φf )
+  cuses solely on the core discriminative task. It learns                                                                                                                                                                                                   class adjustments, respectively.
+
+
+
+                                                                                                                                                                                                                                                      21319
+   Adaptability is achieved by dynamically fusing the static                                                                                                                                                                                                                                                                                                                         Following the visual encoding by PWCL and prompt
+templates with the compact, image-adaptive adjustment                                                                                                                                                                                                                                                                                                                            generation by PPM, we obtain the visual feature vector Xcls
+vectors (φg , φs , φr , φf ) from the Prompt Flow Module. For                                                                                                                                                                                                                                                                                                                    and two sets of text embeddings: {ftext,i    r
+                                                                                                                                                                                                                                                                                                                                                                                                                                 } for “real” and
+the n-th sample and the b-th template, this fusion is per-                                                                                                                                                                                                                                                                                                                          f
+                                                                                                                                                                                                                                                                                                                                                                                 {ftext,i } for “fake”, where i = 1, . . . , B × N .
+formed by broadcasting and adding each adjustment vector                                                                                                                                                                                                                                                                                                                             The prediction is based on cosine similarity cos. For
+to its corresponding token sequence, yielding two distinct                                                                                                                                                                                                                                                                                                                       each individual text embedding, we compute its similarity
+prompts for the “real” and “fake” classes:                                                                                                                                                                                                                                                                                                                                       to the visual feature:
+
+     \small { \begin {aligned} g_{b,n}^{r} &= [\mathbf {G}_{b,1..L_g} + \varphi _{n}^{g}] [\mathbf {S}_{b,1..L_s} + \varphi _{n}^{s}] [\mathbf {C}_{b,1..L_c}^{r} + \varphi _{n}^{r}], \\ g_{b,n}^{f} &= [\mathbf {G}_{b,1..L_g} + \varphi _{n}^{g}] [\mathbf {S}_{b,1..L_s} + \varphi _{n}^{s}] [\mathbf {C}_{b,1..L_c}^{f} + \varphi _{n}^{f}]. \end {aligned} }                    s_{i}^r = \cos (\mathbf {X}_\text {cls}, \mathbf {f}_{\text {text},i}^{r}) \quad \text {and} \quad s_{i}^f = \cos (\mathbf {X}_\text {cls}, \mathbf {f}_{\text {text},i}^{f}).  (10)
+                                                                                                                                                                                                                                                                                                                                                                      (6)
+                                                                                                                                                                                                                                                                                                                                                                                   For each prompt pair i, we can then derive the corre-
+This process expands our initial B template pairs into a rich                                                                                                                                                                                                                                                                                                                   sponding class probabilities using a softmax function with
+ensemble of B × N distinct, image-adaptive prompt pairs                                                                                                                                                                                                                                                                                                                         temperature τ :
+with negligible inference overhead.
+                                                                                                                                                                                                                                                                                                                                                                                      P_i^r = \frac {\exp (s_i^r / \tau )}{\exp (s_i^r / \tau ) + \exp (s_i^f / \tau )}, \quad \text {and} \quad P_i^f = 1 - P_i^r. \label {eq:single_prob} 
+3.3. Optimization and Inference
+                                                                                                                                                                                                                                                                                                                                                                                                                                        (11)
+During the training stage, a single Monte Carlo sampling is
+                                                                                                                                                                                                                                                                                                                                                                                   With these individual probabilities, our training and in-
+performed to enhance efficiency. Let the text prompts from
+                             r     f                                                                                                                                                                                                                                                                                                                                            ference strategies diverge:
+B samples be denoted as [gb,1   , gb,1 ], and their correspond-
+ing text embeddings as [trb,1 , tfb,1 ], b ∈ {1, 2, · · · B}. To en-
+                                                                                                                                                                                                                                                                                                                                                                                During training, for efficiency, we randomly sample a
+hance the diversity of learnable prompts in prompt reposi-
+                                                                                                                                                                                                                                                                                                                                                                                single index i for each input image. The classification loss,
+tory, an orthogonal loss is designed on the text embeddings
+                                                                                                                                                                                                                                                                                                                                                                                Lcls , is then the standard cross-entropy loss computed be-
+as follows:
+                                                                                                                                                                                                                                                                                                                                                                                tween this single predicted probability pair {Pir , Pif } and
+                                                                                                                                                                                                                                                                                                                                                                                the ground truth label.
+    \mathcal {L}_{\text {ort}} = \sum _{i=1}^{B} \sum _{\substack {j=1 \\ j \neq i}}^{B} \left \{ \cos (t_{i,1}^r, t_{j,1}^r )^2 + \cos (t_{i,1}^f, t_{j,1}^f )^2 \right \},                                                                                                                                                                                          (7)
+                                                                                                                                                                                                                                                                                                                                                                                During inference, to leverage the full power of our en-
+                                                                                                                                                                                                                                                                                                                                                                                semble, we compute the final class probabilities, P̄ c , by av-
+   Our Prompt Flow Module is trained by optimizing a                                                                                                                                                                                                                                                                                                                            eraging the individual probabilities from all B × N prompt
+variational objective based on the Evidence Lower Bound                                                                                                                                                                                                                                                                                                                         pairs:
+(ELBO), which comprises a KL divergence term (Lkl ) and
+a reconstruction term (Lrec ). The detailed derivation is in
+Appendix 7.                                                                                                                                                                                                                                                                                                                                                                                        \bar {P}^r = \frac {1}{B \times N} \sum _{i=1}^{B \times N} P_i^r, \quad \text {and} \quad \bar {P}^f = 1 - \bar {P}^r.                                                                                                              (12)
+   The first component is the KL divergence (LKL ), which
+is applied to all three distributions (IGD, ISD, and ICD).
+                                                                                                                                                                                                                                                                                                                                                                                   The overall objective function is a weighted sum of the
+It acts as a regularizer, encouraging the learned posterior
+                                                                                                                                                                                                                                                                                                                                                                                classification loss and the aforementioned regularization
+qK to stay close to a simple prior p(Φ). Its computational
+                                                                                                                                                                                                                                                                                                                                                                                terms:
+formula is:
+                                   \mathcal {L}_{KL} = \mathbb {E}_{q_{0}(\Phi _{0})}\left [ \log q_{K}(\Phi _{K}) - \log p(\Phi _{K}) \right ]. \label {eq:kl_divergence}                                                                                                                                                                                            (8)             \mathcal {L} = \mathcal {L}_{\text {cls}} + \lambda _{\text {con}} \mathcal {L}_{\text {con}} + \lambda _{\text {ort}} \mathcal {L}_{\text {ort}} + \lambda _{kl} \mathcal {L}_{kl} + \lambda _{\text {rec}} \mathcal {L}_{\text {rec}}, \label {eq:final_loss}  (13)
+
+   The second component is the reconstruction loss (Lrec ),                                                                                                                                                                                                                                                                                                                     where λcon , λort , λkl , and λrec are hyperparameters that
+which is applied exclusively to the Image-Specific Distri-                                                                                                                                                                                                                                                                                                                      balance the contribution of each component. The terms
+bution (ISD). The purpose of this loss is to ensure that the                                                                                                                                                                                                                                                                                                                    λkl Lkl + λrec Lrec jointly form a weighted approximation
+ISD’s latent variable ΦsK faithfully preserves the salient in-                                                                                                                                                                                                                                                                                                                  of the negative Evidence Lower Bound (ELBO), which is
+formation from its unique conditioning input. We enforce                                                                                                                                                                                                                                                                                                                        the core variational objective for our prompt flow module.
+this by decoding ΦsK with a simple decoder to generate a re-
+constructed vector Xrec and minimizing the Mean Squared                                                                                                                                                                                                                                                                                                                         4. Experiments
+Error (MSE) with the original Xcls :                                                                                                                                                                                                                                                                                                                                            4.1. Experimental Setup
+                                                                                                                                                                                                                                                                                                                                                                                Implementation Details. We adopt the CLIP ViT-L/14
+                                                                                                                 \mathcal {L}_{\text {rec}} = \sum _{i=1}^{d} (x_{i} - \hat {x}_{i})^2, \label {eq:recon_loss_sum}                                                                                                                                                    (9)       model as our backbone, adhering to the standard protocol in
+                                                                                                                                                                                                                                                                                                                                                                                Ojha et al. [19]. The model is trained for 1 epochs using the
+where xi and x̂i correspond to elements in the original fea-                                                                                                                                                                                                                                                                                                                    Adam optimizer with a learning rate of 1×10−4 and a batch
+ture vector Xcls and the reconstructed vector Xrec .                                                                                                                                                                                                                                                                                                                            size of 48. Input images are resized to 224 × 224, applying
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                            21320
+                                                          Glide                                         LDM
+ Method                Ref       DALLE                                           ADM                                           mAcc
+                                             100 10      100 27       50 27                  100         200       200 cfg
+ CNNDet [33]       CVPR 2020       51.8       53.3        53.0         54.2       54.9       51.9        52.0       51.6        52.8
+ FreDect [3]       ICML 2020       57.0       53.6        50.4         52.0       53.4       56.6        56.4       56.5        54.5
+ F3Net [20]        ECCV 2020       71.6       88.3        87.0         88.5       69.2       74.1        73.4       80.7        79.1
+ LGrad [28]        CVPR 2023       88.5       89.4        87.4         90.7       86.6       94.8        94.2       95.9        90.9
+ UnivFD [19]       CVPR 2023       89.5       90.1        90.7         91.1       75.7       90.5        90.2       77.3        86.9
+ PatchCraft [43]   Arxiv 2023      83.3       80.1        83.4         77.6       80.9       88.9        89.3       88.1        84.0
+ FreqNet [29]      AAAI 2024       97.2       87.8        84.4         86.6       67.2       97.8        97.4       97.2        89.5
+ NPR [30]          CVPR 2024       94.5       98.2        97.8         98.2       75.8       99.3        99.1       99.0        95.1
+ FatFormer [13]    CVPR 2024       98.7       94.5        94.1         94.2       75.9       98.5        98.5       94.8        93.6
+ SAFE [12]         KDD 2025        97.5       97.2        95.8         96.6       82.4       98.8        98.8       98.7        95.7
+ COD [8]           CVPR 2025       98.1       97.6        97.4         97.7       92.8       98.8        98.9       98.7        97.5
+ Ours                   –        98.4±1.3    99.3±0.0    99.3±0.1    99.3±0.1   97.0±0.4   99.3±0.0    99.1±0.1    98.4±0.3   98.8±0.2
+
+                     Table 1. Comparison with state-of-the-art methods on Ojha datasets [19] using Accuracy (%).
+
+ Method               Ref       Midjourney    SD v1.4     SD v1.5      ADM       GLide     Wukong       VQDM       BigGAN      mAcc
+ CNNDet [33]       CVPR 2020       50.1         50.3       50.3        53.0       51.7      51.4         50.0        69.8      53.3
+ FreDect [3]       ICML 2020       32.1         28.8       28.9        62.9       42.8      35.9         72.1        26.1      41.2
+ LGrad [28]        CVPR 2023       73.7         76.3       77.4        51.8       49.8      73.1         52.1        40.5      61.8
+ UnivFD [19]       CVPR 2023       93.9         96.4       96.2        71.9       85.4      94.3         81.6        90.5      88.8
+ PatchCraft [43]   Arxiv 2023      89.7         95.0       94.6        81.6       83.5      90.9         88.2        91.5      86.3
+ FreqNet [29]      AAAI 2024       89.6         98.8       98.6        66.8       86.5      97.3         75.8        81.4      86.8
+ NPR [30]          CVPR 2024       81.0         98.2       97.9        76.9       89.8      96.9         84.1        84.2      88.6
+ FatFormer [13]    CVPR 2024       92.7        100.0       99.9        75.9       88.0      99.9         98.8        55.8      88.9
+ AIDE [38]         ICLR 2025       79.4         99.7       99.8        78.5       91.8      98.7         80.3        66.9      86.9
+ Effort [39]       ICML 2025       82.4         99.8       99.8        78.7       93.3      97.4         91.7        77.6      90.1
+ SAFE [12]          KDD 2025       95.3         99.4       99.3        82.1       96.3      98.2         96.3        97.8      95.6
+ C2P-CLIP [31]     AAAI 2025       88.2         90.9       97.9        96.4       99.0      98.8         96.5        98.7      95.8
+ CoD [8]           CVPR 2025       96.0         99.7       99.8        85.2       95.9      98.2         96.8        98.3      96.2
+ LOTA [32]         ICCV 2025       93.2         99.8       99.8        99.5       99.2      99.8         99.5        99.9      98.9
+ Ours                  –         98.7±1.5    100.0±0.0    99.9±0.0   99.2±0.9   99.4±0.7   100.0±0.0   100.0±0.0   99.9±0.2   99.6±0.4
+
+                   Table 2. Comparison with state-of-the-art methods on GenImage datasets [44] using Accuracy (%).
+
+
+random cropping during training and center cropping dur-               4.2. Comparison with State-of-the-Art Methods
+ing testing. To enable efficient adaptation, we apply LoRA
+(r = 4, αlora = 0.5) to layers 12-23 in the visual encoder.            Ojha. We first evaluate cross-architecture generalization on
+For the proposed modules, we set the PWCL selection ratio              Ojha . As shown in Table 1, pixel-level methods like CN-
+α to 0.5 and the margin m to 1.0. The PPM module uti-                  NDet and FreDect hard to generalize, overfitting to source-
+lizes a prompt repository size of B = 2 and a flow length              specific artifacts. Although semantic-level methods like
+of K = 10. During inference, we perform the Monte Carlo                UnivFD improve robustness by leveraging CLIP features,
+sampling 4 times.                                                      they are still lower than our approach (86.9% vs. 98.8%).
+                                                                       This gap stems from UnivFD’s reliance on a static linear
+                                                                       classifier, which tends to learn a rigid decision boundary
+Datasets. Following previous methods [32, 34], we con-                 tied to GAN-induced artifacts. This rigidity hinders adapt-
+duct experiments on three challenging benchmarks: (1)                  ability to the diverse artifacts of advanced diffusion models
+Ojha [19]: This dataset is designed to assess the detec-               (e.g., 75.7% on LDM). In contrast, PPM-CLIP achieves a
+tion of cross-architecture generalization, which models are            mean accuracy of 98.8%, surpassing the baseline by 11.9%.
+trained on ProGAN and evaluated on unseen GANs and                     The consistent performance across DALLE (98.4%) and
+Diffusion Models. (2) GenImage [44]: A large-scale                     Glide (99.3%) demonstrates that our generative-powered
+benchmark for cross-generator robustness, where models                 approach effectively mitigates generator-specific biases and
+are trained on SDv1.4 and evaluated on images generated                captures universal forgery patterns.
+by eight diverse models. (3) DRCT [1]: A recent dataset                GenImage. To further assess cross-generator robustness,
+evaluates robustness against high-fidelity diffusion recon-            we conduct experiments on the GenImage dataset (Table 2).
+struction and localized inpainting attacks.                            Our method achieves the best average accuracy of 99.6%.
+
+
+
+                                                                  21321
+                                                 SD Variants                        Turbo Variants    LCM Variants      ControlNet Variants             DR Variants
+ Method              Ref                                        SDXL      SDXL-      SD-    SDXL-    LCM-     LCM-    SDv1-   SDv2-    SDXL-    SDv1-     SDv2-   SDXL-    Avg.
+                              LDM     SDv1.4   SDv1.5   SDv2
+                                                                Refiner   Refiner   Turbo   Turbo    SDv1.5   SDXL     Ctrl    Ctrl      Ctrl    DR        DR       DR
+ CNNSpot [33]     CVPR 2020   99.87   99.91    99.90    97.55    66.25     86.55    86.15    72.42    98.26   61.72   97.96   85.89     82.84   60.93     51.41    50.28   81.12
+ F3Net [20]       ECCV 2020   99.85   99.78    99.79    88.66    55.85     87.37    68.29    63.66    97.39   54.98   97.98   72.39     81.99   65.42     50.39    50.27   77.13
+ CLIP/RN50 [21]   ICML 2021   99.00   99.99    99.96    94.61    62.08     91.43    83.57    64.40    98.97   57.43   99.74   80.69     82.03   65.83     50.67    50.47   80.05
+ GramNet [14]     CVPR 2020   99.40   99.01    98.84    95.30    62.63     80.68    71.19    69.32    93.05   57.02   89.97   75.55     82.68   51.23     50.01    50.08   76.62
+ De-fake [27]      CCS 2023   92.10   99.53    99.51    89.65    64.02     69.24    92.00    93.93    99.13   70.89   58.98   62.34     66.66   50.12     50.16    50.00   75.52
+ Conv-B [15]      CVPR 2022   99.97   100.0    99.97    95.84    64.44     82.00    80.82    60.75    99.27   62.33   99.80   83.40     73.28   61.65     51.79    50.41   79.11
+ UnivFD [19]      CVPR 2023   98.30   96.22    96.33    93.83    91.01     93.91    86.38    85.92    90.44   88.99   90.41   81.06     89.06   51.96     51.03    50.46   83.46
+ DIRE [35]        ICCV 2023   54.62   75.89    76.04    99.87    59.90     93.08    99.77    57.55    87.29   72.53   67.85   99.69     64.40   49.96     52.48    49.92   72.55
+ DRCT [1]         ICML 2024   94.45   94.35    94.24    95.05    95.61     95.38    94.81    94.48    91.66   95.54   93.86   93.48     93.54   84.34     83.20    67.61   91.35
+ Ours                 –       99.83   99.82    99.80    99.84    99.81     99.80    99.85    99.83    99.80   99.82   99.78   99.83     99.84   88.92     88.68    56.67   95.72
+
+
+                       Table 3. Comparison with state-of-the-art methods on the DRCT datasets [1] using Accuracy (%).
+
+
+                                                                                                Prompt Flow             Repository              PWCL          mAcc (%)
+Fake                                                                                                                                             ✓              91.2
+                                                                                                                              ✓                  ✓              92.1
+                                                                                                        ✓                                        ✓              88.9
+CLIP
+                                                                                                        ✓                     ✓                                 80.0
+                                                                                                        ✓                     ✓                  ✓              99.6
+PWCL
+                                                                                            Table 4. Ablation Study on Different Components via Replace-
+                                                                                            ment with Zero Tensor.
+Figure 3. Grad-CAM visualizations comparing the focus of the
+original CLIP model (middle row) with our PWCL-enhanced
+model (bottom row).
+                                                                                            4.3. Ablation Study
+                                                                                            Impact of Core Components. We investigate the contri-
+A closer inspection reveals distinct performance gaps in                                    bution of each module on the GenImage dataset, as sum-
+competing methods. For instance, FatFormer achieves high                                    marized in Table 4. First, we evaluate the Prompt Flow
+accuracy on Stable Diffusion but experiences a significant                                  Module (PFM). Disabling this module (reverting to static
+drop on ADM (75.9%) and BigGAN (55.8%). We at-                                              prompts) results in a significant accuracy drop from 99.6%
+tribute this decline to its reliance on learning a single pair                              to 92.1%. This sharp decline mirrors the limitations of pre-
+of prompts, which fails to cover the shifted artifact distri-                               vious static methods, confirming that deterministic repre-
+butions of unseen generators. In contrast, our PPM-CLIP                                     sentations are insufficient for capturing the diverse land-
+maintains robust performance across all subsets. This sup-                                  scape of forgery artifacts. Second, we examine the visual
+ports our core hypothesis regarding the superiority of a gen-                               adaptation. Removing the PWCL module leads to the most
+erative approach. Its ability to model the entire distribution                              substantial drop to 80.0%. We attribute this to the “semantic
+of forgery cues enables it to robustly handle the distribu-                                 gap”: without PWCL, the visual encoder primarily focuses
+tional shifts in cross-generator scenarios, a challenge where                               on object semantics rather than forgery artifacts. Further-
+static, discriminative methods inevitably falter.                                           more, replacing our frequency-based selection with random
+DRCT. We further examine robustness against localized                                       selection yields a sub-optimal accuracy of 95.0%, demon-
+manipulations on the DRCT benchmark (Table 3). PPM-                                         strating that explicit frequency-aware guidance is essential.
+CLIP achieves a new state-of-the-art with 95.72% accu-                                      Finally, removing the Prompt Repository leads to a degra-
+racy. Notably, in the “DR Variants” subset (inpainting),                                    dation to 88.9%, suggesting that a stable structural prior is
+where global artifacts are largely absent, traditional de-                                  necessary to guide the flow optimization.
+tectors like UnivFD collapse to near-chance performance                                     Performance and Resource Trade-offs. We analyze the
+(∼51%). However, our method maintains remarkable re-                                        trade-off between inference cost and accuracy in Table 5.
+silience (87.80% on SDv1/v2-DR). This robustness is at-                                     Even under a minimal sampling budget (N = 2), our
+tributed to the synergy between PPM and PWCL: PPM                                           method reaches 98.6% accuracy, significantly outperform-
+captures high-level semantic inconsistencies, while PWCL                                    ing UnivFD while maintaining high throughput. Increas-
+compels the encoder to attend to fine-grained anomalies.                                    ing the number of samples to 10 yields a peak accuracy of
+This capability is visually verified in Figure 3, where our                                 100.0%, demonstrating the scalability of our approach with
+model precisely pinpoints high-frequency artifacts in the                                   respect to computation.
+forged regions, whereas the baseline CLIP tends to focus                                    Sensitivity to Hyperparameters. We further analyze the
+on irrelevant semantics.                                                                    sensitivity of our model to key hyperparameters. For the
+
+
+
+                                                                                    21322
+  Method             Sample(N)         Memory(MB)            Acc(%)              FPS
+  Univfd                                  3116                88.8               87.44
+                            2             3200                 98.6              50.51
+                            4             4764                 99.6              35.61
+    Ours                    6             5542                 99.8              27.17
+                            8             6496                 99.9              22.19
+                                                                                                      ISD                  IGD+ISD               ICD+ISD
+                           10             7976                100.0              18.76
+                                                                                              Figure 5. The t-SNE visualization is applied to the fused prompts
+  Table 5. Performance and resource trade-offs for our method                                 to confirm that the components capture distinct information as de-
+                                                                                              signed.
+                    λkl            0.0001    0.001         0.01      0.1
+                  mAcc (%)          92.3      99.6         98.6      97.1
+                                                                                              classification. Together, this delicate balance establishes a
+     Table 6. Sensitivity analysis on the KL loss weight (λkl ).                              robust optimization landscape for universal detection.
+
+            100                                                                                        IGD         ISD         ICD        mAcc (%)
+                                                                                                                                            92.1
+             98
+                                                                                                                                 ✓          92.6
+             96                                                                                                     ✓                       95.5
+  mAcc(%)
+
+
+
+
+                                                                                                            ✓                               91.3
+             94                                                     Hyperparameters                                 ✓            ✓          98.0
+                                                                         rec (rec)
+
+             92                                                          con (contra)                       ✓                    ✓          93.1
+                                                                         ort (ort)
+                                                                                                            ✓       ✓                       96.3
+             90
+                     0.2     0.4     0.6     0.8     1.0      1.2          1.4
+                                                                                                            ✓       ✓            ✓          99.6
+                                    Hyperparameter Value
+                                                                                              Table 7. Ablation Study(replacing components with zero tensor)
+Figure 4. Ablation study on the weights of the reconstruction loss                            on the Contributions and Interplay of the Core Distributions (IGD,
+(λrec ), the contrastive loss (λcon ), the orthogonal loss weight (λort ),                    ISD, ICD).
+and the PWCL selection ratio (α).
+                                                                                              Visualization. Figure 5 validates our hierarchical de-
+                                                                                              sign. While the Image-Specific Distribution (ISD) extracts
+KL divergence weight, as detailed in Table 6, a small value                                   fine-grained visual details, the Image-Generic Distribution
+(λkl = 0.001) yields optimal performance. We attribute                                        (IGD) further improves separation by providing coarse-
+this to the need for diversity: a larger penalty tends to over-                               grained universal attributes. Finally, the Image-Class Dis-
+regularize the prompt distribution, suppressing the variance                                  tribution (ICD) acts as a discriminative steering mechanism,
+required to model complex forgery patterns. Regarding the                                     successfully disentangling the latent space into linearly sep-
+auxiliary objectives, Figure 4 illustrates that the weights for                               arable clusters.
+reconstruction (λrec ) and contrastive (λcon ) losses peak at
+0.5, while the orthogonal loss (λort ) performs best at 1.0.                                  5. Conclusions
+This unified behavior suggests that these objectives should
+act as gentle regularizers rather than dominating the primary                                 In this paper, we introduced PPM-CLIP, a framework that
+classification task. Finally, for the PWCL selection ratio, a                                 challenges the conventional static, discriminative approach
+balanced α = 0.5 proves most effective (Figure 4), ensur-                                     by embracing dynamic, probabilistic reasoning. Its core,
+ing the model learns from a sufficient variety of both high-                                  Probabilistic Prompt Modeling (PPM), reframes detection
+frequency artifacts and background textures.                                                  as generating and evaluating multiple hypotheses, empow-
+Component Synergy and Sensitivity. Table 7 dissects our                                       ered by a PWCL-enhanced encoder for fine-grained foren-
+Prompt Flow. While ISD captures visual variance, peak per-                                    sic artifacts. Experiments across key benchmarks validate
+formance requires ICD’s semantic steering to align adap-                                      that our paradigm achieves a new SOTA. This work shows
+tive features with discriminative poles, stabilized by IGD                                    the path to universal detection lies in embracing uncertainty
+priors. For hyperparameters (Table 6, Figure 4), optimal                                      and harnessing the power of probabilistic inference.
+performance relies on balanced regularization. A mini-
+mal KL weight (λkl = 0.001) preserves prompt diversity                                        Acknowledgment
+against over-regularization. Meanwhile, moderate auxil-                                       This work is supported by the National Natu-
+iary weights (λrec/con ≈ 0.5) and a balanced PWCL ratio                                       ral Science Foundation of China (No. 62276221).
+(α = 0.5) guide learning without dominating the primary
+
+
+
+                                                                                         21323
+References                                                             [17] Yunpeng Luo, Junlong Du, Ke Yan, and Shouhong Ding.
+                                                                            Lareˆ 2: Latent reconstruction error based method for
+ [1] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.                diffusion-generated image detection. In CVPR, 2024. 2
+     Drct: Diffusion reconstruction contrastive training towards
+                                                                       [18] Alexander Quinn Nichol and Prafulla Dhariwal. Improved
+     universal detection of diffusion generated images. In ICML,
+                                                                            denoising diffusion probabilistic models. In ICML, 2021. 1
+     2024. 2, 6, 7
+                                                                       [19] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. Towards uni-
+ [2] Jiaxuan Chen, Jieteng Yao, and Li Niu. A single simple
+                                                                            versal fake image detectors that generalize across generative
+     patch is all you need for ai-generated image detection. arXiv
+                                                                            models. In CVPR, 2023. 2, 5, 6, 7
+     preprint arXiv:2402.01123, 2024. 3
+                                                                       [20] Yuyang Qian, Guojun Yin, Lu Sheng, Zixuan Chen, and Jing
+ [3] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fis-
+                                                                            Shao. Thinking in frequency: Face forgery detection by min-
+     cher, Dorothea Kolossa, and Thorsten Holz. Leveraging fre-
+                                                                            ing frequency-aware clues. In ECCV, 2020. 6, 7
+     quency analysis for deep fake image recognition. In ICML,
+     2020. 2, 6                                                        [21] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+                                                                            Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+ [4] Ian J Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing
+                                                                            Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen
+     Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and
+                                                                            Krueger, and Ilya Sutskever. Learning transferable visual
+     Yoshua Bengio. Generative adversarial nets. In NeurIPS,
+                                                                            models from natural language supervision. In ICML, 2021.
+     2014. 1
+                                                                            2, 7
+ [5] Amir Hertz, Ron Mokady, Jay Tenenbaum, Kfir Aberman,
+     Yael Pritch, and Daniel Cohen-Or. Prompt-to-prompt im-            [22] Danilo Rezende and Shakir Mohamed. Variational inference
+     age editing with cross attention control. arXiv preprint               with normalizing flows. In ICML, 2015. 4
+     arXiv:2208.01626, 2022. 1                                         [23] Jonas Ricker, Denis Lukovnikov, and Asja Fischer. Aerob-
+ [6] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffu-            lade: Training-free detection of latent diffusion images using
+     sion probabilistic models. In NeurIPS, 2020. 1                         autoencoder reconstruction error. In CVPR, 2024. 2
+ [7] Zhenglin Huang, Jinwei Hu, Xiangtai Li, Yiwei He, Xingyu          [24] Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+     Zhao, Bei Peng, Baoyuan Wu, Xiaowei Huang, and Guan-                   Patrick Esser, and Björn Ommer. High-resolution image syn-
+     gliang Cheng. Sida: Social media image deepfake detection,             thesis with latent diffusion models. In CVPR, 2022. 1
+     localization and explanation with large multimodal model.         [25] Hao Ruan, Jinliang Lin, Yingxin Lai, Zhiming Luo, and
+     In CVPR, 2025. 2                                                       Shaozi Li. Hccm: Hierarchical cross-granularity contrastive
+ [8] Zexi Jia, Chuanwei Huang, Yeshuang Zhu, Hongyan Fei, Xi-               and matching learning for natural language-guided drones.
+     aoyue Duan, Zhiqiang Yuan, Ying Deng, Jiapei Zhang, Jin-               In Proceedings of the 33rd ACM International Conference
+     chao Zhang, and Jie Zhou. Secret lies in color: Enhancing              on Multimedia, pages 4524–4533, 2025. 1
+     ai-generated images detection with color distribution analy-      [26] Ayush Sarkar, Hanlin Mai, Amitabh Mahapatra, Svetlana
+     sis. In CVPR, 2025. 6                                                  Lazebnik, David A Forsyth, and Anand Bhattad. Shadows
+ [9] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen.             don’t lie and lines can’t bend! generative models don’t know
+     Progressive growing of gans for improved quality, stability,           projective geometry... for now. In CVPR, pages 28140–
+     and variation. arXiv preprint arXiv:1710.10196, 2017. 1                28149, 2024. 2
+[10] Tero Karras, Samuli Laine, and Timo Aila. A style-based           [27] Zeyang Sha, Zheng Li, Ning Yu, and Yang Zhang. De-fake:
+     generator architecture for generative adversarial networks. In         Detection and attribution of fake images generated by text-
+     CVPR, 2019. 1                                                          to-image generation models. In ACM CCS, 2023. 2, 7
+[11] Diederik P Kingma and Max Welling. Auto-encoding varia-           [28] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     tional bayes. arXiv preprint arXiv:1312.6114, 2013. 4                  and Yunchao Wei. Learning on gradients: Generalized arti-
+[12] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao                facts representation for gan-generated images detection. In
+     Hu, and Fuli Feng. Improving synthetic image detection to-             CVPR, 2023. 6
+     wards generalization: An image transformation perspective.        [29] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     In KDD, 2025. 2, 6                                                     Ping Liu, and Yunchao Wei. Frequency-aware deepfake de-
+[13] Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei,                  tection: Improving generalizability through frequency space
+     Jingdong Wang, and Yao Zhao. Forgery-aware adaptive                    domain learning. In AAAI, 2024. 6
+     transformer for generalizable synthetic image detection. In       [30] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu,
+     CVPR, 2024. 2, 6                                                       Ping Liu, and Yunchao Wei. Rethinking the up-sampling
+[14] Zhengzhe Liu, Xiaojuan Qi, and Philip H. S. Torr. Global               operations in cnn-based generative network for generalizable
+     texture enhancement for fake face detection in the wild. In            deepfake detection. In CVPR, pages 28130–28139, 2024. 6
+     CVPR, 2020. 7                                                     [31] Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu,
+[15] Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feicht-                 Baoyuan Wu, Yao Zhao, and Yunchao Wei. C2p-clip: Inject-
+     enhofer, Trevor Darrell, and Saining Xie. A convnet for the            ing category common prompt in clip to enhance generaliza-
+     2020s. In CVPR, 2022. 7                                                tion in deepfake detection. In AAAI, 2025. 2, 6
+[16] Zihan Liu, Hanyi Wang, Yaoyu Kang, and Shilin Wang. Mix-          [32] Hongsong Wang, Renxi Cheng, Yang Zhang, Chaolei Han,
+     ture of low-rank experts for transferable ai-generated image           and Jie Gui. Lota: Bit-planes guided ai-generated image de-
+     detection. arXiv preprint arXiv:2404.04883, 2024. 2                    tection. In ICCV, 2025. 6
+
+
+
+
+                                                                  21324
+[33] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+     Owens, and Alexei A. Efros. Cnn-generated images are sur-
+     prisingly easy to spot... for now. CVPR, pages 8695–8704,
+     2020. 2, 6, 7
+[34] Yabin Wang, Zhiwu Huang, and Xiaopeng Hong. Opensdi:
+     Spotting diffusion-generated images in the open world. In
+     CVPR, pages 4291–4301, 2025. 2, 6
+[35] Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun
+     Wang, Hezhen Hu, Hong Chen, and Houqiang Li. Dire for
+     diffusion-generated image detection. ICCV, pages 22445–
+     22455, 2023. 2, 7
+[36] Haiwei Wu, Jiantao Zhou, and Shile Zhang. Generalizable
+     synthetic image detection via language-guided contrastive
+     learning. arXiv preprint arXiv:2305.13800, 2023. 2
+[37] Danni Xu, Shaojing Fan, and Mohan Kankanhalli. Combat-
+     ing misinformation in the era of generative ai models. In
+     ACM MM, 2023. 1
+[38] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong
+     Jiang, Yao Hu, and Weidi Xie. A sanity check for ai-
+     generated image detection. ICLR, 2025. 2, 3, 6
+[39] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang,
+     Chengchun Liu, Shen Chen, Taiping Yao, Shouhong Ding,
+     Baoyuan Wu, and Li Yuan. Orthogonal subspace decompo-
+     sition for generalizable ai-generated image detection. arXiv
+     preprint arXiv:2411.15633, 2024. 6
+[40] Yongqi Yang, Zhihao Qian, Ye Zhu, Olga Russakovsky, and
+     Yu Wu. D3 : Scaling up deepfake detection by learning from
+     discrepancy. In CVPR, 2025. 2
+[41] Andrii Yermakov, Jan Cech, and Jiri Matas. Unlocking the
+     hidden potential of clip in generalizable deepfake detection.
+     arXiv preprint arXiv:2503.19683, 2025. 2
+[42] Kejia Zhang, Keda Tao, Jiasheng Tang, and Huan Wang. Poi-
+     son as cure: Visual noise for mitigating object hallucinations
+     in lvms. arXiv preprint arXiv:2501.19164, 2025. 1
+[43] Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and Xin-
+     peng Zhang. Patchcraft: Exploring texture patch for efficient
+     ai-generated image detection. In CVPRW, 2023. 2, 3, 6
+[44] Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang,
+     Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu, Jie Hu, and
+     Yunhe Wang. Genimage: A million-scale benchmark for
+     detecting ai-generated image. NeurIPS, 36:77771–77782,
+     2023. 6
+
+
+
+
+                                                                  21325
+

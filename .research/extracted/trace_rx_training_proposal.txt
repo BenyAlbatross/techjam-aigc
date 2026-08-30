@@ -1,0 +1,645 @@
+TRACE-RX                                                                                                                                                               Robust AI-generated image detection
+
+
+
+
+ TRAINING PROPOSAL
+
+
+
+                                                                                   TRACE-RX
+ Transformation-Reliability-Aware AI Image Detection
+
+
+
+
+                   Do not force every forensic feature to vote on every image. Measure whether the signal
+                       survived, model correlated evidence, and abstain when the endpoint no longer
+                                                contains enough information.
+
+
+
+          Multiple evidence families                      Controlled interventions                          Reliable fusion                            Operational decision
+          PE provenance semantics, DINOv3                 Mild, content-preserving perturbations            Availability, uncertainty and covariance   Return real, AI-generated or insufficient
+          structure, native residuals, frequency,         measure whether fragile forensic                  determine how strongly each expert can     evidence with calibrated confidence.
+          phase and authentic manifolds.                  evidence remains observable.                      speak.
+
+
+
+
+ Execution target: two DGX Sparks, 24 hours, open models below 2B parameters, and a lineage-safe 160,000-record dataset.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                 1
+TRACE-RX                                                                                                                                                      Robust AI-generated image detection
+
+
+
+
+ 01 / PROBLEM AND BACKGROUND
+
+
+ Why robust AIGC detection is difficult
+    Platform problem                                                                           What the literature establishes
+    Highly realistic synthetic images can support misinformation, impersonation and
+                                                                                                 No universal fingerprint
+    fraud. The practical target is not a pristine generator output: it is the endpoint after
+                                                                                                 Generator artifacts vary by model family and decoder generation. A detector that wins
+    compression, cropping, filters, reposting, screenshots or recapture.                         on one benchmark may fail on current generators.
+
+    Competition scope
+    ●   Binary image-level AIGC detection with confidence scores.
+                                                                                                 Signals fail differently
+    ●   Robustness to JPEG, blur, resize, noise, color jitter and crop.                          Semantic evidence can survive compression but carries content bias. Fine residual and
+    ●                                                                                            frequency evidence can be discriminative yet fragile.
+        Strong generalisation and careful authentic-image false-positive control.
+    ●   Convincing proof of concept under limited compute; model below 2B parameters.
+
+    Statistical target                                                                           Missing evidence is asymmetric
+                                                                                                 Positive camera evidence supports authenticity. Its absence does not prove synthesis
+    Let Y=1 denote a fully synthetic origin and Y=0 an authentic origin. A                       because ordinary editing can erase it.
+    post-processing journey T changes pixels but not origin: Y(T(x))=Y(x). The detector
+    estimates p(Y=1 | T(x)) while maximising sensitivity at a fixed, low authentic-image
+    false-positive rate.
+                                                                                                 Transformations have order
+                                                                                                 Resize then JPEG is not equivalent to JPEG then resize. Repeating a lossy operation
+                                                                                                 can produce saturation rather than a proportional change.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                        2
+TRACE-RX                                                                                                                                                                                     Robust AI-generated image detection
+
+
+
+
+ 02 / DETECTION FOUNDATIONS
+
+
+ What information can distinguish synthetic and authentic origin?
+        Evidence family                      Measured phenomenon                                                    Representative statistic                                 Principal failure
+
+        Semantic and physical consistency    Objects, text, lighting, reflections and generator-associated visual   Learned embedding phi(x); class logit w^T phi(x)+b       Content and style shortcuts; generators
+                                             style                                                                                                                           improve
+
+        Local RGB and neighbour relations    Decoder texture, upsampling and short-range pixel dependencies         C(delta)=E[(x_p-mu)(x_{p+delta}-mu)]                     Resize, blur and denoise alter local
+                                                                                                                                                                             dependence
+
+        Residual and camera evidence         Sensor noise, demosaicing, sharpening and synthesis residuals          r=x-G_sigma*x; residual energy and correlation           Compression and editing erase genuine
+                                                                                                                                                                             camera evidence
+
+        Frequency magnitude                  Periodicity, spectral slope and decoder upsampling artifacts           A(u,v)=log(1+|FFT(x)_{u,v}|)                             Easy to erase or imitate; JPEG shortcuts
+
+        Frequency phase                      Spatial arrangement encoded separately from magnitude                  theta(u,v)=atan2(Im FFT, Re FFT)                         Crop and geometric resampling change
+                                                                                                                                                                             phase
+
+        Authentic acquisition manifold       Positive similarity to camera, screenshot, scan, artwork or            d_c(x)=||phi(x)-mu_c||^2                                 Absence of authentic evidence is not proof
+                                             conventional-CGI subtypes                                                                                                       of AI
+
+        Provenance and metadata              C2PA assertions, watermarks and file/container history                 Verified positive credential or watermark                May be removed or absent; absence is
+                                                                                                                                                                             non-evidence
+
+
+
+
+        Why multiple experts                                                   Why missing evidence is asymmetric                                           Why fusion needs reliability
+        The evidence families are conditionally informative under              A verified sensor or provenance trace supports authenticity.                 Concatenation assumes every feature remains trustworthy.
+        different transformations. A semantic feature may survive              Its absence is compatible with both synthesis and ordinary                   TRACE-RX instead estimates signal availability and
+        JPEG while a residual feature disappears.                              redistribution.                                                              correlation before combining logits.
+
+
+
+
+ Design principle
+ The model should learn evidence of origin, not a particular file format, image subject or generator name. Every label-correlated acquisition choice is therefore treated as a potential
+ confound and tested with source-disjoint splits and metadata-only baselines.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                       3
+TRACE-RX                                                                                                                                                                              Robust AI-generated image detection
+
+
+
+
+ 03 / GLOBAL REPRESENTATION EXPERTS
+
+
+ Three backbones, two representation paradigms
+     PE-Core-L, DINOv3-L and DINOv2-L are the only pretrained backbones in the trial. PE represents images in a language-aligned space; DINOv3 and
+     DINOv2 provide self-supervised dense visual structure. One primary encoder is selected before any optional two-backbone fusion is considered.
+
+
+        Backbone                          Scale          Why consider it                                               Main risk                                                    Decision
+
+        PE-Core-L/14                      320M vision    Language-aligned provenance semantics; Apache 2.0; supports   Best direct AIGC evidence is at 1.9B G scale; L-scale gain   Provenance candidate
+                                                         semantic prototype calibration                                must be measured
+
+        DINOv3-L/16                       300M           Strong dense image features; current dominant frozen          Custom gated license; largest published AIGC baseline used   Structure candidate
+                                                         vision-only AIGC baseline                                     prohibited 6.7B model
+
+        DINOv2-L/14                       300M           Apache 2.0; mature and reproducible dense features            Older pretraining and weaker current foundation-model        Reproducible control
+                                                                                                                       baseline
+
+
+
+
+        PE semantic prototypes                                                Three-backbone trial                                                    One optional fusion test
+        Normalize image embedding e and text prototypes t_c;                  Freeze PE-L, DINOv3-L and DINOv2-L; cache features;                     Add the runner-up once after selecting the best encoder.
+        compute z_c=(e^T t_c)/tau. Calibrate prototypes without               use the same head and schedule. Select one primary                      Keep two global backbones only when their error sets are
+        forcing the backbone to relearn vision.                               global encoder by low-FPR and worst-group metrics.                      measurably complementary.
+
+
+
+    Language-aligned provenance                                                                                 Self-supervised structure
+    For normalized PE image embedding e and class-text prototype t_c, z_c=(e^T t_c)/tau. Prototype              For DINO patch tokens h_1,...,h_n, form h_pool=mean_i h_i together with token mean/variance. A
+    calibration moves class directions using training data while keeping the visual encoder stable.             shared linear head z=w^T h_pool+b tests whether the representation separates origin without
+    Authentic subtype prompts reduce the risk that only camera photographs define 'real'.                       architecture-specific tuning.
+
+
+ Evidence note: the August 2026 PE-SPC preprint reports PE-SPC matching or exceeding a DINOv3 linear probe across cross-generator, in-the-wild, recent-generator and blur/JPEG groups. Its headline models were
+ PE-G/14 at 1.9B and DINOv3-7B at 6.7B; those results do not establish the winner at our 300M scale, so direct ablation remains mandatory.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                4
+TRACE-RX                                                                                                                                                                               Robust AI-generated image detection
+
+
+
+
+ 04 / SYSTEM ARCHITECTURE
+
+
+ TRACE-RX: evidence experts with reliability-aware fusion
+ TRACE-RX combines one selected global representation backbone with a native-resolution forensic expert, authentic-manifold evidence and controlled intervention responses.
+ JPEG, resize and blur in the diagram are illustrative intervention operators; the final intervention set is selected empirically.
+
+
+
+
+ Core evidence score: effective evidence = signed expert evidence x availability / uncertainty. Intervention responses are fusion features, not independent votes. A constrained covariance layer reduces
+ double-counting when experts react to the same artifact.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                 5
+TRACE-RX                                                                                                                                                                                    Robust AI-generated image detection
+
+
+
+
+ 05 / NATIVE FORENSIC EXPERT
+
+
+ Preserve local evidence that global resizing can destroy
+ A single 224-pixel global resize can erase the exact microtexture, sampling and residual patterns that image forensics needs. The forensic expert therefore analyses
+ native-resolution patches selected from high texture, low texture, edges, faces/text and uniform spatial coverage.
+
+        Input representation                 Construction                                                                        What the branch can learn
+
+        RGB                                  Native 192-256 pixel patches without global downsampling                            Texture, edges, text rendering and local physical inconsistencies
+
+        High-pass residual                   r_sigma(x)=x-G_sigma*x, with sigma fixed or lightly learned                         Sensor/demosaicing traces, sharpening, decoder and denoising residuals
+
+        Block DCT                            D_{u,v}=sum x_{i,j} cos_u(i) cos_v(j) over local blocks                             Quantisation, periodicity, spectral slope and block-grid artifacts
+
+        Fourier phase                        theta_{u,v}=atan2(Im FFT(x), Re FFT(x))                                             Spatial organisation that magnitude-only detectors discard
+
+        Neighbour relations                  C_delta=E[(x_p-mu)(x_{p+delta}-mu)] for short offsets delta                         Upsampling, interpolation and decoder-specific local dependence
+
+
+
+
+        Patch encoding                                                         Patch aggregation                                                     Forensic uncertainty
+        Each modality is tokenised at multiple scales. A 40-60M                For patch logits z_i, retain mean, variance, upper quantile           Predict log variance v(x) with the logit. The fusion system
+        transformer shares spatial locations across modalities while           and attention-weighted score. High disagreement is                    can discount a confident-looking score when the expert's
+        retaining modality embeddings.                                         evidence of locality or uncertainty.                                  learned variance is high.
+
+
+
+
+ Cross-patch consistency
+ If z_i is the AI logit for patch i, define V_patch(x)=Var_i[z_i]. The model receives both mean evidence and V_patch. This provides crop robustness without deliberately discarding
+ 20% of the image as an inference-time intervention.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                      6
+TRACE-RX                                                                                                                                                                               Robust AI-generated image detection
+
+
+
+
+ 06 / DATA AND COMPUTE PROTOCOL
+
+
+ Use 95% of independent masters for model fitting
+    A. Lineage-safe allocation                                                                                     B. Independent work queues
+    ●    80,000 independent masters: 40,000 authentic and 40,000 fully AI-generated.
+    ●                                                                                                                  Spark A - global and modelling
+         One journey endpoint per master creates 160,000 records; derivatives are not
+                                                                                                                       Cache PE-L, DINOv3-L and DINOv2-L features; select one primary backbone; fit
+         independent observations.
+                                                                                                                       fusion, robust objectives and calibration.
+    ●    76,000 masters (152,000 records) are assigned to expert or fusion fitting.
+    ●    The locked set contains exactly 2,000 image records from 1,000 masters: 500
+         authentic and 500 synthetic lineages.                                                                         Spark B - forensic and transforms
+    ●    A master, derivative, prompt group and duplicate component always remain in one                               Train the native-patch forensic tower; compute candidate interventions, official
+         partition.                                                                                                    transform sweeps, interactions, order effects and repeats.
+
+    ●    The locked records are the clean and journey endpoint for each test master; wider
+         transform experiments use development.
+                                                                                                                       Shared contract
+        Partition               Masters           Records             Role
+                                                                                                                       Identical immutable manifests; separate output directories; exchange compact feature
+        Expert train            72,000            144,000             Fit experts                                      tables rather than transformed image corpora.
+
+        Fusion train            4,000             8,000               Fit fusion/objectives
+
+        Development             2,000             4,000               Select methods
+                                                                                                                       No risky cluster setup
+        Calibration             1,000             2,000               Thresholds only
+                                                                                                                       Use multi-node training only if networking is already configured and passes a
+                                                                      Exactly 2,000 images; open                       15-minute NCCL test. Otherwise keep both Sparks productive independently.
+        Locked test             1,000             2,000
+                                                                      once
+
+
+
+ Test-set precision caveat
+ With 500 authentic test masters, one master-level false positive changes FPR by 0.2 percentage point. Report exact binomial or Wilson intervals and avoid production-level claims; this cohort provides fast
+ independent hackathon validation.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                 7
+TRACE-RX                                                                                                                                                                            Robust AI-generated image detection
+
+
+
+
+ 07 / CONTROLLED INTERVENTIONS
+
+
+ Estimate whether forensic evidence remains observable
+ A controlled intervention is a mild, deterministic transformation applied temporarily at inference. It is a stress test, not a new training label and not a vote. The model compares an
+ expert's representation before and after intervention to estimate local sensitivity at the observed endpoint.
+
+        Candidate                                  What it stresses                                                                 Interpretation risk
+
+        JPEG q95                                   Quantisation, grid and residual evidence                                         Small response may mean prior saturation
+
+        Blur sigma 0.5                             High-frequency texture and noise                                                 Overlaps with resize and denoise
+
+        Resize 0.95 then restore                   Sampling grid and neighbour relations                                            Interpolation choice can dominate
+
+        Saturation 0.95                            Colour dependence and filter shortcuts                                           May alter semantic appearance
+
+        Mild denoise                               Residual and noise evidence                                                      Can erase genuine sensor evidence
+
+        Cross-patch consistency                    Local evidence and crop dependence                                               Content heterogeneity creates variance
+
+
+
+
+        Why interventions help                                                 Why several operators                                               How operators are chosen
+        An expert may output a strong logit from evidence that                 Compression, low-pass filtering, resampling, colour change          Screen all candidates on development; keep an operator
+        disappears under an imperceptible perturbation. The                    and patch selection disturb different statistics.                   only for measurable low-FPR, worst-group or calibration
+        response exposes this fragility to fusion.                             Complementarity matters more than count.                            gain without authentic-FPR harm.
+
+
+
+
+ Response representation
+ For expert feature h and logit z, define r_p(x)=[|z(x)-z(T_p(x))|, 1-cos(h(x),h(T_p(x))), ||h(x)-h(T_p(x))||_2/(||h(x)||_2+epsilon)]. A small response is interpreted jointly with original
+ evidence strength and estimated image quality: it may indicate stable evidence or an already-saturated image.
+ Intervention-set utility: U(P)=Delta TPR@1%FPR + alpha Delta worst-group AUC - lambda latency(P) - mu instability(P). Greedy forward selection stops when marginal held-out utility becomes negligible.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                              8
+TRACE-RX                                                                                                                                                                        Robust AI-generated image detection
+
+
+
+
+ 08 / RELIABILITY-AWARE FUSION
+
+
+ Combine evidence according to availability, uncertainty and correlation
+ Suppose K experts emit aligned AI logits z=(z_1,...,z_K). A conventional concatenation head can let a fragile expert dominate after its signal is erased. TRACE-RX separately
+ estimates whether each expert can speak and how uncertain its score is.
+
+         Quantity                          Definition                                                          Role
+
+         Evidence z_k                      Signed AI logit from expert k                                       Direction and strength of origin evidence
+
+
+         Availability a_k                  a_k=sigmoid(g_k(q(x), r(x)))                                        Whether quality and intervention responses indicate that signal k remains observable
+
+
+         Variance s_k^2                    Positive heteroscedastic uncertainty predicted by expert k          Downweight examples for which the expert is intrinsically uncertain
+
+
+         Covariance Sigma                  Low-rank covariance of expert residual errors                       Avoid counting correlated texture/frequency evidence several times
+
+
+
+
+    Generalised reliability weighting                                                                   Abstention and guardrails
+                                                                                                        ●   Abstain when predictive entropy is high, expert disagreement is high or total
+    Let a be the availability vector. Define w=Sigma^(-1)a / [a^T Sigma^(-1)a + epsilon],
+                                                                                                            available evidence is low.
+    then z_fused=w^T z and p_AI=sigmoid(z_fused/T), where T is fitted on calibration.
+                                                                                                        ●   Treat verified C2PA or watermark evidence as an independent positive
+    ●   Diagonal Sigma reduces to availability- and inverse-variance weighting.
+                                                                                                            provenance channel.
+    ●   Low-rank off-diagonal terms model correlated expert mistakes.                                   ●   Never infer AI solely from absent EXIF, PRNU, watermark or provenance
+    ●   Constrain weights or use logistic stacking if covariance fitting is unstable.                       credentials.
+                                                                                                        ●   Calibrate real/AI thresholds and the insufficient-evidence region separately.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                          9
+TRACE-RX                                                                                                                                                         Robust AI-generated image detection
+
+
+
+
+ 09 / ARCHITECTURE EXPERIMENTS
+
+
+ Identify the smallest evidence system that generalises
+ID                   Global evidence                 Forensic                Authentic prototypes                      Interventions                  Purpose
+
+B0                   PE-L                            -                       -                                         -                              Backbone trial 1
+
+B1                   DINOv3-L                        -                       -                                         -                              Backbone trial 2
+
+B2                   DINOv2-L                        -                       -                                         -                              Backbone trial 3
+
+A0                   Best of B0-B2                   -                       -                                         -                              Primary global baseline
+
+A1                   Best                            Yes                     -                                         -                              Add local forensic evidence
+
+A2                   Best                            Yes                     Yes                                       -                              Add positive-real evidence
+
+A3                   Best                            Yes                     Yes                                       Selected                       Full reliability system
+
+A4 optional          Best + runner-up                Yes                     Yes                                       Selected                       Single complementarity check
+
+
+
+     Selection score                                                                                Removal rules
+                                                                                                    ●   Drop a branch with less than 0.5 point fused gain.
+     S = 0.35 TPR@1%FPR + 0.25 worst-group AUC + 0.20 unseen-generator AUC +
+                                                                                                    ●   Drop a branch whose gain disappears at low FPR or on unseen generators.
+     0.10(1 - worst-real FPR) + 0.10(1 - ECE).
+                                                                                                    ●   Drop any component that raises worst authentic-subtype FPR materially.
+     ●   Run exactly three pretrained backbones under one frozen-feature protocol.
+                                                                                                    ●   Fallback: if the custom forensic tower is unstable by hour 5, use a proven
+     ●   Use one seed for component screening; rerun only the finalist.
+                                                                                                        lightweight RGB/residual backbone.
+     ●   Compare expert error correlation, not only fused AUC.
+     ●   Test a second global backbone only once, after choosing the primary encoder.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                          10
+TRACE-RX                                                                                                                                                                                       Robust AI-generated image detection
+
+
+
+
+ 10 / TRAINING OBJECTIVES
+
+
+ Optimise origin accuracy, worst-group risk and low-FPR operation
+ The objectives are evaluated as separate hypotheses and then, if useful, staged. This prevents several losses from simultaneously pulling the representation in incompatible
+ directions.
+
+         Variant                                 Definition                                                                                       Question
+
+
+         O0 Balanced BCE                         Master-, class-, subtype- and generator-balanced binary cross-entropy                            Strong reference objective
+
+
+         O1 BCE + CVaR                           Add loss over the worst 20% of hierarchical groups                                               Does worst-group robustness improve?
+
+
+         O2 BCE + pAUC                           Rank AI positives above hard authentic negatives near the low-FPR boundary                       Does authentic false-positive control improve?
+
+
+         O3 Staged                               BCE convergence -> CVaR fine-tune -> short pAUC stage -> separate calibration                    Can sequencing avoid objective conflict?
+
+
+
+
+        Balanced BCE                                                             Worst-group CVaR                                                          Low-FPR ranking
+        L_BCE=-E[w_g {y log p + (1-y) log(1-p)}]. Group weights                  L_CVaR=min_eta [eta + E(L_g-eta)_+/(1-alpha)], with                       L_pAUC=mean softplus(m-z_pos+z_hard-real), where
+        w_g prevent dominant sources or generators from                          alpha=0.8. It emphasizes the worst 20% of group losses.                   hard-real examples lie near the target false-positive
+        controlling the gradient.                                                                                                                          boundary.
+
+
+
+
+ Conflict diagnostic and operational sequence
+ For losses L_i and L_j, monitor C_ij=(grad L_i dot grad L_j)/(||grad L_i|| ||grad L_j||) on 256 batches. Persistent C_ij<0 with no held-out gain indicates objective interference.
+ ●   Train expensive experts once on the 144,000 expert-training records.
+ ●   Cache expert outputs; run architecture and objective sweeps as inexpensive fusion experiments.
+ ●   Fit fusion on the separate 8,000-record fusion partition; never fit it on development.
+ ●   Fit temperature and abstention thresholds only on calibration after architecture and objective choices freeze.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                        11
+TRACE-RX                                                                                                                                                                                      Robust AI-generated image detection
+
+
+
+
+ 11 / TRANSFORMATION EXPERIMENTS
+
+
+ Measure signal survival, interaction, order and saturation
+         Experiment                              Design                                                                                                      Report artifact
+
+         Official single transforms              JPEG 90/70/50/30; blur 0.5/1/2; resize 0.5/0.25; noise 0.02/0.05/0.10; colour +/-20%; crop 80%              Branch x severity survival heatmap
+
+
+         Interactions                            Eight-condition fractional-factorial design on 2,000 development masters                                    Pairwise interaction matrix
+
+
+         Order                                   Resize/JPEG, blur/JPEG and crop/resize in both directions                                                   Order-effect comparison
+
+
+         Repeated operation                      JPEG -> JPEG; resize -> resize; blur -> blur with every stage scored                                        Saturation curves
+
+
+         Generalisation                          Unseen generator, unseen authentic source and journey-held-out groups                                       Low-FPR and worst-group table
+
+
+
+
+ For branch k under condition t, standardised class separation is d'(k,t)=[mu_AI(k,t)-mu_real(k,t)] / sqrt{[var_AI(k,t)+var_real(k,t)]/2}. This measures discrimination independently of a fixed classification threshold.
+
+
+
+        Signal survival                                                           Interaction                                                              Order and saturation
+        For branch k and transform t, rho(k,t) = d'(k,t) / [d'(k,clean)           I(a,b) = d'(a after b) - d'(a) - d'(b) + d'(clean). A negative           Compare a after b with b after a; score every
+        + epsilon]. Negative survival means the signal has become                 value indicates super-additive damage.                                   repeated-operation stage so a small second change is not
+        misleading.                                                                                                                                        mistaken for preserved evidence.
+
+
+
+
+ Uncertainty and error analysis
+ Cluster-bootstrap by master lineage. Each high-confidence error records source/generator, authentic subtype, complete transform lineage, expert scores, selected-intervention
+ responses, uncertainty and the exact stage where the decision changed.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                       12
+TRACE-RX                                                                                                                                                                             Robust AI-generated image detection
+
+
+
+
+ 12 / EVALUATION MATHEMATICS
+
+
+ Report discrimination, low-FPR utility, calibration and abstention
+        Metric                               Definition                                                                          Interpretation
+
+        ROC-AUC                              P[s(x_AI) > s(x_real)] with ties assigned one half                                  Threshold-free ranking; can hide low-FPR failure
+
+        TPR at fixed threshold               TPR(tau)=P[s>=tau | Y=1]                                                            Synthetic-image sensitivity at an operational threshold
+
+        FPR at fixed threshold               FPR(tau)=P[s>=tau | Y=0]                                                            Authentic-image harm; primary guardrail
+
+        Brier score                          Brier=N^(-1) sum_i (p_i-y_i)^2                                                      Overall probability accuracy
+
+        Expected calibration error           ECE=sum_b (n_b/N)|accuracy_b-confidence_b|                                          Whether confidence matches empirical frequency
+
+        Risk at coverage c                   R(c)=error rate among the c fraction with lowest uncertainty                        Value of abstaining on insufficient evidence
+
+        Worst-group metric                   min_g metric_g over predeclared generator/source/journey groups                     Prevents a good mean from hiding systematic collapse
+
+
+
+    Threshold protocol                                                                                         Uncertainty protocol
+    ●   Choose tau from authentic calibration scores, never from the locked test.                              ●   Resample master lineages so clean and journey endpoints remain paired.
+    ●   For a nominal 1% calibration FPR, use the empirical 99th percentile or a                               ●   Use Wilson or exact binomial intervals for FPR/TPR with the small locked
+        conservative quantile bound.                                                                               cohort.
+    ●   On locked testing, report the realised FPR(tau) and TPR(tau); never retune tau to                      ●   Report per-seed metrics for finalists; do not treat multiple seeds as
+        force 1% test FPR.                                                                                         independent images.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                              13
+TRACE-RX                                                                                                                                                                                                                  Robust AI-generated image detection
+
+
+
+
+ 13 / 24-HOUR EXECUTION
+
+
+ Two work queues, four decision gates, one locked test
+         Hours                 Spark A - global/modelling                                                   Spark B - forensic/transforms                                                   Gate / output
+
+         0-1                   Manifest, split and decoder checks                                           Transform parity and 200-image smoke test                                       Immutable protocol
+
+         1-5                   Cache PE, DINOv3 and DINOv2 features                                         Train forensic tower; prepare dev interventions                                 Fallback tower if unstable
+
+         5-9                   B0-B2 backbone trial; A0-A3 components                                       Intervention and single-transform sweep                                         Primary backbone; selected interventions
+
+         9-14                  O0 BCE and O1 CVaR                                                           Selected responses; O2 pAUC and O3 staged                                       Freeze objective
+
+         14-18                 Train finalist fusion                                                        Interactions, order and repeated operations                                     Freeze architecture and weights
+
+         18-20                 Calibration and abstention                                                   Complete transformed evaluation                                                 Freeze thresholds
+
+         20-21                 Open 2,000-image locked metrics once                                         Locked forensic inference                                                       No further model changes
+
+         21-24                 Tables, calibration and narrative                                            Heatmaps, curves and error cards                                                Reproducible report package
+
+
+
+    Mandatory evidence                                                                                                                     Kill order if late
+    ●   Three-backbone trial plus global/forensic expert-error correlation.                                                                ●   Second forensic seed.
+    ●   No-intervention versus selected-intervention marginal gains.                                                                       ●   Denoise and saturation interventions.
+    ●   BCE versus CVaR, with pAUC only if stable.                                                                                         ●   Partial-AUC if unstable.
+    ●   Official single transforms and repeated JPEG/resize/blur.                                                                          ●   Lower-priority interaction pairs.
+    ●   Calibration, master-clustered intervals and locked-test discipline.                                                                ●   Full locked transformation matrix; preserve final clean and journey evaluation.
+
+
+ The 2,000-image locked set supports rapid independent validation, not production certification. All selection, intervention screening and objective tuning finish before its labels are opened.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                                                   14
+TRACE-RX                                                                                                                                                                                               Robust AI-generated image detection
+
+
+
+
+ 14 / ERROR ANALYSIS
+
+
+ Turn failures into explanations and the next data decision
+ Error analysis operates on master lineages, not individual transformed records. Every false positive, false negative and abstention is joined to source, generator, authentic
+ subtype, content stratum and complete transformation history.
+
+        Failure class                                      Diagnostic evidence                                                                         Likely response
+
+        Source or format shortcut                          Metadata-only model predicts label; errors concentrate by codec/source                      Rebalance acquisition; canonicalise model inputs while preserving masters
+
+        Transformation erasure                             Branch d' collapses at a specific stage; availability remains high                          Correct availability targets; add matched transformed training views
+
+        Semantic confusion                                 Global expert fails on a content subtype while forensic expert remains stable               Collect matched real/AI content; revise prototype prompts
+
+        Authentic-manifold mismatch                        Real screenshots, art or CGI are far from every authentic prototype                         Add subtype prototypes and hard authentic examples
+
+        Generator novelty                                  Unseen generator errors with stable transformation response                                 Expand generator diversity; favour generator-invariant evidence
+
+        Calibration failure                                Ranking remains good but confidence is wrong after degradation                              Quality-aware temperature scaling or wider abstention region
+
+
+
+    Statistical decomposition                                                                                                   Required report artifacts
+                                                                                                                                ●   Three-backbone table and architecture component ladder.
+    Model error probability with logit
+                                                                                                                                ●   Signal-survival heatmap and interaction/order matrices.
+    P(E=1)=beta_0+u_source+v_generator+w_transform+r_content+(v x w)_interaction.
+    Large random-effect estimates identify systematic groups rather than isolated                                               ●   Intervention marginal-utility curve and response examples.
+    examples.                                                                                                                   ●   Objective Pareto plot, calibration curve and risk-coverage plot.
+    ●   Use master-clustered bootstrap intervals for all metrics.                                                               ●   Representative error cards with expert and stage-wise scores.
+    ●   Use paired score deltas because clean and transformed views share a master.
+    ●   Report Wilson or exact binomial intervals for low-count test FPR.
+
+
+ Selected foundations: Wang et al., CVPR 2020; Ojha et al., CVPR 2023; GenImage, NeurIPS 2023; DINOv2, 2023; DINOv3, 2025; Perception Encoder, NeurIPS 2025; PE-SPC, arXiv 2608.04935; Dual Data Alignment, NeurIPS 2025; RRDataset, ICCV
+ 2025; AIGIBench, NeurIPS 2025. Organiser validation remains sealed from training and selection.
+
+
+
+
+TikTok TechJam 2026 - training proposal                                                                                                                                                                                                     15
+

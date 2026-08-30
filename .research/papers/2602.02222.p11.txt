@@ -1,0 +1,78 @@
+   A                          Detailed Benchmark Results and Original Weight Performance
+   A.1                        Detailed Breakdown of Benchmark Performance
+   In this section, we provide the comprehensive quantitative results across five benchmarks to supplement the main experiments.
+   Tables 5 and 6 detail the performance on AIGCDetect and DRCT-2M, covering a wide range of architectures from early GANs
+   (e.g., ProGAN, StyleGAN) to modern diffusion models (e.g., SDXL). Table 7 presents the results on UniversalFakeDetect,
+   focusing on robustness against unseen processing pipelines. To assess generalization across **diverse generative paradigms,
+   ranging from open-source foundations to proprietary commercial engines**, Table 8 and Table 9 illustrate the detection accuracy
+   on Synthbuster (including Midjourney v6 and DALL-E 3) and the newly curated EvalGEN benchmark, respectively. These
+   detailed breakdowns confirm that MIRROR maintains consistent performance across diverse generative semantics and architectural
+   paradigms, identifying forgery traces even in challenging high-fidelity samples where baseline methods often exhibit significant
+   volatility.
+
+
+   A.2                        Evaluation of Official Weights
+   To ensure a fair comparison of architectural performance, we evaluate baseline methods using both the officially released weights
+   (“Official”) and weights retrained on our format-aligned SDv1.4 dataset (“Ours”). Results in Table 10 present the performance
+   under both settings. By utilizing the retrained weights, we prioritize format alignment and data scale consistency, ensuring
+   that all detectors are trained under the premise of eliminating format discrepancies and maintaining identical dataset scale. This
+   standardization eliminates discrepancies arising from varying training data sources, thereby establishing a fair and balanced
+   baseline for analyzing intrinsic architectural capabilities.
+
+
+   B                          Robustness to Common Corruptions
+   To evaluate the reliability of MIRROR in real-world deployment, we conduct stress tests against three prevalent image degra-
+   dations: JPEG compression, spatial resizing, and Gaussian blurring. As illustrated in Figure 8, MIRROR exhibits remarkable
+   resilience across all corruption types, consistently outperforming state-of-the-art baselines. Unlike traditional artifact-driven
+   detectors—which often suffer from severe performance degradation due to their over-reliance on fragile high-frequency pat-
+   terns—MIRROR leverages the ideal reference to maintain stable detection, even when low-level spectral cues are compromised by
+   unseen perturbations.
+
+                   90                                                                      90                                                                 90
+
+                   80                                                                      80                                                                 80
+Balanced Acc (%)
+
+
+
+
+                                                                        Balanced Acc (%)
+
+
+
+
+                                                                                                                                           Balanced Acc (%)
+
+
+
+
+                   70                                                                      70
+                                                                                                                                                              70
+                   60
+                                                                                           60
+                                                                                                                                                              60
+                   50
+                                                                                           50
+                   40                                                                                                                                         50
+                                                                                           40
+                   30                                                                                                                                         40
+                        100       90           80            60    40                           0.5   0.75         1.0        1.5    2.0                           0   0.5         1.0        1.5   2.0
+                                       JPEG Quality Factor                                                   Resizing Scale                                                  Blurring Sigma
+                                                         AIDE           B-Free                         DRCT              FatFormer         SAFE                        MIRROR
+                                                         Aligned        C2P-Clip                       DDA               NPR               UnivFD
+
+   Figure 8: Robustness evaluation under common image degradations. We report the Balanced Accuracy curves under (Left)
+   JPEG compression with quality factors ranging from 100 down to 40, (Middle) Spatial resizing with scale factors from 0.5× to
+   2.0×, and (Right) Gaussian blurring with sigma values (σ) from 0 to 2.0. MIRROR (red curve) maintains high stability across all
+   settings, whereas baseline methods exhibit significant volatility.
+
+
+
+   JPEG Compression. We simulate lossy compression artifacts by varying the JPEG quality factor from 100 down to 40. This
+   process introduces quantization noise that effectively obliterates the subtle high-frequency spectral fingerprints often exploited by
+   standard classifiers. MIRROR maintains its efficacy in this regime by anchoring its decision on manifold-consistent structural
+   residuals rather than volatile pixel-level statistics, which are easily corrupted by quantization.
+
+
+                                                                                                                11
+

@@ -1,0 +1,137 @@
+           PPM-CLIP: Probabilistic Prompt Modeling for Generalizable AI-Generated
+                                      Image Detection
+                                                                                                                                                                                       Supplementary Material
+6. Implementation Details of Patch Scoring                                                                                                                                                             Since computing the marginal likelihood p(D) is in-
+                                                                                                                                                                                                    tractable, we adopt variational inference. We introduce a
+For a given RGB image, we first view it into non-                                                                                                                                                   variational distribution qγ (Φ|D), parameterized by γ, to ap-
+overlapping patches, denoted as I = {p1 , p2 , . . . , pn },                                                                                                                                        proximate the true posterior.
+where pi ∈ RM ×M ×3 .
+   Each patch is then transformed into the frequency do-
+main using the Discrete Cosine Transform (DCT), resulting                                                                                                                                           Independence Assumption and Factorization. A core
+in corresponding frequency patches:                                                                                                                                                                 tenet of our PPM framework is the semantic decoupling of
+                                                                                                                                                                                                    prompts. Accordingly, we assume independence among the
+                              \mathcal {P}_f = \{p^{\text {dct}}_1, p^{\text {dct}}_2, \dots , p^{\text {dct}}_n\}, \quad p^{\text {dct}}_i \in \mathbb {R}^{M \times M \times 3}.                  latent components. The variational distribution is factorized
+                                                                                                                                                                                                    as:
+To assess the frequency complexity of each patch, we em-
+ploy a simple yet effective scoring strategy using Nf dis-                                                                                                                                                                                                     q_{\gamma }(\Phi |\mathcal {D}) \approx q_{\gamma _s}(\Phi _{s}|\mathbf {I}) \cdot q_{\gamma _g}(\Phi _{g}) \cdot q_{\gamma _c}(\Phi _{c}).                                                                                                            (17)
+tinct band-pass filters defined as:
+                                                                                                                                                                                                    Crucially, while Φs is conditioned on the specific input im-
+                                                                                                                                                                                                    age I , Φg and Φc are modeled as global latent variables
+          F^{(k)}_{i,j} = \begin {cases} 1, & \text {if } \frac {2M}{N_f} \cdot k \leq i + j < \frac {2M}{N_f} \cdot (k + 1), \\ 0, & \text {otherwise}. \end {cases}                        (14)   shared across the dataset. Although Φg and Φc are not di-
+                                                                                                                                                                                                    rectly conditioned on individual input images, their param-
+                                                              (k)                                                                                                                                   eters are optimized jointly with Φs to maximize the total
+    Here, Fij denotes the weight at position (i, j) in the                                                                                                                                          evidence.
+k-th band-pass filter. These filters allow us to differentiate
+between patches with high and low frequency components.
+                                    M ×M ×3                                                                                                                                                         ELBO Derivation. By applying Jensen’s inequality, we
+Next, for the m-th patch pdct
+                           m ∈ R            , we compute its
+                                                                                                                                                                                                    derive the Evidence Lower Bound (ELBO) on the log
+grade Gm by applying the Nf filters to the logarithm of the
+                                                                                                                                                                                                    marginal likelihood:
+absolute DCT coefficients. The grading function is defined
+as:
+                                                                                                                                                                                                          \log p(\mathcal {D}) &= \log \int p(\mathcal {D}|\Phi )p(\Phi )d\Phi \notag \\ &\geq \mathbb {E}_{q_{\gamma }(\Phi |\mathcal {D})}\big [ \log p(\mathcal {D},\Phi ) - \log q_{\gamma }(\Phi |\mathcal {D}) \big ] \notag \\ &= -\mathcal {L}_{e}(\mathcal {D}). \label {ELBO}
+
+
+  G_m = \sum _{k=0}^{N_f-1} 2^k \cdot \sum _{c=0}^{2} \sum _{i=0}^{M-1} \sum _{j=0}^{M-1} F^{(k)}_{i,j} \cdot \log \left ( \left | p^{\text {dct}}_m(i,j,c) \right | + 1 \right ). 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      (18)
+                                                                                                                                                                                             (15)
+where c denotes the channel index.                                                                                                                                                                     We minimize the negative ELBO, denoted as Le (D). Us-
+                                                                                                                                                                                                    ing the chain rule p(D, Φ) = p(D|Φ)p(Φ), we decompose
+7. Derivation of the ELBO Objective                                                                                                                                                                 the objective:
+
+Let the training dataset be denoted as D = {I, Y}, where                                                                                                                                                         \mathcal {L}_{e}(\mathcal {D}) = &\ \mathbb {E}_{q_{\gamma }(\Phi |\mathcal {D})}\big [ \log q_{\gamma }(\Phi |\mathcal {D}) - \log p(\Phi ) \big ] \label {eq:kl_term_appendix} \\ & - \mathbb {E}_{q_{\gamma }(\Phi |\mathcal {D})}[\log p(\mathcal {D}|\Phi )]. \label {eq:recon_term_appendix}
+I represents the input images and Y represents the corre-                                                                                                                                                                                                                                                                                                                                                                                                                                                             (20)
+sponding ground-truth labels. To construct a probabilis-
+tic distribution over textual prompts, we model the image-
+                                                                                                                                                                                                    Connection to Loss Functions. This decomposition re-
+generic, image-specific, and class-indicative text embed-
+                                                                                                                                                                                                    veals the theoretical foundation of our proposed loss func-
+dings as latent random vectors Φg , Φs , and Φc , respectively.
+                                                                                                                                                                                                    tions:
+For compactness, we denote the complete set of latent vari-
+ables as Φ = {Φg , Φs , Φc }. These variables correspond to                                                                                                                                         • KL Divergence (Eq. 19): Due to the factorization as-
+the distributions parameterized by the Prompt Flow Module                                                                                                                                              sumption, the joint KL divergence splits into the sum of
+described in Section 3.2 of the main text.                                                                                                                                                             KL divergences for each component:
+    Following Bayes’ theorem, the posterior distribution
+over the latent prompts given the dataset is:                                                                                                                                                                                       \mathcal {L}_{KL} = \mathcal {L}_{KL}(\Phi _g) + \mathcal {L}_{KL}(\Phi _s) + \mathcal {L}_{KL}(\Phi _c).                                                                                                                                                                         (21)
+
+                                                                                                                                                                                                      This justifies applying the flow-based KL regularization
+                                                                                                    p(\Phi |\mathcal {D}) = \frac {p(\mathcal {D}|\Phi )p(\Phi )}{p(\mathcal {D})}.          (16)     (Eq. 8 in the main text) to each distribution individually.
+                                                                                                                                             1.0
+GAN | GAN 0.99 0.99 0.86 0.97 0.98 0.79 0.99 1.00 0.90 0.99 0.97 0.99 0.98 1.00 0.99 0.99 0.98 1.00 0.99 1.00 0.97                                 on GANs and evaluating on Stable Diffusion (denoted as
+GAN | GAN 0.99 1.00 0.99 0.99 0.99 1.00 0.99 0.99 0.98 0.99 0.98 0.99 0.96 1.00 0.83 0.99 0.99 0.99 0.97 1.00 0.98                           0.8   “GAN | SD”). As observed in the heatmap, when the model
+   GAN | SD 0.82 0.77 0.95 0.99 0.98 0.99 0.92 0.99 0.85 0.73 0.98 0.96 0.67 0.96 0.58 0.96 0.91 0.98 0.96 0.99 0.90
+                                                                                                                                             0.6
+                                                                                                                                                   encounters unseen artifacts from a novel generator, relying
+   GAN | SD 0.90 0.98 0.22 0.39 0.71 0.39 0.96 0.99 0.42 0.39 0.98 0.99 0.42 0.84 0.66 0.77 0.19 0.18 0.92 0.97 0.66
+   SD | GAN 1.00 1.00 1.00 1.00 0.93 0.96 0.98 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 0.99 0.98 1.00 0.99
+                                                                                                                                                   on a single static prompt is highly risky. This is evidenced
+                                                                                                                                             0.4
+   SD | GAN 1.00 0.97 0.99 1.00 0.98 0.99 0.99 1.00 0.98 1.00 1.00 0.99 0.90 0.99 0.98 1.00 1.00 0.99 0.98 0.98 0.99                               by the high variance and occasional low confidence scores
+     SD | SD 1.00 1.00 1.00 1.00 0.99 1.00 1.00 1.00 0.99 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00                        0.2   (e.g., values dropping to 0.18 or 0.22, shown in warm col-
+     SD | SD 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00                              ors) among individual prompt hypotheses (columns 0–19).
+              0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 Avg.                                                                         0.0
+                                                                                                                                                   However, our probabilistic ensemble approach effectively
+ Figure 6. Heatmap of ensemble confidence scores demonstrating                                                                                     neutralizes this unreliability. By aggregating the predic-
+ cross-generator robustness. The Y-axis denotes the domain shift                                                                                   tions across all B × N adaptive hypotheses, the final en-
+ scenarios (“Train Model | Test Source”). The X-axis represents                                                                                    semble consensus (the “Avg” column) consistently main-
+ the confidence scores produced by the B × N (B = 2, N = 10)                                                                                       tains a high and stable confidence level. This visualization
+ individual generated prompt pairs (columns 0–19) alongside their                                                                                  explicitly validates our core motivation: shifting from a sin-
+ final ensemble average (the “Avg” column).                                                                                                        gle deterministic boundary to a probabilistic distribution of
+                                                                                                                                                   hypotheses is the key to mitigating generator-specific biases
+                                                                                                                                                   and achieving robust cross-domain detection.
+ • Reconstruction (Eq. 20): The term − log p(D|Φ) repre-
+   sents the negative log-likelihood of the data observation.                                                                                      8.2. Robustness against Image Degradations.
+   In our framework, the prompt generation is conditioned
+   on the visual feature Xcls extracted from I. To ensure                                                                                          To assess the model’s resilience to common image trans-
+   the image-specific latent Φs retains fine-grained visual fi-                                                                                    mission and processing artifacts, we evaluate its robust-
+   delity, we maximize the likelihood of the visual features                                                                                       ness against Gaussian blur and JPEG compression across
+   p(Xcls |Φs ). Assuming a Gaussian likelihood, minimizing                                                                                        the GenImage benchmark. For the baseline comparisons,
+   this term is equivalent to the Mean Squared Error (MSE)                                                                                         SAFE and LOTA utilize their officially provided models.
+   loss:                                                                                                                                           As illustrated in Figure 7, our PPM-CLIP demonstrates ex-
+                                                                                                                                                   ceptional resilience against visual degradations. Under in-
+                      -\log p(\mathbf {X}_{\text {cls}}|\Phi _s) \propto \|\mathbf {X}_{\text {cls}} - \text {Dec}(\Phi _s)\|^2_2,         (22)    creasing Gaussian blur (Figure 7a, up to a sigma of 3),
+                                                                                                                                                   our method maintains a robust AUC of approximately 90%,
+   which corresponds to Lrec (Eq. 9 in the main text).                                                                                             whereas competing methods (e.g., LOTA and SAFE) expe-
+     Consequently, maximizing the ELBO is equivalent to                                                                                            rience severe performance drops. Similarly, against JPEG
+ minimizing the weighted sum of LKL and Lrec . In our full                                                                                         compression (Figure 7b), our model sustains high AP scores
+ objective (Eq. 13), these terms serve as a generative regu-                                                                                       across varying quality levels. While methods like SAFE
+ larization to the discriminative classification task.                                                                                             and LOTA exhibit a sharp decline in performance even at
+                                                                                                                                                   mild compression levels (Quality 95), PPM-CLIP consis-
+ 8. Robustness Evaluation.                                                                                                                         tently outperforms all baselines, highlighting the superior
+                                                                                                                                                   robustness of our probabilistic reasoning approach against
+                                                   Ours            UnivFD               LOTA             SAFE
+                                                                                                                                                   low-level visual distortions.
+          100                                                                         100
+           90                                                                          90
+AUC (%)
+
+
+
+
+           80                                                                          80
+                                                                             AP (%)
+
+
+
+
+           70                                                                          70
+           60                                                                          60
+           50                                                                          50
+                0              1                    2                   3                   100           95             90           85    80
+                       (a) Gaussian Blur Sigma                                                     (b) JPEG Compression Quality
+
+ Figure 7. Robustness evaluation against common image Degrada-
+ tions. (a) AUC scores under different Gaussian blur sigma values.
+ (b) AP scores under different JPEG compression qualities.
+
+
+ 8.1. Insights into Cross-Generator Robustness.
+ To further elucidate the mechanism behind our model’s su-
+ perior cross-generator generalization, we visualize the con-
+ fidence scores of individual generated prompts in Figure 6.
+ The heatmap illustrates various training and testing scenar-
+ ios, including challenging domain shifts such as training
+

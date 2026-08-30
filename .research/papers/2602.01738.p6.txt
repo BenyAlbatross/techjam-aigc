@@ -1,0 +1,67 @@
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                                                              Anonymous Author(s)
+
+
+                                        Table 5: Comparison of Text–Image Similarities on In-the-Wild Dataset
+
+                                                             Chameleon                                                                  SocialRF
+      Method                                Top-1                             Top-2                                Top-1                                      Top-2
+                                Matched Text    Similarity Score   Matched Text   Similarity Score     Matched Text        Similarity Score        Matched Text       Similarity Score
+      CLIP (2021.2.26)          modern design        0.628         portrait            0.345              forged                0.332             urban                    0.253
+      Siglip (2023.3.27)          unaltered          0.318        original             0.212              edited                0.232            original                  0.222
+      Siglip2 (2025.2.21)          genuine           0.385          urban              0.250             portrait               0.202            vintage                   0.191
+      Meta CLIP (2023.9.28)      AI generated        0.678        deepfake             0.091           AI generated             0.902            original                  0.024
+      Meta CLIP-2 (2025.7.29)    AI generated        0.828        deepfake             0.064           AI generated             0.924           deepfake                   0.038
+      PE (2025.4.17)             AI generated        0.861        deepfake             0.021           AI generated             0.943           deepfake                   0.031
+                                                         CommunityAI                                                                Midjourney-CC
+      Method                                Top-1                             Top-2                                Top-1                                      Top-2
+                                Matched Text    Similarity Score   Matched Text   Similarity Score     Matched Text        Similarity Score        Matched Text       Similarity Score
+      CLIP (2021.2.26)            portrait           0.346            nature           0.326               urban                0.332         midjourney_images            0.260
+      Siglip (2023.3.27)         AIGIBench           0.283              real           0.281                fake                0.278              original                0.246
+      Siglip2 (2025.2.21)          urban             0.209            portrait         0.201               urban                0.212              portrait                0.194
+      Meta CLIP (2023.9.28)     AI generated         0.726           deepfake          0.086         midjourney_images          0.604            AI generated              0.284
+      Meta CLIP-2 (2025.7.29)   AI generated         0.858           deepfake          0.041         midjourney_images          0.621            AI generated              0.308
+      PE (2025.4.17)            AI generated         0.878         CommunityAI         0.029         midjourney_images          0.722            AI generated              0.218
+
+
+
+this phenomenon. Because fully controlled retraining of propri-                                     Table 5 presents the results of our semantic probing, revealing
+etary billion-parameter models is computationally infeasible, we                                 a striking dichotomy between legacy and modern VLMs. Legacy
+do not attempt to make a definitive causal claim. Instead, we use                                models like CLIP (2021) and SigLIP (2023) exhibit “forensic blind-
+a set of complementary indirect analyses to characterize how this                                ness”, mapping synthetic images to content terms (e.g., portrait).
+capability may emerge. Taken together, these analyses suggest two                                Notably, even the recently released SigLIP 2 (2025) fails to detect
+main mechanisms: semantic conceptualization in Vision-Language                                   forgery concepts (Top-1: genuine/urban), likely because it relies on
+Models and implicit distribution discrimination in Self-Supervised                               the older WebLI dataset [7] curated in 2022, prior to the generative
+Learning models.                                                                                 explosion. In sharp contrast, modern VLMs trained on recent web
+                                                                                                 crawls (MetaCLIP 2, PE) consistently align fake images with “AI
+                                                                                                 generated”. Crucially, on Midjourney-CC, these models specifically
+4.1      Mechanism I: Semantic Conceptualization                                                 retrieve “midjourney_images”, providing definitive evidence that
+         in VLMs                                                                                 their capability stems from exposure to recent, platform-specific
+For Vision-Language Models (VLMs), we hypothesize that their                                     metadata which older datasets lack.
+capability stems from the contrastive pre-training objective. During
+training, massive volumes of synthetic images co-occur with meta-
+data or captions containing explicit indicators of their source (e.g.,
+                                                                                                 4.2     Mechanism II: Data-Driven Feature
+midjourney,AI generated). Consequently, the model internalizes a                                         Discrimination in SSL
+powerful semantic shortcut: it learns to align the visual features of                           While VLMs rely on semantic tags, Self-Supervised Learning (SSL)
+synthetic content directly with forgery-related textual concepts. To                            models like DINOv3 lack textual supervision, yet they often outper-
+validate this, we conduct a text-image alignment analysis without                               form VLMs in our benchmarks. We hypothesize that this capability
+training any classifier. We probe whether the frozen embedding                                  is acquired implicitly through distribution fitting: by training on
+space of VLMs naturally clusters synthetic images closer to forgery-                            a massive web corpus mixed with generative content, the model
+related prompts. We constructed a comprehensive text pool cate-                                 learns to encode the distinct low-level signatures of the genera-
+gorized into three conceptual groups to probe the model’s internal                              tive manifold into its feature space as separable clusters, indepen-
+associations:                                                                                   dent of semantic labels.
+     • Forgery-Related Concepts: Terms explicitly denoting au-                                      To validate that this capability stems from data exposure rather
+       thenticity or fabrication (e.g., ‘fake’, ‘real’, ‘AI generated’,                         than architectural advantages, we conduct a counterfactual experi-
+       ‘authentic’, ‘manipulated’, ‘synthetic’).                                                ment. We employ the identical DINOv3 ViT-7B architecture but
+     • Content-Related Concepts: Neutral descriptions of vi-                                    vary the pre-training data source: DINOv3-Web (LVD-1689M):
+       sual content (e.g., ‘sunset’, ‘landscape’, ‘portrait’, ‘abstract                         Pre-trained on a large-scale web corpus containing 1.6 billion di-
+       art’, ‘technology’, ‘nature’).                                                           verse internet images, which naturally includes a significant volume
+     • Source-Related Concepts: Specific names of generative                                    of AIGI. DINOv3-Sat (Sat-493M): Pre-trained on 493 million satel-
+       models or platforms (e.g., ‘GenImage’, ‘ADM’, ‘BigGAN’, ‘glide’,                         lite images, a domain strictly devoid of generative content.
+       ‘Midjourney’).                                                                               Table 6 delivers a decisive finding. While the web-trained base-
+   We evaluate the cosine similarity on in-the-wild benchmarks                                  line excels, DINOv3-Sat completely fails on fake images, despite
+and our newly collected Midjourney-CC dataset (3,000 images                                     performing well on real ones. This collapse proves that the model
+from reddit.com/r/midjourney, late 2025) to strictly control for data                           classifies unseen fakes as “real" simply because it is not included
+leakage.                                                                                        in pretrained data. The conclusion is the forensic capability of SSL
+                                                                                            6
+

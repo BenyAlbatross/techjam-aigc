@@ -1,0 +1,89 @@
+      �                                                                             Key
+                                                Memory                             Value
+                                                 Bank
+                                                                                                                      Uncertainly
+
+
+
+            Phase 1: Encoding Reality Priors                                   Phase 2: Reference-Comparison
+
+                                             Memory Bank (M)               Memory Bank (M)
+                                                                                                     Reconstruct Perplexity
+                                                                                                                                       Fake
+                                                                                                                                     (Anomaly)
+                                Extractor                         frozen
+
+                                                                                             Recon.
+                                                                                                        �
+                                                 ������   ����
+                                                                                                             Residual
+                                                                                Extractor               �                 Classify
+                                                                                               See                                     Real
+                                                                                                                                     (Consistent)
+
+
+Figure 4: Architecture of MIRROR. The framework operates in two distinct phases. In Phase 1, a frozen DINO encoder extracts
+patch-level features from real images to encode Reality Priors within an orthogonal memory bank that approximates the real-image
+manifold. In Phase 2, the learned priors are frozen. Given an input image, MIRROR constructs a manifold-consistent Ideal
+Reference through sparse projection and identifies forgeries via Reference-Comparison. This process utilizes both the reconstruct
+perplexity and the comparison residual to evaluate whether the input deviates from the learned reality manifold.
+
+two signals are projected into evidence vectors Vper and Vres              5.2 Definition of the Human-Imperceptible
+respectively:                                                                  Subset
+ Vper = MLPper ([smax , sent ]),     Vres = Linear(∆F ). (4)               Based on these observations, we define a human-imperceptible
+                                                                           subset consisting of generated samples that challenge human
+The final forgery probability ypred is predicted by a classifica-          perception. Such samples either deceive observers into con-
+tion head MLPC acting on the concatenated evidence:                        fidently judging them as real or induce significant hesitation
+             ypred = MLPC (Concat[Vper , Vres ]) .               (5)       during decision-making. Formally, following psychophysical
+                                                                           principles, we define the human-imperceptible subset Dhard
+The framework is optimized by a binary cross-entropy loss:                 as:
+
+    LP hase2 = −y log ypred − (1 − y) log(1 − ypred ),           (6)       Dhard = {x ∈ Xgen | S(x) ≥ τreal ∨ RT (x) > µrt + σrt },
+                                                                                                                                         (7)
+where y ∈ {0, 1} is the ground-truth label. By anchoring the               where Xgen denotes AI-generated images, S(x) ∈ {1, 2, 3, 4}
+decision on the Reference-Comparison of these dual signals,                is the perceived realism score, τreal is the deception threshold,
+MIRROR identifies forgeries as instances that the real-world               and µrt , σrt are the mean and standard deviation of response
+manifold cannot sparsely reconstruct or accurately explain.                times across the benchmark. By focusing on samples that
+                                                                           appear highly realistic or induce pronounced uncertainty, this
+                                                                           subset provides a stringent testbed for assessing whether de-
+5     The Human-AIGI Benchmark                                             tection algorithms can reliably identify generative threats that
+                                                                           evade human perceptual scrutiny. By jointly evaluating perfor-
+5.1       Psychophysical Experimental Design                               mance on Dorig. and Dhard , we can assess whether a detector
+We conduct large-scale psychophysical experiments to probe                 has reached the milestone of reliably replacing human expert
+the limits of human perception in AIGI detection. We recruit               review.
+50 participants, including lay users, computer vision experts,
+and AIGI detection experts, and evaluate them on a dataset            6 Experiments
+DPhase       1:  Manifold
+  orig. comprising   over 30,000 Construction
+                                 images synthesized by 27 gen-Projector                 Phase 2: Deviation Discrimination
+erators from T2I-COREBENCH [22]. Participants perform                 6.1 Experimental Setup
+a controlled binary classification task, judging whether eachPhase 1
+                                                                          Phase 2
+image                 DINOwithout external assistance. Be-Phase 2 Datasets. We evaluate the out-of-distribution
+     � is real or AI-generated                                                                                    DINO    (OOD) detec-          �
+yond accuracy, we record two key psychophysical variables MHA                 (A)
+                                                                      tion performance    of MIRROR on a comprehensive set of
+                   Query realism (confidence score S) and
+for each trial: perceived                                             benchmarks. To avoid shortcut learning caused
+                                                                                        Input Image                       Queryby format-
+response time (RT ). These measurements capture not only              ting discrepancies, all datasets are verified following the DDA
+                                                                                               is
+                       Projsynthetic images from real ones.
+decision outcomes but also the cognitive effort and uncertainty
+                                      Real  Images           Value   Key               Fake    or Real              Projin image for- �
+                                                                      protocol [9], ensuring no systematic differences
+     �
+involved   in distinguishing                                          mat between real and fake samples. (1) StandardExpectation  Bench-
+Lay users aggregated results are shown in Fig. 3 (c), providing       marks: We evaluate on AIGCDetect [40], GenImage [41],
+insight into how human judgments rely on stable real-world           DRCT-2M [8], UnivFakeDetect [27], SynthbusterConcat         [1], and ∆�
+priors����  = than
+       rather       �
+                       �
+               � − generator-specific
+                       �
+                                      ��� − � � Update
+                            ������ = artifacts.                      EvalGEN [9]. These benchmarks MLP     cover dozens of generative
+                                                             Memory Bank (M)                                         Attention Map    Residual Map
+                                                                                        Verification
+                                                                       5
+

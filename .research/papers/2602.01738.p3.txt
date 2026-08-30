@@ -1,0 +1,72 @@
+Simplicity Prevails for Generalizable AIGI Detection                                                ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+Table 1: Performance on GenImage Benchmark. All detectors are trained on Stable Diffusion v1.4 and evaluated on unseen
+generators. Accuracy is averaged over real and fake classes. Best results in bold.
+
+           Method                     ADM         BigGAN       Midjourney   VQDM     GLIDE      SD-v1.4     SD-v1.5      Wukong        Avg.
+           Modern VFM Baselines (Ours)
+           MetaCLIP-Linear     0.549                   0.524      0.839     0.653     0.653       0.984      0.981         0.942       0.766
+           MetaCLIP2-Linear 0.690                      0.816      0.959     0.819     0.887       0.993      0.991         0.980       0.892
+           SigLIP-Linear       0.740                   0.658      0.812     0.857     0.916       0.955      0.954         0.918       0.851
+           SigLIP2-Linear      0.870                   0.924      0.879     0.954     0.951       0.995      0.995         0.994       0.945
+           PE-CLIP-Linear      0.712                   0.963      0.901     0.959     0.972       0.999      0.999         0.999       0.938
+           DINOv2-Linear       0.651                   0.889      0.811     0.757     0.852       0.967      0.961         0.929       0.852
+           DINOv3-Linear       0.849                   0.991      0.934     0.992     0.963       0.998      0.996         0.994       0.964
+           Competitor Methods
+           CNNSpot [28]               0.507            0.530     0.610      0.501     0.522       0.998       0.996        0.985       0.706
+           FreqNet [24]               0.608            0.939     0.849      0.626     0.858       0.950       0.949        0.937       0.840
+           Gram-Net [15]              0.576            0.591     0.665      0.528     0.747       0.989       0.988        0.960       0.756
+           NPR [25]                   0.619            0.849     0.850      0.567     0.844       0.996       0.994        0.984       0.838
+           UnivFD [18]                0.571            0.839     0.795      0.644     0.842       0.959       0.958        0.926       0.817
+           SAFE [13]                  0.600            0.880     0.829      0.708     0.836       0.964       0.967        0.903       0.836
+           LaDeDa [3]                 0.512            0.583     0.595      0.513     0.585       0.876       0.871        0.820       0.670
+           Effort [32]                0.704            0.749     0.756      0.824     0.807       0.874       0.873        0.867       0.807
+           DDA [6]                    0.880            0.741     0.960      0.719     0.862       0.986       0.985        0.986       0.890
+           OMAT [34]                  0.837            0.973     0.903      0.954     0.974       0.974       0.973        0.975       0.946
+           AIDE [31]                  0.602            0.648     0.813      0.694     0.514       0.959       0.957        0.954       0.768
+
+
+3     Simplicity Prevails: Benchmarking Modern                                  state-of-the-art generators released after 2024, including closed-
+      VFMs                                                                      source generators like Nano Banana, GPT4o and FLUX-Pro. These
+                                                                                serve as a strict test for generalization to unseen distributions.
+To empirically validate our hypothesis that the generalization ca-
+                                                                                   Specialized Detectors. We compare against a comprehensive
+pability of AIGI detection stems from the scale of pre-training data
+                                                                                suite of state-of-the-art forensic methods, spanning three cate-
+rather than complex architectural designs, we conduct a comprehen-
+                                                                                gories: (1) Specialized Detectors: Artifact-based methods like
+sive comparative analysis. We pit simple linear classifiers trained
+                                                                                CNNSpot [28], FreqNet [24], and NPR [25], as well as recent VFM-
+on modern Vision Foundation Models (VFMs) against a wide array
+                                                                                based adapters such as UnivFD [18], OMAT [34], Effort [32] and
+of state-of-the-art specialized detectors. Our evaluation protocol is
+                                                                                Dual-Data-Alignment (DDA)[6]. (2) Former VFM Baselines: To
+designed to be rigorous and progressively challenging, spanning
+                                                                                explicitly evaluate the impact of pre-training data evolution, we in-
+three distinct scenarios: standard academic benchmarks, realistic
+                                                                                clude earlier generations of foundation models, such as the original
+in-the-wild distributions, and unseen next-generation generative
+                                                                                OpenAI CLIP [20], SigLIP [33], Meta CLIP [30] and DINOv2 [19].
+models.
+                                                                                For DDA, we utilize the official pre-trained weights provided by
+                                                                                the authors, as its core contribution involves a specialized training
+                                                                                pipeline with VAE-reconstructed data alignment. All other methods
+                                                                                are trained on GenImage SDv1.4 training set for fair comparison.
+3.1     Experimental Setup
+                                                                                   Modern VFM Baselines. To test our “Simplicity Prevails” hy-
+Evaluation Benchmarks. To rigorously assess generalization, we                  pothesis, we select a representative set of modern Vision Founda-
+organize our evaluation into three progressively challenging cat-               tion Models as frozen feature extractors. These include Vision-
+egories. (1) Standard Benchmarks: We use GenImage [36], a                       Language Models (SigLIP2 [27], MetaCLIP 2 [8], Perception En-
+widely adopted benchmark comprising images from 8 generators                    coder [1]) and Self-Supervised Models (DINOv3 [22]). We at-
+(e.g., Stable Diffusion, Midjourney). Following standard protocols              tach a simple linear layer to the pooled output features of these
+[18], we use the Stable Diffusion v1.4 subset for training and the              backbones. Detailed specifications of model architectures and pre-
+remaining subsets for testing. (2) In-the-Wild Datasets: We eval-               training datasets are provided in Appendix.
+uate on Chameleon [31], WildRF [3], SocialRF and Commu-                            Implementation Details. All our VFM baselines are trained
+nityAI [14]. These datasets are collected from social media and                 solely on the GenImage (SD v1.4) training set. We keep the back-
+internet forums, featuring diverse, unconstrained post-processing               bone completely frozen and only update the linear head. We use the
+and unknown generative sources, representing a realistic detection              AdamW optimizer with a learning rate of 1𝑒 −3 and a batch size of
+scenario. (3) Unseen Generators: We employ AIGIHolmes [35]                      128 for 2 epoch. Images are resized and center-cropped to the native
+and AIGI-Now [5], recent benchmarks containing images from
+                                                                            3
+

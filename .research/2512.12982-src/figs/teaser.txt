@@ -1,0 +1,31 @@
+            real image       generated image        generator-aware
+            embedding          embedding               prototype      decision boundary
+                                                                                                            GAPL(Ours)
+
+
+                                                                                                           D3(CVPR’25)
+
+                     gen.A
+generated   real                                   thousand                                               UFD(CVPR’23)
+
+                     gen.B                           gens
+                                         real
+                scaling                        scaling
+ (a) original                 benefit                      conflict      GAPL(Ours)       (b) Number of Generators
+#50.oversmooth material surface
+
+
+
+
+     #36.distortion lines
+
+
+
+
+ #13.consistent portrait light
+
+
+
+
+  #4.complex natural scene
+

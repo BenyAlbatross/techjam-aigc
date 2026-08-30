@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seven papers on generalizable AI-generated image detection — an architecture reading for TRACE-RX</title>
+<style>
+:root { --ink:#202124; --muted:#5f6368; --line:#d7d9dc; --soft:#f6f7f8; --accent:#174ea6; --good:#176b3a; --warn:#8a4b08; }
+html { scroll-behavior:smooth; }
+body { color:var(--ink); background:white; font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif; margin:0; }
+main { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+h1,h2,h3,h4 { line-height:1.22; margin-top:1.8em; }
+h1 { font-size:2.25rem; margin-top:0; }
+h2 { font-size:1.65rem; padding-top:.25rem; border-top:1px solid var(--line); }
+h3 { font-size:1.3rem; }
+h4 { font-size:1.05rem; }
+p,li { max-width:82ch; }
+a { color:var(--accent); }
+nav { background:var(--soft); border:1px solid var(--line); padding:14px 20px; }
+nav ul { columns:2; margin:.5rem 0; padding-left:1.3rem; }
+.summary, .note, .warning, .verdict { border-left:4px solid var(--accent); background:var(--soft); padding:12px 16px; margin:1rem 0; }
+.warning { border-left-color:var(--warn); }
+.verdict { border-left-color:var(--good); }
+.small, figcaption { color:var(--muted); font-size:.9rem; }
+code { background:#f1f3f4; padding:.08rem .25rem; border-radius:3px; }
+pre { background:var(--soft); border:1px solid var(--line); padding:14px; overflow:auto; line-height:1.45; }
+table { border-collapse:collapse; width:100%; margin:1rem 0 1.5rem; font-size:.92rem; }
+th,td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+th { background:var(--soft); }
+.paper { margin-top:3rem; }
+.paper > h2 { border-top:2px solid var(--ink); }
+.tag { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:1px 8px; margin:2px; font-size:.82rem; color:var(--muted); }
+blockquote { border-left:3px solid var(--line); margin-left:0; padding-left:1rem; color:#3c4043; }
+@media (max-width:720px) { nav ul { columns:1; } h1 { font-size:1.8rem; } table { display:block; overflow-x:auto; } }
+@media print { main { max-width:none; } nav { break-inside:avoid; } a { color:inherit; } }
+</style>
+</head>
+<body><main>
+<header>
+<p class="small">Research reading note · prepared for the TechJam AIGC detector repository · 30 August 2026</p>
+<h1>Seven papers on generalizable AI-generated image detection</h1>
+<p><strong>An architecture reading for TRACE-RX, not seven abstract summaries.</strong></p>
+<p>This report asks four questions of each paper: What is the paper's actual argument? What computation does its model perform? What does its evidence establish, and not establish? What should we change, test, or refuse to copy in this repository?</p>
+<div class="warning"><strong>Scope boundary.</strong> The challenge is binary detection of <em>purely generated</em> versus authentic images, under JPEG, blur, resize, noise, color jitter, and crop. Local editing is useful as a scientific stress test but is outside the stated target. The final model must be under 2B parameters, publicly releasable, and must contain an original contribution rather than replicate an existing detector.</div>
+</header>
+
+<nav aria-label="Report contents"><strong>Contents</strong><ul>
+<li><a href="#executive">Executive synthesis</a></li>
+<li><a href="#repo">What exists in this repo</a></li>
+<li><a href="#matrix">Architecture comparison</a></li>
+<li><a href="#tensions">The useful disagreements</a></li>
+<li><a href="#dda">1. DDA</a></li>
+<li><a href="#mirror">2. MIRROR</a></li>
+<li><a href="#simplicity">3. Simplicity Prevails</a></li>
+<li><a href="#gapl">4. GAPL</a></li>
+<li><a href="#ppm">5. PPM-CLIP</a></li>
+<li><a href="#dou">6. Diversity over Uniformity</a></li>
+<li><a href="#sdid">7. Cross-modal / SDID</a></li>
+<li><a href="#trace">Implications for TRACE-RX</a></li>
+<li><a href="#experiments">Experiment order</a></li>
+<li><a href="#taste">Architecture review checklist</a></li>
+<li><a href="#sources">Sources and version notes</a></li>
+</ul></nav>
+
+<section id="executive">
+<h2>Executive synthesis</h2>
+<p>The strongest lesson is not “use CLIP,” “add a frequency branch,” or “learn prompts.” It is to locate the bottleneck before adding machinery. These papers place the bottleneck at four different levels:</p>
+<ol>
+<li><strong>Data and counterfactual construction.</strong> DDA says a detector learns whatever separates the training classes most cheaply. If JPEG history or semantics separates them, architectural sophistication will not save it.</li>
+<li><strong>Pretrained representation.</strong> <em>Simplicity Prevails</em> says recent web-scale VFMs already contain unusually transferable AIGC information. A frozen encoder and linear probe can beat elaborate detectors, especially in the wild.</li>
+<li><strong>Representation geometry.</strong> GAPL says the fake class becomes too heterogeneous as generators scale; DoU says supervised training collapses rich features into too few directions. MIRROR instead asks whether an input can be explained by a learned real-image dictionary.</li>
+<li><strong>Head, objective, and modality coupling.</strong> PPM-CLIP distributes decisions over learned prompt samples; SDID aligns RGB and a neighboring-pixel representation with contrastive and relational distillation losses.</li>
+</ol>
+<div class="summary"><strong>My bottom line for this repo.</strong> Make the hardest-to-beat baseline a frozen modern VFM plus a linear or shallow calibrated head. Fix data and format shortcuts before judging architecture. Add one cheap forensic branch only if it contributes errors that the VFM does not. Learn reliability from known transform lineage and use simple logistic stacking as the reference fusion. Treat LoRA, manifold memory, prototype matching, decorrelation, and probabilistic prompts as separate ablations—not ingredients to combine by default.</div>
+
+<h3>One sentence per paper</h3>
+<ul>
+<li><strong>DDA:</strong> make each synthetic training example a near-counterfactual of a real image in both pixels and compression/frequency, so the detector cannot win using dataset construction artifacts.</li>
+<li><strong>MIRROR:</strong> project DINO patch features through a sparse dictionary learned from real images, then detect from reconstruction residual and retrieval uncertainty.</li>
+<li><strong>Simplicity Prevails:</strong> before building a forensic architecture, try a frozen recent VFM; much apparent forensic ability may already have emerged from modern web pretraining.</li>
+<li><strong>GAPL:</strong> when thousands of fake generators form many modes, compress them into a small learned prototype space and adapt the encoder to that geometry.</li>
+<li><strong>PPM-CLIP:</strong> replace a single pair of class prompts with an input-conditioned distribution of prompt adjustments, while using DCT-ranked patch contrast to tune the visual encoder toward local artifacts.</li>
+<li><strong>Diversity over Uniformity:</strong> keep layer-wise forensic cues informative but decorrelated, so training does not collapse the decision onto one brittle feature direction.</li>
+<li><strong>SDID:</strong> jointly shape a semantic RGB embedding and a local neighboring-pixel embedding by cross-modal contrast and mutual neighborhood distillation.</li>
+</ul>
+</section>
+
+<section id="repo">
+<h2>What we are actually trying to do in this repository</h2>
+<p>The repository has a deterministic visual EDA workflow and a classical feature-robustness laboratory. It does <strong>not</strong> yet contain a trained neural detector or the required production inference entry point. The current neural design is a proposal, TRACE-RX (“Transformation-Reliability-Aware AI Image Detection”), not implemented fact.</p>
+<p>The existing 376-parent pilot should be read as a shortcut warning, not detector evidence. On clean <code>canonical_128</code> confirmation data, a nuisance-only probe using size/codec variables reaches 0.862 AP, above the 0.819 AP from all engineered candidates. Leave-one-dataset-out results approach prevalence on important cells. The current cache predates the expanded feature profile and has no modern chronological generator test or semantic-VFM control. Its strongest result is therefore that source and preprocessing can dominate. The executable safeguards are in better shape than the model: 48 repository tests pass, including binary-scope, demo-split, license, transform, and locked-confirmation guards.</p>
+<p>TRACE-RX proposes:</p>
+<ul>
+<li>a trial among frozen PE-Core-L/14, DINOv3-L/16, and DINOv2-L/14 global encoders;</li>
+<li>a 40–60M native-patch forensic tower over RGB, residual, block-DCT, Fourier phase, and neighboring-pixel inputs;</li>
+<li>authentic-subtype prototype or manifold evidence;</li>
+<li>mild test-time interventions such as JPEG q95, blur 0.5, and resize 0.95, used to measure whether evidence survives;</li>
+<li>availability, heteroscedastic uncertainty, and covariance-aware fusion;</li>
+<li>lineage-safe train/fusion/dev/calibration/locked-test partitions, low-FPR metrics, worst-group evaluation, and an abstention reporting layer.</li>
+</ul>
+<p>The accompanying internal critique already identifies the main implementation risks: this is too much for a 24-hour/two-DGX-Spark budget; availability has no fully specified target; the proposed generalized least-squares formula assumes commensurate unbiased expert outputs; the custom tower is likely undertrained; and data provenance/canonicalization are not settled.</p>
+<div class="verdict"><strong>Why this paper set is especially relevant.</strong> DDA attacks the missing data-canonicalization story. <em>Simplicity Prevails</em> challenges both the custom tower and routine LoRA. SDID tests the RGB+NPR part. MIRROR gives a concrete version of authentic-manifold evidence. DoU challenges representation collapse but conflicts with reliability-aware weighting. GAPL asks when multi-generator diversity helps or hurts. PPM-CLIP is the strongest warning against equating architectural sophistication with established real-world robustness.</div>
+</section>
+
+<section id="matrix">
+<h2>Architecture comparison at a glance</h2>
+<table>
+<thead><tr><th>Paper</th><th>Where it places the bottleneck</th><th>Data flow</th><th>Backbone state</th><th>Main evidence gap for our task</th></tr></thead>
+<tbody>
+<tr><td>DDA</td><td>Biased class construction</td><td>real → VAE reconstruction → matched JPEG → pixel mixup; DINOv2 classifier</td><td>LoRA rank 8</td><td>Only a narrow explicit transform suite; smartphone pipelines remain a stated limitation</td></tr>
+<tr><td>MIRROR</td><td>Artifact classification uses the wrong reference</td><td>DINO patches → sparse real-memory projection → residual + attention entropy/max → MLP</td><td>Phase 1 frozen; phase 2 DINOv3 LoRA</td><td>“Real-only” claim is qualified by binary SD1.4 phase 2; mild JPEG q90/resize .9</td></tr>
+<tr><td>Simplicity</td><td>Weak/old pretraining and over-engineering</td><td>frozen pooled VFM feature → linear head</td><td>Fully frozen</td><td>Pretraining exposure and leakage are hard to audit; still degrades under recapture/transmission</td></tr>
+<tr><td>GAPL</td><td>Fake-class heterogeneity plus fixed encoder capacity</td><td>CLIP → supervised 128D space → PCA directions → cross-attention to 64 prototypes → FC</td><td>Stage 1 frozen; stage 2 LoRA</td><td>Needs 550k images from ~4.7k generators; only JPEG/blur robustness shown</td></tr>
+<tr><td>PPM-CLIP</td><td>A single discriminative boundary is too rigid</td><td>CLIP image + DCT-ranked patch loss; planar-flow prompt samples + prompt repository → frozen text encoder → mean similarities</td><td>Vision LoRA rank 4, layers 12–23</td><td>No in-the-wild or challenge-style transform evaluation; most gain appears to come from PWCL</td></tr>
+<tr><td>DoU</td><td>Supervised feature collapse</td><td>frozen CLIP layer CLS tokens → per-layer variational bottlenecks → HSIC decorrelation → weighted sum → class prompts</td><td>Image and text encoders frozen</td><td>Only JPEG/blur; uniform contribution pressure can be wrong after evidence-destroying transforms</td></tr>
+<tr><td>SDID</td><td>RGB semantics omit source-invariant local relations</td><td>RGB DINOv2 + derived NPR ResNet-101 → InfoNCE + mutual neighbor-distribution KL → concat classifier</td><td>DINOv2 LoRA; ResNet-101 trained/adapted</td><td>No post-processing study—even GenImage’s available degraded-image task is skipped; NPR is expected to be fragile to resize, blur, and JPEG</td></tr>
+</tbody>
+</table>
+<p class="small">Numbers across papers are not directly rankable. They use different training sets, backbones, test subsets, preprocessing, thresholds, and sometimes official weights versus retraining. “Mean accuracy” is a protocol-specific measurement, not a model property.</p>
+</section>
+
+<section id="tensions">
+<h2>The useful disagreements</h2>
+<h3>Frozen versus adapted encoders</h3>
+<p><em>Simplicity Prevails</em> finds that rank-4/8 LoRA on one SD1.4 source can sharply reduce in-the-wild performance. DDA, MIRROR, GAPL, PPM-CLIP, and SDID all use LoRA successfully under their protocols. This is not a contradiction that can be resolved by taste. The important variables are training diversity, objective, which layers are adapted, and whether the evaluation resembles pretraining or the narrow fine-tuning source.</p>
+<p>For TRACE-RX, frozen versus LoRA must therefore be a paired experiment with the same data, preprocessing, head, and evaluation. A LoRA run belongs <em>after</em> the frozen baseline. “LoRA is parameter-efficient” is not evidence that it preserves generalization.</p>
+
+<h3>Compact versus diverse representations</h3>
+<p>GAPL deliberately maps thousands of generator modes into a low-variance 128D prototype space. DoU deliberately preserves high effective rank and decorrelates layer cues. Both report gains because “variance” is not intrinsically good or bad:</p>
+<ul>
+<li>within-generator nuisance variance and dataset identity should be removed;</li>
+<li>distinct, stable evidence families should not collapse into one shortcut;</li>
+<li>between-generator modes may need either explicit mixture structure or coverage, not indiscriminate averaging.</li>
+</ul>
+<p>A good review question is not “does this model increase diversity?” but “which axes are compressed, which remain distinct, and what invariance justifies each choice?”</p>
+
+<h3>Uniform contribution versus availability</h3>
+<p>DoU regularizes layer aggregation weights toward uniformity and asks predictions to survive removal of each cue. TRACE-RX proposes the opposite: a cue should become quiet when a transform destroyed it. Both can be right at different levels. Prevent <em>training-wide monopoly</em> by one branch, but allow <em>sample-conditional non-uniformity</em> at inference. The relevant ablation is a diversity penalty on clean training representations plus transform-supervised availability at fusion—not fixed uniform voting.</p>
+
+<h3>Artifacts versus semantics versus a real reference</h3>
+<p>SDID and PPM-CLIP strengthen artifact sensitivity. <em>Simplicity Prevails</em> argues that web-pretrained semantics and structural knowledge are more robust. MIRROR asks for deviation from a real-image dictionary. DDA tries to remove shortcut artifacts so the remaining learned signal is more causal. The field is moving from “find the universal fingerprint” toward <em>multiple conditional kinds of evidence</em>, but none of these papers demonstrates that simply concatenating them is safe.</p>
+</section>
+
+<section class="paper" id="dda">
+<h2>1. Dual Data Alignment Makes AI-Generated Image Detector Easier Generalizable (DDA)</h2>
+<p><span class="tag">NeurIPS 2025 Spotlight</span><span class="tag">data intervention</span><span class="tag">DINOv2 + LoRA</span></p>
+<h3>The argument</h3>
+<p>DDA starts from the right causal diagnosis: a binary classifier uses the easiest predictive difference in its training distribution. Existing reconstruction-pair methods reduce semantic mismatch by reconstructing a real image through a diffusion VAE. But the real file may already be JPEG-compressed while the reconstructed output is clean PNG-like RGB with restored high-frequency energy. A detector can therefore classify file history rather than synthetic origin.</p>
+<p>The paper demonstrates this with DCT visualizations and a frequency detector whose success on VAE reconstructions collapses after small high-frequency masking (paper Fig. 4–5). Its contribution is a training-data recipe, not a novel feature extractor:</p>
+<pre>real image x
+  → VAE encode/decode → reconstructed x_syn
+  → estimate JPEG quality of x
+  → with probability 0.5, compress x_syn at the matched quality
+  → pixel mix: x_mix = r·x + (1-r)·x_syn, r ~ Uniform(0, R_pixel)
+  → DINOv2 at 336 px, LoRA rank 8 → binary score</pre>
+<p>The reconstructed image holds content nearly fixed while introducing decoder traces. Matched compression removes a nuisance difference. Pixel mixup moves the positive closer to the real image, making the classification problem harder in a controlled way. In causal language, DDA attempts an intervention: hold semantics and acquisition format approximately constant, vary passage through a generative decoder.</p>
+
+<h3>What is architecturally interesting</h3>
+<p>The main “architecture” is the dataset. This is an important taste correction. A sophisticated multi-branch model trained on class-correlated formats will learn a sophisticated format shortcut. DDA uses a conventional strong backbone after investing its novelty budget in counterfactual pair construction.</p>
+<p>The generalization claim rests on two assumptions: VAE decoder artifacts transfer across latent-diffusion generators, and examples close to the real manifold force a tighter boundary that also separates farther-away generators. The second is a margin intuition, not a theorem; the first is weakened as generators move to different decoders or autoregressive pixel/token pipelines.</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>One DINOv2-LoRA model is evaluated without dataset-specific thresholds across 11 curated and in-the-wild benchmarks. It reports 90.7% average and 81.4% minimum balanced accuracy (Table 2).</li>
+<li>On EvalGEN, which includes FLUX and autoregressive systems, DDA reports 97.2% average fake accuracy (Table 10). This is strong cross-architecture evidence, although EvalGEN has no real negatives and therefore cannot reveal its false-positive rate.</li>
+<li>DDA reports gains over alternatives under JPEG 60, resize 2.0, and blur 2.0 (Fig. 9), and the method is not highly sensitive when its mix probabilities remain away from 0 and 1 (Fig. 10).</li>
+<li>Its training-pair generation is materially cheaper than diffusion reconstruction: 118k+118k examples and an estimated 5.9 hours of construction (Table 11).</li>
+</ul>
+
+<h3>What the evidence does not establish</h3>
+<ul>
+<li>The format alignment is based largely on JPEG quality estimation. File history also includes chroma subsampling, resizing kernels, sharpening, color management, WebP, screenshots, and repeated encodes.</li>
+<li>Mixing real pixels into a positive changes the pixel-level data while keeping a “synthetic” label. The closer <code>r</code> gets to 1, the less clearly the image is purely generated. This is defensible as representation training, but it is not a literal sample from the target class.</li>
+<li>Several new benchmarks are constructed by the same authors around the failure mode their method addresses. The broad external evaluation helps, but Table 2 also mixes official checkpoints trained on different data, so it is not a clean architecture comparison.</li>
+<li>The paper’s own limitation is directly relevant: modern smartphone computational photography can create “synthetic-like” artifacts, and heavy real-world processing remains unresolved (p. 10).</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Adopt the principle; adapt the mechanism.</strong> Before training any branch, decode and canonicalize class formats, audit metadata-only performance, and construct matched transform views for both classes. A small VAE-counterfactual arm could be original when combined with transform-reliability learning, but simply reproducing DDA would create competition-rule risk.</div>
+<p><strong>Discriminating experiment:</strong> train the same frozen-backbone head on (A) raw class data, (B) matched re-encoding, (C) semantic/lineage-matched pairs, and (D) a small DDA-style reconstruction set. Evaluate on clean and every official transform, with real/fake accuracy separated. If most gain comes from B, the repo needed hygiene, not VAE generation.</p>
+</section>
+
+<section class="paper" id="mirror">
+<h2>2. MIRROR: Manifold Ideal Reference ReconstructOR for Generalizable AI-Generated Image Detection</h2>
+<p><span class="tag">arXiv:2602.02222</span><span class="tag">real manifold</span><span class="tag">sparse memory</span></p>
+<h3>The argument</h3>
+<p>MIRROR argues that artifact classification uses an unstable reference: today’s known generators. Humans allegedly use a stable internal model of reality and detect violations relative to that model. The computational proposal is more precise than the cognitive story: learn a dictionary of common real-image patch features, project an input onto sparse combinations of that dictionary, and classify what the dictionary cannot explain.</p>
+<pre>image I → DINO patch features F (N×D)
+Phase 1, real images only:
+  learn memory M (4096 prototypes)
+  A = softmax(top-k(Q(F)K(M)^T / sqrt(D)))
+  F_hat = A V(M)
+  minimize ||F-F_hat||² + λ||MM^T-I||_F
+Phase 2:
+  freeze M and projector; LoRA-tune DINOv3 on real + SD1.4
+  residual ΔF = F-F_hat
+  perplexity evidence = MLP(max-attention, attention entropy)
+  residual evidence = Linear(ΔF)
+  concat → MLP → binary probability</pre>
+<p>Top-k=128 prevents an expressive dictionary from reconstructing every anomaly. Orthogonality discourages redundant prototypes. Retrieval entropy asks whether the model has a confident real explanation; the residual localizes unexplained structure.</p>
+
+<h3>The contribution behind the branding</h3>
+<p>This is dictionary learning / sparse coding / anomaly detection in a modern VFM feature space, followed by supervised fine-tuning. Calling the output an “ideal reference” is intuitive, but it is a reconstructed feature tensor, not an image and not a proof of physical realism. The useful idea is to give the classifier an explicit comparison target rather than only a free discriminative embedding.</p>
+<p>It also matters that MIRROR is not truly one-class at the end. Phase 1 uses 200k real COCO images. Phase 2 uses labeled real and SD1.4 examples and LoRA-tunes DINOv3. Thus its performance combines a real-only anchor with conventional binary adaptation.</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>With DINOv3, it reports average 94.0 balanced accuracy, 93.8 JPEG robustness at q90, and 93.9 resize robustness at 0.9 over six standard benchmarks (Table 1).</li>
+<li>It reports 91.2 average balanced accuracy over seven in-the-wild benchmark families (Table 2), a much more relevant stress test than GenImage alone.</li>
+<li>Real-only memory beats generated-only and mixed memories. The direct-classification baseline averages 84.7 versus 90.1 for full reference comparison; perplexity and residual each contribute (Table 4).</li>
+<li>The inverted-U sensitivity to 4096 prototypes and top-k 128 supports a real capacity trade-off: too little dictionary coverage underfits; too much lets anomalies reconstruct (Fig. 5).</li>
+<li>Inference is reported around 20 FPS on a V100, so the memory mechanism is not the dominant cost (Fig. 6).</li>
+</ul>
+
+<h3>Reasons for skepticism</h3>
+<ul>
+<li>The “human reference–comparison” framing is suggestive, not uniquely implied by the psychophysical data. Explicit reference images and expertise help humans; this does not prove that the proposed sparse dictionary matches the human mechanism.</li>
+<li>COCO is not “the real-image manifold.” It undercovers screenshots, scans, art, medical imagery, CGI, phone computational photography, and platform-processed media. An anomaly score against COCO risks false positives on authentic subtypes.</li>
+<li>DINOv3 pretraining itself may contain synthetic images. A memory learned on its features is not independent of generative exposure even if phase-1 samples are real.</li>
+<li>Robustness uses mild q90 JPEG and 0.9 resizing, much weaker than this challenge’s q30 and 0.25× conditions. In-the-wild results are more persuasive, but they do not isolate each transform.</li>
+<li>The reported residual can reflect domain or content mismatch as easily as synthetic origin. The authentic-subtype false-positive table is more important for us than the mean benchmark score.</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Adapt as a small late-stage ablation.</strong> TRACE-RX already proposes authentic-manifold evidence. Replace an ambitious subtype system with a compact patch dictionary on the selected frozen backbone. Keep the dictionary frozen and test whether residual/perplexity adds to a linear probe under source-disjoint authentic subtypes. Do not assume “distance from COCO” means AI.</div>
+<p><strong>Discriminating experiment:</strong> learn the memory on one authentic source, then report score distributions for held-out authentic cameras, screenshots, artwork, CGI, and processed phone photos before looking at fakes. If those authentic domains light up as anomalies, the branch measures source coverage, not origin.</p>
+</section>
+
+<section class="paper" id="simplicity">
+<h2>3. Simplicity Prevails: The Emergence of Generalizable AIGI Detection in Visual Foundation Models</h2>
+<p><span class="tag">arXiv:2602.01738v2</span><span class="tag">frozen VFM</span><span class="tag">linear probe</span></p>
+<h3>The argument</h3>
+<p>This paper is the essential architecture baseline. It claims that recent VFMs—DINOv3, Perception Encoder, MetaCLIP 2, and SigLIP 2—already separate authentic and generated images. A two-epoch linear head trained on SD1.4 can outperform specialized forensic models, especially on web and social-media datasets.</p>
+<pre>resize / center crop to each model's native input
+→ completely frozen VFM pooled feature
+→ one learned linear classifier
+AdamW, lr 1e-3, batch 128, 2 epochs, no extra augmentation</pre>
+<p>The proposed explanation has two forms. Vision-language encoders may learn explicit concepts such as “AI generated” or source tags from image-text pairs. Self-supervised DINOv3 may implicitly fit synthetic visual distributions because modern web data contains much more generative content than older corpora.</p>
+
+<h3>Why this matters for architectural taste</h3>
+<p>A new module must beat the information already in the backbone. Many forensic papers compare an elaborate method on a strong backbone against older methods or weaker backbones, then credit the module. This paper asks for the reverse control: fix the strongest current representation, use the smallest possible head, and measure the module’s incremental value.</p>
+<p>It also demonstrates why clean benchmark saturation is not enough. DINOv3-linear reports 0.964 average GenImage accuracy, but its more important result is 0.940 across Chameleon, WildRF, SocialRF, and CommunityAI, while many specialized methods collapse through low fake recall (Tables 1–2).</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>On modern generators, PE-linear reaches 0.978 on AIGIHolmes and MetaCLIP2-linear reaches 0.907 on AIGI-Now (Tables 3–4).</li>
+<li>The paper reports class-separated in-the-wild accuracy. This reveals whether a detector merely predicts almost everything real or fake, a failure hidden by AP alone.</li>
+<li>Modern web-pretrained DINOv3 substantially beats DINOv3 trained on satellite data under the same broad architecture (Table 6). This supports a data-exposure hypothesis, although it does not isolate synthetic exposure causally.</li>
+<li>On RRDataset, DINOv3 and MetaCLIP2 retain much more fake sensitivity after recapture and platform transfer than classic detectors, though they remain far from solved (Table 7).</li>
+<li>LoRA on one SD1.4 source hurts generalization for all three tested modern backbones. PE drops from 0.959 to 0.635 on Chameleon at rank 8; DINOv3 drops from 0.914 to 0.718 (Table 10).</li>
+</ul>
+
+<h3>What to challenge</h3>
+<ul>
+<li>The paper is careful to call its mechanism evidence indirect. Web-vs-satellite DINOv3 changes domain, scale, and data diversity together. It does not prove that synthetic pretraining examples are the causal factor.</li>
+<li>A VLM retrieving “AI generated” or “midjourney_images” may expose a powerful semantic/source shortcut. That can be operationally useful, but it is not necessarily a generator-invariant forensic concept.</li>
+<li>Recent web pretraining creates difficult leakage questions. Test images, near-duplicates, community source styles, or generator tags may have entered pretraining. Frozen does not mean unbiased or auditable.</li>
+<li>The linear probe is weak on pure VAE reconstruction and local editing (Table 8), and fake recall still drops substantially after recapture. For this challenge, local editing is out of scope; severe redistribution is not.</li>
+<li>The backbone licensing and weight-release conditions matter. Strong performance from a model that cannot be redistributed under the competition rules is not a usable result.</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Adopt as the primary baseline and architecture gate.</strong> TRACE-RX’s B0–B2 trial is correct, but each backbone needs a literal frozen linear probe before prototypes, prompts, a forensic tower, or LoRA. Keep LoRA as an ablation, not an assumed upgrade. Verify licenses before spending compute.</div>
+<p><strong>Discriminating experiment:</strong> for each legal candidate backbone, compare frozen linear, frozen two-layer MLP, and the same head with LoRA. Use identical lineage-safe data and report clean, each official severity, chained transforms, unseen generators, authentic subtypes, and low-FPR metrics. If LoRA wins only on seen/clean data, reject it.</p>
+</section>
+
+<section class="paper" id="gapl">
+<h2>4. Scaling Up AI-Generated Image Detection with Generator-Aware Prototypes (GAPL)</h2>
+<p><span class="tag">CVPR 2026</span><span class="tag">mixture structure</span><span class="tag">CLIP + LoRA</span></p>
+<h3>The argument</h3>
+<p>GAPL studies a different regime: not one seen generator, but thousands. It reports a “benefit then conflict” curve: adding generator sources initially helps, then a frozen encoder’s real and fake features overlap as the aggregate fake class becomes heterogeneous. A single centroid or hyperplane is a poor model of a multimodal positive class.</p>
+<p>Its two-stage solution is:</p>
+<pre>Stage 1 (12k prototype examples):
+  frozen CLIP ViT-L → learned 128D forgery projection + binary MLP
+  collect hidden embeddings from ProGAN, SD1.4, Midjourney + matched real
+  PCA separately on real and fake embeddings
+  retain 32 principal directions from each → 64-vector prototype matrix P
+
+Stage 2 (550k Community-Forensics-small, ~4.7k generators):
+  LoRA-adapt CLIP
+  image embedding f queries P through cross-attention
+  f_tilde = softmax((fWq)(PWk)^T/sqrt(D')) PWv
+  f_tilde → linear classifier; binary cross-entropy</pre>
+<p>This is closer to metric/mixture learning than ordinary binary classification. The useful idea is to preserve several canonical modes instead of averaging all fake generators into one class vector.</p>
+
+<h3>Subtleties an architecture reviewer should notice</h3>
+<p>The objects called “prototypes” are PCA directions, not centroids or exemplar generators. A principal component is an axis of variation with sign ambiguity; treating it as a key/value prototype is unconventional. The paper assumes high-variance directions contain transferable forensic information and low-variance directions are generator-specific noise. That assumption is plausible but not guaranteed—rare future-generator evidence can be low variance.</p>
+<p>GAPL also supplies the missing condition under which LoRA might help: very broad stage-2 data. This offers a reconciliation with <em>Simplicity Prevails</em>. Narrow SD1.4 LoRA overwrites broad knowledge; diverse 4.7k-generator LoRA may teach a useful projection. Only a controlled experiment in our data regime can decide.</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>GAPL reports 90.4 mean accuracy and 94.9 mean AP over six benchmarks/55 subsets while training on 550k rather than all 5M Community-Forensics images (Table 1).</li>
+<li>When several architectures are retrained on the same scaling data, GAPL leads the four-benchmark comparison at 95.5 mean accuracy (Table 3). This is more informative than comparisons using heterogeneous checkpoints.</li>
+<li>The ablation says LoRA is the largest single ingredient, while prototype matching and PCA add on top; all three reach 95.54/98.97 mAcc/mAP in that ablation protocol (Table 4).</li>
+<li>More than 16 prototypes adds little, and three generator families form a better prototype seed than one or random vectors (Fig. 5). This supports a small mixture, not thousands of experts.</li>
+<li>JPEG and blur robustness are reported, but only as curves; extreme conditions still cause 11.09 and 25.12 point degradation (Fig. 6).</li>
+</ul>
+
+<h3>Risks for our repo</h3>
+<ul>
+<li>The training corpus is far beyond the currently prepared hackathon data. Licensing and source overlap across ~4.7k Hugging Face generators require an audit.</li>
+<li>Generator-aware structure needs generator IDs during prototype construction. If those IDs correlate with resolution, prompt source, or encoding, prototypes can become dataset-source prototypes.</li>
+<li>The scaling study changes data composition as the number of generators grows. A decline can reflect real-source matching, sample allocation per generator, or encoder choice, not heterogeneity alone.</li>
+<li>The paper does not test crop, resize, color, noise, repeated redistribution, or low-FPR behavior. Mean AP across clean benchmark subsets cannot justify robust deployment.</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Borrow the diagnostic before the architecture.</strong> Plot performance, real/fake scatter, and error complementarity as generator families are added. If a benefit-then-conflict curve appears, try a small mixture/prototype head. Do not build GAPL at hackathon scale merely because the full paper had 4.7k generators.</div>
+<p><strong>Discriminating experiment:</strong> with a fixed number of total training images and matched authentic sources, add generator families in a predetermined order. Compare linear, mixture-of-prototypes, and LoRA heads. Hold the evaluation and preprocessing fixed. This separates “more images” from “more modes.”</p>
+</section>
+
+<section class="paper" id="ppm">
+<h2>5. PPM-CLIP: Probabilistic Prompt Modeling for Generalizable AI-Generated Image Detection</h2>
+<p><span class="tag">CVPR 2026</span><span class="tag">prompt distribution</span><span class="tag">frequency patch loss</span></p>
+<h3>The argument and computation</h3>
+<p>PPM-CLIP argues that a single discriminative boundary or one learned real/fake prompt pair cannot cover unseen artifact distributions. It creates an ensemble of input-adaptive text prompts. A separate patch-wise contrastive loss makes the CLIP vision encoder focus on high-DCT-energy regions.</p>
+<pre>Visual path:
+  image → CLIP ViT-L/14 with LoRA (layers 12–23)
+  split image into patches; score each by band-weighted log |DCT|
+  highest-frequency patch = anchor
+  other top-half patches = positives; bottom-half = negatives
+  metric margin loss + final CLS feature
+
+Prompt path:
+  three conditional Gaussian bases:
+    generic (learned vector), image-specific (CLS), class-specific (real/fake vectors)
+  K=10 planar-flow transforms → sampled adjustment vectors
+  add adjustments to B=2 learned prompt templates
+  frozen CLIP text encoder → B×N real/fake embedding pairs
+  cosine/temperature probabilities → average all prompt-pair probabilities
+</pre>
+<p>Training uses classification, patch contrast, prompt orthogonality, KL-to-prior, and image-feature reconstruction losses. It samples one prompt instance per image during training and four at inference. The model trains for one epoch at 224 px, with LoRA rank 4.</p>
+
+<h3>How to interpret the “probabilistic” claim</h3>
+<p>The method is probabilistic in the literal sense that it samples latent prompt adjustments through a normalizing flow. But it is still trained for binary discrimination and returns an average of binary softmax outputs. The paper does not show that sample variance is calibrated epistemic uncertainty, predicts failure, or improves selective risk. “Multiple hypotheses” is therefore best understood as a learned stochastic ensemble head, not Bayesian uncertainty about unseen generators.</p>
+<p>Likewise, the flow’s input-conditioned text embeddings can be a high-capacity nonlinear classifier in CLIP space. The claimed escape from a “single boundary” may come from head capacity, ensembling, PWCL-tuned vision features, or regularization—not necessarily generative prompt modeling.</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>It reports 98.8 mean accuracy on the Ojha/UFD protocol, 99.6 on GenImage, and 95.72 on DRCT (Tables 1–3).</li>
+<li>Component ablation is large: full 99.6 versus 92.1 without flow, 88.9 without the repository, and 80.0 without PWCL (Table 4).</li>
+<li>Random rather than DCT-guided patch selection reports 95.0, suggesting that the patch ranking contains useful information.</li>
+<li>More Monte Carlo samples trade throughput for small clean-benchmark gains: N=4 gives 99.6 at 35.61 FPS; N=10 gives 100.0 at 18.76 FPS (Table 5).</li>
+</ul>
+
+<h3>Why not to be seduced by the diagram</h3>
+<ul>
+<li>The largest ablation belongs to PWCL, not the probabilistic story. A fair control would compare the flow against a deterministic input-conditioned MLP and a parameter-matched deep ensemble on the same PWCL vision encoder.</li>
+<li>“High frequency” is not synonymous with “forgery.” Hair, foliage, text, fabric, sharpening, and sensor noise are authentic high-frequency content. Pulling all top-frequency patches together can encode texture/subject shortcuts.</li>
+<li>The main benchmarks are curated and near saturation. There is no Chameleon/RRDataset-style in-the-wild test and no systematic JPEG, blur, resize, crop, noise, or color evaluation.</li>
+<li>Frequency-ranked patch selection may become unreliable precisely under q30 JPEG, blur 2, and 0.25× resize—the challenge conditions where TRACE-RX wants to silence fragile evidence.</li>
+<li>Averaging hypotheses can improve accuracy without improving calibration. The repo needs ECE/Brier/selective-risk evidence before treating prompt dispersion as uncertainty.</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Avoid direct replication.</strong> It is complex, close to an existing detector, and does not answer our robustness question. Borrow two experiments: patch-level evidence maps, and a parameter-matched test of whether a multi-hypothesis head adds beyond a simple nonlinear head. Do not add normalizing flows until the frozen VFM and simple fusion baselines are exhausted.</div>
+</section>
+
+<section class="paper" id="dou">
+<h2>6. Diversity over Uniformity: Rethinking Representation in Generated Image Detection</h2>
+<p><span class="tag">CVPR 2026</span><span class="tag">effective rank</span><span class="tag">multi-layer CLIP</span></p>
+<h3>The argument</h3>
+<p>DoU observes that a pretrained feature space has many directions, while detector training can concentrate variance and predictive sensitivity into one or two components. This “feature collapse” yields an easy seen-generator boundary but discards weaker cues that may transfer. The paper therefore extracts CLS features from several frozen CLIP layers and tries to keep their learned cue representations relevant, compact, and mutually different.</p>
+<pre>frozen CLIP ViT-L/14 → CLS token from N stages
+for each stage i:
+  CIB_i predicts a stochastic bottleneck z_i
+  KL(q(z_i|v_i) || N(0,I)) removes input information
+  cue-removal consistency keeps predictions stable without cue i
+across stages:
+  minimize pairwise HSIC(cue_i, cue_j) to decorrelate
+  weighted aggregation with weights regularized toward uniform
+  global CIB
+→ cosine similarity to learned real/fake prompts from frozen text encoder
+→ cross-entropy + bottleneck + HSIC + weight regularization
+</pre>
+<p>This sits conceptually between multi-layer probing and redundancy-reduction methods such as Barlow Twins. It asks the detector to use several hierarchical views instead of only the final compressed token.</p>
+
+<h3>Strong ideas and weak theory</h3>
+<p>The effective-rank diagnostic is valuable even if the architecture is not. If a detector’s predictions saturate after one principal component, it is likely vulnerable to removal of that direction. But high rank is not automatically causal, robust, or useful; nuisance variation also increases rank.</p>
+<p>The paper describes its information bottleneck as a theoretical constraint, but the implementation is a variational surrogate. KL to a unit Gaussian does not by itself prove removal of task-irrelevant information. HSIC equals zero iff independence only under conditions on the kernel and population; finite-batch estimates and kernel choices matter. The architecture is best judged empirically, not as a guarantee.</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>All methods are trained on GenImage SD1.4 and tested across UFD, GenImage, and AIGI-Holmes. DoU reports 92.81 average accuracy and 99.52 AP, with 90.02 cross-generator accuracy (Table 1 and Fig. 5).</li>
+<li>AFCL alone raises cross-generator accuracy from 85.56 to 91.15 in the component ablation; CIB and AFCL together are best (Table 1).</li>
+<li>The learned representation has effective rank 67.38 versus 1.37/1.92 for two comparison detectors, and needs many more PCs for 90% variance (Figs. 2 and 6).</li>
+<li>JPEG and Gaussian-blur curves are included (Fig. 8), but the paper does not report the numeric grid in the text and does not cover the other four challenge transforms.</li>
+<li>The few-shot curve is unusually useful: even 320 samples produces 80.98 accuracy/90.81 AP, showing the method is not solely a full-data effect (Fig. 7).</li>
+</ul>
+
+<h3>Architecture critique</h3>
+<ul>
+<li>Forcing layer cues to decorrelate can separate genuinely shared evidence rather than discover distinct forensic mechanisms. Transformer layers are sequential and naturally dependent.</li>
+<li>Cue-removal consistency pressures every cue to be individually predictive. This can create redundant copies of the same shortcut—the opposite of the intended diversity.</li>
+<li>Regularizing aggregation weights toward uniformity conflicts with transform reliability. After blur destroys a shallow texture cue, equal voting is undesirable.</li>
+<li>Reported effective rank can be raised by stochastic bottleneck noise or nuisance information. The paper needs a stronger link between each retained direction and cross-transform survival.</li>
+<li>Batch 512 on an H100 is not aligned with the repo’s most constrained training scenario, although frozen backbones allow caching.</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Adopt the measurement, not uniform fusion.</strong> Cache several layers from the chosen VFM. Measure effective rank, PCA performance curves, CKA/HSIC, and error overlap before building independent expert networks. If intermediate layers add robustness, a small multi-layer head is cheaper than a 40–60M forensic transformer.</div>
+<p><strong>Discriminating experiment:</strong> compare final-layer linear, concatenated multi-layer linear, a small decorrelated multi-layer head, and sample-conditional reliability fusion. Report whether extra rank survives each official transform and whether it improves low-FPR behavior on authentic subtypes.</p>
+</section>
+
+<section class="paper" id="sdid">
+<h2>7. Cross-modal Representation Learning for Diffusion-generated Image Detection (SDID)</h2>
+<p><span class="tag">CVPR 2026</span><span class="tag">RGB + NPR</span><span class="tag">contrastive distillation</span></p>
+<h3>Identity and scope</h3>
+<p>The unlinked title in the request resolves to the CVPR 2026 paper by Tao Gong, Dayong Wang, Qi Chu, Bin Liu, and Nenghai Yu. The paper calls its model SDID (“Strong Diffusion-generated Image Detector”). “Cross-modal” here does not mean image and text. Both modalities are deterministic views of the same RGB pixels:</p>
+<ul>
+<li><strong>RGB:</strong> the ordinary image, encoded by DINOv2 ViT-L/14 with LoRA;</li>
+<li><strong>NPR:</strong> in every non-overlapping 2×2 patch and channel, subtract the top-left pixel from all pixels, encoded by ImageNet-pretrained ResNet-101.</li>
+</ul>
+
+<h3>The architecture and objectives</h3>
+<pre>RGB image ─────────────→ DINOv2-L/14 + LoRA → f_rgb ─┐
+     └→ 2×2 neighbor differences → ResNet-101 → f_npr ─┤→ concat → classifier
+                                                       │
+Training only: four class-specific queues, length 2048 │
+  CMCL: same-image RGB/NPR = positive; opposite-class queued features = negatives
+  CMMD: match each modality's top-128 within-class neighbor-similarity distribution
+  L = cross-entropy + 0.1·InfoNCE + 0.1·bidirectional KL
+</pre>
+<p>CMCL increases real/fake separation across modalities. CMMD does not match vectors directly; it matches the local relational geometry of same-class samples in the two spaces. This is a good representation-learning distinction: one loss separates classes, the other aligns within-class neighborhoods.</p>
+
+<h3>Evidence worth retaining</h3>
+<ul>
+<li>On GenImage SD1.4 training, RGB alone gives 86.7, NPR alone 88.5, concatenation 90.1, CMCL 95.4, and CMMD 98.4 average accuracy (Table 4).</li>
+<li>RGB+NPR outperforms RGB+RGB augmentation and RGB+high-frequency alternatives under the same loss design (Table 5).</li>
+<li>It reports 98.4 on GenImage, 92.4 on DRCT-2M, and 96.1 on the broad CO-SPY benchmark (Tables 1–3).</li>
+<li>The RGB branch alone also benefits when NPR is used only as a training teacher, which suggests cross-view supervision can transfer local evidence without paying two-encoder inference cost (Table 6 in the paper).</li>
+</ul>
+
+<h3>What should make us cautious</h3>
+<ul>
+<li>NPR is precisely a local sampling-grid cue. JPEG, blur, resizing, noise, and screenshot pipelines directly alter it. The paper provides no post-processing robustness experiment.</li>
+<li>The two encoders are expensive: roughly 300M DINOv2 plus ResNet-101, with two full forward paths. The challenge permits this, but the opportunity cost is high. The paper reports no parameter, FLOP, latency, or memory measurements.</li>
+<li>Faithful reproduction is not possible from the paper alone: it omits the common-dimensional projection needed between 1024D DINO and 2048D ResNet features, LoRA rank/targets, optimizer, schedule, epochs, batch size, input resolution, augmentations, queue synchronization, and the stop-gradient/top-k details of mutual distillation.</li>
+<li>The class queues can make the embedding compact around dataset identities. Cross-generator tests help, but matched source and encoding controls are still necessary.</li>
+<li>Calling deterministic RGB-derived views separate modalities can overstate complementarity. The proper test is conditional error reduction after the official transforms, not feature dissimilarity alone.</li>
+<li>The paper focuses on diffusion-generated images even though GenImage includes GAN tests. Our hidden test explicitly spans older GANs and newer diffusion transformers.</li>
+</ul>
+
+<h3>Use in TRACE-RX</h3>
+<div class="verdict"><strong>Use as the direct ablation for the proposed neighbor-relations modality.</strong> First test a cheap NPR statistic or small CNN beside the frozen VFM. Then test NPR as a training-only teacher. Add a full ResNet-101 branch only if it improves the exact resize/JPEG/blur conditions where local relations are expected to fail.</div>
+<p><strong>Discriminating experiment:</strong> measure branch AUROC, fused gain, and feature/logit change from clean to each transformation. If NPR is strong clean but its conditional gain becomes zero or negative after 0.5× resize or q50 JPEG, it is the ideal test case for TRACE-RX availability—not a universal always-on expert.</p>
+</section>
+
+<section id="trace">
+<h2>What this literature does to the TRACE-RX proposal</h2>
+<h3>Keep</h3>
+<ul>
+<li><strong>Lineage-safe splits and locked evaluation.</strong> None of the seven papers makes duplicate/prompt lineage as central as this repo should.</li>
+<li><strong>Separate class and source performance.</strong> Mean accuracy can hide detectors that reject nearly all authentic or synthetic inputs.</li>
+<li><strong>Signal survival as the original thesis.</strong> The papers repeatedly show that cues fail differently. Turning that fact into explicit sample-conditional availability remains distinct from copying any one detector.</li>
+<li><strong>Intervention responses as features, not votes.</strong> A mild perturbation can diagnose fragility. It should not become six independently counted predictions.</li>
+<li><strong>Simple fusion baseline, calibration partition, and low-FPR reporting.</strong></li>
+</ul>
+
+<h3>Change</h3>
+<ul>
+<li><strong>Make a frozen modern VFM linear probe A0.</strong> Do not call a complex system successful until it beats this on unseen generators, authentic subtypes, and transformed data.</li>
+<li><strong>Move canonicalization before modeling.</strong> Add matched decode/re-encode and a metadata-only gate before the first neural experiment, following DDA’s causal lesson.</li>
+<li><strong>Reduce the forensic tower to RGB + residual + DCT initially.</strong> Phase and NPR are fragile and can be added only after cheap feature-lab evidence. A pretrained no-early-downsampling network is safer than a from-scratch 40–60M multimodal transformer.</li>
+<li><strong>Supervise availability from transform lineage.</strong> For branch <code>k</code> and transform <code>t</code>, define a development target from clean-to-transformed margin/accuracy retention. Prevent the gate from learning only transform identity by checking within-transform survival variation and using counterfactual matched classes.</li>
+<li><strong>Use logistic stacking first.</strong> The proposed GLS weights require expert logits to be commensurate unbiased estimators and may become negative. Treat covariance weighting as an ablation after calibrated stacking.</li>
+<li><strong>Make LoRA conditional.</strong> Narrow LoRA can destroy VFM knowledge; broad LoRA can help prototype learning. Run it only against a fixed frozen control.</li>
+<li><strong>Use DoU’s rank analysis as a diagnostic.</strong> Do not force uniform expert weights at inference.</li>
+<li><strong>Shrink authentic-manifold evidence.</strong> A compact MIRROR-like dictionary is testable; a full taxonomy of authentic prototypes is not yet justified.</li>
+</ul>
+
+<h3>Do not add yet</h3>
+<ul>
+<li>normalizing-flow prompt distributions;</li>
+<li>a 4.7k-generator prototype pipeline without a licensed corpus and a demonstrated benefit-then-conflict curve;</li>
+<li>two large encoders for RGB and NPR before a small training-only teacher experiment;</li>
+<li>heteroscedastic variance plus low-rank covariance plus abstention before basic probability calibration is measured;</li>
+<li>watermark/C2PA logic as a scored model branch, because the challenge says not to rely on watermarks and such metadata may be absent.</li>
+</ul>
+
+<h3>A defensible minimum architecture</h3>
+<pre>A0  matched/canonicalized training data
+    → legal modern VFM, frozen
+    → linear score + temperature scaling
+
+A1  A0 + small native-patch RGB/residual/DCT branch
+    → calibrated logistic stacking
+
+A2  A1 + two selected mild intervention responses
+    → transform-lineage-supervised availability gate
+    → logistic stack remains the fallback
+
+Stretch, one at a time:
+    compact real-memory residual | multi-layer VFM head | LoRA | NPR teacher
+</pre>
+<p>This is smaller than the proposal, but it tests TRACE-RX’s original contribution. If availability-aware fusion does not beat ordinary stacking under transformations, no amount of extra modalities will rescue the thesis.</p>
+</section>
+
+<section id="experiments">
+<h2>Recommended experiment order</h2>
+<table>
+<thead><tr><th>Gate</th><th>Question</th><th>Minimum comparison</th><th>Kill rule</th></tr></thead>
+<tbody>
+<tr><td>0. Data audit</td><td>Can metadata or format predict the label?</td><td>metadata-only; thumbnails; matched re-encoding</td><td>Do not train neural models until obvious shortcuts are neutralized or explicitly stratified</td></tr>
+<tr><td>1. VFM baseline</td><td>How much is already in legal frozen features?</td><td>each backbone: linear and 2-layer MLP</td><td>Drop backbones dominated on unseen, transformed, and authentic-subtype metrics</td></tr>
+<tr><td>2. Adaptation</td><td>Does LoRA add or overwrite?</td><td>frozen vs rank-4/8, same head and data</td><td>Reject if clean gain accompanies meaningful worst-group or in-wild loss</td></tr>
+<tr><td>3. Data intervention</td><td>Is the bottleneck class construction?</td><td>raw vs canonicalized vs matched pairs vs small VAE-counterfactual set</td><td>Do not credit architecture for gains explained by format hygiene</td></tr>
+<tr><td>4. Forensic complement</td><td>Does local evidence add conditionally?</td><td>A0 vs +RGB/residual/DCT; optional NPR teacher</td><td>Drop a branch whose cross-validated fused gain is within seed/bootstrap uncertainty</td></tr>
+<tr><td>5. Reliability</td><td>Can the system tell when a branch failed?</td><td>plain concat, logistic stack, quality-only gate, response gate</td><td>Reject the gate if it only recognizes transform type or increases authentic FPR</td></tr>
+<tr><td>6. Geometry</td><td>Is there collapse or multimodal conflict?</td><td>effective rank, PCA curves, CKA/HSIC, generator-addition curve</td><td>Add prototypes/decorrelation only when the diagnosed failure is present</td></tr>
+<tr><td>7. Stretch</td><td>Does a real dictionary explain remaining errors?</td><td>linear probe vs compact memory residual</td><td>Reject if held-out authentic domains score as anomalies</td></tr>
+</tbody>
+</table>
+
+<h3>Evaluation matrix required for every finalist</h3>
+<ul>
+<li><strong>Generalization:</strong> held-out generator families and time-forward models; do not average the seen SD1.4 subset into the headline unseen result.</li>
+<li><strong>Transforms:</strong> clean plus every stated severity of JPEG, blur, resize, noise, color jitter, crop; then a small predefined set of chains and orders.</li>
+<li><strong>Authentic coverage:</strong> cameras, phone computational photography, screenshots, scans, artwork, conventional CGI, text-heavy images, and platform-resaved images where licenses allow.</li>
+<li><strong>Metrics:</strong> AUROC/AP for ranking; balanced accuracy only with a fixed calibration threshold; TPR at 1% and 5% FPR with intervals; real and fake accuracy; worst group; ECE/Brier; latency.</li>
+<li><strong>Statistics:</strong> master-level bootstrap or confidence intervals, three seeds only for finalists, and no repeated selection on the locked set.</li>
+<li><strong>Shortcut controls:</strong> metadata-only, resolution/format-only, source prediction, label permutation, matched re-encoding, and duplicate/prompt lineage checks.</li>
+</ul>
+</section>
+
+<section id="taste">
+<h2>A compact checklist for critiquing an architecture</h2>
+<p>Use these questions on your own model, a friend’s diagram, or an AI-generated proposal.</p>
+<ol>
+<li><strong>Where is the alleged bottleneck?</strong> Data, representation, objective, fusion, calibration, or inference? Does the proposed module act at that level?</li>
+<li><strong>What is the smallest baseline with the same backbone and data?</strong> If it is missing, the contribution is not identified.</li>
+<li><strong>What information reaches each branch?</strong> Two deterministic transforms of RGB are two views, not automatically independent modalities.</li>
+<li><strong>What invariance is being imposed?</strong> Why should the label remain stable while the suppressed feature changes?</li>
+<li><strong>What diversity is desirable?</strong> Generator modes, evidence families, semantic content, and codec histories are different axes.</li>
+<li><strong>What can the model cheat with?</strong> File type, dimensions, source corpus, prompt, JPEG grid, generator ID, or pretraining leakage?</li>
+<li><strong>Does tuning improve the intended distribution?</strong> Parameter efficiency says nothing about catastrophic forgetting.</li>
+<li><strong>Are “prototypes,” “uncertainty,” or “manifold” operationally validated?</strong> Names do not establish calibration, coverage, or causal meaning.</li>
+<li><strong>Do components contribute under the hard condition?</strong> A branch that adds clean GenImage AP but harms q30 JPEG is not robust evidence.</li>
+<li><strong>Are losses compatible?</strong> Independence, compactness, uniformity, margin, and calibration can pull in opposing directions. Ablate them separately.</li>
+<li><strong>Is the benchmark claim protocol-complete?</strong> Require training source, test subsets, preprocessing, threshold, class balance, and real/fake breakdown.</li>
+<li><strong>Does complexity buy unique error correction?</strong> Measure error overlap and conditional fused gain, not just feature novelty.</li>
+<li><strong>Can the method be released and reproduced?</strong> Check model/data licenses, generation cost, hardware, and the <2B rule before optimizing.</li>
+</ol>
+<div class="summary"><strong>Taste in one line:</strong> prefer an architecture whose modules correspond to observed failure modes, whose invariances match the causal task, and whose gains survive a backbone-matched, data-matched, transform-matched ablation.</div>
+</section>
+
+<section id="sources">
+<h2>Sources, paper identity, and version notes</h2>
+<ol>
+<li>Ruoxin Chen et al. <a href="https://arxiv.org/abs/2505.14359">“Dual Data Alignment Makes AI-Generated Image Detector Easier Generalizable.”</a> arXiv:2505.14359v6, NeurIPS 2025 Spotlight. <a href="papers/2025-dual-data-alignment.pdf">Local PDF</a>.</li>
+<li>Ruiqi Liu et al. <a href="https://arxiv.org/abs/2602.02222">“MIRROR: Manifold Ideal Reference ReconstructOR for Generalizable AI-Generated Image Detection.”</a> arXiv:2602.02222v1, 2 Feb 2026. <a href="papers/2026-mirror-real-manifold.pdf">Local PDF</a>.</li>
+<li>Yue Zhou et al. <a href="https://arxiv.org/abs/2602.01738">“Simplicity Prevails: The Emergence of Generalizable AIGI Detection in Visual Foundation Models.”</a> arXiv:2602.01738v2, 15 Apr 2026; manuscript formatted for ACM MM 2026. <a href="papers/2026-simplicity-prevails-vfm-linear.pdf">Local PDF</a>.</li>
+<li>Ziheng Qin et al. <a href="https://arxiv.org/abs/2512.12982">“Scaling Up AI-Generated Image Detection with Generator-Aware Prototypes.”</a> arXiv:2512.12982v2; CVPR 2026. <a href="papers/2026-gapl-generator-aware-prototypes.pdf">Local PDF</a>.</li>
+<li>Xinyuan Wang et al. <a href="https://openaccess.thecvf.com/content/CVPR2026/html/Wang_PPM-CLIP_Probabilistic_Prompt_Modeling_for_Generalizable_AI-Generated_Image_Detection_CVPR_2026_paper.html">“PPM-CLIP: Probabilistic Prompt Modeling for Generalizable AI-Generated Image Detection.”</a> CVPR 2026. <a href="papers/2026-ppm-clip.pdf">Local PDF</a>.</li>
+<li>Qinghui He et al. <a href="https://openaccess.thecvf.com/content/CVPR2026/html/He_Diversity_over_Uniformity_Rethinking_Representation_in_Generated_Image_Detection_CVPR_2026_paper.html">“Diversity over Uniformity: Rethinking Representation in Generated Image Detection.”</a> CVPR 2026. <a href="papers/2026-diversity-over-uniformity.pdf">Local PDF</a>.</li>
+<li>Tao Gong et al. <a href="https://openaccess.thecvf.com/content/CVPR2026/html/Gong_Cross-modal_Representation_Learning_for_Diffusion-generated_Image_Detection_CVPR_2026_paper.html">“Cross-modal Representation Learning for Diffusion-generated Image Detection.”</a> CVPR 2026. <a href="papers/2026-sdid-cross-modal.pdf">Local PDF</a>.</li>
+</ol>
+<p class="small">The report uses the locally archived full PDFs, not abstracts alone. Page, figure, and table references refer to those versions. ArXiv papers can change; record the version when reproducing a number. This is a critical reading, so statements introduced as “the paper argues/reports” are author claims; judgments under critique and repo-use sections are this report’s synthesis.</p>
+</section>
+</main></body></html>

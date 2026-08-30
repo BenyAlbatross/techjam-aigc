@@ -1,0 +1,62 @@
+[27] U. et al. Ojha. Towards universal fake image detectors          [39] Xiao Yu, Kejiang Chen, Kai Zeng, Han Fang, Zijin Yang,
+     that generalize across generative models. In Proceedings             Xiuwei Shang, Yuang Qi, Weiming Zhang, and Neng-
+     of the IEEE/CVF Conference on Computer Vision and                    hai Yu. Semgir: Semantic-guided image regeneration
+     Pattern Recognition, pages 24480–24489, 2023.                        based method for ai-generated image detection and attri-
+                                                                          bution. In Proceedings of the 32nd ACM International
+[28] Y. et al. Qian. Thinking in frequency: Face forgery                  Conference on Multimedia, pages 8480–8488, 2024.
+     detection by mining frequency-aware clues. In European
+     conference on computer vision, pages 86–103. Springer,          [40] N. et al. Zhong. Patchcraft: Exploring texture patch for
+     2020.                                                                efficient ai-generated image detection. arXiv preprint
+                                                                          arXiv:2311.12397, 2023.
+[29] A. et al. Radford. Learning transferable visual models
+     from natural language supervision. In International con-        [41] M. et al. Zhu. Genimage: A million-scale benchmark
+     ference on machine learning, pages 8748–8763. PmLR,                  for detecting ai-generated image. Advances in Neural In-
+     2021.                                                                formation Processing Systems, 36:77771–77782, 2023.
+
+[30] A. et al. Rajan. Aligned datasets improve detection
+     of latent diffusion-generated images. arXiv preprint
+     arXiv:2410.11835, 2024.
+
+[31] R. et al. Rombach. High-resolution image synthesis with
+     latent diffusion models. In Proceedings of the IEEE/CVF
+     conference on computer vision and pattern recognition,
+     pages 10684–10695, 2022.
+
+[32] Oriane Siméoni, Huy V Vo, Maximilian Seitzer, Fed-
+     erico Baldassarre, Maxime Oquab, Cijo Jose, Vasil
+     Khalidov, Marc Szafraniec, Seungeun Yi, Michaël
+     Ramamonjisoa, et al.    Dinov3.    arXiv preprint
+     arXiv:2508.10104, 2025.
+
+[33] C. et al. Tan. Frequency-aware deepfake detection: Im-
+     proving generalizability through frequency space do-
+     main learning. In Proceedings of the AAAI Conference
+     on Artificial Intelligence, volume 38, pages 5052–5060,
+     2024.
+
+[34] C. et al. Tan. Rethinking the up-sampling operations
+     in cnn-based generative network for generalizable deep-
+     fake detection. In Proceedings of the IEEE/CVF Con-
+     ference on Computer Vision and Pattern Recognition,
+     pages 28130–28139, 2024.
+
+[35] C. et al. Tan. C2p-clip: Injecting category common
+     prompt in clip to enhance generalization in deepfake
+     detection. In Proceedings of the AAAI Conference on Ar-
+     tificial Intelligence, volume 39, pages 7184–7192, 2025.
+
+[36] S. et al. Wang. Cnn-generated images are surprisingly
+     easy to spot... for now. In Proceedings of the IEEE/CVF
+     conference on computer vision and pattern recognition,
+     pages 8695–8704, 2020.
+
+[37] S. et al. Yan. A sanity check for ai-generated image
+     detection. arXiv preprint arXiv:2406.19435, 2024.
+
+[38] Z. et al. Yan. Orthogonal subspace decomposition
+     for generalizable ai-generated image detection. arXiv
+     preprint arXiv:2411.15633, 2024.
+
+
+                                                                10
+

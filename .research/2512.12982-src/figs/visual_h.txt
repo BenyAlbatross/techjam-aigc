@@ -1,0 +1,17 @@
+#50.oversmooth material surface
+
+
+
+
+     #36.distortion lines
+
+
+
+
+ #13.consistent portrait light
+
+
+
+
+  #4.complex natural scene
+

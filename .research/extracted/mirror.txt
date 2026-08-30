@@ -1,0 +1,1086 @@
+                                                                                      Verification                                          Classify
+
+
+
+
+                                                                                                                                                                                          Semantic
+
+                                                                 Recon         Piexl
+                                                                                                        Phase 1: Manifold Construction
+                                                                 struct       Relatio
+                                                                       MIRROR: Manifold Ideal Reference ReconstructOR for
+                                                                                 n
+                         recon. pixel
+e
+                                                                 Frequ SemanGeneralizable AI-Generated Image Detection
+ n                                                                ency   tic
+cts                           sem.               freq
+                            Seen Artifacts
+                                                    Ruiqi Liu1,2,∗ Manni Cui3,∗ Ziheng Qin1,∗ Zhiyuan Yan6 Ruoxin Chen4 Yi Han5 Zhiheng Li1
+                                                              Priors
+                                                                  Chen1 ZhiJin Chen1 Kaiqing Lin8 Jialiang ShenFrequency
+                                                                                                               7
+wn                                                        Junkai                                                   Lubin Weng1 Jing Dong1
+                                                                             Expectation
+                                              Detector                  Fake             Yan Wang9,† Shu Wu1,†
+                                                                                                                                                                                                                            See         Pri
+ess
+                                                                      1        Verification
+                                                                          Institute of Automation, Chinese Academy of Sciences                      2
+                                                                                                                                                        School of Advanced Interdisciplinary Sciences, UCAS
+                                               Real
+                                                                                  3                                                                     4                         5
+                                                                                      Huazhong University of Science and Technology                         Tencent YouTu Lab         Southwest University
+                                                                                                                                                                Prototype
+                                                   Known Generator/               6                          7                                          8                            9
+      arXiv:2602.02222v1 [cs.CV] 2 Feb 2026
+
+
+
+
+                                                                                      Peking University          The University of Sydney                   Shenzhen University          Tsinghua University
+                                                    No compression                                                                                                                             Reconstruct
+                                                                                          Fake                     ∗
+                                                                                                                       Equal contribution       †
+                                                                                                                                                    Corresponding author                        Feature
+                                                                            Priors
+
+
+                                                        Traditional Artifacts Detection                           Human Detection               Imagine         transfer Mirror Detection                Reconstructor      Extractor
+
+
+                                                                       Seen
+                                                                      Artifacts          Fake Image                               Priors            Real Image                                  Priors          Prototype
+
+                                                         Extractor                                                      Brain                                                Memory Bank
+                                                                                                                                  Ideal Reference
+                                                                                                                                                                                              Ideal Reference
+
+
+                                                                     Artifacts                   Detector                                                                                                                Detector
+                                                                     Change                                                                      Comparison                                          Comparison
+                                                          Fake                                                          Fake                                                  Fake
+
+                                                                                                      Real                          See Image                     Fake                                   See Feature        Fake
+
+
+                                                Figure 1: Comparison of decision paradigms for AI-generated image detection. (Left) Traditional detectors treat detection
+                                                as a Artifacts-Driven classification task, often overfitting to generator-specific artifacts. (Middle) Humans employ a Reference-
+                                                Comparison strategy, anchoring judgment on the invariant priors of the physical world. (Right) Our MIRROR framework
+                                                explicitly encodes these priors to act as a Reconstructor: it projects the input into a manifold-consistent Ideal Reference. The
+                                                resulting reconstruction residual exposes forgeries as significant deviations from reality.
+
+                                                Abstract                                                                                            human experts, we introduce the Human-AIGI benchmark,
+                                                                                                                                                    featuring a psychophysically curated human-imperceptible
+                                                                                                                                                    subset. Across 14 benchmarks, MIRROR consistently out-
+                                                High-fidelity generative models have narrowed the percep-                                           performs prior methods, achieving gains of 2.1% on six stan-
+                                                tual gap between synthetic and real images, posing serious                                          dard benchmarks and 8.1% on seven in-the-wild benchmarks.
+                                                threats to media security. Most existing AI-generated im-                                           On Human-AIGI, MIRROR reaches 89.6% accuracy across
+                                                age (AIGI) detectors rely on artifact-based classification and                                      27 generators, surpassing both lay users and visual experts,
+                                                struggle to generalize to evolving generative traces. In con-                                       and further approaching the human perceptual limit as pre-
+                                                trast, human judgment relies on stable real-world regular-                                          trained backbones scale. The code is publicly available at:
+                                                ities, with deviations from the human cognitive manifold                                            https://github.com/349793927/MIRROR
+                                                serving as a more generalizable signal of forgery. Moti-
+                                                vated by this insight, we reformulate AIGI detection as a
+                                                Reference-Comparison problem that verifies consistency with
+                                                the real-image manifold rather than fitting specific forgery
+                                                                                                                                                    1         Introduction
+                                                cues. We propose MIRROR (Manifold Ideal Reference
+                                                                                                                                                                  “Perception is a process of hypothesis testing.”
+                                                ReconstructOR), a framework that explicitly encodes real-
+                                                                                                                                                                                                — Richard L. Gregory, 1980
+                                                ity priors using a learnable discrete memory bank. MIRROR
+                                                projects an input into a manifold-consistent ideal reference                                          High-fidelity generative models have largely closed the
+                                                via sparse linear combination, and uses the resulting resid-                                        perceptual gap between synthetic and real images, making
+                                                uals as robust detection signals. To evaluate whether detec-                                        generated content often indistinguishable from authentic pho-
+                                                tors reach the “superhuman crossover” required to replace                                           tographs [16, 18, 31, 3]. This trend threatens the reliability of
+
+
+                                                                                                                                            1
+                                                               1 3 5                     8 Q L Y ) '                        ' ' $                         + X P D Q                     0 , 5 5 2 5   2 X U V 
+                                                              5 H V 1 H W   
+                                                              5 H V 1 H W   
+                                                                                            & / , 3  6
+                                                                                            & / , 3  %
+                                                                                                                           ' , 1 2 Y   6
+                                                                                                                           ' , 1 2 Y   %
+                                                                                                                                                       / D \  X V H U
+                                                                                                                                                       & 9  ( [ S H U W
+                                                                                                                                                                                               ' , 1 2 Y   %
+                                                                                                                                                                                               ' , 1 2 Y   /
+                                                                                                                                                                                                                                  In contrast, humans exhibit substantially stronger scalability
+                                                              5 H V 1 H W               & / , 3  /                    ' , 1 2 Y   /             $ , * ,  ' H W  ( [ S H U W           ' , 1 2 Y   +
+                                                                                                                                                                                                                            in AIGI detection. Visual experts with extensive exposure to
+                                                                                                                                                                              
+   ' H W H F W L R Q  $ F F X U D F \    
+
+
+
+                                                                                                                                                                                                                    
+                                                                                                                                       
+                                                                                                                                                                                          
+                                                                                                                                                                                                                           real images significantly outperform non-experts. Human
+                                                                                                                        
+
+                                                                                                           
+                                                                                                                                                                                                                               detection accuracy further improves when reference images
+                                                                                                                                                
+                                                                                                                                                                                                                               are provided. We argue that this advantage does not arise from
+                                                   
+                                                                                                                                                                                                                   memorizing specific generative artifacts. Instead, humans
+                                                   
+                                                                                                                                                                                                                               treat prior knowledge as robust, method-agnostic regularities
+                                                   
+                                                                 1 3 5                     8 Q L Y ) '                          ' ' $                      + X P D Q                    0 , 5 5 2 5   2 X U V 
+                                                                                                                                                                                                                               of real-world images. As illustrated in Fig. 1 (Middle), these
+                                                                                                                                                                                                                               priors are used to construct an internal ideal reference and
+Figure 2: Scalability comparison of AIGI detection be-                                                                                                                                                                         detect deviations by comparing the observed image against
+tween detectors and humans on Human-AIGI. While ex-                                                                                                                                                                            this reference [12, 11]. Because this process is anchored to the
+isting methods (NPR [34], UnivFD [27], and DDA [9]) ex-                                                                                                                                                                        stable real-image distribution rather than the non-stationary
+hibit saturated performance as model size increases, humans                                                                                                                                                                    forged distribution, human judgments exhibit stronger cross-
+demonstrate strong prior-driven scalability. In contrast, MIR-                                                                                                                                                                 generator generalization and scalability (see Sec. 3).
+ROR exhibits similar human-like behavior, achieving sus-                                                                                                                                                                          Motivated by these findings, we propose MIRROR
+tained performance gains as model capacity scales from Base                                                                                                                                                                    (Manifold Ideal Reference ReconstructOR), the first frame-
+to Huge.                                                                                                                                                                                                                       work to formulate forgery detection as a Reference-
+                                                                                                                                                                                                                               Comparison process grounded in priors. Under the mani-
+online media, forensic analysis, and downstream vision sys-                                                                                                                                                                    fold hypothesis [2, 5], real images lie on a low-dimensional
+tems, highlighting the urgent need for detection frameworks                                                                                                                                                                    manifold embedded in high-dimensional pixel space. As illus-
+that can surpass human visual perception.                                                                                                                                                                                      trated in Fig. 1(Right), MIRROR encodes this real-manifold
+    Most AIGI detectors treat real-versus-fake recognition as                                                                                                                                                                  prior using a learnable discrete memory bank composed of
+an isolated binary classification problem: they assume that                                                                                                                                                                    orthogonal prototype vectors, which capture stable texture and
+the presence of artifacts implies a generated image, and their                                                                                                                                                                 semantic patterns from real images. Given an input image,
+absence implies a real image, performing detection by estimat-                                                                                                                                                                 MIRROR retrieves a small set of prototypes and constructs
+ing the probability of artifacts [36, 15, 7, 28]. This strategy                                                                                                                                                                a manifold-consistent reconstruction via sparse linear combi-
+works well under ideal conditions, where artifacts are salient                                                                                                                                                                 nation, serving as the Ideal Reference. The detection signal
+or unperturbed. However, when confronted with unknown                                                                                                                                                                          is derived from the deviation between the observed input and
+generators, performance degrades substantially, indicating se-                                                                                                                                                                 this ideal Reference. Since real images conform to the natural
+vere generalization limitations. This raises a central question:                                                                                                                                                               statistics encoded in the memory, they align closely with their
+as model capacity continues to scale and pretrained priors be-                                                                                                                                                                 Reference; in contrast, generated images exhibit subtle phys-
+come increasingly powerful, can existing detection paradigms                                                                                                                                                                   ical inconsistencies (e.g., in illumination or geometry) that
+still achieve sustained improvements in generalization?                                                                                                                                                                        cannot be explained by the reality-based memory, resulting in
+    We systematically compare the detection performance of                                                                                                                                                                     significant deviations.
+existing detectors and humans on previously unseen gener-                                                                                                                                                                         Existing benchmarks primarily emphasize the number of
+ated images and observe a counterintuitive phenomenon: the                                                                                                                                                                     generators or semantic diversity, yet lack a definitive standard
+performance gains from pretrained prior knowledge exhibit                                                                                                                                                                      to verify when machine detection surpasses human capabili-
+only limited scaling behavior (see Fig. 2). Although methods                                                                                                                                                                   ties. To measure this gap and identify when AI can reliably
+based on pretrained models [27, 9] significantly outperform                                                                                                                                                                    replace human expert reviewers, we introduce the Human-
+those without pretraining [34], their performance improve-                                                                                                                                                                     AIGI Benchmark. Through psychophysical experiments with
+ments quickly saturate as the backbone model size increases.                                                                                                                                                                   50 participants, we record accuracy, confidence, and response
+    We argue that this phenomenon does not stem from de-                                                                                                                                                                       latency, curating a Human-Imperceptible subset comprising
+ficiencies in pretrained knowledge itself. Instead, it arises                                                                                                                                                                  samples that deceive humans or induce hesitation. This bench-
+from intrinsic limitations in how current detection paradigms                                                                                                                                                                  mark serves as a quantitative yardstick for determining the
+leverage such knowledge. In existing approaches, pretrained                                                                                                                                                                    “Superhuman Crossover”, when algorithmic performance ex-
+models are typically treated as generic feature extractors that                                                                                                                                                                ceeds biological perception limits.
+fit artifact cues left by generative models (Fig. 1, left). They                                                                                                                                                                  Comprehensive experiments across 14 benchmarks demon-
+are rarely used to explicitly model stable regularities of the real                                                                                                                                                            strate that MIRROR consistently exhibits superior generaliza-
+world. As a result, detectors approximate a decision boundary                                                                                                                                                                  tion and robustness. On six standard benchmarks, MIRROR
+of the forged distribution, which continuously evolves as gen-                                                                                                                                                                 improves the average accuracy over state-of-the-art methods
+erative algorithms advance. Because this forged distribution                                                                                                                                                                   by 2.1%, while achieving a 8.1% average accuracy gain on
+is inherently non-stationary, artifact-driven methods are prone                                                                                                                                                                seven in-the-wild benchmarks. On the human-imperceptible
+to overfitting and cross-domain failure. This also explains                                                                                                                                                                    subset of Human-AIGI, MIRROR attains an accuracy of
+why scaling pretrained backbones does not yield sustained                                                                                                                                                                      89.5%, outperforming prior methods by 2.6%. Moreover, as
+improvements in generalization.                                                                                                                                                                                                shown in Fig.2, as the pretrained backbone scales up, MIR-
+
+
+                                                                                                                                                                                                                           2
+ROR’s accuracy further approaches the human perceptual                   hierarchical priors and verification mechanisms comparable
+limit (i.e., AIGI detection experts). These results indicate that        to human perception.
+MIRROR can serve as a practical and reliable assistive tool
+for AIGI detection.
+                                                                         2.2    Detection Benchmarks
+   Our main contributions are summarized as follows:
+                                                                         Early AIGI detection benchmarks mainly target GAN imagery,
+    • We identify a key limitation of existing detectors: chas-          exemplified by the CNNSpot dataset [36]. Later datasets sub-
+      ing evolving generative artifacts leads to poor scalability.       stantially broaden generator coverage: GenImage [41] and
+      Inspired by human vision, we reformulate AIGI detec-               AIGCDetect [40] provide large-scale samples from diverse
+      tion as a Reference-Comparison process that anchors                models, while DRCT-2M [8] offers million-level data tailored
+      decisions on invariant reality priors by comparing inputs          for diffusion reconstruction. Evaluation protocols have also
+      against an internal reference.                                     been strengthened, including UniversalFakeDetect [27] for
+                                                                         cross-model testing with CLIP backbones, Synthbuster [1] for
+    • We propose MIRROR, a novel framework that encodes
+                                                                         systematic diffusion evaluation, and EvalGEN [9] for emerg-
+      real-world regularities using a learnable memory bank
+                                                                         ing autoregressive generators. Despite their scale, many of
+      of orthogonal prototypes. MIRROR constructs an Ideal
+                                                                         these benchmarks rely on randomly synthesized images with
+      Reference by sparsely projecting input features onto
+                                                                         simple prompts, which may underrepresent the complexity of
+      the real-image manifold and identifies forgeries through
+                                                                         human-targeted forgeries.
+      reconstruction residuals, enabling robust, generator-
+      agnostic detection.                                                   To better reflect real-world conditions, several in-the-wild
+                                                                         benchmarks collect web images or simulate realistic degrada-
+    • We introduce the Human-AIGI Benchmark, includ-                     tion. Chameleon [37] curates high-resolution samples that are
+      ing a Human-Imperceptible subset curated through psy-              challenging even for humans, exposing detector generalization
+      chophysical experiments, to quantify when detectors sur-           issues. SynthWildx [40], WildRF [4], and AIGIBench [23]
+      pass human perception. Evaluations across 14 bench-                further expand web diversity, while RRDataset [20] and Re-
+      marks show that MIRROR achieves strong generalization              alChain [26] model post-processing and propagation to stress-
+      on human-imperceptible samples, marking the “Superhu-              test robustness. Nevertheless, most existing benchmarks em-
+      man Crossover”.                                                    phasize generator diversity or semantic coverage, but do not
+                                                                         quantify where human perception starts to fail. As a result,
+                                                                         they cannot directly measure whether a detector truly improves
+2     Related Work                                                       upon human judgment on the most deceptive samples.
+
+2.1     AI-Generated Image Detection
+                                                                         3     Motivation
+AI-generated image (AIGI) detection has been extensively
+studied, with a central focus on generalization to unseen gener-         Our motivation stems from a fundamental difference in deci-
+ators [36, 27]. Early approaches primarily relied on low-level           sion paradigms between machine and human vision. Existing
+artifacts, exploiting generator-specific fingerprints in the spa-        detectors typically formulate AIGI detection as artifact classi-
+tial or spectral domain [14, 15]. CNNSpot [36] demonstrated              fication, which overfits generator-specific traces and degrades
+cross-GAN transferability, and subsequent works explored fre-            as generative models evolve. In contrast, humans adopt a
+quency irregularities [28, 33], upsampling traces [34]. How-             Reference–Comparison strategy, anchoring judgments in long-
+ever, such texture-level cues are fragile under generator evolu-         term understanding of invariant physical regularities rather
+tion and real-world post-processing [26].                                than artifact memorization. This paradigm aligns with the
+   To improve robustness, recent methods increasingly lever-             cognitive theory that perception operates as hypothesis testing.
+age pre-trained foundation models. UnivFD [27] combines                  Neuroscience studies show that the visual cortex functions
+CLIP [29] features with lightweight classifiers, while Fat-              as an active inference system, generating internal predictions
+Former [25] and AIDE [37] adapt CLIP representations via                 as references and continuously comparing them with sensory
+task-specific modules. Effort [38] further exploits pretraining          input; mismatches between observation and reference elicit
+by disentangling semantic and forgery-related subspaces.                 strong neural responses [11, 12]. This mechanism supports
+   Another line of work attributes performance degradation               robust perception in unfamiliar environments.
+to data bias, and mitigates shortcut learning through recon-                Our psychophysical experiments further validate the effec-
+struction or alignment between real and synthetic data. Rep-             tiveness of this underlying mechanism for detecting generated
+resentative methods include FakeInversion [6], SemGIR [39],              images. Results show that even when lay user have never been
+DRCT [8], B-Free [17], AlignedForensics [30], and Dual                   systematically exposed to large-scale generated imagery, pro-
+Data Alignment [9]. Despite these advances, most existing                viding explicit real-image references significantly improves
+detectors remain black-box discriminators and lack explicit,             their detection accuracy (see Fig. 3(a)). Moreover, computer
+
+
+                                                                     3
+                                                                                                                                  Easy Fakes
+
+
+
+
+                                                                                   High Confusion   High Confusion &          High Confusion Fakes
+                                                                                                       Deception
+
+
+                                                                                                                       High Confusion and Deception Fakes
+
+
+                                                                                       Easy         High Deception
+                                                                                                                             High Deception Fakes
+
+
+
+      (a) Impact of Reference Priors   (b) Impact of Expertise Priors          (c) Human-Imperceptible Subset
+
+Figure 3: Psychophysical Analysis on the Human-AIGI Benchmark. Results are obtained from controlled psychophysical
+experiments on AI-generated images from 27 generators. (a) Reference Priors. Providing explicit reference images shifts hard
+samples (red) from high uncertainty with long response times to a higher-confidence regime (blue). (b) Expertise Priors. CV
+experts (green) consistently outperform lay users (red), reflecting the benefit of stronger internal perceptual priors. (c) Human-
+Imperceptible Subset. The Hard subset (red) includes samples with high deception or confusion, measured by confidence and
+response time; unlike Easy Fakes (gray), these images preserve high visual fidelity and define a rigorous benchmark.
+
+vision experts (though not forensic experts), relying solely on             found in the real-world distribution. To ensure the generated
+priors acquired through prolonged exposure to real images,                  Ideal Reference remains faithful to Mreal , we project the
+substantially outperform lay user (see Fig. 3(b)). These find-              input features F onto the subspace spanned by M using a
+ings indicate that human superiority arises not from artifact               cross-attention mechanism with a Top-k sparsity constraint:
+memorization, but from the choice of a stable decision anchor.
+                                                                                                            QK ⊤
+                                                                                                                
+By grounding detection in the stable real-image distribution,                     A = Softmax Top-k √                 , F̂ = AV, (2)
+generated image detection becomes a problem of consistency                                                     D
+verification, yielding stronger cross-generator generalization
+                                                                            where Q is derived from F , and K, V are derived from M.
+than conventional artifact-driven methods.
+                                                                            The Top-k operation ensures that F̂ is a sparse linear combina-
+   Inspired by this insight, we introduce MIRROR, which
+                                                                            tion of real-world prototypes, effectively filtering out patterns
+explicitly models the real-image manifold and constructs a
+                                                                            that do not belong to the real-image manifold.
+manifold-consistent Ideal Reference for each input. Detection
+                                                                               The training of Phase 1 is conducted exclusively on real
+is then performed by measuring the Comparison Residual
+                                                                            images using the following objective:
+between the observation and its reference, resulting in a robust,
+generator-agnostic framework.                                                         LP hase1 = ∥F − F̂ ∥22 + λ∥MM⊤ − I∥F ,                                (3)
+
+                                                                            where the first term minimizes the reconstruction error to en-
+4     Methodology                                                           sure the Ideal Reference F̂ accurately reflects the input’s
+                                                                            real components, while the second term enforces orthogo-
+Our MIRROR formalizes the human reference–comparison                        nality among prototypes to maximize the diversity and non-
+paradigm into a learnable two-stage framework (see Fig.4):                  redundancy of the encoded reality priors.
+first encoding stable Reality Priors from real images to con-
+struct a Manifold-consistent Ideal Reference, and then per-
+forming robust detection by analyzing the Comparison Resid-                 4.2 Phase 2: Reference-Comparison-Based De-
+ual between the input and its reference.                                        tection
+                                                                            In Phase 2, we freeze the memory bank M and the projection
+4.1    Phase 1: Encoding Reality Priors                                     module defined in Eq. 2 to ensure that the learned Reality
+                                                                            Priors remain independent of the forgery distribution. We
+Phase 1 aims to learn a latent feature space that approximates
+                                                                            perform detection by evaluating the consistency between the
+the real-image manifold Mreal . To capture the local geometry
+                                                                            input feature F and its Ideal Reference F̂ through two com-
+and fine-grained textures essential for physical consistency,
+                                                                            plementary signals. Specifically, the Reconstruct Perplexity
+we utilize a frozen DINO[32] encoder E to extract patch-level
+                                                                            characterizes the uncertainty in prototype retrieval when an
+features:
+                                                                            input lacks typical real-world patterns, while the Compari-
+                     F = E(I) ∈ RN ×D ,                    (1)
+                                                                            son Residual captures the irreconstructible details that fall
+where N denotes the number of patches and D is the feature                  outside the real-image manifold. We derive the perplexity
+dimension. We encode reality priors into a discrete memory                  from the attention matrix A (Eq.2) using the maximum atten-
+bank M ∈ RK×D containing K orthogonal prototypes. Each                      tion score smax and entropy sent , and calculate the residual
+prototype is optimized to represent a frequent, stable pattern              as ∆F = F − F̂ to quantify manifold deviations. These
+
+
+                                                                        4
+      �                                                                             Key
+                                                Memory                             Value
+                                                 Bank
+                                                                                                                      Uncertainly
+
+
+
+            Phase 1: Encoding Reality Priors                                   Phase 2: Reference-Comparison
+
+                                             Memory Bank (M)               Memory Bank (M)
+                                                                                                     Reconstruct Perplexity
+                                                                                                                                       Fake
+                                                                                                                                     (Anomaly)
+                                Extractor                         frozen
+
+                                                                                             Recon.
+                                                                                                        �
+                                                 ������   ����
+                                                                                                             Residual
+                                                                                Extractor               �                 Classify
+                                                                                               See                                     Real
+                                                                                                                                     (Consistent)
+
+
+Figure 4: Architecture of MIRROR. The framework operates in two distinct phases. In Phase 1, a frozen DINO encoder extracts
+patch-level features from real images to encode Reality Priors within an orthogonal memory bank that approximates the real-image
+manifold. In Phase 2, the learned priors are frozen. Given an input image, MIRROR constructs a manifold-consistent Ideal
+Reference through sparse projection and identifies forgeries via Reference-Comparison. This process utilizes both the reconstruct
+perplexity and the comparison residual to evaluate whether the input deviates from the learned reality manifold.
+
+two signals are projected into evidence vectors Vper and Vres              5.2 Definition of the Human-Imperceptible
+respectively:                                                                  Subset
+ Vper = MLPper ([smax , sent ]),     Vres = Linear(∆F ). (4)               Based on these observations, we define a human-imperceptible
+                                                                           subset consisting of generated samples that challenge human
+The final forgery probability ypred is predicted by a classifica-          perception. Such samples either deceive observers into con-
+tion head MLPC acting on the concatenated evidence:                        fidently judging them as real or induce significant hesitation
+             ypred = MLPC (Concat[Vper , Vres ]) .               (5)       during decision-making. Formally, following psychophysical
+                                                                           principles, we define the human-imperceptible subset Dhard
+The framework is optimized by a binary cross-entropy loss:                 as:
+
+    LP hase2 = −y log ypred − (1 − y) log(1 − ypred ),           (6)       Dhard = {x ∈ Xgen | S(x) ≥ τreal ∨ RT (x) > µrt + σrt },
+                                                                                                                                         (7)
+where y ∈ {0, 1} is the ground-truth label. By anchoring the               where Xgen denotes AI-generated images, S(x) ∈ {1, 2, 3, 4}
+decision on the Reference-Comparison of these dual signals,                is the perceived realism score, τreal is the deception threshold,
+MIRROR identifies forgeries as instances that the real-world               and µrt , σrt are the mean and standard deviation of response
+manifold cannot sparsely reconstruct or accurately explain.                times across the benchmark. By focusing on samples that
+                                                                           appear highly realistic or induce pronounced uncertainty, this
+                                                                           subset provides a stringent testbed for assessing whether de-
+5     The Human-AIGI Benchmark                                             tection algorithms can reliably identify generative threats that
+                                                                           evade human perceptual scrutiny. By jointly evaluating perfor-
+5.1       Psychophysical Experimental Design                               mance on Dorig. and Dhard , we can assess whether a detector
+We conduct large-scale psychophysical experiments to probe                 has reached the milestone of reliably replacing human expert
+the limits of human perception in AIGI detection. We recruit               review.
+50 participants, including lay users, computer vision experts,
+and AIGI detection experts, and evaluate them on a dataset            6 Experiments
+DPhase       1:  Manifold
+  orig. comprising   over 30,000 Construction
+                                 images synthesized by 27 gen-Projector                 Phase 2: Deviation Discrimination
+erators from T2I-COREBENCH [22]. Participants perform                 6.1 Experimental Setup
+a controlled binary classification task, judging whether eachPhase 1
+                                                                          Phase 2
+image                 DINOwithout external assistance. Be-Phase 2 Datasets. We evaluate the out-of-distribution
+     � is real or AI-generated                                                                                    DINO    (OOD) detec-          �
+yond accuracy, we record two key psychophysical variables MHA                 (A)
+                                                                      tion performance    of MIRROR on a comprehensive set of
+                   Query realism (confidence score S) and
+for each trial: perceived                                             benchmarks. To avoid shortcut learning caused
+                                                                                        Input Image                       Queryby format-
+response time (RT ). These measurements capture not only              ting discrepancies, all datasets are verified following the DDA
+                                                                                               is
+                       Projsynthetic images from real ones.
+decision outcomes but also the cognitive effort and uncertainty
+                                      Real  Images           Value   Key               Fake    or Real              Projin image for- �
+                                                                      protocol [9], ensuring no systematic differences
+     �
+involved   in distinguishing                                          mat between real and fake samples. (1) StandardExpectation  Bench-
+Lay users aggregated results are shown in Fig. 3 (c), providing       marks: We evaluate on AIGCDetect [40], GenImage [41],
+insight into how human judgments rely on stable real-world           DRCT-2M [8], UnivFakeDetect [27], SynthbusterConcat         [1], and ∆�
+priors����  = than
+       rather       �
+                       �
+               � − generator-specific
+                       �
+                                      ��� − � � Update
+                            ������ = artifacts.                      EvalGEN [9]. These benchmarks MLP     cover dozens of generative
+                                                             Memory Bank (M)                                         Attention Map    Residual Map
+                                                                                        Verification
+                                                                       5
+Table 1: Performance comparison on Standard Benchmarks. We report Balanced Accuracy (B.Acc), JPEG Robustness (J.Rob),
+and the Resize Robustness (R.Rob) to comprehensively evaluate the detector’s generalization and robustness performance. The
+best and second-best results are highlighted in bold and underline, respectively. DRCT [8], Aligned [30], B-Free [17], and
+DDA [9] are evaluated using their officially released weights. Other methods based on architectural innovations are evaluated
+using the same training set as ours, and evaluation results using their official weights are additionally reported in the appendix.
+                           AIGCDetect                  GenImage                   DRCT-2M                       UnivFakeDetect                                    Synthbuster                                      EvalGEN                                                Average
+ Method
+                   B.Acc     J.Rob    R.Rob    B.Acc     J.Rob    R.Rob   B.Acc    J.Rob     R.Rob      B.Acc       J.Rob              R.Rob           B.Acc          J.Rob         R.Rob              B.Acc               J.Rob        R.Rob              B.Acc           J.Rob           R.Rob
+ NPR [34]           63.9      64.0    48.2      73.7     73.7     46.6    59.5      58.3      37.4          51.1     51.1                  49.2            64.6        64.0             34.4           66.1                 65.7          64.2             63.2            62.8              46.7
+ UnivFD [27]        56.5      50.1    48.7      62.5     53.6     50.8    69.5      57.3      52.5          48.3     51.1                  43.0            65.8        59.2             52.3           73.8                 61.3          56.6             62.7            55.4              50.7
+ FatFormer [25]     82.1      71.5    80.0      71.5     58.4     68.4    53.9      52.1      52.4          86.7     68.9                  85.2            69.2        57.1             65.6           56.7                 53.4          57.5             70.0            60.2              68.2
+ SAFE [21]          48.4      57.8    49.4      47.7     64.4     49.4    50.3      62.4      49.2          49.7     48.5                  49.8            51.6        53.8             49.9           50.2                 55.4          49.1             49.7            57.1              49.5
+ C2P-CLIP [35]      80.0      65.7    77.6      71.1     55.6     67.8    54.4      54.0      55.7          87.3     68.8                  85.2            69.4        57.3             66.4           56.8                 52.1          65.8             69.8            58.9              69.8
+ AIDE [37]          84.0      53.4    77.0      88.6     55.3     76.3    59.2      54.6      72.5          77.9     51.5                  70.8            75.4        76.8             62.5           59.5                 58.8          76.4             74.1            58.4              72.6
+ DRCT [8]           67.1      67.1    67.5      78.8     78.5     80.3    97.0      93.0      98.4          66.8     69.5                  69.7            81.0        80.6             83.3           81.9                 85.5          82.4             78.8            79.0              80.3
+ Aligned [30]       55.7      54.5    55.3      57.5     55.9     57.0    54.9      54.7      54.3          60.5     59.7                  61.0            54.5        53.0             53.8           65.8                 65.2          67.5             58.2            57.2              58.2
+ B-Free [17]        84.7      85.0    82.7      89.6     90.2     87.9    99.2      99.0      98.2          87.8     87.0                  86.2            95.7        95.9             94.8           94.6                 93.7          92.5             91.9            91.8              90.4
+ DDA [9]            81.5      81.8    79.1      88.9     88.7     88.1    97.0      97.7      95.6          69.3     69.3                  66.7            96.5        95.6             94.6           96.6                 90.1          93.9             88.3            87.2              86.3
+ MIRROR (DINOv2)    90.5      90.0    88.6      91.3     94.1     93.7    92.8      88.9      94.2          84.6     85.8                  85.0            97.0        96.4             97.6           98.1                 97.1          96.6          92.4↑0.5          92.1↑0.3         92.6↑2.2
+ MIRROR (DINOv3)    91.7      91.5    91.5      94.2     96.7     94.9    93.0      90.4      93.4          88.2     88.3                  87.5            98.1        97.5             97.6           99.0                 98.5          98.6          94.0↑2.1          93.8↑2.0         93.9↑3.5
+
+
+
+Table 2: Performance comparison on In-the-wild Benchmarks. These datasets have undergone low-level degradation caused by
+network propagation. The best and second-best results in the summary columns are highlighted in bold and underline, respectively.
+                     Cham-                  SynthWildx                    WildRF                      AIGIBench                                             CO-SPY-Bench/in-the-wild                                                                   RR-           BFree-                 Avg
+ Method
+                      eleon                                                                                                                                                                                                                           Dataset        Online                B.Acc
+                                 DALLE3        Firefly    Midj.    FB     Reddit    Twitter     SocRF            ComAI               Civitai           DALLE3               instavibe.ai                Lexica                  Midj.v6
+ NPR [34]             55.2           62.9       53.8      63.0     53.8    53.7       57.7           55.8          52.0                51.3                 74.4                   6.0                    3.9                        80.7              48.3               40.5              50.8
+ UnivFD [27]          39.5           52.5       52.4      50.7     54.1    55.1       66.5           51.6          45.4                89.4                 76.6                   78.3                  63.1                        84.1              51.1               57.2              60.5
+ FatFormer [25]       57.8           52.6       56.6      50.0     52.5    65.4       39.7           55.7          50.4                 0.4                  2.2                    0.0                   0.3                        15.2              50.4               32.7              36.4
+ SAFE [21]            56.8           48.8       46.6      48.7     49.7    49.2       34.7           49.2          49.3                 0.1                  0.9                    0.5                   0.3                         2.4              49.3               32.6              29.3
+ C2P-CLIP [35]        57.6           49.6       57.9      49.6     51.9    67.6       40.4           58.1          50.4                 0.0                  4.5                    0.2                   0.2                        23.2              50.0               32.7              37.1
+ AIDE [37]            65.7           66.4       48.2      66.4     61.6    66.3       52.5           59.2          62.2                15.8                 34.0                   7.2                   19.5                        64.5              57.6               52.1              50.0
+ DRCT [8]             79.8           85.9       58.9      90.5     90.3    66.8       79.6           71.3          84.6                99.1                 82.1                   22.0                  55.8                        94.8              58.2               77.1              81.1
+ Aligned [30]         61.3           49.6       53.9      52.4     48.4    54.0       40.6           51.0          60.2                 7.5                  8.4                    6.2                  11.5                         9.7              47.7               38.1              37.5
+ B-Free [17]          78.3           96.1       92.3      95.3     95.6    85.5       96.7           84.9          79.7                98.8                 97.4                   5.9                   53.6                        98.6              69.5               87.1              82.2
+ DDA [9]              83.5           91.1       84.7      91.6     85.3    82.5       89.3           79.9          88.9                99.7                 94.6                   35.4                  73.7                        97.9              70.3               81.2              83.1
+ MIRROR (DINOv2)      85.4           91.2       86.1      89.5     93.8    90.2       92.7           82.3          88.9                94.6                 93.4                   72.5                  91.1                        85.6              76.8               84.3           87.4↑4.3
+ MIRROR (DINOv3)      90.7           95.9       88.4      94.9     97.1    96.6       96.4           87.6          93.4                99.2                 98.1                   75.0                  94.2                        89.8              78.9               83.0           91.2↑8.1
+
+
+
+models spanning GANs, diffusion models, and autoregres-                                                                         94                                                                                         94
+
+sive architectures. (2) In-the-wild Benchmarks: To assess                                                                       92                                                                                         92
+                                                                                                                                                                  Peak: 90.1 %                                                                             Peak: 90.1 %
+real-world generalization, we use Chameleon [37], Synth-                                                                        90                                                                                         90
+                                                                                                                    B.Acc (%)
+
+
+
+
+                                                                                                                                                                                                               B.Acc (%)
+
+
+
+Wildx [13], WildRF [4], AIGIBench [23], CO-SPY-Bench [10],                                                                      88                                                                                         88        Limited Recon.
+
+BFree-Online [17], and RRDataset [20]. These datasets are                                                                       86          Underfitting                                 Overfitting                       86                                                   Anomaly Leakage
+
+collected from complex network environments and include re-                                                                     84         Standard Benchmarks
+                                                                                                                                           In-the-wild Benchmarks                                                          84        Standard Benchmarks
+                                                                                                                                                                                                                                     In-the-wild Benchmarks
+                                                                                                                                           Human-AIGI Benchmark                                                                      Human-AIGI Benchmark
+alistic degradations introduced during online propagation. (3)                                                                  82
+                                                                                                                                           Average Performance
+                                                                                                                                                                                                                           82
+                                                                                                                                                                                                                                     Average Performance
+                                                                                                                                     512       1024        2048      4096        8192     16384        32768                    16        32          64       128        256        512      1024
+Human-AIGI Benchmark: Crucially, we evaluate MIRROR                                                                                                   Number of Prototypes (K)                                                                  Sparsity Constraint (top-k)
+
+on Dorig. and Dhard , defined in Sec. 5, to measure perfor-
+mance in high-risk scenarios where human visual inspection                                                         Figure 5: Sensitivity analysis of K and top-k. Insufficient
+fails.                                                                                                             K limits manifold coverage, while excessive K causes over-
+                                                                                                                   fitting via prototype redundancy. Sparsity top-k exhibits a
+   Implementation Details. In Phase 1, we adopt DINOv3-
+                                                                                                                   similar trade-off: strict k hinders ideal reference reconstruc-
+large [32] as the feature extractor and collect 200k real images
+                                                                                                                   tion , while excessive k allows generative anomalies to leak
+from MSCOCO [24] for self-supervised training. The memory
+                                                                                                                   through prototype combinations, narrowing the residual gap.
+bank size is set to K = 4096. In Phase 2, we use a LoRA-
+finetuned DINOv3 as the feature extractor and finetune the                                                         port three evaluation metrics: Balanced Accuracy (B.Acc),
+model on SDv1.4 [41] 1 . Training is performed with the                                                            JPEG Robustness (J.Rob) under QF=90 compression, and
+AdamW optimizer [19], an initial learning rate of 1 × 10−4 ,                                                       Resize Robustness (R.Rob) under resize=0.9. We compare
+for 5 epochs, using a cosine annealing learning rate schedule.                                                     MIRROR against a broad set of state-of-the-art detectors.
+All images are cropped to a resolution of 224 × 224 during                                                         Artifact- and pretraining-based methods include NPR [34],
+both training and inference.                                                                                       UnivFD [27], FatFormer [25], C2P-CLIP [35], SAFE [21],
+   Evaluation Metrics and Comparative Methods. We re-                                                              and AIDE [37]. These methods capture generic forgery traces
+    1 The SD v1.4 images from GenImage used in the training set are com-                                           through architectural design or specialized training. For fair
+pressed using JPEG with a quality factor of 96 to align their format with that                                     comparison, all methods are retrained using the same data
+of real images.                                                                                                    configuration as MIRROR, including the real samples used in
+
+
+                                                                                                            6
+Table 3: Performance comparison on the Human-AIGI Benchmark. We report detection accuracy (%) on the original test set
+(Orig.) and the curated Human-Imperceptible subset (Hard).
+                       NPR             UnivFD               C2P          FatFormer             SAFE              AIDE          DRCT           Aligned         B-Free           DDA         MIRROR (Ours)
+ Generator
+                    Orig.   Hard    Orig.   Hard     Orig.    Hard       Orig.   Hard    Orig.     Hard       Orig.   Hard   Orig.   Hard   Orig.   Hard   Orig.   Hard    Orig.   Hard    Orig.   Hard
+                                                                                                 Diffusion Models
+ SD-3-Medium        61.2    52.4     80.3   76.2      1.2         0.0     0.8    0.0      32.0     42.9       34.4    28.6   66.2    76.2   12.2    0.0    93.9    100.0   94.5    95.2    91.1    100.0
+ SD-3.5-Medium      68.8    90.6     87.0   84.4      2.4         0.0     2.2    0.0      28.6     21.9       12.4     6.3   52.2    46.9   16.8    9.4    97.5     93.8   93.9    93.8    92.3    93.7
+ SD-3.5-Large       70.7    69.7     82.0   93.9      2.7         0.0     2.9    0.0      28.6     18.2        8.8     3.0   66.2    57.6   13.2    6.1    96.8    100.0   95.3    93.9    90.0    93.9
+ FLUX.1-schnell     67.6    69.7     77.3   79.8      0.7         0.0     0.4    0.0      29.0     28.3       16.4    10.1   53.8    48.0   21.0    16.2   78.6     74.2   93.2    95.5    83.7    91.4
+ FLUX.1-dev         68.3    65.2     80.5   81.9      1.5         0.7     0.4    0.7      35.2     36.2       23.0    21.7   51.1    50.7   21.2    21.0   54.3     39.1   87.2    89.1    86.5    86.9
+ FLUX.1-Krea-dev    65.3    63.3     86.5   89.3      0.8         0.4     0.6    0.4      42.2     47.4        8.4     3.7   20.3    23.0   12.8    9.6    24.1     18.9   23.1    18.5    64.2    62.5
+ PixArt-α           66.1    57.0     81.2   83.0      5.9         5.0     5.8    8.0      58.8     59.0       52.2    49.0   93.5    95.0   12.9    10.0   99.8    99.0    99.0    99.0    99.5    100.0
+ PixArt-Σ           64.7    61.9     89.9   94.3      3.0         1.0     2.0    0.0      44.3     43.8       30.5    28.6   88.7    87.6   14.4    14.3   99.8     99.1   97.4    97.1    99.7    100.0
+ HiDream-I1         74.0    72.8     76.2   85.5      0.7         0.9     0.4    0.0      25.8     31.1       14.8    15.3   77.6    82.1   11.2    11.9   81.1     79.6   81.6    82.1    88.0    84.6
+ Qwen-Image         53.1    42.3     87.5   94.2      0.2         0.0     0.5    0.0      37.5     48.1        1.0     1.9   48.3    38.5   19.3    17.3   57.9     40.4   90.8    94.2    86.2    86.5
+                                                                                               Autoregressive Models
+ Infinity-8B        67.3    67.0     66.7   71.0      34.3    20.0       33.0    20.0     39.7     43.0       6.2     1.0    57.0    66.0   21.8    16.0   99.3    96.0    98.8    98.0    99.8    100.0
+ GoT-R1-7B          57.6    75.5     84.5   91.8      84.1    67.4       49.1    28.6     59.1     61.2       29.2    16.3   15.5     6.1   46.0    34.7   96.3    95.9    90.8    85.7    99.9    100.0
+                                                                                                  Unified Models
+ BAGEL              71.7    69.0     80.1   83.0      2.7      2.0        1.5     1.0     39.7     36.0       16.1    18.0   57.5    57.0   19.9    24.0    88.1    89.0   93.6     97.0   90.3    92.0
+ BAGEL w/Think      67.9    67.8     84.1    90.1      3.0     0.8        0.9     0.8     37.0     30.6       21.5    22.3   61.1    59.5   21.8    28.9    90.8    87.6   96.3     98.4   96.7    98.3
+ show-o2-1.5B       56.4    71.4     85.0   100.0     22.4     0.0       15.4    14.3     20.6     42.9       14.7    42.9   88.8    85.7   35.0    14.3   100.0   100.0   97.4    100.0   99.9    100.0
+ show-o2-7B         39.2    53.3     87.9    86.7     86.2    76.7       53.6    46.7     38.4     43.3       24.5    13.3   92.6    96.7   56.8    46.7   100.0   100.0   96.8     96.7   99.9    100.0
+ Janus-Pro-1B       67.9    76.2     86.0    85.7     72.0    66.7       44.9    47.6     47.3     76.2       38.3    19.1   14.9     9.5   55.6    9.5    91.0    100.0   82.1    85.7    89.3    95.2
+ Janus-Pro-7B       69.2    63.3     84.4    93.3     71.3    46.7       43.4    33.3     49.5     73.3       27.4    20.0   15.9    13.3   52.6    43.3   93.4     90.0   88.4    93.3    97.5    93.3
+ BLIP3o-4B          60.5    54.5     73.8    72.3     31.3    12.9       46.8    42.6     64.1     62.4       16.9    16.8   83.5    80.2   16.6    16.8   99.3    100.0   99.6    100.0   97.8    98.0
+ BLIP3o-8B          65.3    65.1     73.5    78.6     39.4    21.4       51.4    49.5     70.0     78.6       19.8    20.4   76.8    70.9   15.3    11.7   99.4    100.0   99.1     99.0   97.4    96.1
+ OmniGen2-7B        66.8    55.2     76.4    82.8      7.0     6.9        5.8     5.2     33.4     37.9       34.8    27.6   65.7    77.6   35.4    32.8    97.4    94.8   93.1     96.6   84.1    98.2
+                                                                                               Closed-Source Models
+ Seedream 3.0       63.0    50.0     76.0   77.3      2.9         0.0    7.1     4.6      35.5     47.7       40.9    64.8   92.4    92.1   19.6    10.2   81.9    75.0    94.3    92.1    84.1    78.4
+ Gemini 2.0 Flash   45.6    50.4     85.5   86.9      11.0        7.3     7.7    6.9      39.4     36.5       25.8    15.0   78.5    77.4   24.3    22.6   90.1    83.9    86.6    83.2    79.2    79.5
+ Nano Banana        73.9    80.9     72.3   78.3       0.5        0.7     0.4    1.3      25.5     20.4        2.3     1.3   83.3    81.6   14.4    18.4   50.8    41.5    61.9    57.9    70.7    64.4
+ Imagen 4           73.2    78.3     70.8   74.6       0.9        0.0     0.2    0.0      33.6     33.3       11.4     6.7   75.7    70.4   13.3    22.1   60.1    64.2    80.8    62.9    63.5    52.5
+ HunyuanImage-3.0   82.8    82.7     70.8   70.2       6.0        1.4    10.2    5.3      15.1     22.1        0.1     0.0   93.3    82.7   3.8     5.8    99.2    97.1    98.9    95.7    97.0    89.4
+ GPT-Image          75.3    81.7     74.2   71.7       0.3        0.4     0.1    0.0      45.3     55.8        0.1     0.0    2.5    1.3    3.6     7.9    18.1    22.1    63.1    45.8    92.1    81.5
+ Average            65.3    66.2     80.0   83.6      18.3    12.6       14.4    11.7     39.1     43.6       19.7    17.5   62.0    60.5   22.6    17.8   82.9    80.8    88.1    86.9    89.6    89.5
+
+
+
+Table 4: Ablation Studies on MIRROR Architecture. We                                                             forms state-of-the-art methods, especially in cross-generator
+analyze the impact of different configurations on detection                                                      settings, achieving an average Balanced Accuracy (B.Acc) of
+performance. (a) Compares different data sources for con-                                                        94.0%, substantially surpassing AIDE [37]. This indicates
+structing the Memory Bank. (b) Validates the necessity of the                                                    that leveraging robust priors learned from real-world data
+Reference-Comparison paradigm compared to a discrimina-                                                          effectively mitigates overfitting to the training distribution.
+tive baseline.                                                                                                   While alignment-based methods such as B-Free [17] attain
+                                                                                                                 competitive performance by reducing semantic bias, they ex-
+ Configuration                Standard      In-the-wild           Human-AIGI           Average
+                                                                                                                 hibit sensitivity to mild compression. In contrast, MIRROR’s
+ (a) Memory Prior Source
+                                                                                                                 expectation-deviation paradigm yields stronger robustness,
+ Generated-only                    90.5            84.4                 84.9            86.6
+ Mixed (Real + Generated)          87.1            82.3                 84.3            84.5                     outperforming B-Free by 2.0% / 3.5% in JPEG Robustness
+ Real-only (Ours)                  94.0            86.5                 89.8            90.1                     (J.Rob) / Resize Robustness (R.Rob) .
+ (b) Reference-Comparison
+ Baseline (Only Classify)          88.4            82.2                 83.7            84.7
+                                                                                                                    Generalization on In-the-Wild Benchmarks. Real-world
+ + Perplexity (Vper )              90.1            84.3                 85.0            86.4                     deployment is challenged by image degradations introduced
+ + Residual (Vres )                92.5            85.1                 88.5            88.7                     during internet propagation. As reported in Table 8, we eval-
+ MIRROR (Ours)                     94.0            86.5                 89.8            90.1
+                                                                                                                 uate MIRROR on seven in-the-wild benchmarks. Detectors
+                                                                                                                 without pretrained backbones (e.g., NPR [34], SAFE [21]) fail
+Phase 1. We also evaluate dataset-alignment-based detectors,
+                                                                                                                 to generalize, while pretraining-based and alignment-based
+including DRCT [8], Aligned [30], B-Free [17], and DDA [9].
+                                                                                                                 methods provide only limited gains. In contrast, MIRROR
+These approaches mitigate semantic or formatting biases to
+                                                                                                                 achieves the strongest overall robustness, maintaining a B.Acc
+isolate forgery-related cues. For methods that rely on align-
+                                                                                                                 of 91.2% across diverse post-processing conditions and out-
+ment datasets, we evaluate them using their official pretrained
+                                                                                                                 performing DDA [9] by 8.1%. Notably, unlike DDA, which re-
+weights.
+                                                                                                                 lies on large-scale real and VAE-reconstructed datasets, MIR-
+                                                                                                                 ROR requires only readily available real images for prior
+6.2        Comparison with State-of-the-Art                                                                      learning and a small amount of generated data for fine-tuning.
+Generalization on Standard Benchmarks. As shown in Ta-                                                             Detection of Human-Imperceptible Threats. A critical
+ble 1, we evaluate MIRROR on five standard datasets spanning                                                     evaluation of our framework lies in comparing its performance
+diverse generative architectures. MIRROR consistently outper-                                                    with that of humans, particularly on subsets that are imper-
+
+
+                                                                                                          7
+                         160     Inference Time (s)
+                                                                                                                                   100
+                                                                                                                                                                                                                Real                                                            Generated
+
+
+
+
+                                                                                                                                    Detection Accuracy (B.Acc %)
+                                 Standard Benchmark                                                                       143.0s   90
+                         140     In-the-wild Benchmark
+ Inference Latency (s)
+
+
+
+
+                                                                                                                                                                       Image
+                                                                                                                                   80
+                         120
+                                                                                                                                   70
+                         100                                                                                                       60
+                         80                                                                                   69.9s                50
+                                                                                                     65.6s
+                                                                                           59.9s
+
+
+
+
+                                                                                                                                                                       Residual Map
+                         60                                                        49.9s                                           40
+                         40                                        28.9s   30.4s                                                   30
+                                                           19.6s
+                         20              8.7s    11.7s                                                                             20
+                                7.2s
+                          0                                                                                                        10
+                                                         DRC UnivFD C2P-CLIP MIRROR atForme
+                                                                                            r                               e
+                               NPR     SAFE Aligned         T                                      AIDE      DDA      B-Fre
+                                                                                   F
+
+                                                                                                                                                                       Figure 7: Feature reconstruction residuals. Real images
+Figure 6: Inference efficiency comparison. Time per 1,000
+                                                                                                                                                                       produce sparse, low-magnitude residuals due to effective man-
+samples on an Nvidia Tesla V100 GPU. MIRROR’s inference                                                                                                                               Ground Truth: Real   Ground Truth: Real         Ground Truth: Real      GroundGround
+                                                                                                                                                                                                                                                                     Truth: Truth:
+                                                                                                                                                                                                                                                                            Fake Real
+
+                                                                                                                                                                       ifold projection, while generated images show pronounced
+                                                                                                                                                                                                                       Ground Truth: Fake         Ground Truth: Fake      Ground Truth: Fake
+
+speed is highly competitive among existing detectors.
+                                                                                                                                                                       residual activations in regions that violate internal priors.
+ceptible to human observers (see Sec. 5).As reported in Ta-
+                                                                                                                                                                       real samples, reconstructed features F̂ closely match input
+ble 8, We observe that detectors relying on low-level cues
+                                                                                                                                                                       features F , yielding sparse, low-magnitude residuals overall.
+perform poorly across all generators, while detectors based
+                                                                                                                                                                       In contrast, generated images produce pronounced residual
+on pretrained priors achieve only limited improvements and
+                                                                                                                                                                       activations, typically concentrated in semantically complex
+still struggle on the human-imperceptible subset. In contrast,
+                                                                                                                                                                       regions. This pattern reflects human-like reference-based veri-
+MIRROR achieves a balanced accuracy of up to 89.6% on
+                                                                                                                                                                       fication and provides interpretable evidence for the model’s
+the original dataset, surpassing both lay users (76.9%) and
+                                                                                                                                                                       decisions.
+visual experts (88.3%). Moreover, MIRROR maintains a high
+                                                                                                                                                                          Computational Efficiency. We evaluate MIRROR’s infer-
+balanced accuracy of 89.5% on the human-imperceptible sub-
+                                                                                                                                                                       ence efficiency relative to standard detectors. Despite the dis-
+set. These results highlight the core value of our approach,
+                                                                                                                                                                       crete memory bank and reference reconstructor, the overhead
+demonstrating its effectiveness as an assistive tool for detect-
+                                                                                                                                                                       is minimal since inference is dominated by the DINOv3-large
+ing generative threats that evade human perceptual scrutiny.
+                                                                                                                                                                       backbone. On a single Nvidia Tesla V100 GPU, MIRROR
+                                                                                                                                                                       achieves 20.03 FPS, processing 1,000 samples in 49.91 sec-
+6.3                            Ablation Study and Analysis                                                                                                             onds. As shown in Fig. 6, this performance is competitive with
+Impact of Capacity K and Sparsity top-k. As shown in                                                                                                                   black-box detectors, demonstrating that MIRROR framework
+Fig. 5, performance follows an inverted U-shaped trend with                                                                                                            maintains deployment scalability while improving generaliza-
+respect to K, peaking at 4096. Insufficient capacity fails to                                                                                                          tion.
+cover the real-image manifold, while excessive capacity intro-
+duces redundancy and overfitting. A similar trade-off appears
+for projection sparsity top-k: small values underfit complex                                                                                                           7                   Conclusion
+textures, whereas large values dilute residual separability by
+absorbing generative artifacts. We therefore set K = 4096                                                                                                              We identify a fundamental limitation of artifact-driven AIGI
+and top-k = 128 as a balanced configuration.                                                                                                                           detectors, namely their poor scalability and generalization.
+   Impact of Memory Prior. We compare Memory Bank pro-                                                                                                                 Inspired by human visual verification, we propose MIRROR,
+totypes sourced from real, generated, or mixed samples. As                                                                                                             which formulates detection as a Reference–Comparison pro-
+shown in Table 4 (a), the real-only configuration performs best,                                                                                                       cess by modeling the real-image manifold with a learnable
+while generated-only slightly degrades due to the lower distri-                                                                                                        memory bank. Extensive experiments, including the proposed
+butional consistency of forgeries. In contrast, the mixed set-                                                                                                         Human-AIGI benchmark, show that MIRROR consistently
+ting leads to a severe performance drop, as combining authen-                                                                                                          outperforms existing methods and surpasses human perfor-
+tic and forged prototypes breaks the Reference–Comparison                                                                                                              mance on human-imperceptible samples.
+paradigm, causing residuals to lose discriminative power.
+   Impact of the Reference-Comparison Paradigm. To vali-
+date the advantage of Reference–Comparison over black-box                                                                                                              References
+classification, we compare MIRROR with a baseline that di-
+rectly classifies encoded features. As shown in Table 4(b), the                                                                                                          [1] Quentin Bammey. Synthbuster: Towards detection of
+baseline suffers a 5.4% drop relative to MIRROR. Moreover,                                                                                                                   diffusion model generated images. IEEE Open Journal
+progressively adding Reconstruct Perplexity and Comparison                                                                                                                   of Signal Processing, 5:1–9, 2023.
+Residual consistently improves performance, confirming the
+effectiveness of the human-inspired Reference–Comparison                                                                                                                 [2] Yoshua Bengio, Aaron Courville, and Pascal Vincent.
+paradigm for robust generalization.                                                                                                                                          Representation learning: A review and new perspectives.
+   Visualization of Reconstruction Residuals. Fig. 7 shows                                                                                                                   IEEE transactions on pattern analysis and machine in-
+feature reconstructions for real and generated images. For                                                                                                                   telligence, 35(8):1798–1828, 2013.
+
+
+                                                                                                                                                                   8
+ [3] J. et al. Betker. Dall-e 3. https://openai.com/                  [16] I. et al. Goodfellow. Generative adversarial nets. Ad-
+     dall-e-3, 2023.                                                       vances in neural information processing systems, 27,
+                                                                           2014.
+ [4] B. et al. Cavia. Real-time deepfake detection in the
+     real-world. arXiv preprint arXiv:2406.09398, 2024.               [17] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+                                                                           Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+ [5] Lawrence Cayton et al. Algorithms for manifold learning.              training paradigm for more general ai-generated image
+     Univ. of California at San Diego Tech. Rep, 12(1-17):1,               detection. In Proceedings of the Computer Vision and
+     2005.                                                                 Pattern Recognition Conference, pages 18685–18694,
+ [6] George Cazenavette, Avneesh Sud, Thomas Leung, and                    2025.
+     Ben Usman. Fakeinversion: Learning to detect images              [18] J. et al. Ho. Denoising diffusion probabilistic mod-
+     from unseen text-to-image models by inverting stable dif-             els. Advances in neural information processing systems,
+     fusion. In Proceedings of the IEEE/CVF Conference on                  33:6840–6851, 2020.
+     Computer Vision and Pattern Recognition, pages 10759–
+     10769, 2024.                                                     [19] Diederik P Kingma and Jimmy Ba. Adam: A method for
+                                                                           stochastic optimization. arXiv preprint arXiv:1412.6980,
+ [7] L. et al. Chai. What makes fake images detectable?
+                                                                           2014.
+     understanding properties that generalize. In European
+     conference on computer vision, pages 103–120. Springer,          [20] Chunxiao Li, Xiaoxiao Wang, Meiling Li, Boming Miao,
+     2020.                                                                 Peng Sun, Yunjian Zhang, Xiangyang Ji, and Yao Zhu.
+                                                                           Bridging the gap between ideal and real-world evalu-
+ [8] B. et al. Chen. Drct: Diffusion reconstruction contrastive
+                                                                           ation: Benchmarking ai-generated image detection in
+     training towards universal detection of diffusion gener-
+                                                                           challenging scenarios. In Proceedings of the IEEE/CVF
+     ated images. In Forty-first International Conference on
+                                                                           International Conference on Computer Vision, pages
+     Machine Learning, 2024.
+                                                                           20379–20389, 2025.
+ [9] R. et al. Chen. Dual data alignment makes ai-generated
+                                                                      [21] O. et al. Li. Improving synthetic image detection towards
+     image detector easier generalizable. arXiv preprint
+                                                                           generalization: An image transformation perspective.
+     arXiv:2505.14359, 2025.
+                                                                           arXiv preprint arXiv:2408.06741, 2024.
+[10] S. et al. Cheng. Co-spy: Combining semantic and pixel
+                                                                      [22] Ouxiang Li, Yuan Wang, Xinting Hu, Huijuan Huang,
+     features to detect synthetic images by ai. In Proceed-
+                                                                           Rui Chen, Jiarong Ou, Xin Tao, Pengfei Wan, Xiaojuan
+     ings of the Computer Vision and Pattern Recognition
+                                                                           Qi, and Fuli Feng. Easier painting than thinking: Can
+     Conference, pages 13455–13465, 2025.
+                                                                           text-to-image models set the stage, but not direct the
+[11] Cristiano Costa, Cristina Scarpazza, and Nicola Filippini.            play? arXiv preprint arXiv:2509.03516, 2025.
+     The anterior insula engages in feature-and context-level
+                                                                      [23] Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei
+     predictive coding processes for recognition judgments.
+                                                                           Jiang, Lizhi Xiong, and Zhangjie Fu. Is artificial intel-
+     Journal of Neuroscience, 45(5), 2025.
+                                                                           ligence generated image detection a solved problem?
+[12] David Daniel Cox and Thomas Dean. Neural networks                     arXiv preprint arXiv:2505.12335, 2025.
+     and neuroscience-inspired computer vision. Current
+     Biology, 24(18):R921–R929, 2014.                                 [24] Tsung-Yi Lin, Michael Maire, Serge Belongie, James
+                                                                           Hays, Pietro Perona, Deva Ramanan, Piotr Dollár, and
+[13] D. et al. Cozzolino. Raising the bar of ai-generated image            C Lawrence Zitnick. Microsoft coco: Common objects
+     detection with clip. In Proceedings of the IEEE/CVF                   in context. In European conference on computer vision,
+     Conference on Computer Vision and Pattern Recognition,                pages 740–755. Springer, 2014.
+     pages 4356–4366, 2024.
+                                                                      [25] H. et al. Liu. Forgery-aware adaptive transformer for
+[14] R. et al. Durall. Watch your up-convolution: Cnn based                generalizable synthetic image detection. In Proceedings
+     generative deep neural networks are failing to reproduce              of the IEEE/CVF Conference on Computer Vision and
+     spectral distributions. In Proceedings of the IEEE/CVF                Pattern Recognition, pages 10770–10780, 2024.
+     conference on computer vision and pattern recognition,
+     pages 7890–7899, 2020.                                           [26] Ruiqi Liu, Yi Han, Zhengbo Zhang, Liwei Yao, Zhiyuan
+                                                                           Yan, Jialiang Shen, ZhiJin Chen, Boyi Sun, Lubin Weng,
+[15] J. et al. Frank. Leveraging frequency analysis for deep               Jing Dong, et al. Beyond artifacts: Real-centric enve-
+     fake image recognition. In International conference on                lope modeling for reliable ai-generated image detection.
+     machine learning, pages 3247–3258. PMLR, 2020.                        arXiv preprint arXiv:2512.20937, 2025.
+
+
+                                                                  9
+[27] U. et al. Ojha. Towards universal fake image detectors          [39] Xiao Yu, Kejiang Chen, Kai Zeng, Han Fang, Zijin Yang,
+     that generalize across generative models. In Proceedings             Xiuwei Shang, Yuang Qi, Weiming Zhang, and Neng-
+     of the IEEE/CVF Conference on Computer Vision and                    hai Yu. Semgir: Semantic-guided image regeneration
+     Pattern Recognition, pages 24480–24489, 2023.                        based method for ai-generated image detection and attri-
+                                                                          bution. In Proceedings of the 32nd ACM International
+[28] Y. et al. Qian. Thinking in frequency: Face forgery                  Conference on Multimedia, pages 8480–8488, 2024.
+     detection by mining frequency-aware clues. In European
+     conference on computer vision, pages 86–103. Springer,          [40] N. et al. Zhong. Patchcraft: Exploring texture patch for
+     2020.                                                                efficient ai-generated image detection. arXiv preprint
+                                                                          arXiv:2311.12397, 2023.
+[29] A. et al. Radford. Learning transferable visual models
+     from natural language supervision. In International con-        [41] M. et al. Zhu. Genimage: A million-scale benchmark
+     ference on machine learning, pages 8748–8763. PmLR,                  for detecting ai-generated image. Advances in Neural In-
+     2021.                                                                formation Processing Systems, 36:77771–77782, 2023.
+
+[30] A. et al. Rajan. Aligned datasets improve detection
+     of latent diffusion-generated images. arXiv preprint
+     arXiv:2410.11835, 2024.
+
+[31] R. et al. Rombach. High-resolution image synthesis with
+     latent diffusion models. In Proceedings of the IEEE/CVF
+     conference on computer vision and pattern recognition,
+     pages 10684–10695, 2022.
+
+[32] Oriane Siméoni, Huy V Vo, Maximilian Seitzer, Fed-
+     erico Baldassarre, Maxime Oquab, Cijo Jose, Vasil
+     Khalidov, Marc Szafraniec, Seungeun Yi, Michaël
+     Ramamonjisoa, et al.    Dinov3.    arXiv preprint
+     arXiv:2508.10104, 2025.
+
+[33] C. et al. Tan. Frequency-aware deepfake detection: Im-
+     proving generalizability through frequency space do-
+     main learning. In Proceedings of the AAAI Conference
+     on Artificial Intelligence, volume 38, pages 5052–5060,
+     2024.
+
+[34] C. et al. Tan. Rethinking the up-sampling operations
+     in cnn-based generative network for generalizable deep-
+     fake detection. In Proceedings of the IEEE/CVF Con-
+     ference on Computer Vision and Pattern Recognition,
+     pages 28130–28139, 2024.
+
+[35] C. et al. Tan. C2p-clip: Injecting category common
+     prompt in clip to enhance generalization in deepfake
+     detection. In Proceedings of the AAAI Conference on Ar-
+     tificial Intelligence, volume 39, pages 7184–7192, 2025.
+
+[36] S. et al. Wang. Cnn-generated images are surprisingly
+     easy to spot... for now. In Proceedings of the IEEE/CVF
+     conference on computer vision and pattern recognition,
+     pages 8695–8704, 2020.
+
+[37] S. et al. Yan. A sanity check for ai-generated image
+     detection. arXiv preprint arXiv:2406.19435, 2024.
+
+[38] Z. et al. Yan. Orthogonal subspace decomposition
+     for generalizable ai-generated image detection. arXiv
+     preprint arXiv:2411.15633, 2024.
+
+
+                                                                10
+   A                          Detailed Benchmark Results and Original Weight Performance
+   A.1                        Detailed Breakdown of Benchmark Performance
+   In this section, we provide the comprehensive quantitative results across five benchmarks to supplement the main experiments.
+   Tables 5 and 6 detail the performance on AIGCDetect and DRCT-2M, covering a wide range of architectures from early GANs
+   (e.g., ProGAN, StyleGAN) to modern diffusion models (e.g., SDXL). Table 7 presents the results on UniversalFakeDetect,
+   focusing on robustness against unseen processing pipelines. To assess generalization across **diverse generative paradigms,
+   ranging from open-source foundations to proprietary commercial engines**, Table 8 and Table 9 illustrate the detection accuracy
+   on Synthbuster (including Midjourney v6 and DALL-E 3) and the newly curated EvalGEN benchmark, respectively. These
+   detailed breakdowns confirm that MIRROR maintains consistent performance across diverse generative semantics and architectural
+   paradigms, identifying forgery traces even in challenging high-fidelity samples where baseline methods often exhibit significant
+   volatility.
+
+
+   A.2                        Evaluation of Official Weights
+   To ensure a fair comparison of architectural performance, we evaluate baseline methods using both the officially released weights
+   (“Official”) and weights retrained on our format-aligned SDv1.4 dataset (“Ours”). Results in Table 10 present the performance
+   under both settings. By utilizing the retrained weights, we prioritize format alignment and data scale consistency, ensuring
+   that all detectors are trained under the premise of eliminating format discrepancies and maintaining identical dataset scale. This
+   standardization eliminates discrepancies arising from varying training data sources, thereby establishing a fair and balanced
+   baseline for analyzing intrinsic architectural capabilities.
+
+
+   B                          Robustness to Common Corruptions
+   To evaluate the reliability of MIRROR in real-world deployment, we conduct stress tests against three prevalent image degra-
+   dations: JPEG compression, spatial resizing, and Gaussian blurring. As illustrated in Figure 8, MIRROR exhibits remarkable
+   resilience across all corruption types, consistently outperforming state-of-the-art baselines. Unlike traditional artifact-driven
+   detectors—which often suffer from severe performance degradation due to their over-reliance on fragile high-frequency pat-
+   terns—MIRROR leverages the ideal reference to maintain stable detection, even when low-level spectral cues are compromised by
+   unseen perturbations.
+
+                   90                                                                      90                                                                 90
+
+                   80                                                                      80                                                                 80
+Balanced Acc (%)
+
+
+
+
+                                                                        Balanced Acc (%)
+
+
+
+
+                                                                                                                                           Balanced Acc (%)
+
+
+
+
+                   70                                                                      70
+                                                                                                                                                              70
+                   60
+                                                                                           60
+                                                                                                                                                              60
+                   50
+                                                                                           50
+                   40                                                                                                                                         50
+                                                                                           40
+                   30                                                                                                                                         40
+                        100       90           80            60    40                           0.5   0.75         1.0        1.5    2.0                           0   0.5         1.0        1.5   2.0
+                                       JPEG Quality Factor                                                   Resizing Scale                                                  Blurring Sigma
+                                                         AIDE           B-Free                         DRCT              FatFormer         SAFE                        MIRROR
+                                                         Aligned        C2P-Clip                       DDA               NPR               UnivFD
+
+   Figure 8: Robustness evaluation under common image degradations. We report the Balanced Accuracy curves under (Left)
+   JPEG compression with quality factors ranging from 100 down to 40, (Middle) Spatial resizing with scale factors from 0.5× to
+   2.0×, and (Right) Gaussian blurring with sigma values (σ) from 0 to 2.0. MIRROR (red curve) maintains high stability across all
+   settings, whereas baseline methods exhibit significant volatility.
+
+
+
+   JPEG Compression. We simulate lossy compression artifacts by varying the JPEG quality factor from 100 down to 40. This
+   process introduces quantization noise that effectively obliterates the subtle high-frequency spectral fingerprints often exploited by
+   standard classifiers. MIRROR maintains its efficacy in this regime by anchoring its decision on manifold-consistent structural
+   residuals rather than volatile pixel-level statistics, which are easily corrupted by quantization.
+
+
+                                                                                                                11
+Resizing Operations. To model resolution fluctuations typical in social media transmission, we resize images with scale factors
+ranging from 0.5× to 2.0×. Such geometric transformations introduce interpolation artifacts (e.g., aliasing) that often disrupt
+local texture analysis. Our results confirm that MIRROR’s sparse linear combination strategy effectively preserves structural
+integrity, rendering the detection process largely invariant to scale shifts and preserving high-level semantic consistency.
+
+Gaussian Blurring. We apply Gaussian blurring with kernels of σ ∈ [0, 2.0] to simulate out-of-focus or low-quality acquisition
+conditions. Blurring acts as a low-pass filter, suppressing the high-frequency components that many baselines (e.g., FatFormer,
+SAFE) predominantly rely on. The stability of MIRROR under these conditions underscores its capability to identify forgeries
+based on global semantic discordance rather than relying on fragile local sharpness cues.
+
+
+C     Heatmap Visualization
+To qualitatively elucidate how MIRROR distinguishes authentic content from synthetic artifacts, we visualize the reconstruction
+residuals across various generative architectures. Unlike conventional interpretability tools such as Grad-CAM, which rely
+on backpropagated classification logits to identify salient regions, MIRROR derives heatmaps directly from the residual map
+R = ∥x − x̂∥2 . Here, x denotes the input feature and x̂ represents its corresponding manifold projection. This residual-based
+visualization provides a more granular forensic perspective, highlighting precisely where the generative distribution deviates from
+the learned manifold of authentic images.
+
+                                 Real Image                                     Generated Image
+
+
+
+
+Figure 9: Reconstruction residual heatmaps for authentic and synthetic images. MIRROR yields negligible residuals for
+authentic samples (left), signaling successful manifold projection. For AI-generated content (right), the localized high-intensity
+regions (red) unveil forensic inconsistencies and structural discrepancies, providing an intuitive interpretation of MIRROR’s
+discriminatory mechanism.
+
+  As illustrated in Figure 9, authentic images manifest uniformly low residuals across their spatial extent, validating their close
+adherence to the learned manifold of natural images. Conversely, AI-generated images exhibit localized clusters of high residuals,
+which precisely pinpoint subtle forensic inconsistencies such as irregular illumination, blurred texture boundaries, or geometric
+
+
+                                                                12
+distortions. These heatmaps demonstrate that MIRROR can effectively localize generative artifacts often imperceptible to human
+observers, thereby providing a transparent and interpretable foundation for its classification decisions.
+
+
+D     Visual Showcase of the Human-AIGI Benchmark
+This appendix provides a visual comprehensive overview of the Human-AIGI Benchmark, a dataset specifically curated to
+reflect the increasingly sophisticated threat landscape posed by modern commercial generative AI systems. Unlike traditional
+benchmarks that often focus on single-generator settings or rely on easily distinguishable artifacts, our collection emphasizes
+cross-generator heterogeneity and high perceptual indistinguishability across samples. The dataset incorporates outputs from
+multiple state-of-the-art generative models and diverse content domains, ensuring realistic and challenging evaluation scenarios.
+As such, the Human-AIGI Benchmark serves as a rigorous and representative testbed for assessing the robustness, generalization,
+and real-world applicability of next-generation human–AI content detectors.
+
+                                  Origin                                                Hard
+
+
+
+
+Figure 10: Visual showcase of the Human-AIGI Benchmark. (Left) Representative Samples: A diverse collection encom-
+passing portraits, objects, and complex scenes curated from 27 state-of-the-art generators in T2I-COREBENCH (e.g., Flux,
+Hunyuan 3.0, Nanobanana). These samples reflect the broad semantic coverage and high fidelity of current commercial-grade
+AIGI. (Right) The Human-Imperceptible Subset (Dhard ): A rigorous subset consisting of ”perceptual corner cases” identified
+through psychophysical trials with 50 participants. Following the criteria S(x) ≥ τreal ∨ RT (x) > µrt + σrt , these images
+either successfully deceived human observers into a ”Real” judgment (high confidence score S) or induced significant cognitive
+hesitation (prolonged response time RT ). This subset serves as a stringent testbed for evaluating whether a detector can identify
+generative threats that evade biological perceptual scrutiny and human expert review.
+
+
+
+
+                                                               13
+Table 5: Performance comparison on the AIGCDetect benchmark. The test benchmark uses balance accuracy (B.Acc). Bold
+numbers indicate the best performance in each column, and underlined numbers indicate the second-best performance.
+                                                                         Big-     Cycle-     Gau-        Pro-                                      Star-     Style-        Style-                            Avg
+  Method             ADM     DALLE2        GLIDE     Midj.    VQDM                                                SDXL       SD1.4    SD1.5                                            WFR      Wukong
+                                                                         GAN      GAN        GAN         GAN                                       GAN       GAN           GAN2                             B.Acc
+  NPR [34]           91.4     43.8         64.0     83.8       84.1      50.6      47.7      55.4        52.1     63.1       77.5     77.5         52.8          53.4      61.2        51.8       75.8       63.9
+  UnivFD [27]        68.5     75.0         69.2     71.0       55.5      39.5      43.5      36.6        42.1     73.9       69.2     69.4         47.1          43.5      39.2        51.2       65.6       56.5
+  FatFormer [25]     94.7     52.4         75.7     52.4       77.5      99.0      99.5      99.7        99.7     56.7       65.4     65.8         99.9          94.6      91.9        99.5       71.8       82.1
+  SAFE [21]          46.8     46.6         46.7     47.2       48.7      50.1      48.3      49.7        50.0     46.9       47.0     47.0         50.0          50.0      49.6        50.0       47.6       48.4
+  C2P-CLIP [35]      87.9     50.8         71.2     55.1       74.7      97.4      99.5      99.7        99.8     56.6       68.8     69.4         99.8          91.5      80.6        84.1       73.3       80.0
+  AIDE [37]          98.9     61.1         75.6     82.7       96.3      91.1      89.1      95.9        80.2     78.4       93.0     93.2         75.2          76.6      76.6        74.3       89.7       84.0
+  DRCT [8]           53.6     83.0         61.6     97.7       64.5      48.8      48.8      49.2        50.2     96.8       98.6     98.5         43.2          48.5      49.4        50.0       98.0       67.1
+  Aligned [30]       60.4     60.9         65.7     58.2       60.5      53.0      50.5      53.1        51.2     63.2       54.3     54.8         49.1          56.7      50.1        48.9       56.5       55.7
+  B-Free [17]        76.4     74.9         70.8     94.3       89.2      91.5      66.7      96.1        95.4     99.6       99.4     99.3         81.0          75.4      71.0        58.9       99.4       84.7
+  DDA [9]            90.7     93.9         88.8     93.9       67.8      81.1      64.8      81.6        73.1     98.0       96.7     96.7         67.9          67.8      76.7        49.8       96.8       81.5
+  MIRROR             75.6     88.9         93.1     92.5       95.9      97.2      73.3      95.8        96.8     99.8       99.9     99.8         87.6          91.9      91.1        78.9       99.8       91.7
+
+
+                                              Table 6: Performance comparison on the DRCT-2M benchmark.
+                                                                      SDXL-       SD-       SDXL-        LCM-      LCM-       SDv1-        SDv2-     SDXL-              SDv1-     SDv2-       SDXL-       Avg
+Method             LDM      SDv1.4    SDv1.5       SDv2      SDXL
+                                                                      Refiner    Turbo      Turbo        SDv1.5    SDXL        Ctrl         Ctrl      Ctrl               DR        DR          DR        B.Acc
+NPR [34]            48.8     59.9      59.6        62.3      68.7      74.6       72.7       63.7         62.5      73.3       55.8        53.0           46.0          50.9        50.1       50.4       59.5
+UnivFD [27]         66.9     73.0      73.0        73.9      72.4      73.4       73.7       74.3         74.4      73.3       68.5        72.4           70.2          53.3        58.3       61.2       69.5
+FatFormer [25]      54.6     50.3      50.1        50.0      50.5      49.9       50.0       49.9         50.6      53.2       52.3        53.0           65.4          70.8        59.6       51.9       53.9
+SAFE [21]           50.0     50.0      50.0        49.9      49.9      49.9       49.9       49.9         50.1      49.9       51.1        50.1           50.2          52.1        50.3       51.6       50.3
+C2P-CLIP [35]       59.6     51.1      50.9        50.5      52.2      50.8       50.6       50.3         50.4      53.1       55.6        53.2           68.6          66.6        54.9       52.8       54.4
+AIDE [37]           58.7     60.0      60.0        56.8      51.9      66.0       51.3       50.7         61.8      56.6       55.3        52.2           51.5          83.1        72.1       60.1       59.2
+DRCT [8]            99.8     97.3      97.8        99.3      96.8      96.8       99.3       87.3         99.3      95.3       95.3        99.8           96.8          96.3        99.8       94.3       96.9
+Aligned [30]        51.1     53.7      53.8        51.9      57.9      63.1       51.7       57.2         58.1      69.1       50.8        52.5           50.8          52.9        51.9       51.3       54.9
+B-Free [17]         99.7     99.7      99.7        99.6      99.1      99.4       99.2       98.3         99.6      99.6       99.8        99.8           99.8          99.5        99.6       95.4       99.2
+DDA [9]             97.6     97.4      97.4        97.3      97.2      94.4       97.4       94.1         95.5      97.4       97.7        97.9           97.9          97.9        98.1       97.5       97.0
+MIRROR              99.8     99.6      99.6        99.5      91.7      99.5       99.4       96.9         99.9      97.0       99.8        99.0           98.7          80.9        67.9       59.4       93.0
+
+
+                                      Table 7: Performance comparison on the UniversalFakeDetect benchmark.
+                                                                                          LDM- LDM- LDM- Glide- Glide- Glide-         Avg
+           Method               SITD SAN CRN IMLE Guided                                                                       Dalle
+                                                                                           200 200 cfg 100 100 27 50 27 100 10       B.Acc
+           NPR [34]                 57.8    36.8      52.7      52.6          78.5         50.4          50.4        49.6           46.9       50.9              44.2           43.3       51.1
+           UnivFD [27]              54.7    46.8      23.0      36.6          53.5         44.0          45.3        43.7           61.6       62.2              62.1           46.1       48.3
+           FatFormer [25]           90.6    75.3      93.4      93.4          65.7         95.8          83.4        95.8           84.8       83.6              83.2           95.8       86.7
+           SAFE [21]                50.0    47.0      50.0      50.0          48.2         50.7          50.3        50.3           49.9       49.9              49.9           50.4       49.7
+           C2P-CLIP [35]            91.7    80.8      95.1      95.1          60.2         97.0          84.0        96.8           84.2       83.4              84.9           94.4       87.3
+           AIDE [37]                55.0    60.5      53.1      76.4          87.4         93.5          85.6        93.7           78.3       78.1              81.1           91.7       77.9
+           DRCT [8]                 78.3    82.0      31.1      48.2          62.5         90.6          91.4        90.5           55.6       54.5              58.8           57.9       66.8
+           Aligned [30]             63.9    54.1      54.5      68.9          57.1         51.0          55.0        51.4           68.8       70.5              68.4           62.3       60.5
+           DDA [9]                  48.9    87.0      60.8      67.5          88.1         73.7          73.5        72.9           69.1       67.9              71.6           51.7       69.4
+           B-Free [17]              76.4    92.9      90.4      94.2          75.5         97.1          97.1        97.2           77.9       79.2              82.0           93.6       87.8
+           MIRROR                   63.3    80.6      76.4      76.9          79.8         98.9          98.8        99.0           95.1       94.7              95.6           98.6       88.2
+
+    Table 8: Performance comparison on the Synthbuster benchmark.                                                    Table 9: Performance comparison on the EvalGEN.
+                                                                                                           Avg                                                                                            Avg
+Method             DALLE2 DALLE3 Firefly GLIDE Midj. SD1.3 SD1.4 SD2 SDXL                                                Method              Flux GoT Infinity NOVA OmiGen
+                                                                                                          B.Acc                                                                                          B.Acc
+NPR [34]            72.3       70.2        74.0     26.8      77.9 68.3         69.0      87.7 77.5        69.3          NPR [34]            74.4     70.5          69.7        76.0          70.7       72.3
+UnivFD [27]         88.7       75.9        74.9     89.1      84.2 71.2         66.2      75.4 87.0        79.2          UnivFD [27]         94.3     96.6          91.9        95.5          98.1       95.3
+FatFormer [25]      32.5        0.4        80.7     43.9       5.9  57.6        56.7      27.9 40.7        38.5
+                                                                                                                         FatFormer [25]       0.4      2.6           8.6        54.2           1.7       13.5
+SAFE [21]            0.5        2.5         0.6      0.0       6.4   9.5         7.6       1.8  0.4         3.3
+                                                                                                                         SAFE [21]            0.3      0.3           0.9         0.2           0.6        0.5
+C2P-CLIP [35]       25.2        0.6        78.1     39.4      10.0 54.7         54.5      44.5 44.4        39.0
+                                                                                                                         C2P-CLIP [35]        1.8      6.7          11.4        46.6           2.7       13.8
+AIDE [37]           16.5       23.6         0.3     42.1      51.5 88.7         90.2      77.4 67.3        50.8
+DRCT [8]             3.9       36.8        13.5     21.6      98.9 94.9         93.8      99.9 96.4        62.2
+                                                                                                                         AIDE [37]           17.9     24.7           3.4        16.3          33.4       19.1
+Aligned [30]        23.7        2.3        28.0     22.0      13.1   4.2         3.4       4.6 14.9        12.9          DRCT [8]            52.2     71.2          58.3        67.9          70.5       64.0
+DDA [9]             80.7       92.5        95.3     84.3     100.0 99.5         99.5      99.8 100.0       94.6          Aligned [30]        30.0     46.2          20.8        47.0          32.9       35.4
+B-Free [17]         89.9       93.7        99.2     45.8      98.8 100.0        99.8      99.5 99.9        91.8          DDA [9]             89.1     94.9          95.0        98.3          96.2       94.7
+                                                                                                                         B-Free [17]         52.1     99.5          97.1        99.9          99.4       89.6
+MIRROR              98.0       99.9        91.6     96.5      98.3    99.8      100.0 99.2        99.5     98.1
+                                                                                                                         MIRROR              99.9 99.8              99.5        99.9          95.7       99.0
+
+
+
+                                                                                              14
+Table 10: Performance comparison between Official Weights and Our Retrained Weights. We report Balanced Accuracy
+(B.Acc), JPEG Robustness (J.Rob), and Resize Robustness (R.Rob). For Synthbuster and EvalGEN, which only contain fake
+images, the reported scores are the average of the dataset performance and the performance on the MSCOCO set. “Official”
+denotes results using officially released weights, and “Ours” denotes results obtained by training on our dataset.
+                               AIGCDetect               GenImage                 DRCT-2M           UnivFakeDetect         Synthbuster              EvalGEN                 Average
+Method           Weights
+                            B.Acc J.Rob R.Rob B.Acc J.Rob R.Rob B.Acc J.Rob R.Rob B.Acc J.Rob R.Rob B.Acc J.Rob R.Rob B.Acc J.Rob R.Rob B.Acc J.Rob R.Rob
+                 Official   81.8   53.7   75.5   88.4     57.3     77.3   66.7     59.8    63.6   81.1   51.8   72.8   80.6   54.0   78.3   59.7    59.9     69.8   76.4    56.1     72.9
+AIDE [37]
+                  Ours      84.0   53.4   77.0   88.6     55.3     76.3   59.2     54.6    72.5   77.9   51.5   70.8   75.4   76.8   62.5   59.5    58.8     76.4   74.1    58.4     72.6
+                 Official   51.4   51.1   52.0   52.2     51.3     52.6   53.0     51.6    53.5   52.5   52.1   52.5   53.9   52.5   54.6   54.3    52.8     54.9   52.9    51.9     53.4
+FatFormer [25]
+                  Ours      82.1   71.5   80.0   71.5     58.4     68.4   53.9     52.1    52.4   86.7   68.9   85.2   69.2   57.1   65.6   56.7    53.4     57.5   70.0    60.2     68.2
+                 Official   72.4   60.0   68.8   84.7     67.9     74.9   70.3     64.7    63.1   64.2   56.2   58.0   82.6   63.3   76.2   82.9    80.5     77.9   76.2    65.4     69.8
+NPR [34]
+                  Ours      63.9   64.0   48.2   73.7     73.7     46.6   59.5     58.3    37.4   51.1   51.1   49.2   64.6   64.0   34.4   66.1    65.7     64.2   63.2    62.8     46.7
+                 Official   49.4   50.1   35.3   50.6     50.1     34.4   49.0     49.9    44.8   61.4   49.8   46.5   48.9   50.0   25.7   51.4    50.0     43.9   51.8    50.0     38.4
+SAFE [21]
+                  Ours      48.4   57.8   49.4   47.7     64.4     49.4   50.3     62.4    49.2   49.7   48.5   49.8   51.6   53.8   49.9   50.2    55.4     49.1   49.7    57.1     49.5
+                 Official   76.3   71.0   73.6   67.2     62.5     65.2   62.1     61.9    58.7   76.0   70.4   72.7   68.5   64.6   65.0   58.2    57.7     55.9   68.1    64.7     65.2
+UnivFD [27]
+                  Ours      56.5   50.1   48.7   62.5     53.6     50.8   69.5     57.3    52.5   48.3   51.1   43.0   65.8   59.2   52.3   73.8    61.3     56.6   62.7    55.4     50.7
+
+
+
+
+                                                                                             15
+

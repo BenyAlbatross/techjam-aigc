@@ -1,0 +1,625 @@
+                                                      Simplicity Prevails: The Emergence of Generalizable
+                                                         AIGI Detection in Visual Foundation Models
+                                                                Yue Zhou1 , Xinan He2,1 , Kaiqing Lin1 , Bing Fan3 , Feng Ding2 , Bin Li1∗
+                                                                            1 Shenzhen University 2450042008@email.szu.edu.cn;
+                                                                              2 Nanchang University shahur@email.ncu.edu.cn;
+                                                                                     3 University of North Texas
+
+                                         Abstract
+                                         Specialized detectors for AI-generated images (AIGI) often achieve
+                                         near-perfect accuracy on curated benchmarks, yet their perfor-
+arXiv:2602.01738v2 [cs.CV] 15 Apr 2026
+
+
+
+
+                                         mance degrades substantially in realistic, in-the-wild scenarios. In
+                                         this work, we show that frozen features from modern Vision Foun-
+                                         dation Models (VFMs), combined with a lightweight classifier, form
+                                         a remarkably strong baseline for generalizable AIGI detection. Us-
+                                         ing representative modern encoders, including Perception Encoder,
+                                         MetaCLIP 2, and DINOv3, we conduct a comprehensive evaluation
+                                         across standard benchmarks, recent unseen generators, and chal-
+                                         lenging in-the-wild distributions. Across these settings, this simple
+                                         baseline consistently matches or outperforms recent specialized
+                                                                                                                     Figure 1: The Surge of Generative Data in Web Corpora. We
+                                         detectors, with particularly large gains in realistic scenarios.
+                                                                                                                     track the number of indexed URLs from major open-source
+                                            We further investigate why this simple setup is so effective. Our
+                                                                                                                     AI generation platforms (Civitai and Liblib) within Common
+                                         analyses provide converging evidence that the strong forensic sep-
+                                                                                                                     Crawl snapshots from 2022 to 2025.
+                                         arability of modern VFMs is closely related to their exposure to
+                                         synthetic web content during pre-training. In Vision-Language               era of content creation, synthesizing photorealistic images that
+                                         Models, this manifests as semantic alignment with forgery-related           challenge the boundaries of visual authenticity. While empowering
+                                         concepts, while in Self-Supervised Learning models it appears as            creativity, this technological leap simultaneously introduces pro-
+                                         implicit discrimination of generative distributions. Although a fully       found threats to information integrity, fueling the proliferation of
+                                         controlled pre-training study is beyond the scope of this work,             misinformation. In response, the forensics community has largely
+                                         multiple complementary analyses support this interpretation. We             favored a specialized approach: crafting detectors with increasingly
+                                         also identify important limitations. While modern VFMs are highly           complex module tailored to specific artifacts, such as frequency
+                                         effective for global AIGI detection, they remain vulnerable to se-          anomalies or noise residuals [11, 28]. While these specialized de-
+                                         vere transmission degradation and perform poorly on pure VAE                tectors achieve near-perfect accuracy on curated benchmarks, they
+                                         reconstruction and localized editing. Overall, our results suggest          often suffer from a dramatic performance collapse in realistic sce-
+                                         that progress in generalizable AIGI detection may depend more on            narios. Recent studies, such as the Chameleon benchmark [31], re-
+                                         preserving and leveraging strong pretrained representations than            veal that detectors excelling in controlled environments frequently
+                                         on increasingly complex task-specific forensic designs.                     degrade to 60%–70% accuracy when deployed ‘in-the-wild’. This
+                                                                                                                     fragility suggests that relying on hand-crafted inductive biases may
+                                         CCS Concepts                                                                be a dead end in the face of rapidly evolving generative distribu-
+                                         • Computing methodologies → Computer vision; Artificial in-                 tions.
+                                         telligence; • Information systems → Multimedia content analysis.               Echoing Sutton’s “Bitter Lesson”, we revisit this trend from a
+                                                                                                                     different perspective: rather than asking how to design increas-
+                                         Keywords                                                                    ingly specialized forensic modules, we ask how far one can go
+                                         AI-generated image detection, multimedia forensics, vision founda-          by directly leveraging the frozen representations of modern Vi-
+                                         tion models                                                                 sion Foundation Models (VFMs). We show that a simple linear
+                                                                                                                     classifier, trained on top of frozen features from recent encoders
+                                                                                                                     such as Perception Encoder (PE) [1], MetaCLIP 2 [8], and DINOv3
+                                         1   Introduction                                                            [22], provides a remarkably strong baseline for generalizable AIGI
+                                               “One thing that should be learned from the bitter lesson              detection. We define modern VFMs as the latest generation of en-
+                                               is the great power of general purpose methods, of meth-               coders trained on large-scale and evolving web corpora. Our eval-
+                                               ods that continue to scale with increased computation                 uation spans three distinct protocols: standard benchmarks (e.g.,
+                                               even as the available computation becomes very great.”                GenImage [36]), datasets from the latest unseen generators (e.g.,
+                                                                — Rich Sutton, The Bitter Lesson [23]                AIGIHolmes [35], AIGI-Now [5]), and challenging in-the-wild dis-
+                                            The rapid evolution of generative models, such as Midjourney,            tributions (e.g., Chameleon [31], WildRF [3]). Across all settings,
+                                         Stable Diffusion [21] and Nano Banana[26], has ushered in a new             this simple baseline consistently matches or outperforms recent
+                                                                                                                 1
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                          Anonymous Author(s)
+
+
+specialized detectors, with the largest gains appearing in the most                heads or applying fine-tuning (e.g., LoRA) actively degrades
+challenging in-the-wild scenarios.                                                 the generic representations of VFMs. While these frozen
+   We further investigate why such a simple setup is so effective.                 generic features solve global detection, they remain blind to
+Rather than attributing the gains to forensic-specific architectural               pure VAE reconstruction and localized editing, urging future
+innovation, we argue that they are closely related to an emergent                  research to harness rather than over-engineer foundation
+property of large-scale pre-training on evolving web data. As visu-                models.
+alized in Figure 1, our analysis of the Common Crawl index reveals
+a rapid increase in generative content from major communities
+such as Civitai and Liblib starting in 2023. This trend suggests that
+modern VFMs are increasingly likely to encounter synthetic content
+during pre-training, and may therefore internalize useful cues for
+distinguishing generated images from real ones. We characterize
+this capability through two distinct manifestations of data exposure.       2   Related Works
+For Vision-Language Models, the co-occurrence of synthetic images           The development of AI-generated image (AIGI) detection has un-
+and textual descriptions can lead to explicit concept injection,            dergone a significant paradigm shift, evolving from hand-crafted
+where synthetic visuals become aligned with high-level forgery-             artifact analysis to the adaptation of large-scale foundation models.
+related concepts. For Self-Supervised Learning (SSL) models such               Early Artifact-Based Detection. Initial forensic methods fo-
+as DINOv3, the capability appears instead as implicit distribution          cused on identifying the low-level imperfections inherent to early
+fitting, where the model captures low-level regularities associated         generative architectures. Researchers found that upsampling oper-
+with the generative manifold through pre-training data exposure.            ations in GANs and CNNs often leave distinct footprints, such as
+   At the same time, our analysis also clarifies the boundaries of          checkerboard artifacts in the pixel space [17] or spectral anomalies
+this paradigm. We find that modern VFMs remain blind to pure                in the frequency domain [10]. Others exploited inconsistencies
+reconstruction artifacts and struggle with localized editing,               in color statistics [16] or noise residuals [9] to distinguish syn-
+while also suffering from noticeable degradation under aggressive           thetic content. While effective against specific generators, these
+real-world transmission and screen recapture. These findings sug-           hand-crafted features proved brittle against the rapid evolution of
+gest that large-scale pre-training has substantially improved the           generative models, particularly with the advent of Diffusion Models
+generalizability of global detection for fully synthetic content, but       which exhibit fundamentally different artifact patterns.
+that the localization of fine-grained manipulation remains an open             Data-Driven Specialized Detectors. With the dominance of
+challenge. Complementing these observations, our experiments                Diffusion Models, the focus shifted from detecting CNN-specific
+on backbone replacement and lightweight LoRA fine-tuning                    upsampling artifacts (e.g., checkerboard patterns in GANs [28]) to
+suggest that the dominant factor behind performance is still the            identifying the unique traces of the diffusion process. Researchers
+strength of the pretrained representation itself, while adaptation          proposed reconstructing input images to isolate generative errors:
+mainly serves to better exploit this foundation. Therefore, rather          DIRE [29] leverages the reconstruction residual from a pre-trained
+than viewing increasingly specialized detector design as the default        diffusion model as a forensic signal, while DRCT [4] refines this by
+path forward, we argue that future progress in AI forensics may             analyzing the discrepancies between real-real and fake-fake recon-
+depend more on how to preserve, harness, and refine the evolv-              struction pairs. Others focused on improving generalization: SAFE
+ing representations of foundation models for fine-grained forensic          [13] introduces artifact-preserving augmentations to decouple se-
+reasoning.                                                                  mantic content from forensic traces. notably, DDA [6] targets the
+   In summary, our main contributions are:                                  shared VAE decoder inherent to Latent Diffusion Models, explicitly
+                                                                            aligning the detector with VAE reconstruction patterns to achieve
+     • We show that frozen features from modern Vision Foun-                broader generalization across different LDM-based generators.
+       dation Models, combined with a lightweight classifier, con-             The Foundation Model Era. The introduction of UnivFD [18]
+       stitute a remarkably strong baseline for generalizable AIGI          marked a pivotal turning point. Ojha et al. revealed that training
+       detection. Across standard benchmarks, recent unseen gener-          a linear layer on top of the frozen feature space of a pre-trained
+       ators, and challenging in-the-wild distributions, this simple        Vision-Language Model (specifically CLIP [20]) yields significantly
+       setup consistently matches or outperforms recent specialized         better generalization than training CNNs from scratch. This dis-
+       detectors, with especially large gains in realistic scenarios.       covery spurred a wave of research leveraging Vision Foundation
+     • We provide converging evidence that this capability is closely       Models (VFMs) as backbones. Subsequent works, such as Effort[32],
+       related to pre-training data exposure rather than forensic-          AIDE [31], OMAT[34] and DDA[6], have explored various strate-
+       specific architectural design. In particular, we identify two        gies to adapt CLIP or DINOv2 [19] for forensics, including prompt
+       complementary manifestations: semantic alignment with                tuning, adapter modules, fusing frequency-domain information
+       forgery-related concepts in Vision-Language Models, and              and training hard samples. These methods currently represent the
+       implicit discrimination of generative distributions in Self-         state-of-the-art, yet as our experiments show, they still struggle to
+       Supervised Learning models.                                          maintain robustness in unconstrained, in-the-wild scenarios com-
+     • We validate the “Bitter Lesson” in AI forensics and delin-           pared to the raw capabilities of the latest VFMs. (See Appendix for
+       eate the boundaries of this paradigm. Through rigorous               a comprehensive survey of the legacy backbones still prevalent in
+       ablation, we demonstrate that attaching complex forensic             these recent methods.)
+                                                                        2
+Simplicity Prevails for Generalizable AIGI Detection                                                ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+Table 1: Performance on GenImage Benchmark. All detectors are trained on Stable Diffusion v1.4 and evaluated on unseen
+generators. Accuracy is averaged over real and fake classes. Best results in bold.
+
+           Method                     ADM         BigGAN       Midjourney   VQDM     GLIDE      SD-v1.4     SD-v1.5      Wukong        Avg.
+           Modern VFM Baselines (Ours)
+           MetaCLIP-Linear     0.549                   0.524      0.839     0.653     0.653       0.984      0.981         0.942       0.766
+           MetaCLIP2-Linear 0.690                      0.816      0.959     0.819     0.887       0.993      0.991         0.980       0.892
+           SigLIP-Linear       0.740                   0.658      0.812     0.857     0.916       0.955      0.954         0.918       0.851
+           SigLIP2-Linear      0.870                   0.924      0.879     0.954     0.951       0.995      0.995         0.994       0.945
+           PE-CLIP-Linear      0.712                   0.963      0.901     0.959     0.972       0.999      0.999         0.999       0.938
+           DINOv2-Linear       0.651                   0.889      0.811     0.757     0.852       0.967      0.961         0.929       0.852
+           DINOv3-Linear       0.849                   0.991      0.934     0.992     0.963       0.998      0.996         0.994       0.964
+           Competitor Methods
+           CNNSpot [28]               0.507            0.530     0.610      0.501     0.522       0.998       0.996        0.985       0.706
+           FreqNet [24]               0.608            0.939     0.849      0.626     0.858       0.950       0.949        0.937       0.840
+           Gram-Net [15]              0.576            0.591     0.665      0.528     0.747       0.989       0.988        0.960       0.756
+           NPR [25]                   0.619            0.849     0.850      0.567     0.844       0.996       0.994        0.984       0.838
+           UnivFD [18]                0.571            0.839     0.795      0.644     0.842       0.959       0.958        0.926       0.817
+           SAFE [13]                  0.600            0.880     0.829      0.708     0.836       0.964       0.967        0.903       0.836
+           LaDeDa [3]                 0.512            0.583     0.595      0.513     0.585       0.876       0.871        0.820       0.670
+           Effort [32]                0.704            0.749     0.756      0.824     0.807       0.874       0.873        0.867       0.807
+           DDA [6]                    0.880            0.741     0.960      0.719     0.862       0.986       0.985        0.986       0.890
+           OMAT [34]                  0.837            0.973     0.903      0.954     0.974       0.974       0.973        0.975       0.946
+           AIDE [31]                  0.602            0.648     0.813      0.694     0.514       0.959       0.957        0.954       0.768
+
+
+3     Simplicity Prevails: Benchmarking Modern                                  state-of-the-art generators released after 2024, including closed-
+      VFMs                                                                      source generators like Nano Banana, GPT4o and FLUX-Pro. These
+                                                                                serve as a strict test for generalization to unseen distributions.
+To empirically validate our hypothesis that the generalization ca-
+                                                                                   Specialized Detectors. We compare against a comprehensive
+pability of AIGI detection stems from the scale of pre-training data
+                                                                                suite of state-of-the-art forensic methods, spanning three cate-
+rather than complex architectural designs, we conduct a comprehen-
+                                                                                gories: (1) Specialized Detectors: Artifact-based methods like
+sive comparative analysis. We pit simple linear classifiers trained
+                                                                                CNNSpot [28], FreqNet [24], and NPR [25], as well as recent VFM-
+on modern Vision Foundation Models (VFMs) against a wide array
+                                                                                based adapters such as UnivFD [18], OMAT [34], Effort [32] and
+of state-of-the-art specialized detectors. Our evaluation protocol is
+                                                                                Dual-Data-Alignment (DDA)[6]. (2) Former VFM Baselines: To
+designed to be rigorous and progressively challenging, spanning
+                                                                                explicitly evaluate the impact of pre-training data evolution, we in-
+three distinct scenarios: standard academic benchmarks, realistic
+                                                                                clude earlier generations of foundation models, such as the original
+in-the-wild distributions, and unseen next-generation generative
+                                                                                OpenAI CLIP [20], SigLIP [33], Meta CLIP [30] and DINOv2 [19].
+models.
+                                                                                For DDA, we utilize the official pre-trained weights provided by
+                                                                                the authors, as its core contribution involves a specialized training
+                                                                                pipeline with VAE-reconstructed data alignment. All other methods
+                                                                                are trained on GenImage SDv1.4 training set for fair comparison.
+3.1     Experimental Setup
+                                                                                   Modern VFM Baselines. To test our “Simplicity Prevails” hy-
+Evaluation Benchmarks. To rigorously assess generalization, we                  pothesis, we select a representative set of modern Vision Founda-
+organize our evaluation into three progressively challenging cat-               tion Models as frozen feature extractors. These include Vision-
+egories. (1) Standard Benchmarks: We use GenImage [36], a                       Language Models (SigLIP2 [27], MetaCLIP 2 [8], Perception En-
+widely adopted benchmark comprising images from 8 generators                    coder [1]) and Self-Supervised Models (DINOv3 [22]). We at-
+(e.g., Stable Diffusion, Midjourney). Following standard protocols              tach a simple linear layer to the pooled output features of these
+[18], we use the Stable Diffusion v1.4 subset for training and the              backbones. Detailed specifications of model architectures and pre-
+remaining subsets for testing. (2) In-the-Wild Datasets: We eval-               training datasets are provided in Appendix.
+uate on Chameleon [31], WildRF [3], SocialRF and Commu-                            Implementation Details. All our VFM baselines are trained
+nityAI [14]. These datasets are collected from social media and                 solely on the GenImage (SD v1.4) training set. We keep the back-
+internet forums, featuring diverse, unconstrained post-processing               bone completely frozen and only update the linear head. We use the
+and unknown generative sources, representing a realistic detection              AdamW optimizer with a learning rate of 1𝑒 −3 and a batch size of
+scenario. (3) Unseen Generators: We employ AIGIHolmes [35]                      128 for 2 epoch. Images are resized and center-cropped to the native
+and AIGI-Now [5], recent benchmarks containing images from
+                                                                            3
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                                  Anonymous Author(s)
+
+
+Table 2: Performance on In-the-Wild Benchmarks. Evaluation on Chameleon, WildRF, SocialRF, and CommunityAI datasets.
+Accuracy is averaged over real and fake classes. Best results in bold.
+
+                                       Chameleon                  WildRF                     SocialRF           CommunityAI
+         Method                                                                                                                          Avg.
+                                Real      Fake   Avg.     Real     Fake  Avg.        Real      Fake   Avg.    Real Fake   Avg.
+         Modern VFM Baselines (Ours)
+         MetaCLIP-Linear     0.373 0.914          0.644   0.461    0.923   0.692   0.409      0.866   0.638   0.353   0.933   0.643      0.654
+         MetaCLIP2-Linear 0.948 0.913             0.930   0.478    0.979   0.728   0.659      0.940   0.800   0.926   0.954   0.940      0.842
+         SigLIP-Linear       0.480 0.732          0.606   0.383    0.897   0.640   0.549      0.613   0.581   0.370   0.857   0.614      0.610
+         SigLIP2-Linear      0.884 0.833          0.859   0.597    0.984   0.790   0.744      0.866   0.805   0.826   0.905   0.866      0.822
+         PE-CLIP-Linear      0.970 0.948          0.959   0.679    0.994   0.836   0.751      0.970   0.861   0.966   0.975   0.971      0.899
+         DINOv2-Linear       0.628 0.580          0.608   0.643    0.772   0.705   0.603      0.695   0.649   0.606   0.562   0.583      0.636
+         DINOv3-Linear       0.933 0.895          0.914   0.948    0.975   0.961   0.937      0.948   0.943   0.949   0.946   0.948      0.940
+         Competitor Methods
+         CNNSpot               0.979      0.128   0.554   0.959    0.290   0.625     0.588    0.541   0.565   0.969   0.112   0.541      0.571
+         FreqNet               0.985      0.090   0.538   0.731    0.559   0.645     0.544    0.553   0.549   0.977   0.128   0.553      0.571
+         Gram-Net              0.992      0.044   0.518   0.947    0.205   0.576     0.531    0.523   0.527   0.985   0.061   0.523      0.536
+         NPR                   0.999      0.046   0.523   0.980    0.243   0.612     0.593    0.537   0.565   0.998   0.076   0.537      0.560
+         UnivFD                0.763      0.441   0.602   0.693    0.637   0.665     0.563    0.637   0.600   0.778   0.495   0.636      0.617
+         SAFE                  0.993      0.046   0.520   0.918    0.309   0.613     0.564    0.532   0.548   0.984   0.080   0.532      0.556
+         LaDeDa                0.994      0.015   0.504   0.988    0.119   0.554     0.542    0.506   0.524   0.986   0.026   0.506      0.523
+         Effort                0.394      0.782   0.588   0.179    0.955   0.567     0.513    0.533   0.523   0.225   0.840   0.533      0.553
+         DDA                   0.940      0.708   0.824   0.899    0.908   0.904     0.818    0.846   0.832   0.968   0.725   0.847      0.850
+         OMAT                  0.899      0.359   0.629   0.633    0.715   0.674     0.581    0.633   0.607   0.853   0.414   0.634      0.636
+         AIDE                  0.944      0.203   0.574   0.973    0.195   0.584     0.578    0.541   0.560   0.990   0.093   0.542      0.565
+
+
+resolution of each model without any additional data augmen-                   degrade to near-random performance, primarily due to a failure
+tation. Notably, PE uses a ViT-L/14 backbone at 336px resolution,              to recognize diverse fake samples. The only exception among spe-
+which is comparable in scale to several strong VFM-based baselines             cialized methods is DDA, which maintains a respectable average
+and recent detectors built on CLIP-L style encoders.                           accuracy of 85.0%, due to its alignment with the robust VAE de-
+                                                                               coder patterns shared across latent diffusion models by training on
+3.2    Performance on Standard Benchmarks                                      DINOv2 with VAE reconstruct data.
+We first establish the efficacy of our simple baselines on the stan-              However, modern VFM baselines decisively outperform all com-
+dard GenImage benchmark in Table 1. Despite the simplicity of the              petitors. DINOv3-Linear achieves an average accuracy of 94.0%,
+linear probe, modern VFMs achieve state-of-the-art performance.                surpassing DDA by nearly 10% and traditional detectors by over
+DINOv3-Linear reaches the highest average accuracy of 96.5%, sur-              30%. Crucially, we observe a massive performance gap between
+passing the best specialized detector OMAT (94.6%) and significantly           modern and legacy VFMs: DINOv3 outperforms its predecessor
+outperforming legacy baselines. Notably, we observe a substantial              DINOv2 by a staggering 30.4%, and MetaCLIP-2 surpasses Meta-
+performance leap across VFM generations: DINOv3 improves upon                  CLIP by 18.8%. This confirms that earlier foundation models lacked
+DINOv2 by over 11%, and MetaCLIP-2 boosts accuracy by 12.6%                    the necessary data exposure to handle in-the-wild shifts, whereas
+compared to its predecessor MetaCLIP. This trend highlights that               modern iterations have internalized these distributions during pre-
+forensic discriminability is not static but scales with the quality and        training.
+data volume of the foundation model. Furthermore, while special-
+ized detectors often overfit to the training source, modern VFMs               3.4      Generalization to State-of-the-Art
+demonstrate robust generalization across diverse generative ar-                         Generators
+chitectures, confirming that their representations are inherently              A critical question remains: do these models truly learn general-
+forensic-ready without the need for complex auxiliary modules.                 ized forensic concepts, or do they merely memorize pre-training
+                                                                               patterns? We investigate this via AIGIHolmes and AIGI-Now,
+3.3    The Collapse of SOTA in the Wild                                        which challenge detectors across two fronts:
+While standard benchmarks provide a controlled environment, real-                  • AIGIHolmes: Features recent Auto-Regressive (AR) mod-
+world deployment involves diverse, unconstrained data distribu-                       els (e.g., LlamaGen, VAR) and Diffusion Transformers (e.g.,
+tions. To evaluate this, we test on four challenging in-the-wild                      FLUX), whose mechanisms differ fundamentally from older
+datasets: Chameleon, WildRF, Social-RF, and CommunityAI.                              UNet-based models (e.g., SD-v1.4).
+The results, summarized in Table 2, reveal a stark contrast. Most                  • AIGI-Now: Contains closed-source APIs (e.g., GPT-4o, FLUX-
+specialized detectors suffer a catastrophic performance collapse.                     Pro) unseen during VFM pre-training. And disentangles eval-
+Methods like NPR, LaDeDa, and even recent techniques like OMAT                        uation into two subsets: Pixel-artifact (pix), which isolates
+                                                                           4
+Simplicity Prevails for Generalizable AIGI Detection                                                                             ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+Table 3: Generalization on AIGIHolmes. Evaluation on advanced auto-regressive and diffusion-transformer generative models.
+Accuracy is averaged over real and fake classes. Best results in bold.
+
+  Detector                 FLUX        Infinity      Janus        Janus-Pro-1B        Janus-Pro-7B           LlamaGen         PixArt-XL        SD3.5-L        Show-o           VAR       Avg
+  Modern VFM Baselines (Ours)
+  MetaCLIP-Linear     0.951             0.978        0.736           0.950                0.950                   0.970            0.970            0.867      0.972           0.614     0.896
+  MetaCLIP2-Linear 0.987                0.990        0.839           0.959                0.928                   0.989            0.986            0.956      0.985           0.802     0.942
+  SigLIP-Linear       0.888             0.918        0.889           0.928                0.926                   0.913            0.896            0.826      0.868           0.834     0.889
+  SigLIP2-Linear      0.957             0.994        0.990           0.993                0.989                   0.991            0.994            0.914      0.992           0.913     0.973
+  PE-CLIP-Linear      0.968             0.999        0.945           0.995                0.996                   1.000            1.000            0.943      0.999           0.935     0.978
+  DINOv3-Linear       0.933             0.998        0.996           0.995                0.986                   0.999            0.999            0.891      0.997           0.922     0.972
+  Competitor Methods
+  CNNSpot                  0.626        0.589         0.508           0.531                   0.522               0.604            0.668          0.568        0.608           0.504     0.573
+  FreqNet                  0.894        0.924         0.443           0.439                   0.433               0.875            0.885          0.894        0.910           0.688     0.738
+  Gram-Net                 0.696        0.604         0.491           0.491                   0.491               0.627            0.627          0.701        0.771           0.557     0.606
+  NPR                      0.968        0.983         0.495           0.495                   0.495               0.947            0.899          0.937        0.988           0.730     0.794
+  LaDeDa                   0.682        0.664         0.498           0.497                   0.497               0.810            0.641          0.695        0.755           0.724     0.646
+  UnivFD                   0.868        0.898         0.575           0.674                   0.575               0.915            0.925          0.898        0.911           0.597     0.784
+  SAFE                     0.932        0.965         0.482           0.482                   0.483               0.913            0.896          0.940        0.962           0.911     0.796
+  Effort-AIGI              0.794        0.804         0.483           0.650                   0.569               0.798            0.804          0.765        0.793           0.764     0.722
+  DDA                      0.972        0.989         0.985           0.993                   0.987               0.993            0.994          0.970        0.948           0.804     0.963
+  OMAT                     0.947        0.955         0.651           0.756                   0.641               0.967            0.969          0.957        0.969           0.959     0.877
+  AIDE                     0.944        0.987         0.912           0.989                   0.978               0.994            0.986          0.994        0.980           0.936     0.970
+
+
+Table 4: Generalization on AIGI-Now. Evaluation on 9 open-source and closed-source generative models. Accuracy is averaged
+over real and fake classes. Best results in bold.
+
+                       FLUX-dev          FLUX-kera        FLUX-kontext         FLUX-pro               gpt4o           jimeng           keling          minimax             Nano
+  Detector                                                                                                                                                                                Avg.
+                       pix   sem         pix   sem         pix   sem           pix  sem            pix    sem       pix    sem       pix    sem        pix  sem         pix    sem
+  Modern VFM Baselines (Ours)
+  MetaCLIP-Linear     0.948 0.965       0.956   0.913     0.708     0.808     0.894   0.943     0.898     0.882    0.846   0.829    0.963   0.939     0.889   0.877    0.917     0.884    0.892
+  MetaCLIP2-Linear 0.979 0.941          0.963   0.896     0.799     0.811     0.976   0.892     0.943     0.888    0.965   0.825    0.970   0.902     0.942   0.850    0.965     0.819    0.907
+  SigLIP-Linear       0.838 0.898       0.840   0.891     0.700     0.811     0.836   0.911     0.827     0.897    0.827   0.890    0.863   0.937     0.848   0.863    0.796     0.867    0.852
+  SigLIP2-Linear      0.947 0.882       0.883   0.697     0.776     0.678     0.888   0.885     0.936     0.790    0.831   0.845    0.941   0.867     0.850   0.688    0.895     0.882    0.843
+  PE-CLIP-Linear      0.977 0.959       0.918   0.762     0.830     0.774     0.873   0.943     0.863     0.924    0.915   0.921    0.939   0.916     0.865   0.748    0.971     0.936    0.891
+  DINOv3-Linear       0.944 0.962       0.846   0.811     0.730     0.756     0.813   0.948     0.898     0.960    0.824   0.940    0.884   0.913     0.727   0.784    0.898     0.922    0.864
+  Competitor Methods
+  CNNSpot              0.919   0.500    0.550     0.500   0.843     0.502     0.535   0.500     0.990     0.501    0.523   0.500    0.973   0.501     0.603   0.504    0.985     0.499    0.635
+  FreqNet              0.875   0.468    0.697     0.443   0.769     0.479     0.492   0.501     0.923     0.510    0.459   0.530    0.922   0.543     0.824   0.511    0.907     0.487    0.622
+  Gram-Net             0.933   0.528    0.667     0.522   0.864     0.555     0.608   0.569     0.763     0.508    0.508   0.503    0.955   0.554     0.717   0.521    0.905     0.528    0.651
+  NPR                  0.944   0.500    0.508     0.500   0.785     0.502     0.502   0.502     0.966     0.500    0.497   0.501    0.957   0.500     0.548   0.500    0.930     0.500    0.619
+  LaDeDa               0.586   0.498    0.497     0.497   0.560     0.502     0.496   0.495     0.745     0.499    0.495   0.497    0.661   0.501     0.509   0.502    0.766     0.505    0.546
+  UnivFD               0.542   0.579    0.514     0.538   0.492     0.545     0.516   0.544     0.529     0.532    0.475   0.504    0.631   0.539     0.501   0.539    0.501     0.516    0.531
+  SAFE                 0.903   0.490    0.532     0.492   0.831     0.494     0.521   0.486     0.977     0.488    0.509   0.486    0.960   0.487     0.590   0.491    0.961     0.484    0.621
+  Effort-AIGI          0.789   0.679    0.796     0.669   0.728     0.610     0.688   0.690     0.753     0.580    0.522   0.555    0.782   0.677     0.772   0.687    0.796     0.657    0.690
+  DDA                  0.916   0.512    0.594     0.499   0.827     0.529     0.766   0.550     0.923     0.654    0.870   0.654    0.961   0.646     0.833   0.505    0.816     0.562    0.695
+  OMAT                 0.911   0.475    0.649     0.469   0.847     0.507     0.591   0.515     0.744     0.452    0.491   0.465    0.936   0.526     0.699   0.467    0.891     0.468    0.615
+  AIDE                 0.991   0.590    0.504     0.569   0.979     0.806     0.601   0.538     0.747     0.518    0.639   0.514    0.982   0.554     0.514   0.541    0.989     0.518    0.672
+
+
+
+        low-level generative traces by strictly aligning image for-                                   to near-random guessing (∼50%) on the sem splits. This confirms
+        mats; and Semantic (sem), which applies aggressive degra-                                     that modern VFMs learn generalized, robust forensic concepts that
+        dations to obliterate low-level artifacts, forcing detectors to                               extend far beyond specific generators or brittle low-level artifacts.
+        rely solely on high-level semantic anomalies.
+   Results. As shown in Tables 3 and 4, modern VFMs demonstrate
+exceptional transferability. On AIGIHolmes, PE-CLIP and DINOv3                                        4    Analysis: The Mechanisms of Emergence
+achieve average accuracies of 97.8% and 97.2%, maintaining robust                                     The strong performance of simple probes on modern VFMs raises a
+detection even on fundamentally distinct AR models (e.g., VAR).                                       central question: does this capability primarily come from forensic-
+   On AIGI-Now, MetaCLIP2 leads with 90.7%. Crucially, VFMs ex-                                       specific architectural choices, or from properties already present
+cel across both the pix and heavily degraded sem subsets, proving                                     in large-scale pretrained representations? Motivated by the rapid
+they capture a dual-level (structural and semantic) notion of arti-                                   growth of synthetic content on the web (Figure 1), we investigate
+ficiality. Conversely, specialized detectors like CNNSpot collapse                                    whether pre-training data exposure is an important factor behind
+                                                                                               5
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                                                              Anonymous Author(s)
+
+
+                                        Table 5: Comparison of Text–Image Similarities on In-the-Wild Dataset
+
+                                                             Chameleon                                                                  SocialRF
+      Method                                Top-1                             Top-2                                Top-1                                      Top-2
+                                Matched Text    Similarity Score   Matched Text   Similarity Score     Matched Text        Similarity Score        Matched Text       Similarity Score
+      CLIP (2021.2.26)          modern design        0.628         portrait            0.345              forged                0.332             urban                    0.253
+      Siglip (2023.3.27)          unaltered          0.318        original             0.212              edited                0.232            original                  0.222
+      Siglip2 (2025.2.21)          genuine           0.385          urban              0.250             portrait               0.202            vintage                   0.191
+      Meta CLIP (2023.9.28)      AI generated        0.678        deepfake             0.091           AI generated             0.902            original                  0.024
+      Meta CLIP-2 (2025.7.29)    AI generated        0.828        deepfake             0.064           AI generated             0.924           deepfake                   0.038
+      PE (2025.4.17)             AI generated        0.861        deepfake             0.021           AI generated             0.943           deepfake                   0.031
+                                                         CommunityAI                                                                Midjourney-CC
+      Method                                Top-1                             Top-2                                Top-1                                      Top-2
+                                Matched Text    Similarity Score   Matched Text   Similarity Score     Matched Text        Similarity Score        Matched Text       Similarity Score
+      CLIP (2021.2.26)            portrait           0.346            nature           0.326               urban                0.332         midjourney_images            0.260
+      Siglip (2023.3.27)         AIGIBench           0.283              real           0.281                fake                0.278              original                0.246
+      Siglip2 (2025.2.21)          urban             0.209            portrait         0.201               urban                0.212              portrait                0.194
+      Meta CLIP (2023.9.28)     AI generated         0.726           deepfake          0.086         midjourney_images          0.604            AI generated              0.284
+      Meta CLIP-2 (2025.7.29)   AI generated         0.858           deepfake          0.041         midjourney_images          0.621            AI generated              0.308
+      PE (2025.4.17)            AI generated         0.878         CommunityAI         0.029         midjourney_images          0.722            AI generated              0.218
+
+
+
+this phenomenon. Because fully controlled retraining of propri-                                     Table 5 presents the results of our semantic probing, revealing
+etary billion-parameter models is computationally infeasible, we                                 a striking dichotomy between legacy and modern VLMs. Legacy
+do not attempt to make a definitive causal claim. Instead, we use                                models like CLIP (2021) and SigLIP (2023) exhibit “forensic blind-
+a set of complementary indirect analyses to characterize how this                                ness”, mapping synthetic images to content terms (e.g., portrait).
+capability may emerge. Taken together, these analyses suggest two                                Notably, even the recently released SigLIP 2 (2025) fails to detect
+main mechanisms: semantic conceptualization in Vision-Language                                   forgery concepts (Top-1: genuine/urban), likely because it relies on
+Models and implicit distribution discrimination in Self-Supervised                               the older WebLI dataset [7] curated in 2022, prior to the generative
+Learning models.                                                                                 explosion. In sharp contrast, modern VLMs trained on recent web
+                                                                                                 crawls (MetaCLIP 2, PE) consistently align fake images with “AI
+                                                                                                 generated”. Crucially, on Midjourney-CC, these models specifically
+4.1      Mechanism I: Semantic Conceptualization                                                 retrieve “midjourney_images”, providing definitive evidence that
+         in VLMs                                                                                 their capability stems from exposure to recent, platform-specific
+For Vision-Language Models (VLMs), we hypothesize that their                                     metadata which older datasets lack.
+capability stems from the contrastive pre-training objective. During
+training, massive volumes of synthetic images co-occur with meta-
+data or captions containing explicit indicators of their source (e.g.,
+                                                                                                 4.2     Mechanism II: Data-Driven Feature
+midjourney,AI generated). Consequently, the model internalizes a                                         Discrimination in SSL
+powerful semantic shortcut: it learns to align the visual features of                           While VLMs rely on semantic tags, Self-Supervised Learning (SSL)
+synthetic content directly with forgery-related textual concepts. To                            models like DINOv3 lack textual supervision, yet they often outper-
+validate this, we conduct a text-image alignment analysis without                               form VLMs in our benchmarks. We hypothesize that this capability
+training any classifier. We probe whether the frozen embedding                                  is acquired implicitly through distribution fitting: by training on
+space of VLMs naturally clusters synthetic images closer to forgery-                            a massive web corpus mixed with generative content, the model
+related prompts. We constructed a comprehensive text pool cate-                                 learns to encode the distinct low-level signatures of the genera-
+gorized into three conceptual groups to probe the model’s internal                              tive manifold into its feature space as separable clusters, indepen-
+associations:                                                                                   dent of semantic labels.
+     • Forgery-Related Concepts: Terms explicitly denoting au-                                      To validate that this capability stems from data exposure rather
+       thenticity or fabrication (e.g., ‘fake’, ‘real’, ‘AI generated’,                         than architectural advantages, we conduct a counterfactual experi-
+       ‘authentic’, ‘manipulated’, ‘synthetic’).                                                ment. We employ the identical DINOv3 ViT-7B architecture but
+     • Content-Related Concepts: Neutral descriptions of vi-                                    vary the pre-training data source: DINOv3-Web (LVD-1689M):
+       sual content (e.g., ‘sunset’, ‘landscape’, ‘portrait’, ‘abstract                         Pre-trained on a large-scale web corpus containing 1.6 billion di-
+       art’, ‘technology’, ‘nature’).                                                           verse internet images, which naturally includes a significant volume
+     • Source-Related Concepts: Specific names of generative                                    of AIGI. DINOv3-Sat (Sat-493M): Pre-trained on 493 million satel-
+       models or platforms (e.g., ‘GenImage’, ‘ADM’, ‘BigGAN’, ‘glide’,                         lite images, a domain strictly devoid of generative content.
+       ‘Midjourney’).                                                                               Table 6 delivers a decisive finding. While the web-trained base-
+   We evaluate the cosine similarity on in-the-wild benchmarks                                  line excels, DINOv3-Sat completely fails on fake images, despite
+and our newly collected Midjourney-CC dataset (3,000 images                                     performing well on real ones. This collapse proves that the model
+from reddit.com/r/midjourney, late 2025) to strictly control for data                           classifies unseen fakes as “real" simply because it is not included
+leakage.                                                                                        in pretrained data. The conclusion is the forensic capability of SSL
+                                                                                            6
+Simplicity Prevails for Generalizable AIGI Detection                                                   ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+Table 6: Counterfactual Analysis. Comparison of DINOv3                      Table 7: Robustness Evaluation on RRDataset. We report the
+trained on Web Data vs. Satellite Data.                                     accuracy on Real and AI classes separately.
+
+                                  GenImage           Chameleon                                  Original (Base)   Redigital (Recapture)   Transfer (Social App)
+           Pre-training Data                                                 Detector
+                                    Avg.         Real   Fake  Avg.                              Real       AI     Real         AI         Real         AI
+           DINOv3-Web                0.965      0.933   0.895   0.914        CNNSpot            0.977     0.189   0.986      0.068        0.993      0.065
+           DINOv3-Sat                0.706      0.948   0.121   0.535        NPR                0.957     0.749   0.955      0.083        0.998      0.002
+                                                                             SAFE               0.874     0.792   0.928      0.066        0.997      0.009
+                                                                             DDA                0.942     0.895   0.961      0.298        0.933      0.532
+                                                                             SigLIP2-Linear     0.8714    0.931   0.885      0.559        0.490      0.704
+                                                                             MetaCLIP2-Linear    0.784    0.939   0.791      0.719        0.930      0.713
+                                                                             PE-CLIP-Linear      0.925    0.949   0.913      0.548        0.989      0.685
+                                                                             DINOv3-Linear      0.951     0.930   0.964      0.647        0.980      0.712
+
+
+                                                                            structural anomalies that inherently resist smoothing. This pro-
+                                                                            found resilience to blur and compression allows our image-trained
+                                                                            linear probes (e.g., DINOv3) to achieve generalized SOTA perfor-
+                                                                            mance on video benchmarks like VidProM and GenVideo via simple
+                                                                            frame-level aggregation, decisively outperforming bespoke AI video
+                                                                            detectors.
+
+                                                                            5.2     Protocol II: Real-World Transmission and
+                                                                                    Recapture
+                                                                            To evaluate deployment reliability, we further assess performance
+                                                                            under severe image degradation scenarios, including optical re-
+                                                                            capture from screens and heavy compression introduced by so-
+                                                                            cial media transmission protocols. To evaluate this, we utilize the
+                                                                            RRDataset [12], measuring performance across three settings: Orig-
+                                                                            inal (Digital baseline), Redigital (Screen or print recapture), and
+Figure 2: Robustness to Common Perturbations. Accuracy                      Transfer (Social media transmission).
+trajectories under JPEG compression and Gaussian Blur.                         As detailed in Table 7, specialized detectors suffer a total collapse
+                                                                            under transmission and recapture. Methods like SAFE and NPR
+models is not inherent to the architecture or training strategy, but
+                                                                            degrade to near-zero sensitivity on fake images (< 1%). Even the
+is entirely contingent on exposure to generative data during pre-
+                                                                            robust DDA drops to 29.8% on recaptured data. In sharp contrast,
+training.
+                                                                            modern VFMs maintain robust detection capabilities. MetaCLIP2-
+                                                                            Linear leads with ∼72% accuracy across both scenarios. Consistent
+5 Robustness and Limitations                                                with the blur experiments (Sec. 5.1), PE-CLIP suffers a notable drop
+5.1 Protocol I: Resilience to Common                                        (to 54.8%) on recaptured data, confirming its reliance on fine-grained
+    Perturbations                                                           details prone to erasure by low-pass filtering. Conversely, DINOv3
+                                                                            and MetaCLIP2 exhibit superior resilience, suggesting that their
+To assess real-world reliability, we evaluate detector robustness
+                                                                            learned structural anomalies and semantic concepts persist even
+against JPEG compression (Quality ∈ {95, . . . , 65}) and Gaussian
+                                                                            through the analog-to-digital bottleneck.
+Blur (𝜎 ∈ {0.5, . . . , 2.0}). We benchmark modern VFM linear probes
+against legacy models and specialized detectors across both Gen-
+Image and the in-the-wild Chameleon datasets.
+                                                                            5.3     Protocol III: Robustness to Reconstruction
+   As visualized in Figure 2, the trajectories reveal a stark strati-               and Editing
+fication between legacy VFMs (dashed lines) and modern VFMs                 While modern VFMs excel at detecting fully generated images,
+(solid lines). Older models not only establish lower baselines but          forensic reliability requires handling subtler manipulations: (1)
+also exhibit severe volatility under perturbations, particularly on         VAE Reconstruction, where a real image is encoded and decoded
+Chameleon. This decisively proves that robustness is not an in-             by a diffusion model’s VAE without semantic modification (simulat-
+herent benefit of the linear probing architecture. Instead, modern          ing deepfake pre-processing); and (2) Local Editing, where only
+VFMs exhibit superior resilience because their intrinsic forensic ca-       specific regions are inpainted. We evaluate on the DDA-COCO [6]
+pabilities are derived from massive, inadvertent exposure to diverse        (VAE-reconstructed real images) and BR-Gen [2](Diffusion-based
+synthetic content during web-scale pre-training. By internalizing           local editing) datasets.
+the generative manifold directly from the messy, unconstrained                 Table 8 (Left) exposes a critical limitation: modern VFMs are
+internet, these models learn robust, high-level features rather than        essentially blind to pure VAE reconstruction artifacts. Detection
+brittle, lab-generated artifacts. While PE still relies somewhat on         rates plummet to negligible levels, indicating that these models do
+high-frequency traces susceptible to low-pass filtering (dropping to        not perceive the low-level noise footprint of the VAE decoder as
+77.8% at 𝜎 = 2.0), DINOv3 and MetaCLIP2 capture fundamental                 an anomaly. Conversely, DDA, which explicitly aligns with VAE
+                                                                        7
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                                            Anonymous Author(s)
+
+
+Table 8: Limitations under Reconstruction and Editing. De-                                 91.4% on Chameleon, falling short of PE-Linear’s 95.9%). Worse still,
+tection accuracy on DDA-COCO (VAE-based reconstruction)                                    rigidly specialized architectures like DDA suffer catastrophic degra-
+and BR-Gen (Diffusion-based local editing).                                                dation (∼50-60%) when forced onto new generic feature spaces. This
+                                                                                           reveals that complex inductive biases—such as explicit frequency
+      Method
+                                 DDA-COCO                       BR-Gen                     filtering or strict VAE alignment—actually act as information bottle-
+                             SDXL    SD2       SD3.5L   Brush     Power    SDXL            necks, inadvertently constraining the raw, universal discriminative
+      CNNSpot                0.014   0.017     0.004    0.121     0.091    0.073           power naturally emergent in modern representations.
+      DDA                    0.949   0.997     0.682    0.648     0.589    0.465
+      OMAT                   0.211   0.304     0.135    0.697     0.715    0.681
+      Effort                 0.511   0.549     0.682    0.801     0.793    0.767
+                                                                                           5.5    Protocol V: The Pitfall of
+      SigLIP2-Linear         0.071   0.079      0.017   0.597     0.623    0.476                  Parameter-Efficient Fine-Tuning
+      MetaCLIP2-Linear       0.057   0.074      0.037   0.544     0.575    0.500           Another prevalent paradigm for adapting foundation models is
+      PE-CLIP-Linear         0.066   0.170      0.024   0.564     0.581    0.528
+      DINOv3-Linear          0.030   0.079      0.004   0.592     0.613    0.450           Parameter-Efficient Fine-Tuning (PEFT). If a simple linear layer
+                                                                                           suffices, would unfreezing the backbone via Low-Rank Adaptation
+reconstruction patterns, maintains robust performance. As shown                            (LoRA) yield even better task-specific performance? To test this,
+in Table 8 (Right), VFMs struggle to generalize to localized manip-                        we applied LoRA with rank 𝑟 ∈ {4, 8} to modern VFMs, fine-tuning
+ulations (BR-Gen), with performance hovering around 50%–60%.                               them on the GenImage (SD v1.4) training set.
+We attribute this to the global pooling mechanism inherent to
+                                                                                           Table 10: LoRA Fine-Tuning vs. Frozen Linear Probe. Unfreez-
+our linear probing approach: the dominant feature signal from the
+                                                                                           ing the backbone via LoRA significantly degrades generaliza-
+unaltered “real” regions likely suppresses the subtle forensic traces
+                                                                                           tion in the wild. Best results in bold.
+within the edited mask. In contrast, methods like Effort, designed
+to amplify anomaly feature, achieve higher accuracy.
+                                                                                            Backbone    Strategy                GenImage   Chameleon   AIGIHolmes
+
+5.4    Protocol IV: The Bottleneck of Specialized                                                       Linear Probe (Frozen)     0.892      0.930       0.942
+                                                                                            MetaCLIP2   LoRA (r=4)                0.734      0.817       0.823
+       Architectures                                                                                    LoRA (r=8)                0.780      0.880       0.896
+
+A natural question arises from our primary finding: if modern                                           Linear Probe (Frozen)     0.938      0.959       0.978
+                                                                                            PE          LoRA (r=4)                0.810      0.719       0.879
+Vision Foundation Models (VFMs) possess such powerful represen-                                         LoRA (r=8)                0.761      0.635       0.891
+tations, could their performance be further amplified by attaching                                      Linear Probe (Frozen)     0.964      0.914       0.972
+State-Of-The-Art specialized forensic architectures? To investigate                         DINOv3      LoRA (r=4)                0.954      0.803       0.977
+this, we upgraded recent expert models—Effort [32], AIDE [31], and                                      LoRA (r=8)                0.928      0.718       0.945
+
+DDA [6]—by swapping their original legacy backbones with our                                  Table 10 highlights the Risk of Modifying Internal Knowl-
+top-performing modern VFMs (MetaCLIP2, PE, and DINOv3).                                    edge. Contrary to the intuition that fine-tuning improves task
+                                                                                           adaptation, applying LoRA actively dismantles generalizability. For
+Table 9: Impact of Upgrading Specialized Architectures.                                    instance, LoRA fine-tuning on PE (r=8) causes its in-the-wild detec-
+While modern backbones improve the performance of spe-                                     tion accuracy (Chameleon) to plummet from 95.9% to a mere 63.5%.
+cialized methods, they still severely underperform the simple                              We attribute this to manifold distortion and catastrophic forgetting.
+frozen linear probe. Original baselines are in italics, best re-                           By unfreezing the backbone to optimize for a single generator (SD
+sults in bold.                                                                             v1.4), the model rapidly overfits to a narrow, transient distribution
+                                                                                           of local artifacts, irrevocably overwriting the broad "world knowl-
+ Method & Backbone                     GenImage         Chameleon         AIGIHolmes
+                                                                                           edge" of synthetic anomalies it implicitly derived from massive
+                                                                                           pre-training data.
+ Effort (Original: CLIP-L)                   0.807        0.588              0.722
+ Effort + MetaCLIP2                          0.748        0.720              0.799
+ Effort + PE                                 0.856        0.761              0.924         6     Conclusion
+ AIDE (Original: ResNet/ConvNeXt)            0.768        0.574              0.970         In this work, we revisit AIGI detection from the perspective of pre-
+ AIDE + MetaCLIP2                            0.834        0.709              0.922         trained visual representations. We show that frozen features from
+ AIDE + PE                                   0.883        0.914              0.947
+                                                                                           modern Vision Foundation Models, combined with a lightweight
+ DDA (Original: DINOv2)                      0.890        0.824              0.963
+ DDA + MetaCLIP2                             0.557        0.563              0.596
+                                                                                           classifier, form a remarkably strong baseline for generalizable AIGI
+ DDA + PE                                    0.534        0.559              0.659         detection. Across standard benchmarks, in-the-wild datasets, and
+ DDA + DINOv3                                0.572        0.751              0.713         recent unseen generators, this simple setup consistently matches or
+ MetaCLIP2-Linear                            0.892        0.930             0.942          outperforms recent specialized detectors. Our analyses further sug-
+ PE-CLIP-Linear                              0.938        0.959             0.978          gest that this capability is closely related to exposure to synthetic
+ DINOv3-Linear                               0.964        0.914             0.972
+                                                                                           web content during pre-training, rather than primarily to forensic-
+                                                                                           specific architectural design. In VLMs, this appears as semantic
+  The results in Table 9 expose the Bottleneck of Inductive Bias.                          alignment with forgery-related concepts, while in SSL models it
+While upgrading expert models (e.g., AIDE, Effort) with modern                             appears as implicit discrimination of generative distributions. Al-
+VFMs improves their baseline performance, they still strictly under-                       though fully controlled pre-training ablations are beyond the scope
+perform our minimalist linear probe (e.g., AIDE with PE achieves                           of this work, our evidence consistently supports this interpretation.
+                                                                                       8
+Simplicity Prevails for Generalizable AIGI Detection                                                                    ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+   At the same time, modern VFMs remain weak on pure VAE                                            In International conference on machine learning. PmLR, 8748–8763.
+reconstruction, localized editing, and severe transmission or re-                              [21] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Björn
+                                                                                                    Ommer. 2021. High-Resolution Image Synthesis with Latent Diffusion Models.
+capture. We therefore view frozen modern VFM representations                                        arXiv 2022. arXiv preprint arXiv:2112.10752 (2021).
+not as a complete solution to multimedia forensics, but as a strong                            [22] Oriane Siméoni, Huy V Vo, Maximilian Seitzer, Federico Baldassarre, Maxime
+                                                                                                    Oquab, Cijo Jose, Vasil Khalidov, Marc Szafraniec, Seungeun Yi, Michaël Rama-
+foundation for robust global AIGI detection. More broadly, our find-                                monjisoa, et al. 2025. Dinov3. arXiv preprint arXiv:2508.10104 (2025).
+ings suggest that future progress may depend less on increasingly                              [23] Richard Sutton. 2019. The bitter lesson. Incomplete Ideas (blog) 13, 1 (2019), 38.
+specialized detector design, and more on effectively leveraging the                            [24] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao
+                                                                                                    Wei. 2024. Frequency-aware deepfake detection: Improving generalizability
+evolving representations learned by foundation models.                                              through frequency space domain learning. In Proceedings of the AAAI Conference
+                                                                                                    on Artificial Intelligence, Vol. 38. 5052–5060.
+                                                                                               [25] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao
+References                                                                                          Wei. 2024. Rethinking the up-sampling operations in cnn-based generative
+ [1] Daniel Bolya, Po-Yao Huang, Peize Sun, et al. 2025. Perception encoder: The                    network for generalizable deepfake detection. In Proceedings of the IEEE/CVF
+     best visual embeddings are not at the output of the network. arXiv preprint                    Conference on Computer Vision and Pattern Recognition. 28130–28139.
+     arXiv:2504.13181 (2025).                                                                  [26] Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-Baptiste Alayrac, Jiahui
+ [2] Lvpan Cai, Haowei Wang, Jiayi Ji, YanShu ZhouMen, Shen Chen, Taiping Yao,                      Yu, Radu Soricut, Johan Schalkwyk, Andrew M Dai, Anja Hauth, Katie Millican,
+     and Xiaoshuai Sun. 2025. Zooming in on fakes: A novel dataset for localized                    et al. 2023. Gemini: a family of highly capable multimodal models. arXiv preprint
+     AI-generated image detection with forgery amplification approach. arXiv preprint               arXiv:2312.11805 (2023).
+     arXiv:2504.11922 (2025).                                                                  [27] Michael Tschannen, Alexey Gritsenko, Xiao Wang, et al. 2025. Siglip 2: Multilin-
+ [3] Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen. 2024. Real-time deepfake               gual vision-language encoders with improved semantic understanding, localiza-
+     detection in the real-world. arXiv preprint arXiv:2406.09398 (2024).                           tion, and dense features. arXiv preprint arXiv:2502.14786 (2025).
+ [4] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang. 2024. Drct: Diffu-                [28] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew Owens, and Alexei A
+     sion reconstruction contrastive training towards universal detection of diffusion              Efros. 2020. CNN-generated images are surprisingly easy to spot... for now. In
+     generated images. In Forty-first International Conference on Machine Learning.                 Proceedings of the IEEE/CVF conference on computer vision and pattern recognition.
+ [5] Ruoxin Chen, Jiahui Gao, Kaiqing Lin, Keyue Zhang, Yandan Zhao, Isabel Guan,                   8695–8704.
+     Taiping Yao, and Shouhong Ding. 2025. Task-Model Alignment: A Simple Path                 [29] Zhendong Wang, Jianmin Bao, Wengang Zhou, et al. 2023. Dire for diffusion-
+     to Generalizable AI-Generated Image Detection. arXiv preprint arXiv:2512.06746                 generated image detection. In Proceedings of the IEEE/CVF International Conference
+     (2025).                                                                                        on Computer Vision. 22445–22455.
+ [6] Ruoxin Chen, Junwei Xi, Zhiyuan Yan, et al. 2025. Dual Data Alignment Makes AI-           [30] Hu Xu, Saining Xie, Xiaoqing Ellen Tan, Po-Yao Huang, Russell Howes, Vasu
+     Generated Image Detector Easier Generalizable. arXiv preprint arXiv:2505.14359                 Sharma, Shang-Wen Li, Gargi Ghosh, Luke Zettlemoyer, and Christoph Feichten-
+     (2025).                                                                                        hofer. 2023. Demystifying clip data. arXiv preprint arXiv:2309.16671 (2023).
+ [7] Xi Chen, Xiao Wang, Soravit Changpinyo, Anthony J Piergiovanni, Piotr                     [31] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and
+     Padlewski, Daniel Salz, Sebastian Goodman, Adam Grycner, Basil Mustafa, Lucas                  Weidi Xie. 2024. A sanity check for ai-generated image detection. arXiv preprint
+     Beyer, et al. 2022. Pali: A jointly-scaled multilingual language-image model. arXiv            arXiv:2406.19435 (2024).
+     preprint arXiv:2209.06794 (2022).                                                         [32] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang, Chengchun Liu, Shen
+ [8] Yung-Sung Chuang, Yang Li, Dong Wang, et al. 2025. Metaclip 2: A worldwide                     Chen, Taiping Yao, Shouhong Ding, Baoyuan Wu, and Li Yuan. 2024. Orthogonal
+     scaling recipe. arXiv preprint arXiv:2507.22062 (2025).                                        Subspace Decomposition for Generalizable AI-Generated Image Detection. arXiv
+ [9] Davide Cozzolino and Luisa Verdoliva. 2019. Noiseprint: A CNN-based camera                     preprint arXiv:2411.15633 (2024).
+     model fingerprint. IEEE Transactions on Information Forensics and Security 15             [33] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. 2023. Sig-
+     (2019), 144–159.                                                                               moid loss for language image pre-training. In Proceedings of the IEEE/CVF inter-
+[10] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fischer, Dorothea Kolossa,                national conference on computer vision. 11975–11986.
+     and Thorsten Holz. 2020. Leveraging frequency analysis for deep fake image                [34] Yue Zhou, Xinan He, KaiQing Lin, Bin Fan, Feng Ding, and Bin Li. 2025. Breaking
+     recognition. In International conference on machine learning. PMLR, 3247–3258.                 Latent Prior Bias in Detectors for Generalizable AIGC Image Detection. arXiv
+[11] Yan Ju, Shan Jia, Lipeng Ke, Hongfei Xue, Koki Nagano, and Siwei Lyu. 2022.                    preprint arXiv:2506.00874 (2025).
+     Fusing global and local features for generalized ai-synthesized image detection.          [35] Ziyin Zhou, Yunpeng Luo, Yuanchen Wu, Ke Sun, Jiayi Ji, Ke Yan, Shouhong Ding,
+     In 2022 IEEE International Conference on Image Processing (ICIP). IEEE, 3465–3469.             Xiaoshuai Sun, Yunsheng Wu, and Rongrong Ji. 2025. AIGI-Holmes: Towards
+[12] Chunxiao Li, Xiaoxiao Wang, Meiling Li, Boming Miao, Peng Sun, Yunjian Zhang,                  Explainable and Generalizable AI-Generated Image Detection via Multimodal
+     Xiangyang Ji, and Yao Zhu. 2025. Bridging the Gap Between Ideal and Real-                      Large Language Models. arXiv preprint arXiv:2507.02664 (2025).
+     world Evaluation: Benchmarking AI-Generated Image Detection in Challenging                [36] Mingjian Zhu, Hanting Chen, Qiangyu Yan, et al. 2023. Genimage: A million-scale
+     Scenarios. In Proceedings of the IEEE/CVF International Conference on Computer                 benchmark for detecting ai-generated image. Advances in Neural Information
+     Vision. 20379–20389.                                                                           Processing Systems 36 (2023), 77771–77782.
+[13] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and Fuli Feng.
+     2025. Improving synthetic image detection towards generalization: An image
+     transformation perspective. In Proceedings of the 31st ACM SIGKDD Conference
+     on Knowledge Discovery and Data Mining V. 1. 2405–2414.
+[14] Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei Jiang, Lizhi Xiong, and
+     Zhangjie Fu. 2025. Is Artificial Intelligence Generated Image Detection a Solved
+     Problem? arXiv preprint arXiv:2505.12335 (2025).
+[15] Zhengzhe Liu, Xiaojuan Qi, and Philip HS Torr. 2020. Global texture enhancement
+     for fake face detection in the wild. In Proceedings of the IEEE/CVF conference on
+     computer vision and pattern recognition. 8060–8069.
+[16] Scott McCloskey and Michael Albright. 2019. Detecting GAN-generated imagery
+     using saturation cues. In 2019 IEEE international conference on image processing
+     (ICIP). IEEE, 4584–4588.
+[17] Augustus Odena, Vincent Dumoulin, and Chris Olah. 2016. Deconvolution and
+     Checkerboard Artifacts. Distill (2016). doi:10.23915/distill.00003
+[18] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. 2023. Towards universal fake image
+     detectors that generalize across generative models. In Proceedings of the IEEE/CVF
+     Conference on Computer Vision and Pattern Recognition. 24480–24489.
+[19] Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, Marc Szafraniec,
+     Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-
+     Nouby, et al. 2023. Dinov2: Learning robust visual features without supervision.
+     arXiv preprint arXiv:2304.07193 (2023).
+[20] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh,
+     Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark,
+     et al. 2021. Learning transferable visual models from natural language supervision.
+                                                                                           9
+

@@ -197,7 +197,6 @@ const models = [
     "Base-only, refiner, Turbo, Lightning, LoRA, and ControlNet are documented subdomains, not identical outputs.",
     [["Paper","https://arxiv.org/abs/2307.01952"],["Code","https://github.com/Stability-AI/generative-models"]]),
 
-// MORE_MODELS
 ];
 
 const catalog = document.querySelector("#catalog");

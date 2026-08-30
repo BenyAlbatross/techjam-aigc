@@ -1,0 +1,32 @@
+distortions. These heatmaps demonstrate that MIRROR can effectively localize generative artifacts often imperceptible to human
+observers, thereby providing a transparent and interpretable foundation for its classification decisions.
+
+
+D     Visual Showcase of the Human-AIGI Benchmark
+This appendix provides a visual comprehensive overview of the Human-AIGI Benchmark, a dataset specifically curated to
+reflect the increasingly sophisticated threat landscape posed by modern commercial generative AI systems. Unlike traditional
+benchmarks that often focus on single-generator settings or rely on easily distinguishable artifacts, our collection emphasizes
+cross-generator heterogeneity and high perceptual indistinguishability across samples. The dataset incorporates outputs from
+multiple state-of-the-art generative models and diverse content domains, ensuring realistic and challenging evaluation scenarios.
+As such, the Human-AIGI Benchmark serves as a rigorous and representative testbed for assessing the robustness, generalization,
+and real-world applicability of next-generation human–AI content detectors.
+
+                                  Origin                                                Hard
+
+
+
+
+Figure 10: Visual showcase of the Human-AIGI Benchmark. (Left) Representative Samples: A diverse collection encom-
+passing portraits, objects, and complex scenes curated from 27 state-of-the-art generators in T2I-COREBENCH (e.g., Flux,
+Hunyuan 3.0, Nanobanana). These samples reflect the broad semantic coverage and high fidelity of current commercial-grade
+AIGI. (Right) The Human-Imperceptible Subset (Dhard ): A rigorous subset consisting of ”perceptual corner cases” identified
+through psychophysical trials with 50 participants. Following the criteria S(x) ≥ τreal ∨ RT (x) > µrt + σrt , these images
+either successfully deceived human observers into a ”Real” judgment (high confidence score S) or induced significant cognitive
+hesitation (prolonged response time RT ). This subset serves as a stringent testbed for evaluating whether a detector can identify
+generative threats that evade biological perceptual scrutiny and human expert review.
+
+
+
+
+                                                               13
+

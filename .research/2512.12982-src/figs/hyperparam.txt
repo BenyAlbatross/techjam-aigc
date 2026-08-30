@@ -1,0 +1,17 @@
+        Number of Prototypes                     Number of Generators in Prototype Set
+                               mAcc               mAcc                      98.97
+                               mAp                mAp                                  98.66
+
+                                                     96.89      97.18
+98.98          98.99            98.97
+                                                                            95.54      95.29
+                                         95.4
+                                                                 94.1
+                                                     93.67
+95.28          95.31            95.54
+
+
+
+                                        90.35
+ 16             32               64     random       1type      2types     3types     4types
+

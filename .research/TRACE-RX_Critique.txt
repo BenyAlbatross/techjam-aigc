@@ -1,0 +1,151 @@
+TRACE-RX Training Proposal: Critique
+Review of the TikTok TechJam 2026 training proposal (Transformation-Reliability-Aware AI Image
+Detection). Prepared 30 August 2026.
+
+Overall assessment
+This is a strong, unusually literature-aware proposal. The core thesis — measure whether a forensic signal
+survived rather than letting every feature vote — is the correct response to the robustness findings in the
+detection literature, and the lineage-safe splits, low-FPR focus, abstention region and locked-test discipline
+are things most hackathon teams get wrong. The problems are mostly about scope versus 24 hours and
+about the two most novel components being under-specified. Issues below are listed roughly in order of
+importance.
+
+Issue summary
+#   Issue                                      Severity   Fix in one line
+1   Scope exceeds a 24-hour, two-Spark         High       Define a minimum viable TRACE-RX due by hour 12;
+    budget                                                everything else is stretch
+2   Availability and fusion formula            High       Supervise availability from known transform lineage; make
+    under-specified                                       logistic stacking the default
+3   Selection metrics below the noise floor    High       Fewer decisions from dev data; loosen 0.5-point removal
+                                                          rule; add seeds for finalists
+4   Data sourcing and format shortcut          High       State master sources and canonicalisation; run
+    unstated                                              metadata-only baseline before hour 5
+5   Frozen backbones leave the biggest win     Medium     Add one LoRA/adapter run on the chosen backbone before
+    unclaimed                                             A1
+6   From-scratch forensic tower likely         Medium     Make the pretrained fallback the primary; cut phase and
+    undertrained                                          neighbour modalities
+7   Prior art (RIGID) not positioned against   Medium     Cite and state the delta explicitly
+8   Assorted inconsistencies (objectives,      Low        See section 8
+    abstention, provenance, licence)
+
+
+
+1. It is a research programme, not a 24-hour plan
+Count what has to land on two DGX Sparks: caching three ViT-L backbones over 152k records; training a
+40–60M five-modality multi-scale transformer from scratch; a three-backbone trial; a four-rung component
+ladder (A0–A3); four objective variants (O0–O3); greedy intervention selection; a 16-condition transform
+sweep; a fractional-factorial interaction study; order-effect and saturation curves; and a fusion layer with
+learned availability, heteroscedastic variance and low-rank covariance.
+
+A DGX Spark is roughly a mid-range consumer GPU with a large unified memory pool; it is not fast.
+Everything scientifically interesting (A3, the covariance fusion, CVaR/pAUC) is scheduled after hour 9 with
+zero slack, and the kill order only trims the periphery. If the forensic tower slips by two hours, the entire
+novelty of the proposal is at risk.
+
+Recommendation. Define a minimum viable TRACE-RX — one backbone, one forensic branch, logistic
+stacking, one or two interventions — that must be finished and evaluated by hour 12. Treat the rest as
+stretch goals with explicit entry conditions.
+
+2. The novel parts are the least specified
+Availability ak
+This is the proposal's contribution and it has no training target. What supervises gk? The answer is already
+in the data design: every record has a known transform lineage, so per-branch survival ρ(k,t) can be
+computed on development and used (or thresholded) as the availability target. State this explicitly. Also
+flag the shortcut risk: ak can trivially learn "this image has JPEG blocking" and become a codec detector
+rather than a signal-survival estimator, which reintroduces the format shortcut the proposal is trying to
+remove.
+
+The fusion formula
+w = Σ-1a / (aTΣ-1a + ε) is a GLS/BLUE-style combination. It assumes the experts are unbiased estimates of
+the same quantity on a common scale with error covariance Σ. Raw logits from different heads are not on a
+common scale; weights can go negative once off-diagonal terms enter; and Σ is being fitted across K
+experts plus intervention-response features on only 8,000 records. Make logistic stacking the default and
+the covariance layer the ablation, not the reverse.
+
+Intervention responses at inference
+Each intervention re-runs the relevant expert, so five operators across two experts is roughly a 6× latency
+multiplier. The utility function U(P) accounts for this, but the proposal should state the target latency budget
+up front so the greedy selector has a real constraint.
+
+3. Statistical power does not support the selection machinery
+•   Development contains about 1,000 authentic masters. TPR@1%FPR is decided by 10 images, yet it
+    carries 0.35 of the selection score and drives greedy intervention selection. The selector will fit noise.
+•   The removal rule "drop a branch with less than 0.5 point fused gain" is below single-seed variance, and
+    screening is committed to one seed. The rule cannot distinguish signal from noise.
+•   Worst-group AUC over generator × source × journey groups on 4,000 dev records means some groups
+    contain a few dozen images.
+•   The test-set caveat (one false positive = 0.2 pp FPR) is correctly stated for the locked set but the same
+    arithmetic applies to development and is not acknowledged.
+
+Recommendation. Reduce the number of decisions made from development data, loosen the thresholds
+to something above seed variance, and run at least three seeds on the finalist rather than one.
+
+4. Data provenance is the biggest unstated risk
+The proposal never says where 40,000 authentic and 40,000 AI masters come from, or how authentic
+subtype coverage (screenshots, scans, art, CGI) is obtained. If masters are pulled from GenImage-style
+sources, the JPEG-real / PNG-fake bias the proposal explicitly worries about is already present, and "one
+journey per master" does not fix the clean record.
+•   State the canonicalisation rule: decode everything and re-encode to a matched format, or train only on
+    transformed views.
+•   Run the metadata-only baseline before hour 5 as a gate, not during error analysis.
+•   One fixed journey endpoint per master means each image is seen with a single augmentation for the
+    whole run. On-the-fly augmentation is cheap and strictly better for the experts; reserve fixed records for
+    evaluation.
+•   The journey sampling distribution is unspecified. It should mirror the official transform set and severities.
+
+5. Frozen backbones probably leave the biggest win on the table
+The literature the proposal cites (DRCT, FatFormer) shows that tuning the backbone beats a frozen linear
+head specifically on post-processing robustness. A one-hour LoRA or adapter run on the chosen
+backbone is feasible on a Spark and is likely to yield more than the entire covariance-fusion apparatus.
+Add it as an experiment, ideally before A1, and compare against the frozen probe at low FPR.
+6. Forensic tower: start with the fallback
+A 40–60M multi-modal transformer trained from scratch in roughly four hours on 144k images will be
+undertrained. The stated fallback (a pretrained no-early-downsampling RGB/residual network in the
+Gragnaniello style) is the more likely finisher. Make it the primary and the custom tower the stretch.
+
+Of the five modalities, Fourier phase and neighbour relations have weak support: phase is destroyed by
+any shift or crop, and NPR-style features collapse under JPEG. They mostly exist to be "unavailable",
+which is conceptually consistent with the thesis but costs hours. RGB + residual + DCT is enough to test
+the idea.
+
+7. Prior art not positioned against
+The "response to an imperceptible perturbation" idea is essentially RIGID (He et al., 2024 — training-free
+detection via DINOv2 feature sensitivity to noise) and the broader test-time-consistency family. Cite it and
+state precisely what is different: learned availability from responses, multiple operators, and responses
+used as fusion features rather than a standalone score. Otherwise a reviewer will read it as a rediscovery.
+
+8. Smaller issues
+•   Objectives contradiction. Section 10 says experts are trained once and objective sweeps run as
+    fusion experiments, but CVaR and pAUC shape the expert representation. Clarify that O0–O3 apply to
+    heads on cached features, and accept that this tests less than the text implies.
+•   Abstention versus scoring. If organiser evaluation is AUC/TPR over all images, "insufficient evidence"
+    must still emit a probability. Treat abstention as a reporting layer, not an output class.
+•   Provenance channel. C2PA and watermark checks appear in the architecture but there is no
+    implementation and competition data will not carry them. Mark as out of scope or remove from the
+    diagram.
+•   Screenshot and recapture appear in the problem statement but not in the transform set. State that
+    they are out of scope.
+•   Selection score. 0.10·(1−ECE) and 0.10·(1−worst-real FPR) are near-constant terms; the score is
+    effectively 0.35 TPR@1% + 0.25 worst-group + 0.20 unseen. Say so.
+•   Licensing. DINOv3's gated licence may conflict with the competition's open-model rule; verify before
+    caching features.
+•   PE-SPC citation (arXiv 2608.04935) could not be verified here. The proposal is right that 1.9B/6.7B
+    results do not transfer to 300M; the mandatory ablation is the correct response.
+•   Adversarial robustness is never mentioned. It is reasonable to exclude, but say so in scope.
+
+What to keep exactly as is
+Lineage-safe partitions; the calibration and locked-test threshold protocol; the asymmetric treatment of
+missing evidence; the signal-survival ρ(k,t) and interaction I(a,b) definitions; and the error-analysis design.
+These are the strongest parts of the document and would read well even if half the architecture is cut.
+
+Suggested minimum viable path
+•   Hours 0–2: manifests, canonicalisation, metadata-only baseline gate.
+•   Hours 2–6: cache features for all three backbones; train pretrained fallback forensic net with on-the-fly
+    augmentation.
+•   Hours 6–9: backbone trial; one LoRA run on the winner; logistic stacking of global + forensic.
+•   Hours 9–12: two interventions (JPEG q95, blur 0.5) with lineage-supervised availability; calibrate; this is
+    the deliverable.
+•   Hours 12–20: stretch in order — CVaR head, covariance layer, custom tower, additional interventions,
+    interaction study.
+•   Hours 20–24: locked test once; report.
+

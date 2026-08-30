@@ -1,0 +1,72 @@
+Simplicity Prevails for Generalizable AIGI Detection                                                   ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+Table 6: Counterfactual Analysis. Comparison of DINOv3                      Table 7: Robustness Evaluation on RRDataset. We report the
+trained on Web Data vs. Satellite Data.                                     accuracy on Real and AI classes separately.
+
+                                  GenImage           Chameleon                                  Original (Base)   Redigital (Recapture)   Transfer (Social App)
+           Pre-training Data                                                 Detector
+                                    Avg.         Real   Fake  Avg.                              Real       AI     Real         AI         Real         AI
+           DINOv3-Web                0.965      0.933   0.895   0.914        CNNSpot            0.977     0.189   0.986      0.068        0.993      0.065
+           DINOv3-Sat                0.706      0.948   0.121   0.535        NPR                0.957     0.749   0.955      0.083        0.998      0.002
+                                                                             SAFE               0.874     0.792   0.928      0.066        0.997      0.009
+                                                                             DDA                0.942     0.895   0.961      0.298        0.933      0.532
+                                                                             SigLIP2-Linear     0.8714    0.931   0.885      0.559        0.490      0.704
+                                                                             MetaCLIP2-Linear    0.784    0.939   0.791      0.719        0.930      0.713
+                                                                             PE-CLIP-Linear      0.925    0.949   0.913      0.548        0.989      0.685
+                                                                             DINOv3-Linear      0.951     0.930   0.964      0.647        0.980      0.712
+
+
+                                                                            structural anomalies that inherently resist smoothing. This pro-
+                                                                            found resilience to blur and compression allows our image-trained
+                                                                            linear probes (e.g., DINOv3) to achieve generalized SOTA perfor-
+                                                                            mance on video benchmarks like VidProM and GenVideo via simple
+                                                                            frame-level aggregation, decisively outperforming bespoke AI video
+                                                                            detectors.
+
+                                                                            5.2     Protocol II: Real-World Transmission and
+                                                                                    Recapture
+                                                                            To evaluate deployment reliability, we further assess performance
+                                                                            under severe image degradation scenarios, including optical re-
+                                                                            capture from screens and heavy compression introduced by so-
+                                                                            cial media transmission protocols. To evaluate this, we utilize the
+                                                                            RRDataset [12], measuring performance across three settings: Orig-
+                                                                            inal (Digital baseline), Redigital (Screen or print recapture), and
+Figure 2: Robustness to Common Perturbations. Accuracy                      Transfer (Social media transmission).
+trajectories under JPEG compression and Gaussian Blur.                         As detailed in Table 7, specialized detectors suffer a total collapse
+                                                                            under transmission and recapture. Methods like SAFE and NPR
+models is not inherent to the architecture or training strategy, but
+                                                                            degrade to near-zero sensitivity on fake images (< 1%). Even the
+is entirely contingent on exposure to generative data during pre-
+                                                                            robust DDA drops to 29.8% on recaptured data. In sharp contrast,
+training.
+                                                                            modern VFMs maintain robust detection capabilities. MetaCLIP2-
+                                                                            Linear leads with ∼72% accuracy across both scenarios. Consistent
+5 Robustness and Limitations                                                with the blur experiments (Sec. 5.1), PE-CLIP suffers a notable drop
+5.1 Protocol I: Resilience to Common                                        (to 54.8%) on recaptured data, confirming its reliance on fine-grained
+    Perturbations                                                           details prone to erasure by low-pass filtering. Conversely, DINOv3
+                                                                            and MetaCLIP2 exhibit superior resilience, suggesting that their
+To assess real-world reliability, we evaluate detector robustness
+                                                                            learned structural anomalies and semantic concepts persist even
+against JPEG compression (Quality ∈ {95, . . . , 65}) and Gaussian
+                                                                            through the analog-to-digital bottleneck.
+Blur (𝜎 ∈ {0.5, . . . , 2.0}). We benchmark modern VFM linear probes
+against legacy models and specialized detectors across both Gen-
+Image and the in-the-wild Chameleon datasets.
+                                                                            5.3     Protocol III: Robustness to Reconstruction
+   As visualized in Figure 2, the trajectories reveal a stark strati-               and Editing
+fication between legacy VFMs (dashed lines) and modern VFMs                 While modern VFMs excel at detecting fully generated images,
+(solid lines). Older models not only establish lower baselines but          forensic reliability requires handling subtler manipulations: (1)
+also exhibit severe volatility under perturbations, particularly on         VAE Reconstruction, where a real image is encoded and decoded
+Chameleon. This decisively proves that robustness is not an in-             by a diffusion model’s VAE without semantic modification (simulat-
+herent benefit of the linear probing architecture. Instead, modern          ing deepfake pre-processing); and (2) Local Editing, where only
+VFMs exhibit superior resilience because their intrinsic forensic ca-       specific regions are inpainted. We evaluate on the DDA-COCO [6]
+pabilities are derived from massive, inadvertent exposure to diverse        (VAE-reconstructed real images) and BR-Gen [2](Diffusion-based
+synthetic content during web-scale pre-training. By internalizing           local editing) datasets.
+the generative manifold directly from the messy, unconstrained                 Table 8 (Left) exposes a critical limitation: modern VFMs are
+internet, these models learn robust, high-level features rather than        essentially blind to pure VAE reconstruction artifacts. Detection
+brittle, lab-generated artifacts. While PE still relies somewhat on         rates plummet to negligible levels, indicating that these models do
+high-frequency traces susceptible to low-pass filtering (dropping to        not perceive the low-level noise footprint of the VAE decoder as
+77.8% at 𝜎 = 2.0), DINOv3 and MetaCLIP2 capture fundamental                 an anomaly. Conversely, DDA, which explicitly aligns with VAE
+                                                                        7
+

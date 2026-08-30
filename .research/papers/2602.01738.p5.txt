@@ -1,0 +1,70 @@
+Simplicity Prevails for Generalizable AIGI Detection                                                                             ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+Table 3: Generalization on AIGIHolmes. Evaluation on advanced auto-regressive and diffusion-transformer generative models.
+Accuracy is averaged over real and fake classes. Best results in bold.
+
+  Detector                 FLUX        Infinity      Janus        Janus-Pro-1B        Janus-Pro-7B           LlamaGen         PixArt-XL        SD3.5-L        Show-o           VAR       Avg
+  Modern VFM Baselines (Ours)
+  MetaCLIP-Linear     0.951             0.978        0.736           0.950                0.950                   0.970            0.970            0.867      0.972           0.614     0.896
+  MetaCLIP2-Linear 0.987                0.990        0.839           0.959                0.928                   0.989            0.986            0.956      0.985           0.802     0.942
+  SigLIP-Linear       0.888             0.918        0.889           0.928                0.926                   0.913            0.896            0.826      0.868           0.834     0.889
+  SigLIP2-Linear      0.957             0.994        0.990           0.993                0.989                   0.991            0.994            0.914      0.992           0.913     0.973
+  PE-CLIP-Linear      0.968             0.999        0.945           0.995                0.996                   1.000            1.000            0.943      0.999           0.935     0.978
+  DINOv3-Linear       0.933             0.998        0.996           0.995                0.986                   0.999            0.999            0.891      0.997           0.922     0.972
+  Competitor Methods
+  CNNSpot                  0.626        0.589         0.508           0.531                   0.522               0.604            0.668          0.568        0.608           0.504     0.573
+  FreqNet                  0.894        0.924         0.443           0.439                   0.433               0.875            0.885          0.894        0.910           0.688     0.738
+  Gram-Net                 0.696        0.604         0.491           0.491                   0.491               0.627            0.627          0.701        0.771           0.557     0.606
+  NPR                      0.968        0.983         0.495           0.495                   0.495               0.947            0.899          0.937        0.988           0.730     0.794
+  LaDeDa                   0.682        0.664         0.498           0.497                   0.497               0.810            0.641          0.695        0.755           0.724     0.646
+  UnivFD                   0.868        0.898         0.575           0.674                   0.575               0.915            0.925          0.898        0.911           0.597     0.784
+  SAFE                     0.932        0.965         0.482           0.482                   0.483               0.913            0.896          0.940        0.962           0.911     0.796
+  Effort-AIGI              0.794        0.804         0.483           0.650                   0.569               0.798            0.804          0.765        0.793           0.764     0.722
+  DDA                      0.972        0.989         0.985           0.993                   0.987               0.993            0.994          0.970        0.948           0.804     0.963
+  OMAT                     0.947        0.955         0.651           0.756                   0.641               0.967            0.969          0.957        0.969           0.959     0.877
+  AIDE                     0.944        0.987         0.912           0.989                   0.978               0.994            0.986          0.994        0.980           0.936     0.970
+
+
+Table 4: Generalization on AIGI-Now. Evaluation on 9 open-source and closed-source generative models. Accuracy is averaged
+over real and fake classes. Best results in bold.
+
+                       FLUX-dev          FLUX-kera        FLUX-kontext         FLUX-pro               gpt4o           jimeng           keling          minimax             Nano
+  Detector                                                                                                                                                                                Avg.
+                       pix   sem         pix   sem         pix   sem           pix  sem            pix    sem       pix    sem       pix    sem        pix  sem         pix    sem
+  Modern VFM Baselines (Ours)
+  MetaCLIP-Linear     0.948 0.965       0.956   0.913     0.708     0.808     0.894   0.943     0.898     0.882    0.846   0.829    0.963   0.939     0.889   0.877    0.917     0.884    0.892
+  MetaCLIP2-Linear 0.979 0.941          0.963   0.896     0.799     0.811     0.976   0.892     0.943     0.888    0.965   0.825    0.970   0.902     0.942   0.850    0.965     0.819    0.907
+  SigLIP-Linear       0.838 0.898       0.840   0.891     0.700     0.811     0.836   0.911     0.827     0.897    0.827   0.890    0.863   0.937     0.848   0.863    0.796     0.867    0.852
+  SigLIP2-Linear      0.947 0.882       0.883   0.697     0.776     0.678     0.888   0.885     0.936     0.790    0.831   0.845    0.941   0.867     0.850   0.688    0.895     0.882    0.843
+  PE-CLIP-Linear      0.977 0.959       0.918   0.762     0.830     0.774     0.873   0.943     0.863     0.924    0.915   0.921    0.939   0.916     0.865   0.748    0.971     0.936    0.891
+  DINOv3-Linear       0.944 0.962       0.846   0.811     0.730     0.756     0.813   0.948     0.898     0.960    0.824   0.940    0.884   0.913     0.727   0.784    0.898     0.922    0.864
+  Competitor Methods
+  CNNSpot              0.919   0.500    0.550     0.500   0.843     0.502     0.535   0.500     0.990     0.501    0.523   0.500    0.973   0.501     0.603   0.504    0.985     0.499    0.635
+  FreqNet              0.875   0.468    0.697     0.443   0.769     0.479     0.492   0.501     0.923     0.510    0.459   0.530    0.922   0.543     0.824   0.511    0.907     0.487    0.622
+  Gram-Net             0.933   0.528    0.667     0.522   0.864     0.555     0.608   0.569     0.763     0.508    0.508   0.503    0.955   0.554     0.717   0.521    0.905     0.528    0.651
+  NPR                  0.944   0.500    0.508     0.500   0.785     0.502     0.502   0.502     0.966     0.500    0.497   0.501    0.957   0.500     0.548   0.500    0.930     0.500    0.619
+  LaDeDa               0.586   0.498    0.497     0.497   0.560     0.502     0.496   0.495     0.745     0.499    0.495   0.497    0.661   0.501     0.509   0.502    0.766     0.505    0.546
+  UnivFD               0.542   0.579    0.514     0.538   0.492     0.545     0.516   0.544     0.529     0.532    0.475   0.504    0.631   0.539     0.501   0.539    0.501     0.516    0.531
+  SAFE                 0.903   0.490    0.532     0.492   0.831     0.494     0.521   0.486     0.977     0.488    0.509   0.486    0.960   0.487     0.590   0.491    0.961     0.484    0.621
+  Effort-AIGI          0.789   0.679    0.796     0.669   0.728     0.610     0.688   0.690     0.753     0.580    0.522   0.555    0.782   0.677     0.772   0.687    0.796     0.657    0.690
+  DDA                  0.916   0.512    0.594     0.499   0.827     0.529     0.766   0.550     0.923     0.654    0.870   0.654    0.961   0.646     0.833   0.505    0.816     0.562    0.695
+  OMAT                 0.911   0.475    0.649     0.469   0.847     0.507     0.591   0.515     0.744     0.452    0.491   0.465    0.936   0.526     0.699   0.467    0.891     0.468    0.615
+  AIDE                 0.991   0.590    0.504     0.569   0.979     0.806     0.601   0.538     0.747     0.518    0.639   0.514    0.982   0.554     0.514   0.541    0.989     0.518    0.672
+
+
+
+        low-level generative traces by strictly aligning image for-                                   to near-random guessing (∼50%) on the sem splits. This confirms
+        mats; and Semantic (sem), which applies aggressive degra-                                     that modern VFMs learn generalized, robust forensic concepts that
+        dations to obliterate low-level artifacts, forcing detectors to                               extend far beyond specific generators or brittle low-level artifacts.
+        rely solely on high-level semantic anomalies.
+   Results. As shown in Tables 3 and 4, modern VFMs demonstrate
+exceptional transferability. On AIGIHolmes, PE-CLIP and DINOv3                                        4    Analysis: The Mechanisms of Emergence
+achieve average accuracies of 97.8% and 97.2%, maintaining robust                                     The strong performance of simple probes on modern VFMs raises a
+detection even on fundamentally distinct AR models (e.g., VAR).                                       central question: does this capability primarily come from forensic-
+   On AIGI-Now, MetaCLIP2 leads with 90.7%. Crucially, VFMs ex-                                       specific architectural choices, or from properties already present
+cel across both the pix and heavily degraded sem subsets, proving                                     in large-scale pretrained representations? Motivated by the rapid
+they capture a dual-level (structural and semantic) notion of arti-                                   growth of synthetic content on the web (Figure 1), we investigate
+ficiality. Conversely, specialized detectors like CNNSpot collapse                                    whether pre-training data exposure is an important factor behind
+                                                                                               5
+

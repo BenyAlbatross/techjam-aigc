@@ -1,0 +1,63 @@
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                                  Anonymous Author(s)
+
+
+Table 2: Performance on In-the-Wild Benchmarks. Evaluation on Chameleon, WildRF, SocialRF, and CommunityAI datasets.
+Accuracy is averaged over real and fake classes. Best results in bold.
+
+                                       Chameleon                  WildRF                     SocialRF           CommunityAI
+         Method                                                                                                                          Avg.
+                                Real      Fake   Avg.     Real     Fake  Avg.        Real      Fake   Avg.    Real Fake   Avg.
+         Modern VFM Baselines (Ours)
+         MetaCLIP-Linear     0.373 0.914          0.644   0.461    0.923   0.692   0.409      0.866   0.638   0.353   0.933   0.643      0.654
+         MetaCLIP2-Linear 0.948 0.913             0.930   0.478    0.979   0.728   0.659      0.940   0.800   0.926   0.954   0.940      0.842
+         SigLIP-Linear       0.480 0.732          0.606   0.383    0.897   0.640   0.549      0.613   0.581   0.370   0.857   0.614      0.610
+         SigLIP2-Linear      0.884 0.833          0.859   0.597    0.984   0.790   0.744      0.866   0.805   0.826   0.905   0.866      0.822
+         PE-CLIP-Linear      0.970 0.948          0.959   0.679    0.994   0.836   0.751      0.970   0.861   0.966   0.975   0.971      0.899
+         DINOv2-Linear       0.628 0.580          0.608   0.643    0.772   0.705   0.603      0.695   0.649   0.606   0.562   0.583      0.636
+         DINOv3-Linear       0.933 0.895          0.914   0.948    0.975   0.961   0.937      0.948   0.943   0.949   0.946   0.948      0.940
+         Competitor Methods
+         CNNSpot               0.979      0.128   0.554   0.959    0.290   0.625     0.588    0.541   0.565   0.969   0.112   0.541      0.571
+         FreqNet               0.985      0.090   0.538   0.731    0.559   0.645     0.544    0.553   0.549   0.977   0.128   0.553      0.571
+         Gram-Net              0.992      0.044   0.518   0.947    0.205   0.576     0.531    0.523   0.527   0.985   0.061   0.523      0.536
+         NPR                   0.999      0.046   0.523   0.980    0.243   0.612     0.593    0.537   0.565   0.998   0.076   0.537      0.560
+         UnivFD                0.763      0.441   0.602   0.693    0.637   0.665     0.563    0.637   0.600   0.778   0.495   0.636      0.617
+         SAFE                  0.993      0.046   0.520   0.918    0.309   0.613     0.564    0.532   0.548   0.984   0.080   0.532      0.556
+         LaDeDa                0.994      0.015   0.504   0.988    0.119   0.554     0.542    0.506   0.524   0.986   0.026   0.506      0.523
+         Effort                0.394      0.782   0.588   0.179    0.955   0.567     0.513    0.533   0.523   0.225   0.840   0.533      0.553
+         DDA                   0.940      0.708   0.824   0.899    0.908   0.904     0.818    0.846   0.832   0.968   0.725   0.847      0.850
+         OMAT                  0.899      0.359   0.629   0.633    0.715   0.674     0.581    0.633   0.607   0.853   0.414   0.634      0.636
+         AIDE                  0.944      0.203   0.574   0.973    0.195   0.584     0.578    0.541   0.560   0.990   0.093   0.542      0.565
+
+
+resolution of each model without any additional data augmen-                   degrade to near-random performance, primarily due to a failure
+tation. Notably, PE uses a ViT-L/14 backbone at 336px resolution,              to recognize diverse fake samples. The only exception among spe-
+which is comparable in scale to several strong VFM-based baselines             cialized methods is DDA, which maintains a respectable average
+and recent detectors built on CLIP-L style encoders.                           accuracy of 85.0%, due to its alignment with the robust VAE de-
+                                                                               coder patterns shared across latent diffusion models by training on
+3.2    Performance on Standard Benchmarks                                      DINOv2 with VAE reconstruct data.
+We first establish the efficacy of our simple baselines on the stan-              However, modern VFM baselines decisively outperform all com-
+dard GenImage benchmark in Table 1. Despite the simplicity of the              petitors. DINOv3-Linear achieves an average accuracy of 94.0%,
+linear probe, modern VFMs achieve state-of-the-art performance.                surpassing DDA by nearly 10% and traditional detectors by over
+DINOv3-Linear reaches the highest average accuracy of 96.5%, sur-              30%. Crucially, we observe a massive performance gap between
+passing the best specialized detector OMAT (94.6%) and significantly           modern and legacy VFMs: DINOv3 outperforms its predecessor
+outperforming legacy baselines. Notably, we observe a substantial              DINOv2 by a staggering 30.4%, and MetaCLIP-2 surpasses Meta-
+performance leap across VFM generations: DINOv3 improves upon                  CLIP by 18.8%. This confirms that earlier foundation models lacked
+DINOv2 by over 11%, and MetaCLIP-2 boosts accuracy by 12.6%                    the necessary data exposure to handle in-the-wild shifts, whereas
+compared to its predecessor MetaCLIP. This trend highlights that               modern iterations have internalized these distributions during pre-
+forensic discriminability is not static but scales with the quality and        training.
+data volume of the foundation model. Furthermore, while special-
+ized detectors often overfit to the training source, modern VFMs               3.4      Generalization to State-of-the-Art
+demonstrate robust generalization across diverse generative ar-                         Generators
+chitectures, confirming that their representations are inherently              A critical question remains: do these models truly learn general-
+forensic-ready without the need for complex auxiliary modules.                 ized forensic concepts, or do they merely memorize pre-training
+                                                                               patterns? We investigate this via AIGIHolmes and AIGI-Now,
+3.3    The Collapse of SOTA in the Wild                                        which challenge detectors across two fronts:
+While standard benchmarks provide a controlled environment, real-                  • AIGIHolmes: Features recent Auto-Regressive (AR) mod-
+world deployment involves diverse, unconstrained data distribu-                       els (e.g., LlamaGen, VAR) and Diffusion Transformers (e.g.,
+tions. To evaluate this, we test on four challenging in-the-wild                      FLUX), whose mechanisms differ fundamentally from older
+datasets: Chameleon, WildRF, Social-RF, and CommunityAI.                              UNet-based models (e.g., SD-v1.4).
+The results, summarized in Table 2, reveal a stark contrast. Most                  • AIGI-Now: Contains closed-source APIs (e.g., GPT-4o, FLUX-
+specialized detectors suffer a catastrophic performance collapse.                     Pro) unseen during VFM pre-training. And disentangles eval-
+Methods like NPR, LaDeDa, and even recent techniques like OMAT                        uation into two subsets: Pixel-artifact (pix), which isolates
+                                                                           4
+

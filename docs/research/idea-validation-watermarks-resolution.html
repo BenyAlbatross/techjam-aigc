@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Idea Validation — Watermark-like Cues &amp; Resolution-aware Inference</title>
+  <style>
+    :root {
+      --ink: #182027; --muted: #5c6871; --paper: #f6f4ef; --card: #fffefb;
+      --line: #d9d7cf; --navy: #173e57; --blue: #246f95; --teal: #14766e;
+      --green: #2e7150; --amber: #9a6315; --red: #9a3f3a;
+      --soft-blue: #eaf3f7; --soft-green: #eaf4ed; --soft-amber: #fff4de;
+      --soft-red: #faece9; --shadow: 0 9px 25px rgba(25, 39, 48, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--ink); background: var(--paper);
+      font: 15px/1.62 Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: var(--blue); text-underline-offset: 2px; }
+    a:hover { color: var(--teal); }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .hero {
+      padding: 68px 0 54px; color: white;
+      background:
+        radial-gradient(circle at 82% 23%, rgba(95, 201, 181, .25), transparent 28%),
+        linear-gradient(135deg, #112f45, #185267 61%, #2d675d);
+    }
+    .eyebrow {
+      margin: 0 0 12px; color: #bce8df; font-size: 12px; font-weight: 800;
+      letter-spacing: .13em; text-transform: uppercase;
+    }
+    h1 { max-width: 930px; margin: 0; font: 700 clamp(36px, 6vw, 65px)/1.04 Georgia, serif; }
+    .dek { max-width: 900px; margin: 20px 0 0; color: #e6f0f1; font-size: 18px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
+    .pill, .label {
+      display: inline-flex; align-items: center; border: 1px solid rgba(255, 255, 255, .29);
+      border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800;
+    }
+    nav {
+      position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--line);
+      background: rgba(246, 244, 239, .95); backdrop-filter: blur(12px);
+    }
+    nav .wrap { display: flex; gap: 18px; overflow-x: auto; padding: 11px 0; white-space: nowrap; }
+    nav a { color: var(--ink); font-size: 12px; font-weight: 800; text-decoration: none; }
+    main { padding-bottom: 76px; }
+    section { padding-top: 56px; scroll-margin-top: 45px; }
+    h2 { margin: 0 0 10px; font: 700 33px/1.15 Georgia, serif; }
+    h3 { margin: 0 0 9px; font-size: 19px; line-height: 1.3; }
+    p { margin: 8px 0 13px; }
+    .lead { max-width: 900px; margin: 0 0 24px; color: var(--muted); font-size: 17px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .card {
+      grid-column: span 6; padding: 21px; border: 1px solid var(--line);
+      border-radius: 14px; background: var(--card); box-shadow: var(--shadow);
+    }
+    .verdict { border-top: 5px solid var(--amber); }
+    .verdict.good { border-top-color: var(--green); }
+    .verdict .decision {
+      display: block; margin: 8px 0 4px; color: var(--amber);
+      font: 700 28px/1.15 Georgia, serif;
+    }
+    .verdict.good .decision { color: var(--green); }
+    .label { color: var(--muted); border-color: var(--line); background: #f4f5f2; }
+    .label.direct { color: var(--green); border-color: #b9d7c3; background: var(--soft-green); }
+    .label.adjacent { color: var(--amber); border-color: #e4c78f; background: var(--soft-amber); }
+    .label.precedent { color: var(--blue); border-color: #b9d3df; background: var(--soft-blue); }
+    .callout {
+      margin-top: 18px; padding: 16px 18px; border-left: 4px solid var(--amber);
+      border-radius: 8px; background: var(--soft-amber);
+    }
+    .callout.danger { border-color: var(--red); background: var(--soft-red); }
+    .callout.ok { border-color: var(--green); background: var(--soft-green); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    table { width: 100%; min-width: 940px; border-collapse: collapse; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid #e7e5de; text-align: left; vertical-align: top; }
+    th {
+      background: #eaf0ef; color: #354850; font-size: 11px;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+    tr:last-child td { border-bottom: 0; }
+    ul, ol { padding-left: 21px; }
+    li { margin: 5px 0; }
+    code { padding: 2px 5px; border-radius: 4px; background: #e9ece9; font-size: .9em; }
+    .term { grid-column: span 3; }
+    .term p { color: var(--muted); font-size: 13px; }
+    .flow {
+      display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 10px; align-items: stretch; margin: 22px 0;
+    }
+    .flow .step { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    .flow .arrow { align-self: center; color: var(--teal); font-size: 24px; font-weight: 900; }
+    .step strong { display: block; margin-bottom: 5px; color: var(--navy); }
+    .experiment { grid-column: span 6; }
+    .experiment ol { margin-bottom: 0; }
+    .source { grid-column: span 4; }
+    .source p { color: var(--muted); font-size: 13px; }
+    .source .cite { font-weight: 800; }
+    .small { color: var(--muted); font-size: 12px; }
+    footer { margin-top: 58px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    @media (max-width: 820px) {
+      .wrap { width: min(100% - 28px, 1180px); }
+      .card, .term, .experiment, .source { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+      .flow .arrow { justify-self: center; transform: rotate(90deg); }
+      .hero { padding-top: 48px; }
+    }
+    @media print {
+      nav { display: none; }
+      .hero { padding: 28px 0; color: #111; background: white; border-bottom: 3px solid #111; }
+      .eyebrow, .dek { color: #222; }
+      .card { box-shadow: none; break-inside: avoid; }
+      section { padding-top: 32px; }
+      a { color: #111; }
+    }
+  </style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Rapid evidence brief · team brainstorm validation</p>
+    <h1>Watermark-like cues and resolution-aware inference</h1>
+    <p class="dek">Do hallucinated watermarks provide a useful AIGC signal, and should detector capacity be routed by image resolution? The short answer is “watermarks only as a controlled auxiliary cue” and “yes to adaptive processing, but not a raw low/high-resolution switch.”</p>
+    <div class="meta">
+      <span class="pill">Questions frozen: 29 Aug 2026</span>
+      <span class="pill">Primary-source search: 29 Aug 2026</span>
+      <span class="pill">Binary full-image scope</span>
+      <span class="pill">Evidence and inference separated</span>
+    </div>
+  </div>
+</header>
+
+<nav aria-label="Table of contents"><div class="wrap">
+  <a href="#verdict">Verdict</a><a href="#terms">Definitions</a>
+  <a href="#watermarks">Watermark evidence</a><a href="#resolution">Resolution evidence</a>
+  <a href="#design">Recommended design</a><a href="#experiments">Experiments</a>
+  <a href="#sources">Source notes</a><a href="#method">Method &amp; next reviews</a>
+</div></nav>
+
+<main class="wrap">
+  <section id="verdict">
+    <h2>Executive verdict</h2>
+    <p class="lead">Both brainstorms point at real phenomena, but the literal implementations would create avoidable shortcuts.</p>
+    <div class="grid">
+      <article class="card verdict">
+        <span class="label adjacent">Medium confidence</span>
+        <span class="decision">Watermark cue: experiment only</span>
+        <p>A visible, hallucinated signature/logo can be evidence in a particular image, but training <code>watermark = AI</code> invites false positives on authentic stock photography and false negatives after cropping, inpainting, or generator changes. The image literature directly treats provider overlays as an easily learned confound; direct validation for hallucinated fake watermarks as a general detector feature was <strong>not found in this search</strong>.</p>
+      </article>
+      <article class="card verdict good">
+        <span class="label direct">Medium-high confidence</span>
+        <span class="decision">Adaptive resolution: pursue with changes</span>
+        <p>High-resolution native tiles preserve forensic detail that fixed resizing destroys, and coarse-to-fine conditional inference is well established. Route by <strong>effective quality and model uncertainty</strong>, not file dimensions alone. A high-pixel-count screenshot may contain little native detail; a low-resolution sample may be the hard case that needs the more robust model.</p>
+      </article>
+    </div>
+    <p class="callout danger"><strong>Challenge constraint.</strong> The organizer brief says SynthID is not to be relied on and its test handling is ambiguous. Any watermark-derived feature must be optional and must not define the final decision. Dimensions and codecs must also be label-balanced because size/compression shortcuts are already documented in AIGC benchmarks <a href="#s-w2">[W2]</a>.</p>
+  </section>
+
+  <section id="terms">
+    <h2>First untangle “watermark”</h2>
+    <p class="lead">The chat idea can mean four technically different signals. Only the first is the proposed hallucination heuristic.</p>
+    <div class="grid">
+      <article class="card term"><h3>Hallucinated visible mark</h3><p>Gibberish signature, stock-photo-like overlay, malformed logo, or text rendered as scene content. Passive semantic/artifact cue; no decoder or key exists.</p></article>
+      <article class="card term"><h3>Provider visible overlay</h3><p>A service intentionally stamps a logo or label after generation. Trivial to classify, trivial to crop, and strongly correlated with one source.</p></article>
+      <article class="card term"><h3>Embedded watermark</h3><p>An intentional, usually imperceptible pixel signal such as a learned watermark. Detection uses a provider-specific decoder/key and is proactive provenance, not passive forensics.</p></article>
+      <article class="card term"><h3>Metadata / provenance</h3><p>EXIF or signed manifests such as content credentials. Useful provenance evidence, but separable from what can be inferred from pixels and often lost during redistribution.</p></article>
+    </div>
+  </section>
+
+  <section id="watermarks">
+    <h2>What the watermark literature supports</h2>
+    <p class="lead">The most relevant evidence argues for counterfactual controls and a separate provenance channel—not a positive watermark shortcut.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Work</th><th>Evidence class</th><th>What it found</th><th>Decision impact</th><th>Limit</th></tr></thead>
+      <tbody>
+        <tr><td><a href="#s-w1">Online Detection of AI-Generated Images</a><br>ICCVW 2023</td><td><span class="label direct">Direct image evidence</span></td><td>The authors cropped the bottom 16 pixels from collected DALL·E 2 images because the web-interface watermark would be easily identifiable by a classifier.</td><td>Strong evidence that a visible provider mark is a dataset shortcut worth removing or balancing.</td><td>Provider overlay, not a generator-hallucinated mark; the paper does not quantify a watermark-only classifier.</td></tr>
+        <tr><td><a href="#s-w2">Fake or JPEG?</a><br>ECCV workshop 2024</td><td><span class="label direct">Direct bias evidence</span></td><td>Detectors learned JPEG and image-size biases; correcting them improved cross-generator performance by more than 11 percentage points for evaluated ResNet-50 and Swin-T systems.</td><td>Demonstrates the same causal failure mode: correlated presentation artifacts can masquerade as generation evidence.</td><td>Studies JPEG/size, not visible watermarks.</td></tr>
+        <tr><td><a href="#s-w7">X-AIGD</a><br>ICLR 2026</td><td><span class="label direct">Direct artifact evidence</span></td><td>Pixel-level annotations cover low-level distortions, high-level semantics, and cognitive counterfactuals. Existing detectors showed negligible reliance on perceptual artifacts; explicitly aligning attention to artifact regions improved author-reported interpretability and generalization.</td><td>The closest positive precedent is localized auxiliary artifact supervision, including malformed symbols/text—not a binary shortcut for mark presence.</td><td>Does not isolate hallucinated watermarks, and the reported detector still uses broader, partly uninterpretable evidence.</td></tr>
+        <tr><td><a href="#s-w3">Passive or Watermark?</a><br>CVPRW 2026</td><td><span class="label adjacent">Adjacent image evidence</span></td><td>ImageDetectBench compares five passive and four embedded-watermark detectors under benign and adversarial perturbations; strong proactive watermark systems can outperform passive detectors.</td><td>Use a decoded provider watermark as a separate high-specificity provenance result when available, not as a learned visual proxy.</td><td>Requires intentional embedding and the matching detector. It does not validate hallucinated marks and is incompatible with watermark dependence here.</td></tr>
+        <tr><td><a href="#s-w4">Are Watermarks Bugs for Deepfake Detectors?</a><br>IJCAI 2024</td><td><span class="label adjacent">Adjacent image evidence</span></td><td>Imperceptible watermarks can overlap with passive forensic signals and cause more false negatives; the paper builds an adversarially optimized watermark to alter detector behavior.</td><td>Watermarks and passive detectors can interfere in either direction. Presence alone does not guarantee that a black-box classifier will move toward “fake.”</td><td>Face manipulation/deepfake setting, not pure T2I classification or visible marks.</td></tr>
+        <tr><td><a href="#s-w5">The Watermark Shortcut</a><br>arXiv 2026</td><td><span class="label adjacent">Cross-modal causal analogy</span></td><td>In audio, a paired intervention shows watermark-correlated training creates strip-to-evade, mark-to-frame, and worse unwatermarked OOD detection; adding marks to both classes decorrelates the shortcut.</td><td>Supplies the cleanest experimental template for our image ablation: independently intervene on watermark presence and provenance label.</td><td>Audio preprint. It is a design analogy, not image validation.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid" style="margin-top:18px">
+      <article class="card"><h3>Defensible use</h3><ul>
+        <li>Run OCR/logo/signature detection as an <strong>explanation tag</strong> or error-analysis feature.</li>
+        <li>If it improves prediction after counterfactual testing, fuse only a bounded auxiliary representation while training for invariance to ordinary overlays.</li>
+        <li>Report an actual decoded watermark through a separate provenance field in a future interface, if rules allow; do not silently equate it with the passive AIGC score.</li>
+      </ul></article>
+      <article class="card"><h3>Failure modes to expect</h3><ul>
+        <li><strong>Mark-to-frame:</strong> authentic stock images, news photos, memes, artwork, or signed photography become false positives.</li>
+        <li><strong>Strip-to-evade:</strong> crop, inpaint, blur, re-screenshot, or simple overlay removal flips an AIGC image toward real.</li>
+        <li><strong>Generator drift:</strong> newer generators render text correctly or produce no mark.</li>
+        <li><strong>Source leakage:</strong> the cue identifies a website/product pipeline rather than generated provenance.</li>
+      </ul></article>
+    </div>
+  </section>
+
+  <section id="resolution">
+    <h2>What the resolution literature supports</h2>
+    <p class="lead">There is direct AIGC literature on preserving native-resolution detail and general vision literature on adaptive computation. Neither validates routing solely on the input file's pixel dimensions.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Work</th><th>Evidence class</th><th>Mechanism / result</th><th>Decision impact</th><th>Limit</th></tr></thead>
+      <tbody>
+        <tr><td><a href="#s-r1">SPAI</a><br>CVPR 2025</td><td><span class="label direct">Direct AIGC evidence</span></td><td>Processes arbitrary-resolution images as native 224-pixel patches and aggregates spectral evidence with context attention. Reports 91.0 mean AUC across 13 generators, 5.5 points above its runner-up.</td><td>High resolution is best exploited through patch aggregation rather than destructive whole-image resizing.</td><td>Author protocol; generator identity and resolution bins are partly coupled. Signal-only methods remain weak after recapture.</td></tr>
+        <tr><td><a href="#s-r2">TextureCrop</a><br>WACVW 2025</td><td><span class="label direct">Direct AIGC evidence</span></td><td>Selects texture-rich native patches. On more than 10,000 high-resolution images, reported gains span 3.4–12.1 points balanced accuracy and 6.1–14.9 points AUC across detectors, depending on the comparison.</td><td>A cheap high-resolution path can sample informative patches before invoking or aggregating a larger model.</td><td>Patch-selection preprocessing, not a learned low/high-capacity router; workshop evaluation.</td></tr>
+        <tr><td><a href="#s-r3">HiDA-Net</a><br>ICLR 2026</td><td><span class="label direct">Direct AIGC evidence</span></td><td>Fuses a downsampled global view with all native-resolution local tiles and explicitly estimates JPEG quality. HiRes-50K contains 50,568 images up to 64 MP; reported gains exceed 13 points on Chameleon and 8 on HiRes-50K.</td><td>The closest direct precedent for global/low-cost plus local/detail aggregation, and for treating compression quality as context.</td><td>More compute than selective sampling; includes localized-manipulation machinery outside this challenge's core scope.</td></tr>
+        <tr><td><a href="#s-r4">Finding AI-Generated Faces in the Wild</a><br>CVPRW 2024</td><td><span class="label adjacent">Direct but narrow</span></td><td>When trained at matching resolution, a face detector retained 91.9% TPR at 128×128 but dropped to 44.1% at 32×32 at 0.5% FPR.</td><td>Low resolution is not automatically easy or hopeless; matching training degradation matters, and extreme downsampling changes the operating regime.</td><td>Faces only, fixed domain, workshop paper; cannot establish full-image cross-generator behavior.</td></tr>
+        <tr><td><a href="#s-r5">RANet / GFNet</a><br>CVPR &amp; NeurIPS 2020</td><td><span class="label precedent">General vision precedent</span></td><td>Coarse-to-fine networks exit on easy samples and spend higher-resolution computation on uncertain/hard ones; GFNet reported 20% lower MobileNet-V3 latency on an iPhone without loss of ImageNet accuracy.</td><td>Route using calibrated confidence or learned difficulty. Original dimensions are context, not the exit criterion.</td><td>Natural-image recognition, not forensics; accuracy/latency results do not transfer directly.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="callout"><strong>Important reversal.</strong> The proposed rule “low res → cheap, high res → powerful” may allocate the least compute to the least informative images. High-resolution images offer more native patches, but may be cheaply resolved by one or two texture-rich crops. Low-resolution, compressed images can require the robust semantic/phase model precisely because fragile local traces are gone. Let uncertainty and measured effective quality arbitrate.</p>
+  </section>
+
+  <section id="design">
+    <h2>Recommended hackathon architecture</h2>
+    <p class="lead">Build a small adaptive cascade around models the team should benchmark anyway. Keep a single calibrated AIGC output.</p>
+    <div class="flow" role="img" aria-label="A cheap audit and thumbnail model exits confident samples, while uncertain samples receive native patch aggregation and a stronger model before calibration.">
+      <div class="step"><strong>1 · Cheap audit + glance</strong>Read width/height/codec; estimate blur, JPEG quality and texture energy; run a lightweight full-frame model plus 1–2 native patches.</div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><strong>2 · Confidence gate</strong>Exit only when the cheap score is calibrated and stable across a mild resize/JPEG consistency view. Dimensions affect the patch budget, not the label.</div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><strong>3 · Focus + fuse</strong>For uncertain samples, aggregate more texture-diverse native tiles with the stronger VFM/LoRA or phase-aware branch, then produce one calibrated score.</div>
+    </div>
+    <div class="grid">
+      <article class="card"><h3>Router inputs</h3><ul>
+        <li>Cheap-model logit, entropy/margin, and disagreement across transformed views</li>
+        <li>Shortest side, megapixels, and aspect ratio</li>
+        <li>Estimated JPEG quality, blur/effective resolution, and high-frequency energy</li>
+        <li>Native patch count and diversity—not filename, metadata source, or watermark presence</li>
+      </ul></article>
+      <article class="card"><h3>Guardrails</h3><ul>
+        <li>Balance dimensions, formats, codecs, and overlays across real/fake training labels.</li>
+        <li>Do not super-resolve low-resolution images for the forensic branch; hallucinated detail can create a new generator signal.</li>
+        <li>Freeze one threshold before held-out evaluation and measure calibration per quality stratum.</li>
+        <li>Cap worst-case latency and include router/model parameters in the sub-2B total.</li>
+      </ul></article>
+    </div>
+  </section>
+
+  <section id="experiments">
+    <h2>Fast experiments that can kill the ideas</h2>
+    <p class="lead">Do these before integrating either idea into the main training pipeline.</p>
+    <div class="grid">
+      <article class="card experiment"><h3>Experiment A · watermark counterfactual</h3><ol>
+        <li>Create a held-out, source-balanced 2×2 set: real/fake × visible-mark absent/present. Add the same licensed synthetic overlays—logos, signatures, translucent stock text—to both labels.</li>
+        <li>For naturally marked fakes, create paired crop/inpaint versions. Keep both members in the same evaluation group, never across train/test.</li>
+        <li>Compare baseline, watermark-tag-only, naïve fusion, and fusion trained with watermark counterfactual consistency.</li>
+        <li>Report AUROC/BAcc at a frozen threshold plus the score shift for paired add/remove interventions.</li>
+        <li><strong>Kill condition:</strong> fusion loses on unmarked unseen generators, materially raises false positives on marked real images, or large score changes follow only the overlay intervention.</li>
+      </ol></article>
+      <article class="card experiment"><h3>Experiment B · router ablation</h3><ol>
+        <li>Construct equal-count strata by native megapixels and <em>effective</em> quality: clean native, down/up-scaled, JPEG, blur, and composed transforms. Match strata across labels.</li>
+        <li>Benchmark: fixed cheap model; fixed strong model; literal dimension rule; uncertainty cascade; quality-aware learned router; and an oracle choosing the correct cheapest expert.</li>
+        <li>Train experts with the same data where possible so routing—not extra data—explains the gain.</li>
+        <li>Report ROC-AUC, BAcc, TPR at low FPR, calibration, mean/p95 latency, FLOPs, and fraction routed to the strong path per stratum.</li>
+        <li><strong>Kill condition:</strong> the adaptive system does not improve the accuracy–latency Pareto frontier, or routing decisions correlate with label-specific size/codec artifacts.</li>
+      </ol></article>
+    </div>
+    <p class="callout ok"><strong>Smallest useful prototype.</strong> No new end-to-end router is needed initially. Use the cheap model's calibrated uncertainty plus a quality floor as a hand-written gate, sweep the exit threshold on a training-only validation set, and compare against always-cheap and always-strong. Learn the router only if that curve shows useful headroom.</p>
+  </section>
+
+  <section id="sources">
+    <h2>Primary source notes</h2>
+    <p class="lead">Links go to papers, official proceedings, or author project pages. “Author-reported” means this review has not reproduced the result.</p>
+    <div class="grid">
+      <article class="card source" id="s-w1"><a class="cite" href="https://openaccess.thecvf.com/content/ICCV2023W/DFAD/html/Epstein_Online_Detection_of_AI-Generated_Images__ICCVW_2023_paper.html">[W1] Epstein et al., Online Detection of AI-Generated Images</a><p>ICCV Workshops, 2023. Direct source for cropping the DALL·E 2 provider watermark to prevent easy classifier identification.</p></article>
+      <article class="card source" id="s-w2"><a class="cite" href="https://arxiv.org/abs/2403.17608">[W2] Grommelt et al., Fake or JPEG?</a><p>ECCV workshop paper / arXiv, 2024. Direct source for JPEG and image-dimension shortcut experiments and the reported cross-generator gain after constraints.</p></article>
+      <article class="card source" id="s-w3"><a class="cite" href="https://openaccess.thecvf.com/content/CVPR2026W/SAFE/html/Guo_AI-generated_Image_Detection_Passive_or_Watermark_CVPRW_2026_paper.html">[W3] Guo et al., AI-generated Image Detection: Passive or Watermark?</a><p>CVPR Workshops, 2026. ImageDetectBench comparison of passive and intentionally embedded watermark detectors.</p></article>
+      <article class="card source" id="s-w4"><a class="cite" href="https://www.ijcai.org/proceedings/2024/0673">[W4] Wu et al., Are Watermarks Bugs for Deepfake Detectors?</a><p>IJCAI, 2024. Shows that embedded image watermarks can interfere with passive face-forgery detectors; adjacent to this challenge.</p></article>
+      <article class="card source" id="s-w5"><a class="cite" href="https://arxiv.org/abs/2606.23335">[W5] Müller &amp; Debus, The Watermark Shortcut</a><p>arXiv preprint, 2026. Cross-modal causal evidence and paired counterfactual design; not direct image evidence.</p></article>
+      <article class="card source" id="s-w6"><a class="cite" href="https://openaccess.thecvf.com/content/CVPR2025/html/Guillaro_A_Bias-Free_Training_Paradigm_for_More_General_AI-generated_Image_Detection_CVPR_2025_paper.html">[W6] Guillaro et al., A Bias-Free Training Paradigm</a><p>CVPR, 2025. B-Free controls semantic and format bias with self-conditioned reconstruction/inpainting; supports label-independent nuisance balancing.</p></article>
+      <article class="card source" id="s-w7"><a class="cite" href="https://openreview.net/forum?id=Tk8ujiOgHM">[W7] Xiao et al., Unveiling Perceptual Artifacts</a><p>ICLR, 2026. X-AIGD supplies pixel-level artifact annotations and evaluates artifact-aware training and attention alignment.</p></article>
+      <article class="card source" id="s-r1"><a class="cite" href="https://openaccess.thecvf.com/content/CVPR2025/html/Karageorgiou_Any-Resolution_AI-Generated_Image_Detection_by_Spectral_Learning_CVPR_2025_paper.html">[R1] Karageorgiou et al., Any-Resolution AI-Generated Image Detection</a><p>CVPR, 2025. SPAI's native patch aggregation, resolution-stratified author results, and perturbation analysis.</p></article>
+      <article class="card source" id="s-r2"><a class="cite" href="https://openaccess.thecvf.com/content/WACV2025W/SynRDinBAS/html/Konstantinidou_TextureCrop_Enhancing_Synthetic_Image_Detection_through_Texture-based_Cropping_WACVW_2025_paper.html">[R2] Konstantinidou et al., TextureCrop</a><p>WACV Workshops, 2025. Native texture-patch selection evaluated across several pretrained synthetic-image detectors.</p></article>
+      <article class="card source" id="s-r3"><a class="cite" href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/820e42f39773c6cbbd875553db45658f-Abstract-Conference.html">[R3] Mu et al., No Pixel Left Behind</a><p>ICLR, 2026. HiDA-Net, full native-tile/global-view fusion, JPEG-quality estimation, and HiRes-50K.</p></article>
+      <article class="card source" id="s-r4"><a class="cite" href="https://openaccess.thecvf.com/content/CVPR2024W/WMF/html/Porcile_Finding_AI-Generated_Faces_in_the_Wild_CVPRW_2024_paper.html">[R4] Porcile et al., Finding AI-Generated Faces in the Wild</a><p>CVPR Workshops, 2024. Narrow but useful controlled evidence on train/test resolution matching down to 32×32.</p></article>
+      <article class="card source" id="s-r5"><a class="cite" href="https://openaccess.thecvf.com/content_CVPR_2020/html/Yang_Resolution_Adaptive_Networks_for_Efficient_Inference_CVPR_2020_paper.html">[R5a] Yang et al., Resolution Adaptive Networks</a><p>CVPR, 2020. General coarse-to-fine conditional computation precedent.</p><a class="cite" href="https://proceedings.neurips.cc/paper/2020/hash/1963bd5135521d623f6c29e6b1174975-Abstract.html">[R5b] Wang et al., Glance and Focus</a><p>NeurIPS, 2020. Confidence-based early termination and dynamically selected high-resolution regions.</p></article>
+      <article class="card source" id="s-r6"><a class="cite" href="https://openaccess.thecvf.com/content/ICCV2025/html/Li_Bridging_the_Gap_Between_Ideal_and_Real-world_Evaluation_Benchmarking_AI-Generated_ICCV_2025_paper.html">[R6] Li et al., Bridging the Gap Between Ideal and Real-world Evaluation</a><p>ICCV, 2025. RRDataset/RRBench includes varied resolution plus repeated social-platform transmission and recapture.</p></article>
+    </div>
+  </section>
+
+  <section id="method">
+    <h2>Search boundary and future review structure</h2>
+    <div class="grid">
+      <article class="card"><h3>How this search was run</h3><ol>
+        <li>Searched combinations of AIGC/generated-image detection with visible watermark, fake watermark, logo/text artifacts, shortcut learning, dataset bias, image resolution, downsampling, multi-scale, native patches, routing, cascade, and dynamic inference.</li>
+        <li>Prioritized primary papers and official proceedings; followed direct references from watermark-interference and any-resolution work into adjacent causal and conditional-compute literature.</li>
+        <li>Included older work when it directly established a mechanism. Distinguished full-image AIGC detection from face deepfakes, audio, and generic recognition.</li>
+        <li>Checked claims against the challenge's pure-generation scope, robustness transforms, watermark ambiguity, public-release requirement, and sub-2B cap.</li>
+      </ol><p class="small">This is a rapid decision review, not a systematic review or proof of absence. The search did not find a controlled paper validating hallucinated visible watermarks as a generator-general cue.</p></article>
+      <article class="card"><h3>How to structure the next reviews</h3><p>Create a separate HTML for each decision, linked from <a href="README.md">the research index</a>. Reuse the same order:</p><ol>
+        <li>Frozen question and vocabulary</li><li>Decision-first verdict and confidence</li>
+        <li>Evidence table with directness and limitations</li><li>Challenge-fit analysis</li>
+        <li>Minimal falsification experiment and kill condition</li><li>Primary source ledger and audited search boundary</li>
+      </ol><p><strong>Automation recommendation:</strong> stabilize this contract across two or three reviews, then create a repository skill that fills a shared HTML template and evidence-ledger schema. A plugin is only warranted later if the workflow needs a new scholarly database connector, citation manager, or team-wide distribution mechanism.</p></article>
+    </div>
+  </section>
+
+  <footer><p><strong>Status:</strong> research recommendation, not an implemented architecture. Author-reported results have not been reproduced in this repository. Last updated 29 August 2026.</p></footer>
+</main>
+</body>
+</html>

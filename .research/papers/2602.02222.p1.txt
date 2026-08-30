@@ -1,0 +1,100 @@
+                                                                                      Verification                                          Classify
+
+
+
+
+                                                                                                                                                                                          Semantic
+
+                                                                 Recon         Piexl
+                                                                                                        Phase 1: Manifold Construction
+                                                                 struct       Relatio
+                                                                       MIRROR: Manifold Ideal Reference ReconstructOR for
+                                                                                 n
+                         recon. pixel
+e
+                                                                 Frequ SemanGeneralizable AI-Generated Image Detection
+ n                                                                ency   tic
+cts                           sem.               freq
+                            Seen Artifacts
+                                                    Ruiqi Liu1,2,∗ Manni Cui3,∗ Ziheng Qin1,∗ Zhiyuan Yan6 Ruoxin Chen4 Yi Han5 Zhiheng Li1
+                                                              Priors
+                                                                  Chen1 ZhiJin Chen1 Kaiqing Lin8 Jialiang ShenFrequency
+                                                                                                               7
+wn                                                        Junkai                                                   Lubin Weng1 Jing Dong1
+                                                                             Expectation
+                                              Detector                  Fake             Yan Wang9,† Shu Wu1,†
+                                                                                                                                                                                                                            See         Pri
+ess
+                                                                      1        Verification
+                                                                          Institute of Automation, Chinese Academy of Sciences                      2
+                                                                                                                                                        School of Advanced Interdisciplinary Sciences, UCAS
+                                               Real
+                                                                                  3                                                                     4                         5
+                                                                                      Huazhong University of Science and Technology                         Tencent YouTu Lab         Southwest University
+                                                                                                                                                                Prototype
+                                                   Known Generator/               6                          7                                          8                            9
+      arXiv:2602.02222v1 [cs.CV] 2 Feb 2026
+
+
+
+
+                                                                                      Peking University          The University of Sydney                   Shenzhen University          Tsinghua University
+                                                    No compression                                                                                                                             Reconstruct
+                                                                                          Fake                     ∗
+                                                                                                                       Equal contribution       †
+                                                                                                                                                    Corresponding author                        Feature
+                                                                            Priors
+
+
+                                                        Traditional Artifacts Detection                           Human Detection               Imagine         transfer Mirror Detection                Reconstructor      Extractor
+
+
+                                                                       Seen
+                                                                      Artifacts          Fake Image                               Priors            Real Image                                  Priors          Prototype
+
+                                                         Extractor                                                      Brain                                                Memory Bank
+                                                                                                                                  Ideal Reference
+                                                                                                                                                                                              Ideal Reference
+
+
+                                                                     Artifacts                   Detector                                                                                                                Detector
+                                                                     Change                                                                      Comparison                                          Comparison
+                                                          Fake                                                          Fake                                                  Fake
+
+                                                                                                      Real                          See Image                     Fake                                   See Feature        Fake
+
+
+                                                Figure 1: Comparison of decision paradigms for AI-generated image detection. (Left) Traditional detectors treat detection
+                                                as a Artifacts-Driven classification task, often overfitting to generator-specific artifacts. (Middle) Humans employ a Reference-
+                                                Comparison strategy, anchoring judgment on the invariant priors of the physical world. (Right) Our MIRROR framework
+                                                explicitly encodes these priors to act as a Reconstructor: it projects the input into a manifold-consistent Ideal Reference. The
+                                                resulting reconstruction residual exposes forgeries as significant deviations from reality.
+
+                                                Abstract                                                                                            human experts, we introduce the Human-AIGI benchmark,
+                                                                                                                                                    featuring a psychophysically curated human-imperceptible
+                                                                                                                                                    subset. Across 14 benchmarks, MIRROR consistently out-
+                                                High-fidelity generative models have narrowed the percep-                                           performs prior methods, achieving gains of 2.1% on six stan-
+                                                tual gap between synthetic and real images, posing serious                                          dard benchmarks and 8.1% on seven in-the-wild benchmarks.
+                                                threats to media security. Most existing AI-generated im-                                           On Human-AIGI, MIRROR reaches 89.6% accuracy across
+                                                age (AIGI) detectors rely on artifact-based classification and                                      27 generators, surpassing both lay users and visual experts,
+                                                struggle to generalize to evolving generative traces. In con-                                       and further approaching the human perceptual limit as pre-
+                                                trast, human judgment relies on stable real-world regular-                                          trained backbones scale. The code is publicly available at:
+                                                ities, with deviations from the human cognitive manifold                                            https://github.com/349793927/MIRROR
+                                                serving as a more generalizable signal of forgery. Moti-
+                                                vated by this insight, we reformulate AIGI detection as a
+                                                Reference-Comparison problem that verifies consistency with
+                                                the real-image manifold rather than fitting specific forgery
+                                                                                                                                                    1         Introduction
+                                                cues. We propose MIRROR (Manifold Ideal Reference
+                                                                                                                                                                  “Perception is a process of hypothesis testing.”
+                                                ReconstructOR), a framework that explicitly encodes real-
+                                                                                                                                                                                                — Richard L. Gregory, 1980
+                                                ity priors using a learnable discrete memory bank. MIRROR
+                                                projects an input into a manifold-consistent ideal reference                                          High-fidelity generative models have largely closed the
+                                                via sparse linear combination, and uses the resulting resid-                                        perceptual gap between synthetic and real images, making
+                                                uals as robust detection signals. To evaluate whether detec-                                        generated content often indistinguishable from authentic pho-
+                                                tors reach the “superhuman crossover” required to replace                                           tographs [16, 18, 31, 3]. This trend threatens the reliability of
+
+
+                                                                                                                                            1
+

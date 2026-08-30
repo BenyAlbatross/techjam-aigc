@@ -1,0 +1,1547 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2025
+
+% The authors should use one of these tracks.
+% Before accepting by the NeurIPS conference, select one of the options below.
+% 0. "default" for submission
+ % \usepackage{neurips_2025}
+% the "default" option is equal to the "main" option, which is used for the Main Track with double-blind reviewing.
+% 1. "main" option is used for the Main Track
+%  \usepackage[main]{neurips_2025}
+% 2. "position" option is used for the Position Paper Track
+%  \usepackage[position]{neurips_2025}
+% 3. "dandb" option is used for the Datasets & Benchmarks Track
+ % \usepackage[dandb]{neurips_2025}
+% 4. "creativeai" option is used for the Creative AI Track
+%  \usepackage[creativeai]{neurips_2025}
+% 5. "sglblindworkshop" option is used for the Workshop with single-blind reviewing
+ % \usepackage[sglblindworkshop]{neurips_2025}
+% 6. "dblblindworkshop" option is used for the Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop]{neurips_2025}
+
+% After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
+% 1. Main Track
+ \usepackage[main, final]{neurips_2025}
+% 2. Position Paper Track
+%  \usepackage[position, final]{neurips_2025}
+% 3. Datasets & Benchmarks Track
+ % \usepackage[dandb, final]{neurips_2025}
+% 4. Creative AI Track
+%  \usepackage[creativeai, final]{neurips_2025}
+% 5. Workshop with single-blind reviewing
+%  \usepackage[sglblindworkshop, final]{neurips_2025}
+% 6. Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop, final]{neurips_2025}
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
+% For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
+% \workshoptitle{WORKSHOP TITLE}
+
+% "preprint" option is used for arXiv or other preprint submissions
+ % \usepackage[preprint]{neurips_2025}
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2025}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+
+\usepackage{adjustbox}
+\usepackage{subcaption}
+\usepackage{wrapfig} 
+
+\usepackage{titlesec}
+\usepackage{amsmath,epstopdf,amssymb,color,url,multirow,multicol,verbatim,threeparttable,diagbox,makecell,booktabs,color,colortbl}  
+\definecolor{myblue}{rgb}{0.9, 0.95, 1}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{courier} 
+\usepackage{adjustbox}
+\usepackage{subcaption}
+\usepackage{wrapfig} 
+
+\usepackage{amsmath,epstopdf,amssymb,color,url,multirow,multicol,verbatim,threeparttable,diagbox,makecell,booktabs,color,colortbl}
+
+\definecolor{myblue}{rgb}{0.9, 0.95, 1}
+
+% 定义灰色背景提示框
+\newtcolorbox{promptbox}{
+  colback=gray!20,  
+  colframe=gray!20, 
+  boxrule=0pt,      
+  arc=10pt,         
+  boxsep=5pt,       
+  left=10pt,        
+  right=10pt,       
+  top=10pt,         
+  bottom=10pt,      
+  fontupper=\ttfamily\footnotesize
+}
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+\newcommand{\yes}{\textcolor{green}{\ding{51}}}  % Check mark
+\newcommand{\no}{\textcolor{deepred}{\ding{55}}}    % Cross mark
+\definecolor{deepgreen}{rgb}{0.0, 0.42, 0.24}
+\definecolor{deepred}{rgb}{0.5, 0.0, 0.0}
+\definecolor{deeporange}{rgb}{0.8, 0.33, 0.0}
+\newcommand{\high}{\textcolor{deepgreen}{\textbf{High}}}  % Check mark
+\newcommand{\medium}{\textcolor{deeporange}{\textbf{Medium}}}  % New command for Medium with orange text
+\newcommand{\low}{\textcolor{deepred}{\textbf{Low}}}    % Cross mark
+
+\newcommand{\ours}{DDA}
+
+\setlength{\tabcolsep}{12pt}
+
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
+\title{Dual Data Alignment Makes AI-Generated Image Detector Easier Generalizable}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{
+Ruoxin Chen\textsuperscript{1}, 
+Junwei Xi\textsuperscript{2},
+Zhiyuan Yan\textsuperscript{3}, 
+Keyue Zhang\textsuperscript{1},  
+Shuang Wu\textsuperscript{1}, \\
+\textbf{Jingyi Xie\textsuperscript{4},
+Xu Chen\textsuperscript{2},
+Lei Xu\textsuperscript{5},
+Isabel Guan\textsuperscript{6\dag},
+Taiping Yao\textsuperscript{1\dag},
+Shouhong Ding\textsuperscript{1}} \\
+\textsuperscript{1}Tencent YouTu Lab, 
+\textsuperscript{2}East China University of Science and Technology, \\
+\textsuperscript{3}Peking University, 
+\textsuperscript{4}Renmin University of China, \\
+\textsuperscript{5}Shenzhen University, 
+\textsuperscript{6}Hong Kong University of Science and Technology \\
+\textsuperscript{\dag} Corresponding Authors \\
+\texttt{{\{cusmochen, taipingyao\}}@tencent.com}, \texttt{eeguan@ust.hk}
+}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\label{sec:abstract}
+The rapid increase in AI-generated images (AIGIs) underscores the need for detection methods. 
+Existing detectors are often trained on biased datasets, leading to overfitting on spurious correlations between non-causal image attributes and real/synthetic labels.
+While these biased features enhance performance on the training data, they result in substantial performance degradation when tested on unbiased datasets.
+A common solution is to perform data alignment through generative reconstruction, matching the content between real and synthetic images. 
+However, we find that pixel-level alignment alone is inadequate, as the reconstructed images still suffer from frequency-level misalignment, perpetuating spurious correlations.
+To illustrate, we observe that reconstruction models restore the high-frequency details lost in real images, inadvertently creating a frequency-level misalignment, where synthetic images appear to have richer high-frequency content than real ones. This misalignment leads to models associating high-frequency features with synthetic labels, further reinforcing biased cues.
+To resolve this, we propose Dual Data Alignment (DDA), which aligns both the pixel and frequency domains. 
+DDA generates synthetic images that closely resemble real ones by fusing real and synthetic image pairs in both domains, enhancing the detector's ability to identify forgeries without relying on biased features.
+Moreover, we introduce two new test sets: DDA-COCO, containing DDA-aligned synthetic images, and EvalGEN, featuring the latest generative models. Our extensive evaluations demonstrate that a detector trained exclusively on DDA-aligned MSCOCO improves across diverse benchmarks. 
+Code is available at \url{https://github.com/roy-ch/Dual-Data-Alignment}.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+The rise of AIGIs \cite{goodfellow2014generative, ho2020denoising, van2016pixel,yan2025can} poses risks to digital security, including the potential for misinformation, fraud, and copyright violations~\cite{goodfellow2014generative,karras2018progressive,karras2019style,ho2020denoising,rombach2022high,zhang2023controlvideo,yan2025gpt,yan2024df40,yan2025ns,li2025artificial,song2024anti}. This severe security issue underscores the urgent need for reliable detection methods to differentiate synthetic images from authentic ones. Despite advances in AIGI detection techniques~\cite{chen2024drct,ojha2023towards,sha2023fake}, the rapid evolution of generative models and the emergence of new architectures present cross-domain generalization challenges. This is especially evident in zero-shot scenarios involving previously unseen generation paradigms.
+
+The generalizability of AIGI detectors is hindered by dataset biases~\cite{grommelt2024fake, chen2024drct, rajan2025aligned, guillaro2024bias}. Existing datasets often exhibit systematic discrepancies in attributes unrelated to the authority. Works~\cite{tan2024c2p} illustrate semantic bias through word frequency analysis, and studies~\cite{sha2023fake} demonstrate image size bias by analyzing on the datasets where synthetic images are uniformly sized as multiples of 128 $\times$ 128. These non-causal features could be exploited by models to distinguish real from synthetic images, resulting in biased detector performance that fails to generalize across different datasets. Figure \ref{fig:intro_bias} visually illustrates such bias.
+\textbf{Dataset alignment holds promise in addressing the issue of dataset bias} by ensuring synthetic images closely resemble real ones, \textit{excluding authenticity-related factors} and \textit{directing detectors to focus on forgery-related cues}. 
+Specifically, studies~\cite{grommelt2024fake} reveal systematic discrepancies in format and size biases: real images are JPEG-encoded and vary in size, whereas synthetic images are uniformly PNG-encoded and fixed in size.  SemGIR~\cite{yu2024semgir}, DRCT~\cite{chen2024drct}, B-Free~\cite{guillaro2024bias} aim to mitigate content discrepancies using diffusion reconstruction techniques that generate images semantically similar to real ones.  
+Works~\cite{gye2025sfld, zheng2024breaking,zhou2025breaking} prevent models from learning semantics-dependent features by breaking images into patches and shuffling them.
+
+
+However, in this paper, we ask: \emph{Does reconstruction truly eliminate potential misalignment and bias?} Our answer is \textbf{no}. We find that although reconstruction-based methods align datasets at the pixel level, they still \textbf{introduce subtle misalignments at the frequency level}. Specifically, generative reconstruction based data alignment tends to preserve or even amplify details across all frequency bands. In particular, reconstructed images often restore high-frequency components that are diminished in real images—typically due to compression during transmission or storage, where such components are removed to reduce file size because they have little impact on human visual perception. Consequently, \textbf{synthetic images exhibit disproportionately strong high-frequency details, whereas real images contain much weaker ones}, creating a noticeable discrepancy in the magnitude of high-frequency components rather than in their semantic content. This spurious correlation can lead detectors to overfit these frequency cues, mistakenly identifying high-frequency richness as an indicator of synthetic origin.
+
+
+\begin{figure}[tb!]
+  \centering
+    \begin{minipage}[t]{0.49\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/bias.png}
+    \captionof{figure}{\textbf{Illustration of dataset bias.} Top row: Real/synthetic images show disparities in format, content, and size. Real images are typically in JPEG, with varying sizes and centered semantics. Bottom row: Detectors trained on datasets containing these discrepancies are prone to learning biased features, incorrectly associating authenticity with format, image size, or semantics.}
+    \label{fig:intro_bias}
+    \vspace{0pt}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.49\linewidth}
+    \centering
+    \includegraphics[width=0.85\linewidth]{fig/bfs_coco_benchmark_comparison_logo.png}
+    \captionof{figure}{\textbf{Overall comparison between detection methods on 11 benchmarks.} Our model is exclusively trained on DDA-aligned MSCOCO data. The consistent outperformance of DDA on 4 in-the-wild (Chameleon, WildRF, BFree-Online and SynthWildx) and 7 manually-crafted benchmarks validates the generalizability. Detailed results are provided in Section \ref{sec:experiments}.}
+    \label{fig:intro_comparison}
+    \vspace{0pt}
+  \end{minipage}
+\end{figure}
+
+
+\begin{figure}[tb!]
+    \centering
+    \includegraphics[width=\textwidth]{fig/motivation.png}
+    \vspace{-10pt}
+    \caption{Visual illustration of how dataset bias affects decision boundaries. \textbf{Left three panels:} Detectors trained on biased data—where synthetic images (e.g., Syn.1–3) differ from real images in format, content, or resolution—tend to learn spurious decision boundaries. \textbf{Right:} When synthetic images are carefully aligned with real images across multiple aspects, the model can learn a tighter decision boundary that more accurately encompasses the real data.}
+    \label{fig:motivation}
+    \vspace{-10pt}
+\end{figure}
+
+
+
+In this paper, we propose \textbf{D}ual \textbf{D}ata \textbf{A}lignment (DDA), an effective technique that aligns synthetic images with real ones across both pixel and frequency domains. 
+DDA consists of three steps: 1) VAE reconstruction for pixel alignment, 2) high-frequency fusion to eliminate bias, and 3) pixel mixup for further alignment in the pixel domain. As shown in Figure \ref{fig:intro_comparison},
+\textbf{a single model trained on DDA-aligned MSCOCO demonstrates significant improvements across benchmarks: +11.4\% on Chameleon, + 26.6\% on BFree-Online and + 19.4\% on EvalGEN, with much lower fluctuations across subsets -- usually 1/2 that of baselines.} 
+We attribute this significant performance boost to the data alignment process: when synthetic images are carefully aligned with real images across key domains, the model learns a tighter, more transferable decision boundary, enhancing generalizability to unseen data, as demonstrated in Figure~\ref{fig:motivation}.
+Moreover, we introduce two new evaluation datasets: 1) DDA-COCO, a test set consisting of real images from MSCOCO and their DDA-aligned counterparts. This dataset evaluates whether the detector captures inherent discriminative features or relies on other biases. Prior detectors suffer significant performance drops on DDA-COCO.
+2) EvalGEN, a test set consisting of FLUX, GoT, Infinity, NOVA, and OmniGen, which includes both advanced auto-regressive and diffusion generators, serving for measuring detectors' generalizability under newly evolved generative models.
+
+
+% \begin{table*}[t!]
+% \centering
+% \caption{Comparing on dataset alignment.} 
+% \label{table:compar_study}
+% \begin{adjustbox}{width=1.0\linewidth}
+% \begin{tabular}{c cc ccc cccccc}
+% \toprule
+% % \rowcolor{myblue}
+% Domaim & UnivFD \cite{ojha2023towards}  & C2P-CLIP \cite{tan2024c2p} & SAFE \cite{li2024improving} & AIDE \cite{yan2024sanity} & DRCT \cite{chen2024drct} & AlignedForensics  \cite{rajan2025aligned} & Ours \\
+% \hline
+% Frequency & \low  & \low  & \low & \low & \low & \low & \high\\
+% Pixel & \low  & \low  & \low & \low & \medium & \high & \high\\ 
+% \bottomrule
+% \end{tabular}
+% \end{adjustbox}
+% \end{table*}
+
+\vspace{-10pt}
+\section{Related Works}
+
+\paragraph{AIGI Detection.} CNNSpot \cite{wang2020cnn} trains a vanilla CNN model, finding that detectors easily recognize synthetic images from seen models but struggle to generalize to unseen ones. UnivFD~\cite{ojha2023towards} employs CLIP as backbone, showing the improvements in generalizability in detecting unseen generators. Subsequent works \cite{lin2025standing,tan2024c2p,zheng2024breaking,yanorthogonal} explore model architectures and image preprocessing for more generalizable detection. C2P-CLIP enhances the pretrained CLIP backbone for AIGI detection by injecting 'real' and 'fake' concepts. Works \cite{tan2024frequency,chu2024fire,li2024improving,karageorgiou2024any,zhou2023exposing} exploit frequency domain artifacts, showing that frequency artifacts could well discriminate. NPR \cite{tan2024rethinking} explores the upsampling artifact in generative models. Vision–language approaches \cite{lin2025guard,he2025vlforgery,lin2025seeing,chen2024x2,xu2025avatarshield,xu2025fakeshield} pursue explainable detection by leveraging VLMs’ semantic priors.
+However, these methods' generalizability is limited by either content bias or frequency-level bias, with a chance of exploiting non-causal features like image format, which can degrade performance on unbiased test sets.
+
+\paragraph{Dataset alignment.} 
+The evaluation bias issue in AIGI detection is firstly introduced in the work \cite{grommelt2024fake}, showing that image format and size are common biases unintentionally exploited by detectors. FakeInversion \cite{cazenavette2024fakeinversion} introduces a bias-reduced evaluation benchmark, mitigating thematic and stylistic biases by collecting synthetic images that match real images in both content and style. A line of subsequent works explores eliminating bias in the training set to enhance generalizability. SemGIR \cite{yu2024semgir} regenerates synthetic images by semantic-level reconstruction conditioned on the real counterpart’s description, aiming to better align synthetic and real images semantically. DRCT \cite{chen2024drct} employs diffusion reconstruction for improved semantic alignment. 
+B-Free \cite{guillaro2024bias} addresses dataset bias through self-conditioned inpainted reconstructions and content augmentation. However, this inpainting paradigm can alter the center object, corrupting the semantic alignment. AlignedForensics \cite{rajan2025aligned} performs simple VAE reconstruction without latent space manipulation, resulting in synthetic images that closely match real images in semantics and resolution. However, both B-Free and AlignedForensics overlook format alignment, creating space for JPEG-based shortcuts in discrimination. 
+% These methods are summarized in Table~\ref{table:compar_study}.
+
+\vspace{-10pt}
+\section{Methodology}
+
+\subsection{Motivation and Analysis}
+\label{sec:motivation}
+
+
+\begin{figure}[tb!]
+    \centering
+    \includegraphics[width=\textwidth,interpolate=false]{fig/dct_7.png}
+    \caption{\textbf{Visualization of frequency domain energy using 2D DCT.}  
+    The left column shows a real image, while the remaining columns display images reconstructed by VAEs from various Stable Diffusion models. The grids represent frequency components, with the top-left and bottom-right indicating low- and high-frequency regions, respectively. Lighter areas correspond to higher energy. Real images in JPEG format exhibit darker high-frequency regions compared to VAE reconstructions, indicating weaker high-frequency content in real images.}
+    \label{fig:freq_diff}
+\end{figure}
+
+\begin{figure}[tb!]
+    \centering
+    \includegraphics[width=\linewidth]{fig/SAFE_Comparison.png}
+    \caption{\textbf{Evidence for the existence of biased frequency-based features to discriminate reconstructed images.} We apply a binary mask to the DCT coefficients, systematically nullifying high-frequency components where either the horizontal or vertical frequencies exceed 95\%, 90\%, 85\% and 80\% of their respective spectral ranges to generate High-Freq. Masked VAE Rec.}
+    \label{fig:freq-bias}
+\end{figure}
+
+
+
+\paragraph{Misaligned Dataset.} In the absence of additional supervision, detectors rely exclusively on the training set to learn the concept of 'real' versus 'synthetic'. When these two classes' data differ systematically in non-causal attributes—such as compression format or semantic content—the model may incorrectly learn to associate these irrelevant features with authenticity. These spurious signals are often more salient than subtle, genuine artifacts that actually distinguish real from synthetic images, making it more difficult for the model to learn truly generalizable features.
+
+
+\paragraph{Reconstruction-based Alignment.} To align synthetic images with real ones, some approaches \cite{yu2024semgir, zhu2023genimage, guillaro2024bias} employ txt2img generative models to generate images with similar semantic content, conditioned on the image label or image captions obtained through pretrained models. However, images generated using this approach often differ from the originals due to the lack of strong and detailed supervision, which prevents the generated images from fully matching the original images in all semantic details. DRCT \cite{chen2024drct, guillaro2024bias} leverages Img2Img diffusion reconstruction, directly using the image itself to guide the reconstruction of a real image $x$ into a synthetic counterpart $\hat{x}$ as follows:
+\begin{equation}
+     \hat{x} = \text{Decoder} (\hat{z}), \quad \text{where} \quad \hat{z} = z + \epsilon_t - \epsilon_{\theta}(z, t), \quad z = \text{Encoder} (x) \label{eq:sd_rec}.
+\end{equation}
+where $z$ represents the encoded latent of the real image, while $\hat{z}$ is modified by adding noise and subsequently denoising, creating new latents that subtly differ from $z$.However, such self-supervised diffusion reconstruction can still lead to changes in image details due to modifications in the latent space, which is responsible for the generation of semantics. The work~\cite{rajan2025aligned} further simplifies the reconstruction process by using a Variational Autoencoder (VAE)—a submodule used in all stable diffusion generators—without any modification to the latent. This approach generates images that closely match the original real image at the pixel level.
+\begin{equation}
+    \hat{x} = \text{Decoder} (z), \quad \text{where} \quad z = \text{Encoder} (x) \label{eq:vae_rec}.
+\end{equation}
+
+
+
+\paragraph{Frequency-Level Misalignment Exists and Can Be Exploited.}
+Frequency domain has been widely explored in AIGI detectors \cite{Tan2023CVPR, li2024improving, liu2021spatial, yan2024sanity}, demonstrating that frequency information is crucial for AIGI detection. This motivates us to revisit the frequency-domain alignment. 
+Surprisingly, despite pixel-level alignment, synthetic counterparts exhibit significant discrepancies in high-frequency content. 
+Figure \ref{fig:freq_diff} visualizes this discrepancy between the real image and synthetic images reconstructed using various VAEs. Real images are often with relatively poor high-frequency information, which is due to JPEG compression removing high-frequency details.
+Having identified this frequency-level discrepancy, another question arises: "Can this disparity be leveraged, or are we overestimating its impact?" To evaluate its effect, we assess the impact by measuring the variance in detector performance on VAE-reconstructed images. 
+As shown in Figure \ref{fig:freq-bias}, the empirical results are striking: visually identical VAE-reconstructed images are detected by the frequency-based detector SAFE \cite{li2024improving} with a 93\% success rate, indicating a significant difference in the frequency domain. 
+However, when we mask high-frequency information slightly, the detection rate drops dramatically. This substantial decline cannot be attributed solely to information loss; rather, it suggests that detectors exploit biased features—specifically, the richer high-frequency details in synthetic images due to their not undergoing JPEG compression, unlike real images.
+% In conclusion, we expose the frequency-level discrepancy between real and synthetic images, demonstrating that this misalignment can be exploited by certain detectors.
+
+
+\begin{figure}[tb!]
+\centering
+\includegraphics[width=\textwidth]{fig/overview.pdf}
+\caption{DDA pipeline. \textbf{Left:} VAE-reconstructed images differ from real ones in the intensity of high-frequency components. \textbf{Right:} DDA fuses high-frequency information from real images into the VAE-reconstructed images to align them in the frequency domain. Then, DDA uses pixel-level mixup of real and frequency-aligned images to further align them in the pixel domain.}
+\label{fig:pipeline}
+\end{figure}
+
+
+\begin{figure}[tb!]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/rec_comparison.png}
+    \caption{Comparison of various image processing methods based on loss with respect to the real image. \textbf{Left:} Comparison of image processing methods across three Stable Diffusion model series (SD15, SDXL, SD21) displaying real images alongside processed versions using DDA, VAE reconstruction (VAE Rec.), diffusion reconstruction (Diff. Rec.), masked inpainting with prompts (Inpaint), and text-to-image generation (T2I). Mean squared error (MSE) values relative to the real image are presented beneath each processed image, and each mse value is calculated by generating 100 images. \textbf{Right:} Visualization of relative error metrics for each processing method across the same model series, segregated into low frequency and high frequency bands as calculated using discrete Fourier transform (DFT). Bar charts illustrate comparative error magnitudes across different reconstruction techniques and frequency components. Both pixel-level and frequency-level analyses indicate that DDA produces synthetic images most similar to the real images.}
+    \label{fig:pixel_alignment}
+\end{figure}
+
+
+
+\begin{figure}[tb!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{fig/TSNE_8.png}
+    \caption{t-SNE visualizations comparing real and generated images, illustrating the proximity of synthetic image cluster centers to real images in feature space.  
+    The ordering of proximity—from closest to farthest—is: DDA, VAE reconstruction, diffusion reconstruction, and text-to-image (T2I) generation.  
+    These results indicate that DDA produces synthetic samples most closely aligned with real images near the data manifold boundary, thereby facilitating the learning of a tighter and more generalizable decision boundary.}
+    \label{fig:tsne}
+    \vspace{-10pt}
+\end{figure}
+
+\subsection{Dual Data Alignment}
+\label{sec:methodology}
+
+Motivated by the previous observation, we propose DDA, a technique that generates synthetic images aligned with real ones in both the pixel and frequency domains to mitigate the learning of biased features.
+As illustrated in Figure~\ref{fig:pipeline}, DDA consists of three steps: 
+1) \textbf{VAE Reconstruction:} Generate pixel-wise similar images containing VAE-specific artifacts.  
+2) \textbf{Frequency-Level Alignment:} 
+We identified that discrepancies in the frequency domain primarily arise from JPEG compression. To mitigate this, we align the frequency by applying the same JPEG compression with an equivalent quality factor to both real and VAE-reconstructed images. In practice, we estimate the quality factor of each real image before training and apply the same compression to its reconstructed counterpart during training.
+% Fuse high-frequency components from real images into the VAE-reconstructed images to eliminate discrepancies in the frequency domain. Specifically, we replace the 2D-DCT coefficients whose horizontal or vertical frequencies exceed a predefined threshold $T_{freq}$ with those from the corresponding real image.
+3) \textbf{Pixel-Level Alignment:} Apply mixup between real and frequency-aligned images to ensure pixel-domain alignment. A closely aligned synthetic image is generated as follow:
+\begin{equation}
+    x_{\text{mix}} = r_{pixel} \cdot x_{real} + (1 - r_{pixel}) \cdot x_{syn}.
+\end{equation}
+where $r_{pixel} \in [0, 1]$ controls the degree of pixel-level alignment. A higher $r_{pixel}$ value yields a closer synthetic image in the pixel space. In practice, $r_{pixel}$ is sampled from a uniform distribution $\mathcal{U}(0, R_{pixel})$.
+Together, these steps ensure that the resulting synthetic images preserve generative artifacts while maintaining close alignment with real data, both spectrally and spatially.
+
+
+The generalizability of DDA is built upon two foundations:  
+1) \textbf{VAE artifacts generalize across generators.} Because VAE-reconstructed images are the closest synthetic counterparts to real images, decision boundaries learned from these pairs are likely to remain effective for distinguishing other, more distant synthetic variants (e.g., those from text-to-image generators). Moreover, since the VAE decoder is typically the final stage in diffusion-based generators, its artifacts are less influenced by subsequent modules.  
+2) \textbf{Dual-domain alignment mitigates dataset bias.} By aligning synthetic images with real ones in both the frequency and pixel domains, DDA reduces real-synthetic discrepancies more effectively than alternative reconstruction-based methods. In particular, it eliminates high-frequency bias—commonly introduced by compression or generative artifacts—leading to stronger generalization and reduced reliance on spurious features.
+
+
+\vspace{0pt}
+\paragraph{Comparison to Dataset Alignment Methods.} We validate that DDA creates the closest real-synthetic image pairs when compared to other alignment methods from the following three viewpoints: 1) Pixel domain: Left of Figure \ref{fig:pixel_alignment} shows that DDA-aligned images lead to minimal MSE loss compared to the original image; 2) Frequency domain: Right of Figure \ref{fig:pixel_alignment} shows that DDA-aligned images are most similar to the original image in frequency space; 3) Feature domain: Figure \ref{fig:tsne} validates that the cluster center of DDA-aligned images is closest to the center of real images.
+
+\vspace{0pt}
+\section{Experiments}
+\label{sec:experiments}
+\subsection{Experimental Setup}
+\vspace{0pt}
+
+% \noindent
+% \begin{minipage}[t]{0.46\textwidth}
+%   \captionsetup{type=table,position=top,justification=raggedright,singlelinecheck=false}
+%   \raggedright
+%   \captionof{table}{Datasets Overview. "SD" is stable diffusion and "AR" is auto-regressive model.}
+%   \label{tab:dataset-overview}
+
+%   \begin{adjustbox}{width=\linewidth}
+%     \begin{tabular}{cccccc}
+%       \toprule
+%       Dataset & Real / Fake & Source & \# Models & Model Types \\
+%       \midrule
+%       DDA-COCO & 5K / 30K & MSCOCO & 6 & SD  \\
+%       GenImage \cite{zhu2023genimage} & 48K / 48K & ImageNet & 8 & SD \& GAN \\
+%       DRCT-2M \cite{chen2024drct} & 5K / 80K & MSCOCO & 16 & SD \\
+%       Synthbuster \cite{bammey2023synthbuster} & 1K / 9K & RAISE & 9 & SD \& AR \\
+%       EvalGEN & 0 / 55.3K & Prompt & 7 & SD \& AR\\
+%       Chameleon \cite{yan2024sanity} & 14.9K / 11.2K & Internet & unknown & unknown \\
+%       WildRF \cite{cavia2024real} & 500 / 500 & Reddit, FB, X & unknown & unknown \\
+%       SynthWildx \cite{cozzolino2024raising} & 500 / 1.5K & X & 3 & SD \& AR \\
+%       \bottomrule
+%     \end{tabular}
+%   \end{adjustbox}
+%   \vspace{0pt}
+% \end{minipage}
+
+
+% \begin{wraptable}{r}{0.6\textwidth} %
+%   \vspace{-20pt} % 细调顶边距，避免与上一行挤在一起（可删）
+%   \captionsetup{justification=raggedright,singlelinecheck=false}
+%   \caption{Datasets Overview. "SD" is stable diffusion and "AR" is auto-regressive model.}
+%   \label{tab:dataset-overview}
+%   \begin{adjustbox}{width=\linewidth}
+%     \begin{tabular}{ccccc}
+%       \toprule
+%       Dataset & Real/Fake & Source & \#Models & Model Types \\
+%       \midrule
+%       DDA-COCO (ours) & 5K/5K & MSCOCO & 6 & SD \\
+%       EvalGEN (ours) & 0/55.3K & Prompt & 7 & SD \& AR \\
+%       GenImage \cite{zhu2023genimage} & 48K/48K & ImageNet & 8 & SD \& GAN \\
+%       DRCT-2M \cite{chen2024drct} & 5K/80K & MSCOCO & 16 & SD \\
+%       Synthbuster \cite{bammey2023synthbuster} & 1K/9K & RAISE & 9 & SD \& AR \\
+%       AIGCDetectionBenchmark \cite{zhong2024patchcraft} & 76.25K/76.25K & LSUN \& MSCOCO \& ImageNet \& CelebA \& FFHQ & 17 & SD \& GAN \\
+%       ForenSynths \cite{wang2020cnn2}s & 36.2K/36.2K & LSUN \& MSCOCO \& ImageNet \& CelebA \& others & 11 & GAN\\
+%       Chameleon \cite{yan2024sanity} & 14.9K/11.2K & Internet & unknown & unknown \\
+%       WildRF \cite{cavia2024real} & 500/500 & Reddit, FB, X & unknown & unknown \\
+%       SynthWildx \cite{cozzolino2024raising} & 500/1.5K & X & 3 & SD \& AR \\
+%       BFree-Online \cite{guillaro2024bias} & 240/493 & Internet & unknown & unknown \\
+%       \bottomrule
+%     \end{tabular}
+%   \end{adjustbox}
+%   \vspace{-10pt}
+% \end{wraptable}
+
+\paragraph{Datasets} All compared detectors are evaluated on eleven diverse datasets, including seven benchmark datasets (GenImage \cite{zhu2023genimage}, DRCT-2M \cite{chen2024drct}, Synthbuster \cite{bammey2023synthbuster}, DDA-COCO, EvalGEN, AIGCDetectionBenchmark \cite{zhong2024patchcraft} and ForenSynths \cite{wang2020cnn2} ) and four in-the-wild datasets (Chameleon \cite{yan2024sanity}, WildRF \cite{cavia2024real}, SynthWildx \cite{cozzolino2024raising} and BFree-Online \cite{guillaro2024bias}), where images are sourced from the web. These datasets contain real images from different sources and various generators, including diffusion models, GAN models, auto-regressive models, and other unknown models. They differ in format, content, and resolution, thereby minimizing evaluation bias. Table \ref{tab:dataset-overview} outlines the datasets' details.
+
+
+
+% \begin{table}[tb!]
+%   \centering
+  % \begin{minipage}[t]{0.46\textwidth}
+  %   \centering
+  %   \captionof{table}{Datasets Overview. "SD" is stable diffusion and "AR" is auto-regressive model.}
+  %   \label{tab:dataset-overview}
+  %   \begin{adjustbox}{width=\linewidth}
+  %   \begin{tabular}{cccccc}
+  %   \toprule
+  %   Dataset & Real / Fake & Source & \# Models & Model Types \\
+  %   \midrule
+  %   DDA-COCO & 5K / 30K & MSCOCO & 6 & SD  \\
+  %   GenImage \cite{zhu2023genimage} & 48K / 48K & ImageNet & 8 & SD \& GAN \\
+  %   DRCT-2M \cite{chen2024drct} & 5K / 80K & MSCOCO & 16 & SD \\
+  %   Synthbuster \cite{bammey2023synthbuster} & 1K / 9K & RAISE & 9 & SD \& AR \\
+  %   EvalGEN & 0 / 55.3K & Prompt & 7 & SD \& AR\\
+  %   Chameleon \cite{yan2024sanity} & 14.9K / 11.2K & Internet & unknown & unknown \\
+  %   WildRF \cite{cavia2024real} & 500 / 500 & Reddit, FB, X & unknown & unknown \\
+  %   SynthWildx \cite{cozzolino2024raising} & 500 / 1.5K & X & 3 & SD \& AR \\
+  %   \bottomrule
+  %   \end{tabular}
+  %   \end{adjustbox}
+  %   \vspace{0pt}
+  % \end{minipage}
+%   \hfill
+% \begin{minipage}[t]{0.52\textwidth}
+%     \centering
+%     \captionof{table}{Comparison on DDA-COCO.}
+%     \label{tab:compare-DDA-coco}
+%     \begin{adjustbox}{width=\linewidth}
+%     \begin{tabular}{lc|cccccl}
+%     \toprule
+%     \multirow{2}{*}{Method} & \multirow{2}{*}{real} & \multicolumn{6}{|c}{fake} \\
+%     \cmidrule{3-8}
+%  &  & XL & EMA & MSE & SD21 & SD35 & Avg. \\
+%     \midrule
+% NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 55.4 & 21.0 & 31.0 & 29.8 & 29.1 & 29.6 & 28.1 $\pm$ 4.0 \\
+% UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & \textbf{99.2} & 2.7 & 5.3 & 3.8 & 4.3 & 1.9 & 3.6 $\pm$ 1.3 \\
+% FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 96.4 & 2.3 & 3.1 & 4.2 & 4.3 & 2.4 & 3.3 $\pm$ 0.9 \\
+% SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 98.8 & 0.5 & 0.6 & 0.5 & 0.4 & 0.3 & 0.5 $\pm$ 0.1 \\
+% C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 99.0 & 1.6 & 1.7 & 2.2 & 2.2 & 2.3 & 2.0 $\pm$ 0.3 \\
+% AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 98.8 & 1.1 & 2.2 & 0.9 & 0.8 & 1.0 & 1.2 $\pm$ 0.6 \\
+% DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 94.2 & 24.5 & 34.7 & 33.1 & 33.6 & 26.3 & 30.4 $\pm$ 4.7 \\
+% AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 99.0 & \underline{82.5} & \underline{99.0} & \underline{99.0} & \underline{99.0} & \underline{53.2} & \underline{86.6} $\pm$ 20.0 \\
+%     \midrule
+%     \rowcolor{myblue}
+% % VAE Rec. & 94.4 & 94.3 & 96.2 & 96.3 & 96.6 & 66.4 & 90.0 $\pm$ 12.2 \\
+%     \rowcolor{myblue}
+% % \textbf{VAE Rec. + DDA (ours) / DINOv2} & 96.8 & \textbf{98.3} & \textbf{99.7} & \textbf{99.9} & \textbf{99.8} & \textbf{73.9} & \textbf{94.3} $\pm$ 11.4 \\
+%     \rowcolor{myblue}
+% % \textbf{VAE Rec. + DDA (ours) / DINOv2 + JPEG AUG} & 97.8 & \textbf{98.3} & \textbf{99.7} & \underline{99.8} & \textbf{99.8} & 66.1 & 92.8 $\pm$ 14.9 \\
+%     \rowcolor{myblue}
+% % \textbf{VAE Rec. + DDA (ours) / DINOv3 + JPEG AUG} & 99.2 & \underline{96.3} & 99.0 & 99.2 & \underline{99.2} & \underline{73.7} & \underline{93.5} $\pm$ 11.1 \\
+% \textbf{DDA (ours)} & \underline{99.0} & \textbf{97.8} & \textbf{99.5} & \textbf{99.8} & \textbf{99.7} & \textbf{58.8} & \textbf{91.1} $\pm$ 18.1 \\
+% \bottomrule
+%     \end{tabular}
+%     \end{adjustbox}
+%     \vspace{0pt}
+%   \end{minipage}
+% \end{table}
+
+\vspace{0pt}
+\paragraph{DDA-COCO and EvalGEN} DDA-COCO consists of five subsets containing reconstructed images of MSCOCO \cite{coco} validation set by different VAEs, utilizing frequency-level alignment.
+We construct the EvalGEN dataset using the five latest text-to-image (T2I) generators using aligned prompts from the GenEval benchmark~\cite{ghosh2023geneval}. Notably, \textbf{we are the first work to involve auto-regressive-based T2I generators for image forensics} in the AIGI detection field.
+Specifically, we introduce each generator as follows: (1) \textbf{Flux}~\cite{flux2024}: the SOTA diffusion-based generator, offering extremely higher-resolution output images. (2) \textbf{GoT}~\cite{fang2025got}: A multimodal model combining LLM and diffusion processes to enable reasoning-guided image generation. (3) \textbf{Infinity}~\cite{han2024infinity}: A bitwise auto-regressive model using infinite-vocabulary tokenization and self-correction for faster and higher-fidelity image generation. (4) \textbf{OmiGen}~\cite{xiao2024omnigen}: A unified multimodal framework capable of handling diverse image generation tasks within a single, simplified architecture. (5) \textbf{NOVA}~\cite{nova}: A non-quantized auto-regressive model designed for efficient image and video generation, achieving high fidelity with reduced computational overhead. 
+These models allow our \textbf{EvalGEN to serve as a very high-quality benchmark} for evaluating the generalizability of detectors on unseen generators.
+
+
+
+\begin{table}[t!]
+  \caption{Overview of the evaluation benchmarks. “SD” denotes Stable Diffusion and “AR” denotes auto-regressive models. The diversity of data sources and generator types—along with four benchmarks collected from in-the-wild data with unknown generators and post-processing—ensures that the overall evaluation more accurately reflects a detector’s generalizability and practical applicability.}
+  \label{tab:dataset-overview}
+  \centering
+  \begin{adjustbox}{width=0.85\linewidth}
+    \begin{tabular}{ccccc}
+      \toprule
+      Dataset & Real/Fake & Source & \#Models & Model Types \\
+      \midrule
+      DDA-COCO (ours) & 5K/25K & MSCOCO & 5 & SD \\
+      EvalGEN (ours) & 0/2765 & Prompt & 5 & SD \& AR \\
+      GenImage \cite{zhu2023genimage} & 48K/48K & ImageNet & 8 & SD \& GAN \\
+      DRCT-2M \cite{chen2024drct} & 5K/80K & MSCOCO & 16 & SD \\
+      Synthbuster \cite{bammey2023synthbuster} & 1K/9K & RAISE & 9 & SD \\
+      AIGCDetectionBenchmark \cite{zhong2024patchcraft} & 76.25K/76.25K & LSUN \& MSCOCO \& ImageNet \& CelebA \& FFHQ & 17 & SD \& GAN \\
+      ForenSynths \cite{wang2020cnn2} & 36.2K/36.2K & LSUN \& MSCOCO \& ImageNet \& CelebA \& others & 11 & GAN\\
+      Chameleon \cite{yan2024sanity} & 14.9K/11.2K & Internet & unknown & unknown \\
+      WildRF \cite{cavia2024real} & 500/500 & Reddit, FB, X & unknown & unknown \\
+      SynthWildx \cite{cozzolino2024raising} & 500/1.5K & X & 3 & SD \\
+      BFree-Online \cite{guillaro2024bias} & 303/641 & Internet & unknown & unknown \\
+      \bottomrule
+    \end{tabular}
+  \end{adjustbox}
+  \vspace{-10pt}
+\end{table}
+
+
+\begin{table}[t!]
+\centering
+\caption{\textbf{Overall comparison across 11 benchmarks.} To ensure fairness and reproducibility, we use official checkpoints released by each method. We exclude B-Free \cite{guillaro2024bias} from this comparison due to the unavailability of public code. JPEG compression with a quality factor of 96 is applied to the synthetic images in GenImage, ForenSynths, and AIGCDetectionBenchmark to mitigate format bias. The number of generators used in each dataset is reported below the dataset name, where G refers to GANs, D to Diffusion models, and AR to Auto-Regressive models. Bold numbers indicate the best performance per column; underlined numbers indicate the second-best.}
+\label{tab:compare-methods}
+\begin{adjustbox}{width=1.0\linewidth}
+\begin{tabular}{lccccccccccccc}
+\toprule
+\multirow{3}{*}{Method} & \multicolumn{7}{c}{Manually Curated Datasets} & \multicolumn{4}{c}{In-the-Wild Datasets} & \multirow{3}{*}{Avg} & \multirow{3}{*}{Min} \\
+\cmidrule(lr){2-8} \cmidrule(l){9-12}
+ & GenImage & DRCT-2M & DDA-COCO & EvalGEN & Synthbuster & ForenSynths & \makecell{AIGCDetection \\Benchmark} & Chameleon & Synthwildx & WildRF & Bfree-Online \\
+ & 1G + 7D & 16D & 5D & 3D + 2AR & 9D & 11G & 7G + 10D & Unknown & 3D & Unknown & Unknown \\
+\cmidrule(lr){1-8} \cmidrule(l){9-12} \cmidrule(l){13-14}
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 51.5 $\pm$ 6.3 & 37.3 $\pm$ 15.0 & 42.2 $\pm$ 5.4 & 2.9 $\pm$ 2.7 & 50.0 $\pm$ 2.6 & 47.9 $\pm$ 22.6 & 53.1 $\pm$ 12.2 & 59.9 & 49.8 $\pm$ 10.0 & 63.5 $\pm$ 13.6 & 49.5 & 46.1 $\pm$ 16.1 & 2.9 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 64.1 $\pm$ 10.8 & 61.8 $\pm$ 8.9 & 52.4 $\pm$ 1.5 & 15.4 $\pm$ 14.2 & 67.8 $\pm$ 14.4 & 77.7 $\pm$ 16.1 & 72.5 $\pm$ 17.3 & 50.7 & 52.3 $\pm$ 11.3 & 55.3 $\pm$ 5.7 & 49.0 & 56.3 $\pm$ 16.5 & 15.4 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 62.8 $\pm$ 10.4 & 52.2 $\pm$ 5.7 & 51.7 $\pm$ 1.5 & 45.6 $\pm$ 33.1 & 56.1 $\pm$ 10.7 & \underline{90.0} $\pm$ 11.8 & \underline{85.0} $\pm$ 14.9 & 51.2 & 52.1 $\pm$ 8.2 & 58.9 $\pm$ 8.0 & 50.0 & 59.6 $\pm$ 14.6 & 45.6 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 50.3 $\pm$ 1.2 & 59.3 $\pm$ 19.2 & 49.9 $\pm$ 0.3 & 1.1 $\pm$ 0.6 & 46.5 $\pm$ 20.8 & 49.7 $\pm$ 2.7 & 50.3 $\pm$ 1.1 & 59.2 & 49.1 $\pm$ 0.7 & 57.2 $\pm$ 18.5 & 50.5 & 47.6 $\pm$ 16.0 & 1.1 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 74.4 $\pm$ 8.4 & 59.2 $\pm$ 9.9 & 51.3 $\pm$ 0.6 & 38.9 $\pm$ 31.2 & 68.5 $\pm$ 11.4 & \textbf{92.0} $\pm$ 10.1 & 81.4 $\pm$ 15.6 & 51.1 & 57.1 $\pm$ 4.2 & 59.6 $\pm$ 7.7 & 50.0 & 62.1 $\pm$ 15.6 & 38.9 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 61.2 $\pm$ 11.9 & 64.6 $\pm$ 11.8 & 50.0 $\pm$ 0.4 & 19.1 $\pm$ 11.1 & 53.9 $\pm$ 18.6 & 59.4 $\pm$ 24.6 & 63.6 $\pm$ 13.9 & 63.1 & 48.8 $\pm$ 0.8 & 58.4 $\pm$ 12.9 & 53.1 & 54.1 $\pm$ 12.8 & 19.1 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & \underline{84.7} $\pm$ 2.7 & 90.5 $\pm$ 7.4 & 60.2 $\pm$ 4.3 & \underline{77.8} $\pm$ 5.4 & \underline{84.8} $\pm$ 3.6 & 73.9 $\pm$ 13.4 & 81.4 $\pm$ 12.2 & 56.6 & 55.1 $\pm$ 1.8 & 50.6 $\pm$ 3.5 & 55.7 & 70.1 $\pm$ 14.6 & 50.6 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 79.0 $\pm$ 22.7 & \underline{95.5} $\pm$ 6.1 & \underline{86.5} $\pm$ 19.1 & 68.0 $\pm$ 20.7 & 77.4 $\pm$ 25.0 & 53.9 $\pm$ 7.1 & 66.6 $\pm$ 21.6 & \underline{71.0} & \underline{78.8} $\pm$ 17.8 & \underline{80.1} $\pm$ 10.3 & \underline{68.5} & \underline{75.0} $\pm$ 11.1 & \underline{53.9} \\
+\midrule
+\rowcolor{myblue}
+\textbf{DDA (ours)} & \textbf{91.7} $\pm$ 7.8 & \textbf{98.1} $\pm$ 1.4 & \textbf{92.2} $\pm$ 10.6 & \textbf{97.2} $\pm$ 4.2 & \textbf{90.1} $\pm$ 5.6 & 81.4 $\pm$ 13.9 & \textbf{87.8} $\pm$ 12.6 & \textbf{82.4} & \textbf{90.9} $\pm$ 3.1 & \textbf{90.3} $\pm$ 3.5 & \textbf{95.1} & \textbf{90.7} $\pm$ 5.3 & \textbf{81.4} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{-10pt}
+\end{table}
+
+
+\paragraph{Implementation Details} We use DINOv2 as the backbone and fine-tune it with LoRA, using a rank of 8. The input resolution is set to 336×336, employing random cropping during training and center cropping during validation. Padding is applied when the image height or width is insufficient. The training data exclusively consists of MSCOCO \cite{lin2014microsoft} images and their DDA-aligned counterparts. During VAE reconstruction, to ensure that the reconstructed image size matches the real one, we first center-crop each image to the largest size that is a multiple of 8, following the VAE model’s design. For frequency alignment in DDA, we apply the same JPEG compression to each reconstructed counterpart with a 50\% probability during training, allowing the model to encounter both JPEG and PNG formats of synthetic images. \emph{All evaluations are conducted using a single model without any dataset-specific fine-tuning or threshold adjustments.}
+
+
+\paragraph{Evaluation Metrics and Comparative Methods} Unless otherwise specified, we report balanced accuracy, the average of real and fake accuracies, as the evaluation metric, following works \cite{cozzolino2024zero, ojha2023towards, liu2024forgery, li2024improving, tan2024c2p, yan2024sanity, chen2024drct, rajan2025aligned, guillaro2024bias}. The methods compared include four frequency-based detectors: NPR \cite{cozzolino2024zero}, SAFE \cite{li2024improving}, and AIDE \cite{yan2024sanity}; three CLIP-based detectors: UnivFD \cite{ojha2023towards}, Fatformer \cite{liu2024forgery}, and C2P-CLIP \cite{tan2024c2p}; and two data alignment methods: DRCT \cite{chen2024drct} and AlignedForensics \cite{rajan2025aligned}.
+
+
+\subsection{Cross-Dataset and Cross-Model Comparison}
+
+\paragraph{Overall Comparison on 11 Benchmarks.}
+Table~\ref{tab:compare-methods} presents a comprehensive comparison across 11 datasets—7 manually curated and 4 in-the-wild—covering most known open-source AIGI evaluation benchmarks. To the best of our knowledge, the first large-scale comparison of its kind. As benchmarks vary greatly, the benefits of exploiting any bias are minimized, making the average accuracy across the 11 benchmarks more representative of the detector's practical performance. The results show that: 1) DDA achieves an average accuracy of 90.7\%, marking a 15.7\% improvement over the second-best method. Notably, DDA reaches 82.4\% accuracy on the challenging Chameleon benchmark, where only AlignedForensics achieves above 70\%; 2) DDA also has the highest minimal accuracy of 81.4\%, significantly outperforming the second-best method by 27.5\%. Moreover, DDA exhibits the smallest deviation across benchmarks, less than half of the other methods, suggesting it is more reliable and robust; 3) An interesting observation is that, when comparing methods across datasets, detectors trained on more aligned data tend to achieve much higher average accuracy. The degree of data alignment in the detectors, in increasing order, is as follows: UnivFD (no data alignment), DRCT (data alignment via diffusion reconstruction), AlignedForensics (data alignment via VAE reconstruction), and DDA (dual-domain data alignment). The overall average accuracy follows the same order as the degree of data alignment. This clearly demonstrates the effectiveness of data alignment in improving a detector's generalizability, supporting our previous assertion that data alignment helps models learn more transferable decision boundariess.
+
+
+\begin{table}[tb!]
+  \centering
+  \caption{Comparison of balanced accuracy between DDA and compared methods on DRCT-2M.}
+  \label{tab:compare-drct}
+  \begin{adjustbox}{width=1.0\linewidth}
+  \begin{tabular}{lccccccccccccccccl}
+  \toprule
+  Method & LDM & SDv1.4 & SDv1.5 & SDv2 & SDXL & \makecell{SDXL-\\Refiner} & \makecell{SD-\\Turbo} & \makecell{SDXL-\\Turbo} & \makecell{LCM-\\SDv1.5} & \makecell{LCM-\\SDXL} & \makecell{SDv1-\\Ctrl} & \makecell{SDv2-\\Ctrl} & \makecell{SDXL-\\Ctrl} & \makecell{SDv1-\\DR} & \makecell{SDv2-\\DR} & \makecell{SDXL-\\DR} & Avg. \\
+  \midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 33.0 & 29.1 & 29.0 & 35.1 & 33.2 & 28.4 & 27.9 & 27.9 & 29.4 & 30.2 & 28.4 & 28.3 & 34.7 & 67.9 & 67.4 & 66.1 & 37.3 $\pm$ 15.0 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 85.4 & 56.8 & 56.4 & 58.2 & 63.2 & 55.0 & 56.5 & 53.0 & 54.5 & 65.9 & 68.0 & 65.4 & 75.9 & 64.6 & 56.2 & 53.9 & 61.8 $\pm$ 8.9 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 55.9 & 48.2 & 48.2 & 48.2 & 48.2 & 48.3 & 48.2 & 48.2 & 48.3 & 50.6 & 49.7 & 49.9 & 59.8 & 66.3 & 60.6 & 56.0 & 52.2 $\pm$ 5.7 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 50.3 & 50.1 & 50.0 & 50.0 & 49.9 & 50.1 & 50.0 & 50.0 & 50.1 & 50.0 & 49.9 & 50.0 & 54.7 & 98.2 & 98.5 & \textbf{97.3} & 59.3 $\pm$ 19.2 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 83.0 & 51.7 & 51.7 & 52.9 & 51.9 & 64.6 & 51.7 & 50.6 & 52.0 & 66.1 & 56.9 & 54.7 & 77.8 & 67.2 & 57.1 & 56.7 & 59.2 $\pm$ 9.9 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 64.4 & 74.9 & 75.1 & 58.5 & 53.5 & 66.3 & 52.8 & 52.8 & 70.0 & 54.3 & 65.9 & 53.6 & 53.9 & 95.3 & 73.3 & 69.0 & 64.6 $\pm$ 11.8 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 96.7 & 96.3 & 96.3 & 94.9 & \underline{96.2} & \underline{93.5} & 93.4 & \underline{92.9} & 91.2 & \underline{95.0} & 95.6 & 92.7 & \underline{92.0} & 94.1 & 69.6 & 57.4 & 90.5 $\pm$ 7.4 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & \textbf{99.9} & \textbf{99.9} & \textbf{99.9} & \textbf{99.6} & 90.2 & 81.3 & \textbf{99.7} & 89.4 & \textbf{99.7} & 90.0 & \textbf{99.9} & \textbf{99.2} & 87.6 & \textbf{99.9} & \textbf{99.8} & 92.6 & \underline{95.5} $\pm$ 6.1 \\
+  \midrule
+  \rowcolor{myblue}
+\textbf{DDA (ours)} & \underline{99.2} & \underline{98.9} & \underline{99.0} & \underline{98.3} & \textbf{98.0} & \textbf{96.8} & \underline{97.9} & \textbf{94.8} & \underline{95.9} & \textbf{98.2} & \underline{98.7} & \underline{99.0} & \textbf{99.4} & \underline{99.0} & \underline{99.5} & \underline{96.3} & \textbf{98.1} $\pm$ 1.4 \\
+\bottomrule
+  \end{tabular}
+  \end{adjustbox}
+  \vspace{0pt}
+\end{table}
+
+
+\begin{table}[tb!]
+  \centering
+\caption{Comparison of balanced accuracy on GenImage.}
+\label{tab:compare-genimage}
+ \begin{adjustbox}{width=\linewidth}
+      \begin{tabular}{lccccccccl}
+      \toprule
+      Method & Midjourney & SDv1.4 & SDv1.5 & ADM & GLIDE & Wukong & VQDM & BigGAN & Avg. \\
+      \midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 53.4 & 55.1 & 55.0 & 43.8 & 41.2 & 57.4 & 48.4 & 57.7 & 51.5 $\pm$ 6.3 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 55.1 & 55.6 & 55.7 & 62.5 & 61.3 & 61.1 & \underline{76.9} & 84.4 & 64.1 $\pm$ 10.8 \\  
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 52.1 & 53.6 & 53.8 & 61.4 & 65.5 & 60.9 & 72.5 & 82.2 & 62.8 $\pm$ 10.4 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 49.0 & 49.7 & 49.8 & 49.5 & 53.0 & 50.3 & 50.2 & 50.9 & 50.3 $\pm$ 1.2 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 56.6 & 77.5 & 76.9 & 71.6 & 73.5 & 79.4 & 73.7 & 85.9 & 74.4 $\pm$ 8.4 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 58.2 & 77.2 & 77.4 & 50.4 & 54.6 & 70.5 & 50.8 & 50.6 & 61.2 $\pm$ 11.9 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 82.4 & 88.3 & 88.2 & \underline{76.9} & \underline{86.1} & 87.9 & \textbf{85.4} & \textbf{87.0} & \underline{84.7} $\pm$ 2.7 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & \textbf{97.5} & \textbf{99.7} & \textbf{99.6} & 52.4 & 57.6 & \textbf{99.6} & 75.0 & 50.6 & 79.0 $\pm$ 22.7 \\
+\midrule
+\rowcolor{myblue}
+\textbf{DDA (ours)} & \underline{95.6} & \underline{98.7} & \underline{98.6} & \textbf{89.5} & \textbf{89.6} & \underline{98.7} & 76.5 & \underline{86.5} & \textbf{91.7} $\pm$ 7.8 \\
+\bottomrule
+      \end{tabular}
+      \end{adjustbox}
+      \vspace{0pt}
+\end{table}
+
+
+
+\begin{table}[tb!]
+\centering
+\caption{Comparison of balanced accuracy on AIGCDetectionBenchmark.}
+\label{tab:aigc-detection}
+\begin{adjustbox}{width=1.0\linewidth}
+\begin{tabular}{lcccccccccccccccccl}
+\toprule
+Method & ADM & DALLE2 & GLIDE & Midjourney & VQDM & BigGAN & CycleGAN & GauGAN & ProGAN & SDXL & SD14 & SD15 & StarGAN & StyleGAN & StyleGAN2 & WFR & Wukong & Avg. \\
+\midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 43.8 & 20.0 & 41.2 & 53.4 & 48.4 & 53.1 & 76.6 & 42.2 & 58.7 & 59.6 & 55.1 & 55.0 & 67.4 & 57.9 & 54.6 & 58.8 & 57.4 & 53.1 $\pm$ 12.2 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 62.5 & 50.0 & 61.3 & 55.1 & 76.9 & 87.5 & \underline{96.9} & 98.8 & \textbf{99.4} & 58.2 & 55.6 & 55.7 & 95.1 & 80.0 & 69.4 & 69.2 & 61.1 & 72.5 $\pm$ 17.3 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & \underline{80.2} & 68.5 & \textbf{91.1} & 54.4 & \underline{88.0} & \textbf{99.2} & \textbf{99.5} & \textbf{99.1} & 98.5 & 71.7 & 67.5 & 67.2 & \underline{99.4} & \textbf{98.0} & \textbf{98.8} & \underline{88.3} & 75.6 & \underline{85.0} $\pm$ 14.9 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 49.5 & 49.5 & 53.0 & 49.0 & 50.2 & 52.2 & 51.9 & 50.0 & 50.0 & 49.8 & 49.7 & 49.8 & 50.1 & 50.0 & 50.0 & 49.8 & 50.3 & 50.3 $\pm$ 1.1 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 71.6 & 52.3 & 73.5 & 56.6 & 73.7 & \underline{98.4} & 96.8 & \underline{98.8} & \underline{99.3} & 62.3 & 77.5 & 76.9 & \textbf{99.6} & \underline{93.1} & 79.4 & \textbf{94.8} & 79.4 & 81.4 $\pm$ 15.6 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 52.9 & 51.1 & 60.2 & 49.8 & 69.3 & 70.1 & 93.6 & 60.6 & 89.0 & 49.6 & 51.6 & 51.0 & 72.1 & 66.5 & 59.0 & 80.6 & 54.5 & 63.6 $\pm$ 13.9 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 79.9 & \underline{89.2} & 89.2 & 85.5 & \textbf{88.6} & 81.4 & 91.0 & 93.8 & 71.1 & 88.3 & 91.4 & 91.0 & 53.0 & 62.7 & 63.8 & 73.9 & 90.8 & 81.4 $\pm$ 12.2 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 51.6 & 52.0 & 55.6 & \textbf{96.2} & 72.1 & 51.2 & 49.5 & 50.8 & 50.7 & \underline{95.1} & \textbf{99.7} & \textbf{99.6} & 53.8 & 52.7 & 51.6 & 50.0 & \textbf{99.6} & 66.6 $\pm$ 21.6 \\
+\midrule
+\rowcolor{myblue}
+\textbf{DDA (ours)} & \textbf{89.5} & \textbf{94.6} & \underline{89.6} & \underline{95.6} & 76.6 & 91.0 & 72.5 & 92.7 & 92.8 & \textbf{99.4} & \underline{98.7} & \underline{98.6} & 72.7 & 87.8 & \underline{90.2} & 52.1 & \underline{98.8} & \textbf{87.8} $\pm$ 12.6 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{0pt}
+\end{table}
+
+
+\begin{table}[tb!]
+\centering
+\caption{Comparison of balanced accuracy between DDA and compared methods on ForenSynths.}
+\label{tab:compare-ForenSynths}
+\begin{adjustbox}{width=\linewidth}
+\begin{tabular}{lcccccccccccccl}
+\toprule
+Method & BigGAN & CRN & CycleGAN & DeepFake & GauGAN & IMLE & ProGAN & SAN & SeeingDark & StarGAN & StyleGAN & StyleGAN 2 & WFR & Avg. \\
+\midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 53.1 & 0.4 & 76.6 & 35.7 & 42.2 & 5.3 & 58.7 & 48.4 & 63.6 & 67.4 & 57.9 & 54.6 & 58.8 & 47.9 $\pm$ 22.6 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 87.5 & 55.7 & \underline{96.9} & 69.4 & 98.8 & 68.1 & \textbf{99.4} & 58.2 & 62.2 & 95.1 & 80.0 & 69.4 & 69.2 & 77.7 $\pm$ 16.1 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & \textbf{99.3} & 72.1 & \textbf{99.5} & \textbf{93.0} & \textbf{99.3} & 72.1 & 98.4 & 70.8 & \underline{81.9} & \underline{99.4} & \textbf{98.1} & \textbf{98.9} & \underline{88.3} & \underline{90.1} $\pm$ 11.8 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 52.2 & 50.0 & 51.9 & 50.1 & 50.0 & 50.0 & 50.0 & 50.9 & 41.1 & 50.1 & 50.0 & 50.0 & 49.8 & 49.7 $\pm$ 2.7 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & \underline{98.4} & \textbf{93.3} & 96.8 & \underline{92.6} & \underline{98.8} & \textbf{93.2} & \underline{99.3} & 63.2 & \textbf{94.7} & \textbf{99.6} & \underline{93.1} & 79.4 & \textbf{94.8} & \textbf{92.1} $\pm$ 10.1 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 70.1 & 12.2 & 93.6 & 53.2 & 60.6 & 15.9 & 89.0 & 55.3 & 44.2 & 72.1 & 66.5 & 59.0 & 80.6 & 59.4 $\pm$ 24.6 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 81.4 & 78.4 & 91.0 & 51.5 & 93.8 & 82.6 & 71.1 & \underline{84.9} & 72.2 & 53.0 & 62.7 & 63.8 & 73.9 & 73.9 $\pm$ 13.4 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 51.2 & 50.4 & 49.5 & 71.7 & 50.8 & 49.7 & 50.7 & 67.6 & 51.4 & 53.8 & 52.7 & 51.6 & 50.0 & 53.9 $\pm$ 7.1 \\
+\midrule
+\rowcolor{myblue}
+\textbf{DDA (ours)} & 91.0 & \underline{87.0} & 72.5 & 76.5 & 92.7 & \underline{89.7} & 92.8 & \textbf{94.7} & 58.6 & 72.7 & 87.8 & \underline{90.2} & 52.1 & 81.4 $\pm$ 13.9 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{0pt}
+\end{table}
+
+
+\begin{table}[tb!]
+\centering
+\caption{Comparison of balanced accuracy between DDA and compared methods on Synthbuster.}
+\label{tab:compare-synthbuster}
+\begin{adjustbox}{width=\linewidth}
+\begin{tabular}{lcccccccccl}
+\toprule
+Method & DALL·E 2 & DALL·E 3 & Firefly & GLIDE & Midjourney & SD 1.3 & SD 1.4 & SD 2 & SDXL & Avg. \\
+\midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 51.1 & 49.3 & 46.5 & 48.5 & 52.8 & 51.4 & 51.8 & 46.0 & 52.8 & 50.0 $\pm$ 2.6 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & \underline{83.5} & 47.4 & \underline{89.9} & 53.3 & 52.5 & 70.4 & 69.9 & 75.7 & 68.0 & 67.8 $\pm$ 14.4 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 59.4 & 39.5 & 60.3 & 72.7 & 44.4 & 53.7 & 54.0 & 52.3 & 69.1 & 56.1 $\pm$ 10.7 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 58.0 & 9.9 & 10.3 & 52.2 & 56.7 & 59.4 & 59.1 & 53.0 & 59.5 & 46.5 $\pm$ 20.8 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 55.6 & 63.2 & 59.5 & \textbf{86.7} & 52.9 & 75.2 & 76.7 & 69.2 & 77.7 & 68.5 $\pm$ 11.4 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 34.9 & 33.7 & 24.8 & 65.0 & 57.5 & 74.1 & 73.7 & 53.2 & 68.4 & 53.9 $\pm$ 18.6 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 77.2 & \underline{86.6} & 84.1 & \underline{82.6} & 73.7 & 86.6 & 86.6 & 83.2 & 71.3 & \underline{84.8} $\pm$ 3.6 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 50.2 & 48.9 & 51.7 & 53.5 & \textbf{98.7} & \textbf{98.8} & \textbf{98.8} & \textbf{98.6} & \textbf{97.3} & 77.4 $\pm$ 25.0 \\
+\midrule
+\rowcolor{myblue}
+\textbf{DDA (ours)} & \textbf{86.3} & \textbf{90.0} & \textbf{91.9} & 76.5 & \underline{93.5} & \underline{92.9} & \underline{92.7} & \underline{93.3} & \underline{93.5} & \textbf{90.1} $\pm$ 5.6 \\ 
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{0pt}
+\end{table}
+
+
+\begin{table}[tb!]
+\centering
+\caption{Comparison of balanced accuracy between DDA and compared methods on SynthWildx and WildRF.}
+\label{tab:compare-synthwildx-wildrf}
+\begin{adjustbox}{width=\linewidth}
+      \begin{tabular}{l|cccl|cccl}
+      \toprule
+      \multirow{2}{*}{Method} & \multicolumn{4}{c|}{SynthWildx} & \multicolumn{4}{c}{WildRF} \\
+      \cmidrule{2-9}
+ & DALL·E 3 & Firefly & Midjourney & Avg. & Facebook & Reddit & Twitter & Avg. \\
+      \midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 43.6 & 61.3 & 44.5 & 49.8 $\pm$ 10.0 & 78.1 & 61.0 & 51.3 & 63.5 $\pm$ 13.6 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 45.4 & \underline{65.3} & 46.2 & 52.3 $\pm$ 11.3 & 49.1 & 60.2 & 56.5 & 55.3 $\pm$ 5.7 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 46.5 & 61.6 & 48.3 & 52.1 $\pm$ 8.2 & 54.1 & 68.1 & 54.4 & 58.9 $\pm$ 8.0 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 49.4 & 48.2 & 49.6 & 49.1 $\pm$ 0.7 & 50.9 & \underline{74.1} & 37.5 & 57.2 $\pm$ 18.5 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 56.9 & 61.4 & 53.0 & 57.1 $\pm$ 4.2 & 54.4 & 68.4 & 55.9 & 59.6 $\pm$ 7.7  \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 63.4 & 48.8 & 51.9 & 48.8 $\pm$ 0.8 & 57.8 & 71.5 & 45.8 & 58.4 $\pm$ 12.9  \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 58.3 & 56.4 & 50.5 & 55.1 $\pm$ 1.8 & 46.6 & 53.1 & 55.2 & 50.6 $\pm$ 3.5  \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & \underline{85.5} & 58.5 & \underline{92.2} & \underline{78.8} $\pm$ 17.8 & \underline{89.4} & 69.1 & \underline{81.8} & \underline{80.1} $\pm$ 10.3 \\
+\midrule
+\rowcolor{myblue}
+\textbf{DDA (ours)} & \textbf{92.3} & \textbf{87.3} & \textbf{93.1} & \textbf{90.9} $\pm$ 3.1 & \textbf{93.1} & \textbf{86.4} & \textbf{91.5} & \textbf{90.3} $\pm$ 3.5 \\
+\bottomrule
+      \end{tabular}
+    \end{adjustbox}
+      \vspace{0pt}
+\end{table}
+
+\paragraph{Detailed Comparison on DRCT-2M, GenImage, AIGCDetectionBenchmark, ForenSynths, Synthbuster, SynthWildx, and WildRF.}
+Table~\ref{tab:compare-drct} to Table~\ref{tab:compare-synthwildx-wildrf} report the detailed performance of various methods across these subsets. From the results, we observe the following:
+(1) Consistent superiority: DDA not only surpasses other detectors by a substantial margin in average accuracy (ranging from 3\% to 10\%) but also achieves consistently lower deviations across all benchmarks. Given the diversity of real image sources and the inclusion of both GAN- and diffusion-based models, these results strongly demonstrate the effectiveness and generalizability of DDA.
+(2) Exception on ForenSynths: DDA underperforms slightly on the ForenSynths benchmark. We attribute this to the fact that the two methods outperforming DDA—FatFormer and C2P-CLIP—were trained on ProGAN, which is also the generator used in the ForenSynths subsets, giving them an advantage. Moreover, some data in the ForenSynths are generated by older and smaller models, which deviate significantly from modern generators, contributing to DDA’s performance degradation.
+
+
+\paragraph{Comparison on DDA-COCO and EvalGEN}
+Table~\ref{tab:compare-DDA-coco} and Table~\ref{tab:compare-eval-gen} report accuracies on our two proposed benchmarks, DDA-COCO and EvalGEN, respectively. We observe the following:
+(1) Generalization across diffusion models: DDA, trained solely on SD 2.1–reconstructed data, generalizes well to other diffusion models and exhibits a smaller standard deviation. This suggests that DDA learns a universal upsampling artifact shared across diverse generative models, reinforcing our claim that data alignment enhances generalizability.
+(2) Effectiveness of data alignment: Results on DDA-COCO highlight the importance of data alignment. Methods lacking explicit alignment—such as NPR~\cite{cozzolino2024zero}, UnivFD~\cite{ojha2023towards}, FatFormer~\cite{liu2024forgery}, C2P-CLIP~\cite{tan2024c2p}, AIDE~\cite{yan2024sanity}, and SAFE~\cite{li2024improving}—exhibit large disparities between real and fake accuracies, revealing underlying dataset biases.
+(3) Performance on emerging generators: DDA also achieves SOTA on EvalGEN, excelling on auto-regressive generators, further validating its strong cross-architecture generalizability.
+
+
+
+\begin{table}[tb!]
+  \centering
+\begin{minipage}[t]{0.51\textwidth}
+    \centering
+    \captionof{table}{Comparison of balanced accuracy between our DDA and other methods on DDA-COCO.}
+    \label{tab:compare-DDA-coco}
+    \begin{adjustbox}{width=\linewidth}
+    \begin{tabular}{lc|cccccc|l}
+    \toprule
+    \multirow{2}{*}{Method} & \multirow{2}{*}{real} & \multicolumn{6}{|c|}{fake} & \multirow{2}{*}{Avg} \\
+    \cmidrule{3-8}
+ &  & XL & EMA & MSE & SD21 & SD35 & FLUX.1 & \\
+    \midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 55.4 & 16.1 & 31.1 & 41.3 & 41.2 & 24.9 & \underline{19.2} & 42.2 $\pm$ 5.4 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 99.2 & 3.9 & 9.6 & 7.3 & 7.4 & 3.4 & 1.8 & 52.4 $\pm$ 1.5 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 96.4 & 5.4 & 6.9 & 10.4 & 10.3 & 6.6 & 2.8 & 51.7 $\pm$ 1.5 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 98.8 & 0.6 & 0.9 & 0.9 & 1.0 & 0.3 & 1.8 & 49.9 $\pm$ 0.3 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & \underline{99.5} & 2.0 & 2.7 & 4.3 & 4.2 & 4.0 & 1.3 & 51.3 $\pm$ 0.6 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 98.8 & 0.6 & 2.2 & 1.7 & 1.8 & 0.3 & 0.6 & 50.0 $\pm$ 0.4 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 94.2 & 16.9 & 34.8 & 33.5 & 33.6 & 21.7 & 17.2 & 60.2 $\pm$ 4.3 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & \textbf{99.8} & \underline{82.5} & \underline{99.2} & \underline{99.0} & \underline{99.1} & \underline{55.4} & 3.6 & \underline{86.5} $\pm$ 19.1 \\
+    \midrule
+    \rowcolor{myblue}
+% VAE Rec. & 94.4 & 94.3 & 96.2 & 96.3 & 96.6 & 66.4 & 90.0 $\pm$ 12.2 \\
+    \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv2} & 96.8 & \textbf{98.3} & \textbf{99.7} & \textbf{99.9} & \textbf{99.8} & \textbf{73.9} & \textbf{94.3} $\pm$ 11.4 \\
+    \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv2 + JPEG AUG} & 97.8 & \textbf{98.3} & \textbf{99.7} & \underline{99.8} & \textbf{99.8} & 66.1 & 92.8 $\pm$ 14.9 \\
+    \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv3 + JPEG AUG} & 99.2 & \underline{96.3} & 99.0 & 99.2 & \underline{99.2} & \underline{73.7} & \underline{93.5} $\pm$ 11.1 \\
+\textbf{DDA (ours)} & 99.0 & \textbf{95.0} & \textbf{99.3} & \textbf{99.7} & \textbf{99.7} & \textbf{68.1} & \textbf{50.2} & \textbf{92.2} $\pm$ 10.6 \\
+\bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \vspace{0pt}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.43\textwidth}
+    \centering
+    \captionof{table}{Comparison of balanced accuracy on EvalGEN.}
+    \label{tab:compare-eval-gen}
+      \begin{adjustbox}{width=\linewidth}
+      \begin{tabular}{lcccccl}
+      \toprule
+      Method & Flux & GoT & Infinity & NOVA & OmiGen & Avg. \\
+      \midrule
+NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 0.7 & 0.2 & 6.5 & 4.7 & 2.2 & 2.9 $\pm$ 2.7 \\
+UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 4.0 & 9.2 & 15.7 & 8.3 & 39.6 & 15.4 $\pm$ 14.2 \\
+FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 9.9 & 47.9 & 44.7 & \underline{98.3} & 27.3 & 45.6 $\pm$ 33.1 \\
+SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 1.0 & 0.5 & 1.9 & 0.6 & 1.6 & 1.1 $\pm$ 0.6 \\
+C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 8.7 & 49.6 & 35.3 & 86.4 & 14.5 & 38.9 $\pm$ 31.2 \\
+AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 17.9 & 24.7 & 3.4 & 16.3 & 33.4 & 19.1 $\pm$ 11.1 \\
+DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & \underline{72.5} & \underline{81.4} & \underline{77.9} & 84.6 & 72.5 & \underline{77.8} $\pm$ 5.4 \\
+AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 32.0 & 72.3 & 74.0 & 84.8 & \underline{77.0} & 68.0 $\pm$ 20.7 \\
+      \midrule
+      \rowcolor{myblue}
+% VAE Rec. & 64.0 & 89.6 & 88.2 & 88.6 & 89.7 & 84.2 $\pm$ 11.3 \\
+      \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours)} & 87.0 & \underline{99.3} & \underline{99.5} & 99.5 & \textbf{100.0} & 94.0 $\pm$ 5.6 \\
+      \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv2 + JPEG AUG} & \underline{93.3} & \textbf{99.8} & 99.3 & \underline{99.6} & \underline{99.3} & \underline{98.3} $\pm$ 2.8 \\
+      \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv3 + JPEG AUG} & \textbf{95.8} & 98.7 & \textbf{99.6} & \textbf{99.8} & 98.6 & \textbf{98.5} $\pm$ 1.6 \\
+\textbf{DDA (ours)} & \textbf{89.9} & \textbf{99.5} & \textbf{97.8} & \textbf{99.5} & \textbf{99.5} & \textbf{97.2} $\pm$ 4.2 \\
+\bottomrule
+      \end{tabular}
+      \end{adjustbox}
+      \vspace{0pt}
+  \end{minipage}
+\vspace{-10pt}
+\end{table}
+
+% \begin{table}[tb!]
+%   \centering
+%   \begin{minipage}[t]{0.51\textwidth}
+%     \centering
+%     \captionof{table}{Comparison on Chameleon, SynthWildx.}
+%     \label{tab:compare-chemeloen-synthbuster}
+%     \begin{adjustbox}{width=\linewidth}
+%       \begin{tabular}{lc|cccl}
+%       \toprule
+%       \multirow{2}{*}{Method} & \multirow{2}{*}{Chameleon}  & \multicolumn{4}{c}{SynthWildx} \\
+%       \cmidrule{3-6}
+%  &  & DALL·E 3 & Firefly & Midjourney & Avg. \\
+%       \midrule
+% NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 59.9 & 43.6 & 61.3 & 44.5 & 49.8 $\pm$ 10.0 \\
+% UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 50.7 & 45.4 & 65.3 & 46.2 & 52.3 $\pm$ 11.3 \\
+% FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 51.2 & 46.5 & 61.6 & 48.3 & 52.1 $\pm$ 8.2 \\
+% SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 59.2 & 49.4 & 48.2 & 49.6 & 49.1 $\pm$ 0.7 \\
+% C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 51.1 & 56.9 & 61.4 & 53.0 & 57.1 $\pm$ 4.2 \\
+% AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 63.1 & 63.4 & 48.8 & 51.9 & 48.8 $\pm$ 0.8 \\
+% DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 56.6 & 58.3 & 56.4 & 50.5 & 55.1 $\pm$ 1.8 \\
+% AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 71.0 & 85.5 & 58.5 & \textbf{92.2} & 78.8 $\pm$ 17.8 \\
+%       \midrule
+%       \rowcolor{myblue}
+% VAE Rec. & 62.8 & 82.4 & 81.7 & 81.4 & 77.1 $\pm$ 9.5 \\
+%       \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours)} & 74.3 & 88.0 & \underline{86.3} & 87.5 & 84.0 $\pm$ 6.5 \\
+%       \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv2 + JPEG AUG} & \underline{81.7} & \underline{89.0} & \underline{86.3} & 88.7 & \underline{88.0} $\pm$ 1.4 \\
+%       \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv3 + JPEG AUG} & \textbf{85.8} & \textbf{91.8} & \textbf{88.1} & \underline{89.9} & \textbf{89.9} $\pm$ 1.9 \\
+% \bottomrule
+%       \end{tabular}
+%     \end{adjustbox}
+%       \vspace{0pt}
+%   \end{minipage}
+%   \hfill
+%  \begin{minipage}[t]{0.47\textwidth}
+%     \centering
+%     \captionof{table}{Comparison on WildRF.}
+%     \label{tab:compare-wildrf}
+%     \begin{adjustbox}{width=\linewidth}
+%       \begin{tabular}{lcccl}
+%       \toprule
+%       Method & Facebook & Reddit & Twitter & Avg. \\
+%       \midrule
+% NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 78.1 & 61.0 & 51.3 & 63.5 $\pm$ 13.6 \\
+% UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & 49.1 & 60.2 & 56.5 & 55.3 $\pm$ 5.7 \\
+% FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 54.1 & 68.1 & 54.4 & 58.9 $\pm$ 8.0 \\
+% SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 50.9 & 74.1 & 37.5 & 57.2 $\pm$ 18.5 \\
+% C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 54.4 & 68.4 & 55.9 & 59.6 $\pm$ 7.7 \\
+% AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 57.8 & 71.5 & 45.8 & 58.4 $\pm$ 12.9 \\
+% DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 46.6 & 53.1 & 55.2 & 50.6 $\pm$ 3.5 \\
+% AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 89.4 & 69.1 & 81.8 & 80.1 $\pm$ 10.3 \\
+%       \midrule
+%       \rowcolor{myblue}
+% VAE Rec. & 89.5 & 91.8 & 93.5 & 88.3 $\pm$ 2.1 \\
+%       \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours)} & \underline{94.4} & \textbf{94.3} & \textbf{96.8} & \textbf{95.1} $\pm$ 1.4 \\
+%       \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv2 + JPEG AUG} & \textbf{96.9} & 92.5 & 95.3 & \underline{94.9} $\pm$ 2.2 \\
+%       \rowcolor{myblue}
+% \textbf{VAE Rec. + DDA (ours) / DINOv3 + JPEG AUG} & 94.1 & \underline{94.0} & \underline{95.7} & 94.6 $\pm$ 1.0 \\
+
+% \bottomrule
+%       \end{tabular}
+%       \end{adjustbox}
+%       \vspace{0pt}
+%   \end{minipage}
+% \end{table}
+
+
+
+\paragraph{Comparison on Generation Time Cost} We compare three methods which introduce train data generation—DRCT \cite{chen2024drct}, AlignedForensics \cite{rajan2025aligned}, and B-Free \cite{guillaro2024bias}. Table~\ref{tab:compare-traing-data} presents the number of real and synthetic images used for training, generation method and the estimated reconstruction time (Single Image \& Full Set) using each method, which is tested by generating 100 synthetic images. Results show that our DDA requires the least amount of training data and reconstruction time, confirming its effectiveness and efficiency in terms of training cost.
+
+\subsection{Evaluation on Robustness}
+Figure~\ref{fig:robustness} shows the results of three robustness evaluations on the GenImage-JPEG96 dataset for all compared methods. Results show that: (1) DDA shows strong robustness across all three post-processing methods, outperforming the second-best method by 10.5\%, 4.1\%, and 5.7\% under JPEG 60, RESIZE 2.0, and BLUR 2.0, respectively. (2) Methods lacking alignment, such as NPR~\cite{cozzolino2024zero}, SAFE~\cite{li2024improving}, and AIDE~\cite{yan2024sanity}, demonstrate poor robustness under JPEG compression and resizing. In contrast, methods with alignment perform much better, emphasizing the importance of data alignment.
+
+
+\begin{table}[tb!]
+\centering       
+\caption{Comparing on data generation time.}
+\label{tab:compare-traing-data}
+    \begin{adjustbox}{width=0.9\linewidth}
+      \begin{tabular}{lcccc}
+      \toprule
+      Method & \# Real / Fake & Generation Method & Time Per Image & Full Construction Time \\
+      \midrule
+      DRCT  & 118K / 354K & Diff. Rec. & 0.6569 ± 0.0050 s & 64.6 h \\
+      AlignedForensics & 179K / 179K & VAE Rec. &  0.1756 ± 0.0692 s & 8.73 h \\ 
+      B-Free & 51K / 309K & Diff. Rec + Inpaint. & 3.0150 ± 0.0125 s & 258.79 h \\
+      \midrule
+      \rowcolor{myblue}
+      \textbf{DDA (ours)} & 118K / 118K & VAE Rec. + DDA & 0.1792 ± 0.0704 s & \textbf{5.9 h} \\
+      \bottomrule
+      \end{tabular}
+    \end{adjustbox}
+    \vspace{-10pt}
+\end{table}
+
+% \begin{table}[tb!]
+%   \centering
+%   \begin{minipage}[t]{0.46\textwidth}
+%     \centering
+%     \captionof{table}{Comparing on data generation time.}
+%     \label{tab:compare-traing-data}
+%     \begin{adjustbox}{width=\linewidth}
+%       \begin{tabular}{lcccc}
+%       \toprule
+%       Method & \# Real / Fake & Generation Method & Time Per Image & Full Construction Time \\
+%       \midrule
+%       DRCT  & 118K / 354K & Diff. Rec. & 0.6569 ± 0.0050 s & 64.6 h \\
+%       AlignedForensics & 179K / 179K & VAE Rec. &  0.1756 ± 0.0692 s & 8.73 h \\ 
+%       B-Free & 51K / 309K & Diff. Rec + Inpaint. & 3.0150 ± 0.0125 s & 258.79 h \\
+%       \midrule
+%       \rowcolor{myblue}
+%       \textbf{DDA (ours)} & 118K / 118K & VAE Rec. + DDA & 0.1792 ± 0.0704 s & 5.9 h \\
+%       \bottomrule
+%       \end{tabular}
+%     \end{adjustbox}
+%     \vspace{0pt}
+%   \end{minipage}
+%   \hfill
+% \begin{minipage}[t]{0.52\textwidth}
+%     \centering
+%     \captionof{table}{Comparison on DDA-COCO.}
+%     \label{tab:compare-DDA-coco}
+%     \begin{adjustbox}{width=\linewidth}
+%     \begin{tabular}{lc|cccccl}
+%     \toprule
+%     \multirow{2}{*}{Method} & \multirow{2}{*}{real} & \multicolumn{6}{|c}{fake} \\
+%     \cmidrule{3-8}
+%  &  & XL & EMA & MSE & SD21 & SD35 & Avg. \\
+%     \midrule
+% NPR \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{cozzolino2024zero} & 55.4 & 21.0 & 31.0 & 29.8 & 29.1 & 29.6 & 28.1 $\pm$ 4.0 \\
+% UnivFD \textsubscript{\textcolor{blue}{(CVPR'23)}} \cite{ojha2023towards} & \textbf{99.2} & 2.7 & 5.3 & 3.8 & 4.3 & 1.9 & 3.6 $\pm$ 1.3 \\
+% FatFormer \textsubscript{\textcolor{blue}{(CVPR'24)}} \cite{liu2024forgery} & 96.4 & 2.3 & 3.1 & 4.2 & 4.3 & 2.4 & 3.3 $\pm$ 0.9 \\
+% SAFE \textsubscript{\textcolor{blue}{(KDD'25)}} \cite{li2024improving} & 98.8 & 0.5 & 0.6 & 0.5 & 0.4 & 0.3 & 0.5 $\pm$ 0.1 \\
+% C2P-CLIP \textsubscript{\textcolor{blue}{(AAAI'25)}} \cite{tan2024c2p} & 99.0 & 1.6 & 1.7 & 2.2 & 2.2 & 2.3 & 2.0 $\pm$ 0.3 \\
+% AIDE \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{yan2024sanity} & 98.8 & 1.1 & 2.2 & 0.9 & 0.8 & 1.0 & 1.2 $\pm$ 0.6 \\
+% DRCT \textsubscript{\textcolor{blue}{(ICML'24)}} \cite{chen2024drct} & 94.2 & 24.5 & 34.7 & 33.1 & 33.6 & 26.3 & 30.4 $\pm$ 4.7 \\
+% AlignedForensics \textsubscript{\textcolor{blue}{(ICLR'25)}} \cite{rajan2025aligned} & 99.0 & \underline{82.5} & \underline{99.0} & \underline{99.0} & \underline{99.0} & \underline{53.2} & \underline{86.6} $\pm$ 20.0 \\
+%     \midrule
+%     \rowcolor{myblue}
+% % VAE Rec. & 94.4 & 94.3 & 96.2 & 96.3 & 96.6 & 66.4 & 90.0 $\pm$ 12.2 \\
+%     \rowcolor{myblue}
+% % \textbf{VAE Rec. + DDA (ours) / DINOv2} & 96.8 & \textbf{98.3} & \textbf{99.7} & \textbf{99.9} & \textbf{99.8} & \textbf{73.9} & \textbf{94.3} $\pm$ 11.4 \\
+%     \rowcolor{myblue}
+% % \textbf{VAE Rec. + DDA (ours) / DINOv2 + JPEG AUG} & 97.8 & \textbf{98.3} & \textbf{99.7} & \underline{99.8} & \textbf{99.8} & 66.1 & 92.8 $\pm$ 14.9 \\
+%     \rowcolor{myblue}
+% % \textbf{VAE Rec. + DDA (ours) / DINOv3 + JPEG AUG} & 99.2 & \underline{96.3} & 99.0 & 99.2 & \underline{99.2} & \underline{73.7} & \underline{93.5} $\pm$ 11.1 \\
+% \textbf{DDA (ours)} & \underline{99.0} & \textbf{97.8} & \textbf{99.5} & \textbf{99.8} & \textbf{99.7} & \textbf{58.8} & \textbf{91.1} $\pm$ 18.1 \\
+% \bottomrule
+%     \end{tabular}
+%     \end{adjustbox}
+%     \vspace{0pt}
+%   \end{minipage}
+% \end{table}
+
+
+\begin{figure}[t]
+    \centering
+    \begin{minipage}{\textwidth} % This makes the entire figure take only half the column width
+        \centering
+        \includegraphics[width=0.99\textwidth]{fig/robust_legend.png}
+        \vspace{0.2cm}
+        \begin{subfigure}[b]{0.32\textwidth}
+            \includegraphics[width=\textwidth]{fig/jpeg_robust.png}
+        \end{subfigure}%
+        \hfill%
+        \begin{subfigure}[b]{0.32\textwidth}
+            \includegraphics[width=\textwidth]{fig/resize_robust.png}
+        \end{subfigure}%
+        \hfill%
+        \begin{subfigure}[b]{0.32\textwidth}
+            \includegraphics[width=\textwidth]{fig/blur_robust.png}
+        \end{subfigure}
+    \end{minipage}
+    \vspace{-10pt}
+    \caption{Robustness analysis on GenImage.}
+    \label{fig:robustness}
+    \vspace{-5pt}
+\end{figure}
+
+
+% \begin{figure}[tb!]
+%     \centering
+%     \begin{minipage}{\textwidth} % This makes the entire figure take only half the column width
+%         \begin{subfigure}[b]{0.24\textwidth}
+%             \includegraphics[width=\textwidth]{fig/freq_ratio_chart.png}
+%             \caption{Impact of $T_{freq}$}
+%         \end{subfigure}
+%         \hfill
+%         \begin{subfigure}[b]{0.24\textwidth}
+%             \includegraphics[width=\textwidth]{fig/pixel_prob_chart.png}
+%             \caption{Impact of $P_{pixel}$}
+%         \end{subfigure}%
+%         \hfill%
+%         \begin{subfigure}[b]{0.24\textwidth}
+%             \includegraphics[width=\textwidth]{fig/pixel_ratio_chart.png}
+%             \caption{Impact of $r_{pixel}$}
+%         \end{subfigure}%
+%         \hfill%
+%         \begin{subfigure}[b]{0.24\textwidth}
+%             \includegraphics[width=\textwidth]{fig/vae_chart.png}
+%             \caption{Impact of VAE}
+%         \end{subfigure}
+%     \vspace{0pt}
+%      \caption{\textbf{Ablation studies.}  
+%     (a) $T_{freq}$: frequency threshold for frequency-level alignment;  
+%     (b) $P_{pixel}$: probability of applying pixel-level alignment;  
+%     (c) $R_{pixel}$: upper bound for sampling the pixel mixup ratio;  
+%     (d) VAE: backbone used for training data reconstruction.  
+%     Results show the impact of each hyperparameter on the performance of DDA.}
+%     \label{fig:ablation}
+%     \end{minipage}
+  
+%     \vspace{-15pt}
+% \end{figure}
+
+\begin{figure}[tb!]
+    \centering
+    \begin{minipage}{\textwidth} % This makes the entire figure take only half the column width
+        \begin{subfigure}[b]{0.3\textwidth}
+            \includegraphics[width=\textwidth]{fig/pixel_prob_chart.png}
+            \caption{Impact of $P_{pixel}$}
+        \end{subfigure}%
+        \hfill%
+        \begin{subfigure}[b]{0.3\textwidth}
+            \includegraphics[width=\textwidth]{fig/pixel_ratio_chart.png}
+            \caption{Impact of $R_{pixel}$}
+        \end{subfigure}%
+        \hfill%
+        \begin{subfigure}[b]{0.3\textwidth}
+            \includegraphics[width=\textwidth]{fig/vae_chart.png}
+            \caption{Impact of VAE}
+        \end{subfigure}
+    \vspace{-5pt}
+     \caption{\textbf{Ablation studies.}    
+    (a) $P_{pixel}$: probability of applying pixel-level alignment;  
+    (b) $R_{pixel}$: upper bound for sampling the pixel mixup ratio;  
+    (c) VAE: backbone used for training data reconstruction.  
+    Results show the impact of each hyperparameter on the performance of DDA.}
+    \label{fig:ablation}
+    \end{minipage}
+    \vspace{-15pt}
+\end{figure}
+
+\vspace{-10pt}
+\subsection{Ablation Studies}
+\vspace{-5pt}
+Figure~\ref{fig:ablation} illustrates the impact of $P_{pixel}$, $R_{pixel}$, and the choice of VAE in training data generation. Results indicate that the detector maintains consistent accuracy when $P_{pixel}$ and $R_{pixel}$ are between 0.2 and 0.8, with performance drops observed at 0.0 and 1.0. Experiments with different VAEs confirm that SD21 is the most effective choice.
+
+\vspace{-10pt}
+\section{Conclusion}
+\vspace{-10pt}
+\label{sec:conclude}
+In this paper, we demonstrate that pixel-domain alignment alone is insufficient for fully aligning real and synthetic image pairs. Building on this, we propose DDA to align synthetic images with real ones across both pixel and frequency domains, thereby mitigating bias. We also introduce two AIGI benchmarks: DDA-COCO and EvalGEN. Extensive experiments across eleven benchmarks demonstrate the consistent superiority of DDA. We believe that DDA, DDA-COCO, and EvalGEN provide a solid foundation for advancing the generalization of AIGI detection.
+
+\paragraph{Limitations and Future Work}
+While DDA demonstrates strong performance across extensive benchmarks, there remains a gap in its application to real-world scenarios, particularly due to the heavy post-processing applied to images in such contexts. In practice, we observe that even authentic photos taken by smartphones may exhibit synthetic-like artifacts, likely resulting from the AI-based enhancements embedded in modern smartphone camera pipelines, which adds complexity to real-world AIGI detection. In future work, we plan to develop a more practical AIGI detector tailored to address these real-world challenges.
+
+\vspace{-10pt}
+\section{Acknowledgements}
+\label{sec:ack}
+\vspace{-5pt}
+The authors would like to express our sincere gratitude to NeurIPS anonymous reviewers for their constructive feedback.
+This work is supported by the National Natural Science Foundation of China under Grant 62572188 and Grant 62272164.
+% , and in part by the Aeronautical Science Foundation of China under Grant 202400550S7003.
+
+
+
+% \section*{References}
+\bibliography{ref}
+\bibliographystyle{plain}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\appendix
+
+The Appendix provides additional technical and evaluative details of our work. Section~\ref{sec:implementation} presents the \textbf{implementation details} of DDA. Section~\ref{sec:peer-methods} summarizes the \textbf{peer methods}. Section~\ref{sec:comparison} \textbf{visualizes the degree of data alignment}  of different methods in the feature space. Section~\ref{sec:ablation} presents \textbf{ablation studies on input size and backbone}. Section~\ref{sec:evalgen} provides \textbf{details of our proposed dataset EvalGEN}, including example prompts used for generation and visualizations of selected samples. Finally, Section~\ref{sec:patch-evaluation} \textbf{visualizes the regional detection results of DDA}.
+
+\titleformat{\section}[block] 
+  {\normalfont\large\bfseries}
+  {\thesection}{1em}{}
+\renewcommand{\thesection}{\Alph{section}}
+
+\section{Implementation Details}
+\label{sec:implementation}
+
+\paragraph{Training Details.}
+All experiments were conducted on eight NVIDIA V100 GPUs. We trained the detector on a dataset consisting of MSCOCO images and their synthetic counterparts generated through DDA alignment using the VAE from Stable Diffusion 2.1. The model was optimized with a base batch size of 16 and a learning rate of 1e-4. To achieve an effective batch size of 64 without exceeding GPU memory limits, gradient accumulation was applied over four iterations. Balanced accuracy was evaluated on all datasets every 10,000 iterations, and early stopping was employed to prevent overfitting. To help the model better shape its decision boundary, each batch was manually constructed to include both real images and their DDA-aligned counterparts, allowing the model to simultaneously observe closely aligned positive and negative samples.
+
+\section{Peer Methods}
+\label{sec:peer-methods}
+
+Below we provide a brief description of the compared methods used in Section 4 of main paper.
+
+\paragraph{NPR \cite{cozzolino2024zero}} This detector leverages low-level features—neighboring pixel relationships—to distinguish synthetic images from real ones. NPR trains a ResNet-50 to identify upsampling patterns.
+
+\paragraph{UnivFD \cite{ojha2023towards}}  Instead of conventional supervised training, this method utilizes features from a vision-language model (CLIP-ViT) combined with a linear classifier. This approach avoids overfitting to specific generative artifacts and generalizes better to unseen generators.
+
+\paragraph{FatFormer \cite{liu2024forgery}} FatFormer builds on a ViT backbone, incorporating a forgery-aware adapter that adapts features in both the image and frequency domains. It introduces language-guided alignment using contrastive learning with text prompts to improve generalization.
+
+
+\paragraph{SAFE \cite{li2024improving}} This method focuses on frequency domain artifacts. The detector is built upon a ResNet backbone and trained with several data augmentation techniques, including random masking.
+
+\paragraph{C2P-CLIP \cite{tan2024c2p}} The method utilizes CLIP embeddings with category-specific prompts to enhance deepfake detection generalizability. Image captions are generated using ClipCap and enhanced with category common prompts. During training, these enhanced caption-image pairs train the image encoder through contrastive learning. For inference, only the modified image encoder and a linear classifier are used.
+
+\paragraph{AIDE \cite{yan2024sanity}} This work employs a hybrid approach that combines low-level patch statistics with high-level semantics. It uses DCT scoring to select extreme frequency patches for extracting noise patterns through SRM filters, while utilizing CLIP embeddings to capture semantic information. These complementary features are fused through channel-wise concatenation before classification.
+
+\paragraph{DRCT \cite{chen2024drct}} This method reconstructs real images using diffusion models to generate challenging synthetic samples that retain visual content while introducing subtle artifacts. Contrastive learning is employed to guide detectors toward recognizing these fingerprints, improving generalization.
+
+\paragraph{AlignedForensics \cite{rajan2025aligned}} This method creates aligned datasets by reconstructing real images through a single forward pass in an LDM’s autoencoder. This forces the detector to focus exclusively on artifacts introduced by the VAE decoder, avoiding reliance on spurious correlations.
+
+\paragraph{B-Free \cite{guillaro2024bias}} B-Free introduces a training paradigm using self-conditioned diffusion-based reconstructions. It ensures semantic alignment between real and synthetic images so that differences arise solely from generation artifacts. The approach includes content augmentation via inpainting and fine-tunes a DINOv2+reg ViT using large crops to retain forensic signals.
+
+
+\begin{figure}[tb!]
+    \centering
+    \includegraphics[width=\textwidth]{fig/TSNE.png}
+    \caption{t-SNE visualizations comparing real and synthetic images using detectors trained with different data alignment methods. Rows correspond to the data alignment method used during detector training, while columns represent the generative pipeline—either VAE or diffusion—used to produce synthetic images. \textbf{The results show that detectors trained with better dataset alignment are able to separate reconstructed images more distinctly, highlighting the importance of effective dataset alignment in achieving clearer feature space separation.}}
+    \label{fig:tsne-comparison}
+\end{figure}
+
+\section{More Comparison Results}
+\label{sec:comparison}
+
+\paragraph{Comparison to Dataset Alignment Methods in Feature Domain}
+Fig~\ref{fig:tsne-comparison} presents t-SNE visualizations of real and synthetic image features, generated by detectors trained with varying data alignment strategies. Each row, from top to bottom, represents detectors trained on datasets with progressively stronger alignment. \textbf{Detectors trained on better-aligned datasets yield more separable feature distributions, suggesting that enhanced alignment facilitates clearer decision boundaries between real and synthetic content.} These findings reinforce the role of data alignment in improving feature separability and overall AGI detector performance.
+
+\section{More Ablation Results} 
+\label{sec:ablation}
+
+\paragraph{Ablation on Input Size} Table~\ref{tab:cropsize-comparison} presents an ablation study of our method across different input sizes, ranging from 224 to 504. Detectors achieve comparable accuracies across these input sizes.
+
+
+\paragraph{Ablation on Backbone} 
+Table~\ref{tab:backbone} presents an ablation study comparing the performance of different backbone architectures. The ResNet backbone is excluded from this study due to training instability and failure to converge. The relatively poor performance of linear probing methods is attributed to the limited representational capacity of a single linear layer. This observation aligns with the convergence issues observed with ResNet, suggesting that the universal artifacts in our training data are inherently more difficult to learn.
+In contrast, AlignedForensics~\cite{rajan2025aligned} successfully employs a ResNet backbone, implying that the artifacts used in our training setup may be subtler or more complex than those captured in prior work. Another key finding is that DINO-LoRA outperforms CLIP-LoRA. This performance difference is likely due to the architectural focus of each backbone: CLIP emphasizes high-level semantic features, while DINO is more attuned to low-level visual patterns—which are more indicative of AI-generated image artifacts. Moreover, DINO-LoRA achieves a lower standard deviation, indicating greater stability for robust AGI detection.
+
+\begin{table}[tb!]
+\centering
+\caption{Ablation study across different input sizes.}
+\label{tab:cropsize-comparison}
+\begin{adjustbox}{width=1.0\linewidth}
+\begin{tabular}{ccccccl}
+\toprule
+Input Size & GenImage & DRCT-2M & EvalGEN & Chameleon & SynthWildx & Avg \\
+\midrule
+224 & 94.9 & 96.7 & \textbf{97.2} & 71.9 & 80.3 & 88.2 $\pm$ 11.5 \\
+252 & \underline{95.3} & 96.7 & 94.1 & 72.0 & 84.0 & 88.4 $\pm$ 10.5 \\
+280 & \textbf{95.7} & 96.2 & 95.4 & 70.1 & 84.6 & 88.4 $\pm$ 11.3 \\
+392 & 92.9 & 96.5 & 95.7 & 71.8 & 89.6 & \underline{89.3} $\pm$ 10.2 \\
+448 & 93.4 & \underline{97.2} & 89.5 & 65.7 & \underline{89.9} & 87.1 $\pm$ 12.4 \\
+504 & 93.0 & 93.0 & 95.8 & \underline{73.2} & 86.2 & 88.2 $\pm$ 9.1 \\
+\midrule
+\rowcolor{myblue}
+\textbf{336} & 91.7 & \textbf{98.1} & 96.3 & \underline{82.4} & \textbf{90.9} & \textbf{91.9} $\pm$ 6.1 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{0pt}
+\end{table}
+
+\begin{table}[tb!]
+\centering
+\caption{Ablation on backbones and training strategies. \textbf{Linear Probing} refers to training a linear classifier on frozen backbone features. \textbf{LoRA Finetune} denotes fine-tuning the backbone using LoRA (rank=8). }
+\label{tab:backbone}
+\begin{adjustbox}{width=1.0\linewidth}
+\begin{tabular}{clcccccl}
+\toprule
+Train Strategy & Backbone & GenImage & DRCT-2M & EvalGEN & Chameleon & SynthWildx & Avg \\
+\midrule
+\multirow{6}{*}{\makecell{Linear\\Probing}} & CLIP ViT-B/16 & 86.4 & 84.2 & 92.3 & 54.7 & 53.9 & 74.3 $\pm$ 18.5 \\
+& CLIP ViT-B/32 & 83.8 & 80.8 & 97.3 & 63.2 & 54.5 & 75.9 $\pm$ 17.1 \\
+& CLIP ViT-L/14 & 91.2 & \underline{91.2} & \underline{98.9} & 59.1 & 52.8 & 78.6 $\pm$ 21.1 \\
+& DINOv2 VIT-S/14 & 68.8 & 74.4 & 59.8 & 60.9 & 62.6 & 65.3 $\pm$ 6.2 \\
+& DINOv2 VIT-B/14 & 68.3 & 74.5 & 66.2 & 64.1 & 58.6 & 66.8 $\pm$ 4.9 \\
+& DINOv2 VIT-L/14 & 70.5 & 75.6 & 56.8 & 60.6 & 61.6 & 65.0 $\pm$ 7.8 \\
+\midrule
+\multirow{4}{*}{\makecell{LoRA\\Finetune}} & CLIP ViT-B/16 & \underline{95.2} & 80.3 & 96.2 & 46.6 & 62.0 & 76.1 $\pm$ 21.5 \\
+& CLIP ViT-B/32 & 93.2 & 80.6 & 98.5 & 55.0 & 59.0 & 77.3 $\pm$ 19.7 \\
+& CLIP ViT-L/14 & \textbf{97.0} & 80.4 & \textbf{99.2} & \underline{67.7} & \underline{71.8} & \underline{83.2} $\pm$ 14.4 \\
+\cmidrule{2-8}
+\rowcolor{myblue}
+% \cellcolor{white} & \underline{95.5} & \textbf{97.4} & 94.3 & 94.0 & \textbf{94.6} & \textbf{74.3} & \textbf{84.0} & \textbf{90.6} $\pm$ 8.4 \\
+\cellcolor{white} & \textbf{DINOv2 VIT-L/14} & 91.7 & \textbf{98.1} & 96.3 & \textbf{82.4} & \textbf{90.9} & \textbf{91.9} $\pm$ 6.1 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{0pt}
+\end{table}
+
+
+\begin{promptbox}
+\textbf{Prompt 00} a photo of a backpack
+
+\textbf{Prompt 01} a photo of a backpack below a cake
+
+\textbf{Prompt 02} a photo of a backpack right of a sandwich
+
+\textbf{Prompt 03} a photo of a banana
+
+\textbf{Prompt 04} a photo of a baseball bat
+
+\textbf{Prompt 05} a photo of a baseball bat and a bear
+
+\textbf{Prompt 06} a photo of a baseball bat and a fork
+
+\textbf{Prompt 07} a photo of a baseball bat and a giraffe
+
+\textbf{Prompt 08} a photo of a baseball glove
+
+\textbf{Prompt 09} a photo of a baseball glove and a carrot
+
+\textbf{Prompt 10} a photo of a baseball glove below an umbrella
+
+\textbf{Prompt 11} a photo of a baseball glove right of a bear
+
+\textbf{Prompt 12} a photo of a bear
+
+\textbf{Prompt 13} a photo of a bear above a clock
+
+\textbf{Prompt 14} a photo of a bear above a spoon
+
+\textbf{Prompt 15} a photo of a bed
+
+\textbf{Prompt 16} a photo of a bed right of a frisbee
+
+\textbf{Prompt 17} a photo of a bed right of a sports ball
+
+\textbf{Prompt 18} a photo of a bench
+
+\textbf{Prompt 19} a photo of a bench and a snowboard
+
+\textbf{...}
+\end{promptbox}
+
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\textwidth]{fig/evalgen.jpg}
+    \caption{Examples from EvalGEN.}
+    \label{fig:evalgen}
+\end{figure}
+
+\section{More Details of EvalGEN}
+\label{sec:evalgen}
+
+To construct EvalGEN, we used 553 distinct prompts, each generating 20 synthetic images per generator, resulting in 11,060 images per generator and a total of 55,300 synthetic images in the complete dataset. All images are stored in JPEG format with a quality factor of 96. A subset of prompts is provided above to illustrate the dataset’s diversity and semantic coverage, while Fig.~\ref{fig:evalgen} shows visual examples from EvalGEN. To balance efficiency and representativeness, for the comparison in Table~\ref{tab:compare-methods} and Table~\ref{tab:compare-eval-gen} of the main paper, we selected the first (index 0) image generated for each prompt, yielding 55,300 / 20 = 2,765 samples for quantitative evaluation.
+
+
+% \begin{table}[t!]
+%   \caption{Overview of the evaluation benchmarks. “SD” denotes Stable Diffusion and “AR” denotes auto-regressive models. The diversity of data sources and generator types—along with four benchmarks collected from in-the-wild data with unknown generators and post-processing—ensures that the overall evaluation more accurately reflects a detector’s generalizability and practical applicability.}
+%   \label{tab:dataset-overview}
+%   \centering
+%   \begin{adjustbox}{width=0.85\linewidth}
+%     \begin{tabular}{ccccc}
+%       \toprule
+%       Dataset & Real/Fake & Source & \#Models & Model Types \\
+%       \midrule
+%       DDA-COCO (ours) & 25K/25K & MSCOCO & 5 & SD \\
+%       EvalGEN (ours) & 0/2765 & Prompt & 5 & SD \& AR \\
+%       GenImage \cite{zhu2023genimage} & 48K/48K & ImageNet & 8 & SD \& GAN \\
+%       DRCT-2M \cite{chen2024drct} & 5K/80K & MSCOCO & 16 & SD \\
+%       Synthbuster \cite{bammey2023synthbuster} & 1K/9K & RAISE & 9 & SD \\
+%       AIGCDetectionBenchmark \cite{zhong2024patchcraft} & 76.25K/76.25K & LSUN \& MSCOCO \& ImageNet \& CelebA \& FFHQ & 17 & SD \& GAN \\
+%       ForenSynths \cite{wang2020cnn2} & 36.2K/36.2K & LSUN \& MSCOCO \& ImageNet \& CelebA \& others & 11 & GAN\\
+%       Chameleon \cite{yan2024sanity} & 14.9K/11.2K & Internet & unknown & unknown \\
+%       WildRF \cite{cavia2024real} & 500/500 & Reddit, FB, X & unknown & unknown \\
+%       SynthWildx \cite{cozzolino2024raising} & 500/1.5K & X & 3 & SD \\
+%       BFree-Online \cite{guillaro2024bias} & 240/493 & Internet & unknown & unknown \\
+%       \bottomrule
+%     \end{tabular}
+%   \end{adjustbox}
+%   \vspace{-10pt}
+% \end{table}
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\textwidth]{fig/heatmap.jpg}
+    \caption{Patch-level detection results. From top to bottom, images are sourced from Synthbuster~\cite{bammey2023synthbuster}, Chameleon~\cite{yan2024sanity}, ForenSynths~\cite{wang2020cnn2}, SynthWildx~\cite{cozzolino2024raising}, AIGCDetectionBenchmark~\cite{zhong2024patchcraft}, WildRF~\cite{cavia2024real}, and EvalGEN (ours), respectively.}
+    \label{fig:heatmap-all}
+\end{figure}
+
+
+\section{Regional Detection Analysis} 
+\label{sec:patch-evaluation}
+Figure~\ref{fig:heatmap-all} displays heatmaps of detection scores across segmented image regions, with numerical overlays indicating the detector’s predictions. These results reveal that detection scores vary by region, indicating that synthetic artifacts are spatially uneven. This observation suggests that localized detection strategies could further enhance robustness.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\section*{NeurIPS Paper Checklist}
+
+%%% BEGIN INSTRUCTIONS %%%
+% The checklist is designed to encourage best practices for responsible machine learning research, addressing issues of reproducibility, transparency, research ethics, and societal impact. Do not remove the checklist: {\bf The papers not including the checklist will be desk rejected.} The checklist should follow the references and follow the (optional) supplemental material.  The checklist does NOT count towards the page
+% limit. 
+
+% Please read the checklist guidelines carefully for information on how to answer these questions. For each question in the checklist:
+% \begin{itemize}
+%     \item You should answer \answerYes{}, \answerNo{}, or \answerNA{}.
+%     \item \answerNA{} means either that the question is Not Applicable for that particular paper or the relevant information is Not Available.
+%     \item Please provide a short (1–2 sentence) justification right after your answer (even for NA). 
+%    % \item {\bf The papers not including the checklist will be desk rejected.}
+% \end{itemize}
+
+% {\bf The checklist answers are an integral part of your paper submission.} They are visible to the reviewers, area chairs, senior area chairs, and ethics reviewers. You will be asked to also include it (after eventual revisions) with the final version of your paper, and its final version will be published with the paper.
+
+% The reviewers of your paper will be asked to use the checklist as one of the factors in their evaluation. While "\answerYes{}" is generally preferable to "\answerNo{}", it is perfectly acceptable to answer "\answerNo{}" provided a proper justification is given (e.g., "error bars are not reported because it would be too computationally expensive" or "we were unable to find the license for the dataset we used"). In general, answering "\answerNo{}" or "\answerNA{}" is not grounds for rejection. While the questions are phrased in a binary way, we acknowledge that the true answer is often more nuanced, so please just use your best judgment and write a justification to elaborate. All supporting evidence can appear either in the main paper or the supplemental material, provided in appendix. If you answer \answerYes{} to a question, in the justification please point to the section(s) where related material for the question can be found.
+
+% IMPORTANT, please:
+% \begin{itemize}
+%     \item {\bf Delete this instruction block, but keep the section heading ``NeurIPS Paper Checklist"},
+%     \item  {\bf Keep the checklist subsection headings, questions/answers and guidelines below.}
+%     \item {\bf Do not modify the questions and only use the provided macros for your answers}.
+% \end{itemize} 
+ 
+
+%%% END INSTRUCTIONS %%%
+
+
+\begin{enumerate}
+
+\item {\bf Claims}
+    \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Abstract and Section \ref{sec:intro}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the abstract and introduction do not include the claims made in the paper.
+        \item The abstract and/or introduction should clearly state the claims made, including the contributions made in the paper and important assumptions and limitations. A No or NA answer to this question will not be perceived well by the reviewers. 
+        \item The claims made should match theoretical and experimental results, and reflect how much the results can be expected to generalize to other settings. 
+        \item It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper. 
+    \end{itemize}
+
+\item {\bf Limitations}
+    \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:conclude}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper has no limitation while the answer No means that the paper has limitations, but those are not discussed in the paper. 
+        \item The authors are encouraged to create a separate "Limitations" section in their paper.
+        \item The paper should point out any strong assumptions and how robust the results are to violations of these assumptions (e.g., independence assumptions, noiseless settings, model well-specification, asymptotic approximations only holding locally). The authors should reflect on how these assumptions might be violated in practice and what the implications would be.
+        \item The authors should reflect on the scope of the claims made, e.g., if the approach was only tested on a few datasets or with a few runs. In general, empirical results often depend on implicit assumptions, which should be articulated.
+        \item The authors should reflect on the factors that influence the performance of the approach. For example, a facial recognition algorithm may perform poorly when image resolution is low or images are taken in low lighting. Or a speech-to-text system might not be used reliably to provide closed captions for online lectures because it fails to handle technical jargon.
+        \item The authors should discuss the computational efficiency of the proposed algorithms and how they scale with dataset size.
+        \item If applicable, the authors should discuss possible limitations of their approach to address problems of privacy and fairness.
+        \item While the authors might fear that complete honesty about limitations might be used by reviewers as grounds for rejection, a worse outcome might be that reviewers discover limitations that aren't acknowledged in the paper. The authors should use their best judgment and recognize that individual actions in favor of transparency play an important role in developing norms that preserve the integrity of the community. Reviewers will be specifically instructed to not penalize honesty concerning limitations.
+    \end{itemize}
+
+\item {\bf Theory assumptions and proofs}
+    \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:methodology}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include theoretical results. 
+        \item All the theorems, formulas, and proofs in the paper should be numbered and cross-referenced.
+        \item All assumptions should be clearly stated or referenced in the statement of any theorems.
+        \item The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, the authors are encouraged to provide a short proof sketch to provide intuition. 
+        \item Inversely, any informal proof provided in the core of the paper should be complemented by formal proofs provided in appendix or supplemental material.
+        \item Theorems and Lemmas that the proof relies upon should be properly referenced. 
+    \end{itemize}
+
+    \item {\bf Experimental result reproducibility}
+    \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:experiments}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item If the paper includes experiments, a No answer to this question will not be perceived well by the reviewers: Making the paper reproducible is important, regardless of whether the code and data are provided or not.
+        \item If the contribution is a dataset and/or model, the authors should describe the steps taken to make their results reproducible or verifiable. 
+        \item Depending on the contribution, reproducibility can be accomplished in various ways. For example, if the contribution is a novel architecture, describing the architecture fully might suffice, or if the contribution is a specific model and empirical evaluation, it may be necessary to either make it possible for others to replicate the model with the same dataset, or provide access to the model. In general. releasing code and data is often one good way to accomplish this, but reproducibility can also be provided via detailed instructions for how to replicate the results, access to a hosted model (e.g., in the case of a large language model), releasing of a model checkpoint, or other means that are appropriate to the research performed.
+        \item While NeurIPS does not require releasing code, the conference does require all submissions to provide some reasonable avenue for reproducibility, which may depend on the nature of the contribution. For example
+        \begin{enumerate}
+            \item If the contribution is primarily a new algorithm, the paper should make it clear how to reproduce that algorithm.
+            \item If the contribution is primarily a new model architecture, the paper should describe the architecture clearly and fully.
+            \item If the contribution is a new model (e.g., a large language model), then there should either be a way to access this model for reproducing the results or a way to reproduce the model (e.g., with an open-source dataset or instructions for how to construct the dataset).
+            \item We recognize that reproducibility may be tricky in some cases, in which case authors are welcome to describe the particular way they provide for reproducibility. In the case of closed-source models, it may be that access to the model is limited in some way (e.g., to registered users), but it should be possible for other researchers to have some path to reproducing or verifying the results.
+        \end{enumerate}
+    \end{itemize}
+
+
+\item {\bf Open access to data and code}
+    \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Abstract
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that paper does not include experiments requiring code.
+        \item Please see the NeurIPS code and data submission guidelines (\url{https://nips.cc/public/guides/CodeSubmissionPolicy}) for more details.
+        \item While we encourage the release of code and data, we understand that this might not be possible, so “No” is an acceptable answer. Papers cannot be rejected simply for not including code, unless this is central to the contribution (e.g., for a new open-source benchmark).
+        \item The instructions should contain the exact command and environment needed to run to reproduce the results. See the NeurIPS code and data submission guidelines (\url{https://nips.cc/public/guides/CodeSubmissionPolicy}) for more details.
+        \item The authors should provide instructions on data access and preparation, including how to access the raw data, preprocessed data, intermediate data, and generated data, etc.
+        \item The authors should provide scripts to reproduce all experimental results for the new proposed method and baselines. If only a subset of experiments are reproducible, they should state which ones are omitted from the script and why.
+        \item At submission time, to preserve anonymity, the authors should release anonymized versions (if applicable).
+        \item Providing as much information as possible in supplemental material (appended to the paper) is recommended, but including URLs to data and code is permitted.
+    \end{itemize}
+
+
+\item {\bf Experimental setting/details}
+    \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer, etc.) necessary to understand the results?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:experiments}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item The experimental setting should be presented in the core of the paper to a level of detail that is necessary to appreciate the results and make sense of them.
+        \item The full details can be provided either with the code, in appendix, or as supplemental material.
+    \end{itemize}
+
+\item {\bf Experiment statistical significance}
+    \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:experiments}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item The authors should answer "Yes" if the results are accompanied by error bars, confidence intervals, or statistical significance tests, at least for the experiments that support the main claims of the paper.
+        \item The factors of variability that the error bars are capturing should be clearly stated (for example, train/test split, initialization, random drawing of some parameter, or overall run with given experimental conditions).
+        \item The method for calculating the error bars should be explained (closed form formula, call to a library function, bootstrap, etc.)
+        \item The assumptions made should be given (e.g., Normally distributed errors).
+        \item It should be clear whether the error bar is the standard deviation or the standard error of the mean.
+        \item It is OK to report 1-sigma error bars, but one should state it. The authors should preferably report a 2-sigma error bar than state that they have a 96\% CI, if the hypothesis of Normality of errors is not verified.
+        \item For asymmetric distributions, the authors should be careful not to show in tables or figures symmetric error bars that would yield results that are out of range (e.g. negative error rates).
+        \item If error bars are reported in tables or plots, The authors should explain in the text how they were calculated and reference the corresponding figures or tables in the text.
+    \end{itemize}
+
+\item {\bf Experiments compute resources}
+    \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:experiments}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item The paper should indicate the type of compute workers CPU or GPU, internal cluster, or cloud provider, including relevant memory and storage.
+        \item The paper should provide the amount of compute required for each of the individual experimental runs as well as estimate the total compute. 
+        \item The paper should disclose whether the full research project required more compute than the experiments reported in the paper (e.g., preliminary or failed experiments that didn't make it into the paper). 
+    \end{itemize}
+    
+\item {\bf Code of ethics}
+    \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics \url{https://neurips.cc/public/EthicsGuidelines}?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Research conducted in this paper conform with the NeurIPS Code of Ethics in every respect
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the authors have not reviewed the NeurIPS Code of Ethics.
+        \item If the authors answer No, they should explain the special circumstances that require a deviation from the Code of Ethics.
+        \item The authors should make sure to preserve anonymity (e.g., if there is a special consideration due to laws or regulations in their jurisdiction).
+    \end{itemize}
+
+
+\item {\bf Broader impacts}
+    \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:conclude}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that there is no societal impact of the work performed.
+        \item If the authors answer NA or No, they should explain why their work has no societal impact or why the paper does not address societal impact.
+        \item Examples of negative societal impacts include potential malicious or unintended uses (e.g., disinformation, generating fake profiles, surveillance), fairness considerations (e.g., deployment of technologies that could make decisions that unfairly impact specific groups), privacy considerations, and security considerations.
+        \item The conference expects that many papers will be foundational research and not tied to particular applications, let alone deployments. However, if there is a direct path to any negative applications, the authors should point it out. For example, it is legitimate to point out that an improvement in the quality of generative models could be used to generate deepfakes for disinformation. On the other hand, it is not needed to point out that a generic algorithm for optimizing neural networks could enable people to train models that generate Deepfakes faster.
+        \item The authors should consider possible harms that could arise when the technology is being used as intended and functioning correctly, harms that could arise when the technology is being used as intended but gives incorrect results, and harms following from (intentional or unintentional) misuse of the technology.
+        \item If there are negative societal impacts, the authors could also discuss possible mitigation strategies (e.g., gated release of models, providing defenses in addition to attacks, mechanisms for monitoring misuse, mechanisms to monitor how a system learns from feedback over time, improving the efficiency and accessibility of ML).
+    \end{itemize}
+    
+\item {\bf Safeguards}
+    \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pretrained language models, image generators, or scraped datasets)?
+    \item[] Answer: \answerNA{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: The paper poses no risk for misuse
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper poses no such risks.
+        \item Released models that have a high risk for misuse or dual-use should be released with necessary safeguards to allow for controlled use of the model, for example by requiring that users adhere to usage guidelines or restrictions to access the model or implementing safety filters. 
+        \item Datasets that have been scraped from the Internet could pose safety risks. The authors should describe how they avoided releasing unsafe images.
+        \item We recognize that providing effective safeguards is challenging, and many papers do not require this, but we encourage authors to take this into account and make a best faith effort.
+    \end{itemize}
+
+\item {\bf Licenses for existing assets}
+    \item[] Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:experiments}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not use existing assets.
+        \item The authors should cite the original paper that produced the code package or dataset.
+        \item The authors should state which version of the asset is used and, if possible, include a URL.
+        \item The name of the license (e.g., CC-BY 4.0) should be included for each asset.
+        \item For scraped data from a particular source (e.g., website), the copyright and terms of service of that source should be provided.
+        \item If assets are released, the license, copyright information, and terms of use in the package should be provided. For popular datasets, \url{paperswithcode.com/datasets} has curated licenses for some datasets. Their licensing guide can help determine the license of a dataset.
+        \item For existing datasets that are re-packaged, both the original license and the license of the derived asset (if it has changed) should be provided.
+        \item If this information is not available online, the authors are encouraged to reach out to the asset's creators.
+    \end{itemize}
+
+\item {\bf New assets}
+    \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
+    \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Supplementary
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not release new assets.
+        \item Researchers should communicate the details of the dataset/code/model as part of their submissions via structured templates. This includes details about training, license, limitations, etc. 
+        \item The paper should discuss whether and how consent was obtained from people whose asset is used.
+        \item At submission time, remember to anonymize your assets (if applicable). You can either create an anonymized URL or include an anonymized zip file.
+    \end{itemize}
+
+\item {\bf Crowdsourcing and research with human subjects}
+    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)? 
+    \item[] Answer: \answerNA{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: The paper does not involve crowdscourcing nor research with human subjects
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.
+        \item Including this information in the supplemental material is fine, but if the main contribution of the paper involves human subjects, then as much detail as possible should be included in the main paper. 
+        \item According to the NeurIPS Code of Ethics, workers involved in data collection, curation, or other labor should be paid at least the minimum wage in the country of the data collector. 
+    \end{itemize}
+
+\item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}
+    \item[] Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?
+    \item[] Answer: \answerNA{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: The paper does not involve crowdsourcing nor research with human subjects
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.
+        \item Depending on the country in which research is conducted, IRB approval (or equivalent) may be required for any human subjects research. If you obtained IRB approval, you should clearly state this in the paper. 
+        \item We recognize that the procedures for this may vary significantly between institutions and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the guidelines for their institution. 
+        \item For initial submissions, do not include any information that would break anonymity (if applicable), such as the institution conducting the review.
+    \end{itemize}
+
+\item {\bf Declaration of LLM usage}
+    \item[] Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does not impact the core methodology, scientific rigorousness, or originality of the research, declaration is not required.
+    %this research? 
+    \item[] Answer: \answerNA{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
+    \item[] Justification: Refer to Section \ref{sec:methodology}
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the core method development in this research does not involve LLMs as any important, original, or non-standard components.
+        \item Please refer to our LLM policy (\url{https://neurips.cc/Conferences/2025/LLM}) for what should or should not be described.
+    \end{itemize}
+
+\end{enumerate}
+
+
+\end{document}

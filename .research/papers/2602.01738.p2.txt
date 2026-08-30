@@ -1,0 +1,62 @@
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                          Anonymous Author(s)
+
+
+specialized detectors, with the largest gains appearing in the most                heads or applying fine-tuning (e.g., LoRA) actively degrades
+challenging in-the-wild scenarios.                                                 the generic representations of VFMs. While these frozen
+   We further investigate why such a simple setup is so effective.                 generic features solve global detection, they remain blind to
+Rather than attributing the gains to forensic-specific architectural               pure VAE reconstruction and localized editing, urging future
+innovation, we argue that they are closely related to an emergent                  research to harness rather than over-engineer foundation
+property of large-scale pre-training on evolving web data. As visu-                models.
+alized in Figure 1, our analysis of the Common Crawl index reveals
+a rapid increase in generative content from major communities
+such as Civitai and Liblib starting in 2023. This trend suggests that
+modern VFMs are increasingly likely to encounter synthetic content
+during pre-training, and may therefore internalize useful cues for
+distinguishing generated images from real ones. We characterize
+this capability through two distinct manifestations of data exposure.       2   Related Works
+For Vision-Language Models, the co-occurrence of synthetic images           The development of AI-generated image (AIGI) detection has un-
+and textual descriptions can lead to explicit concept injection,            dergone a significant paradigm shift, evolving from hand-crafted
+where synthetic visuals become aligned with high-level forgery-             artifact analysis to the adaptation of large-scale foundation models.
+related concepts. For Self-Supervised Learning (SSL) models such               Early Artifact-Based Detection. Initial forensic methods fo-
+as DINOv3, the capability appears instead as implicit distribution          cused on identifying the low-level imperfections inherent to early
+fitting, where the model captures low-level regularities associated         generative architectures. Researchers found that upsampling oper-
+with the generative manifold through pre-training data exposure.            ations in GANs and CNNs often leave distinct footprints, such as
+   At the same time, our analysis also clarifies the boundaries of          checkerboard artifacts in the pixel space [17] or spectral anomalies
+this paradigm. We find that modern VFMs remain blind to pure                in the frequency domain [10]. Others exploited inconsistencies
+reconstruction artifacts and struggle with localized editing,               in color statistics [16] or noise residuals [9] to distinguish syn-
+while also suffering from noticeable degradation under aggressive           thetic content. While effective against specific generators, these
+real-world transmission and screen recapture. These findings sug-           hand-crafted features proved brittle against the rapid evolution of
+gest that large-scale pre-training has substantially improved the           generative models, particularly with the advent of Diffusion Models
+generalizability of global detection for fully synthetic content, but       which exhibit fundamentally different artifact patterns.
+that the localization of fine-grained manipulation remains an open             Data-Driven Specialized Detectors. With the dominance of
+challenge. Complementing these observations, our experiments                Diffusion Models, the focus shifted from detecting CNN-specific
+on backbone replacement and lightweight LoRA fine-tuning                    upsampling artifacts (e.g., checkerboard patterns in GANs [28]) to
+suggest that the dominant factor behind performance is still the            identifying the unique traces of the diffusion process. Researchers
+strength of the pretrained representation itself, while adaptation          proposed reconstructing input images to isolate generative errors:
+mainly serves to better exploit this foundation. Therefore, rather          DIRE [29] leverages the reconstruction residual from a pre-trained
+than viewing increasingly specialized detector design as the default        diffusion model as a forensic signal, while DRCT [4] refines this by
+path forward, we argue that future progress in AI forensics may             analyzing the discrepancies between real-real and fake-fake recon-
+depend more on how to preserve, harness, and refine the evolv-              struction pairs. Others focused on improving generalization: SAFE
+ing representations of foundation models for fine-grained forensic          [13] introduces artifact-preserving augmentations to decouple se-
+reasoning.                                                                  mantic content from forensic traces. notably, DDA [6] targets the
+   In summary, our main contributions are:                                  shared VAE decoder inherent to Latent Diffusion Models, explicitly
+                                                                            aligning the detector with VAE reconstruction patterns to achieve
+     • We show that frozen features from modern Vision Foun-                broader generalization across different LDM-based generators.
+       dation Models, combined with a lightweight classifier, con-             The Foundation Model Era. The introduction of UnivFD [18]
+       stitute a remarkably strong baseline for generalizable AIGI          marked a pivotal turning point. Ojha et al. revealed that training
+       detection. Across standard benchmarks, recent unseen gener-          a linear layer on top of the frozen feature space of a pre-trained
+       ators, and challenging in-the-wild distributions, this simple        Vision-Language Model (specifically CLIP [20]) yields significantly
+       setup consistently matches or outperforms recent specialized         better generalization than training CNNs from scratch. This dis-
+       detectors, with especially large gains in realistic scenarios.       covery spurred a wave of research leveraging Vision Foundation
+     • We provide converging evidence that this capability is closely       Models (VFMs) as backbones. Subsequent works, such as Effort[32],
+       related to pre-training data exposure rather than forensic-          AIDE [31], OMAT[34] and DDA[6], have explored various strate-
+       specific architectural design. In particular, we identify two        gies to adapt CLIP or DINOv2 [19] for forensics, including prompt
+       complementary manifestations: semantic alignment with                tuning, adapter modules, fusing frequency-domain information
+       forgery-related concepts in Vision-Language Models, and              and training hard samples. These methods currently represent the
+       implicit discrimination of generative distributions in Self-         state-of-the-art, yet as our experiments show, they still struggle to
+       Supervised Learning models.                                          maintain robustness in unconstrained, in-the-wild scenarios com-
+     • We validate the “Bitter Lesson” in AI forensics and delin-           pared to the raw capabilities of the latest VFMs. (See Appendix for
+       eate the boundaries of this paradigm. Through rigorous               a comprehensive survey of the legacy backbones still prevalent in
+       ablation, we demonstrate that attaching complex forensic             these recent methods.)
+                                                                        2
+

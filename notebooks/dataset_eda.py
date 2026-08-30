@@ -2,6 +2,7 @@
 # dependencies = [
 #     "altair>=5.5",
 #     "marimo",
+#     "numpy==2.5.2",
 #     "pandas>=2.3",
 #     "pillow>=11.3",
 # ]
@@ -13,13 +14,17 @@ import marimo
 __generated_with = "0.24.0"
 app = marimo.App(width="medium")
 
-with app.setup:
+with app.setup(hide_code=True):
+    import hashlib
+    import io
     import json
     from pathlib import Path
 
     import altair as alt
     import marimo as mo
+    import numpy as np
     import pandas as pd
+    from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 
 @app.cell(hide_code=True)
@@ -27,14 +32,14 @@ def _():
     mo.md("""
     # See the data before modeling it
 
-    Visual EDA for **CIFAKE**, **SID Set**, and **WildFake**. This notebook stays intentionally close to the published pixels: dataset scale, class/source makeup, dimensions, file formats, and image galleries.
+    Visual EDA for **CIFAKE**, **SID Set**, and **WildFake**: dataset scale, class/source makeup, dimensions, file formats, image galleries, and qualitative robustness-transform inspection.
 
-    > **Boundary for this phase:** no FFT, DCT, high-pass filters, spectral plots, augmentations, or model features yet. First use your eyes and identify dataset shortcuts, source differences, and labeling caveats.
+    > **Boundary for this phase:** use your eyes to identify dataset shortcuts, source differences, labeling caveats, and which documented redistribution transforms obscure visible cues. Frequency analysis, model features, training, and quantitative robustness claims remain out of scope here.
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def paths():
     repo_root = Path.cwd()
     index_path = repo_root / "data/samples/index.csv"
@@ -47,7 +52,7 @@ def paths():
     return index_path, repo_root, summary_path
 
 
-@app.cell
+@app.cell(hide_code=True)
 def load_data(index_path, summary_path):
     sample_index = pd.read_csv(index_path).assign(
         megapixels=lambda frame: frame["width"] * frame["height"] / 1_000_000,
@@ -60,7 +65,7 @@ def load_data(index_path, summary_path):
     return dataset_summary, sample_index
 
 
-@app.cell
+@app.cell(hide_code=True)
 def overview(dataset_summary, sample_index):
     _published = dataset_summary["published_datasets"]
     _local_counts = sample_index.groupby("dataset").size().to_dict()
@@ -136,11 +141,10 @@ def overview(dataset_summary, sample_index):
         ),
         mo.ui.table(wildfake_local_coverage, selection=None, pagination=False),
     ])
-
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def controls(sample_index):
     _all_datasets = ["All"] + sorted(sample_index["dataset"].unique().tolist())
     _all_labels = ["All"] + sorted(sample_index["label"].unique().tolist())
@@ -184,7 +188,6 @@ def controls(sample_index):
         ),
     ])
     control_panel
-
     return (
         dataset_control,
         family_control,
@@ -199,7 +202,7 @@ def controls(sample_index):
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def filtered_data(
     dataset_control,
     family_control,
@@ -225,11 +228,10 @@ def filtered_data(
     filtered = _filtered.reset_index(drop=True)
 
     mo.md(f"**{len(filtered):,} local images match the current controls.**")
-
     return (filtered,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def breakdown(filtered):
     breakdown_data = (
         filtered.groupby(
@@ -257,11 +259,10 @@ def breakdown(filtered):
         mo.md("Look for label/source coupling: if a source or model appears under only one label, a detector may learn dataset identity rather than AI-generation evidence."),
         breakdown_chart if len(breakdown_data) else mo.callout("No rows match the controls.", kind="warn"),
     ])
-
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def dimensions(filtered):
     dimension_scatter = (
         alt.Chart(filtered)
@@ -303,7 +304,7 @@ def dimensions(filtered):
     return
 
 
-@app.function
+@app.function(hide_code=True)
 def make_image_card(row, root):
     caption = (
         f"**{row['dataset']} · {row['label']} · {row['split']}**<br>"
@@ -313,12 +314,12 @@ def make_image_card(row, root):
     )
     image_bytes = (root / row["local_path"]).read_bytes()
     return mo.vstack([
-        mo.image(image_bytes, width=190),
+        mo.image(image_bytes, width=220),
         mo.md(caption),
     ])
 
 
-@app.cell
+@app.cell(hide_code=True)
 def gallery(
     dataset_control,
     family_control,
@@ -478,11 +479,718 @@ def gallery(
     ])
 
     gallery_view
+    return
+
+
+@app.cell(hide_code=True)
+def transform_helpers():
+    TRANSFORM_FAMILIES = {
+        "JPEG compression": [
+            ("JPEG quality 90", ("jpeg", 90)),
+            ("JPEG quality 70", ("jpeg", 70)),
+            ("JPEG quality 50", ("jpeg", 50)),
+            ("JPEG quality 30", ("jpeg", 30)),
+        ],
+        "Gaussian blur": [
+            ("Gaussian blur · σ 0.5", ("blur", 0.5)),
+            ("Gaussian blur · σ 1.0", ("blur", 1.0)),
+            ("Gaussian blur · σ 2.0", ("blur", 2.0)),
+        ],
+        "Resize then upscale": [
+            ("Resize 0.5× → upscale", ("resize", 0.5)),
+            ("Resize 0.25× → upscale", ("resize", 0.25)),
+        ],
+        "Gaussian noise": [
+            ("Gaussian noise · σ 0.02", ("noise", 0.02)),
+            ("Gaussian noise · σ 0.05", ("noise", 0.05)),
+            ("Gaussian noise · σ 0.10", ("noise", 0.10)),
+        ],
+        "Color jitter": [
+            ("Brightness −20%", ("brightness", 0.8)),
+            ("Brightness +20%", ("brightness", 1.2)),
+            ("Contrast −20%", ("contrast", 0.8)),
+            ("Contrast +20%", ("contrast", 1.2)),
+            ("Saturation −20%", ("saturation", 0.8)),
+            ("Saturation +20%", ("saturation", 1.2)),
+        ],
+        "Center crop": [
+            ("Center crop · retain 80%", ("crop", 0.8)),
+        ],
+    }
+
+    TRANSFORM_OPTIONS = {"None": None}
+    for _family_variants in TRANSFORM_FAMILIES.values():
+        for _variant_label, _variant_spec in _family_variants:
+            TRANSFORM_OPTIONS[_variant_label] = _variant_spec
+
+    CHAIN_PRESETS = {
+        "Manual": None,
+        "Light redistribution": [("resize", 0.5), ("jpeg", 70)],
+        "Heavy redistribution": [("resize", 0.25), ("blur", 1.0), ("jpeg", 30)],
+        "Noisy repost": [("noise", 0.02), ("resize", 0.5), ("jpeg", 50)],
+        "Filtered repost": [("brightness", 1.2), ("contrast", 1.2), ("saturation", 1.2), ("resize", 0.5), ("jpeg", 70)],
+        "Crop and repost": [("crop", 0.8), ("resize", 0.5), ("jpeg", 50)],
+    }
+
+
+    def load_eda_image(path):
+        with Image.open(path) as _source:
+            return ImageOps.exif_transpose(_source).convert("RGB")
+
+
+    def transform_spec_label(spec):
+        for _label, _candidate in TRANSFORM_OPTIONS.items():
+            if _candidate == spec:
+                return _label
+        return f"{spec[0]} · {spec[1]}"
+
+
+    def stable_transform_seed(path_key, spec, occurrence, base_seed):
+        _payload = (
+            f"{path_key}\0{spec[0]}\0{spec[1]}\0{occurrence}\0{int(base_seed)}"
+        ).encode("utf-8")
+        return int.from_bytes(hashlib.sha256(_payload).digest()[:8], "big")
+
+
+    def apply_robustness_transform(image, spec, path_key, base_seed, occurrence=0):
+        _operation, _value = spec
+        _image = image.convert("RGB")
+
+        if _operation == "jpeg":
+            _buffer = io.BytesIO()
+            _image.save(
+                _buffer,
+                format="JPEG",
+                quality=int(_value),
+                subsampling=2,
+                optimize=False,
+                progressive=False,
+            )
+            _buffer.seek(0)
+            with Image.open(_buffer) as _decoded:
+                return _decoded.convert("RGB").copy()
+
+        if _operation == "blur":
+            return _image.filter(ImageFilter.GaussianBlur(radius=float(_value)))
+
+        if _operation == "resize":
+            _width, _height = _image.size
+            _down_size = (
+                max(1, int(round(_width * float(_value)))),
+                max(1, int(round(_height * float(_value)))),
+            )
+            return _image.resize(_down_size, Image.Resampling.LANCZOS).resize(
+                (_width, _height), Image.Resampling.LANCZOS
+            )
+
+        if _operation == "noise":
+            _pixels = np.asarray(_image, dtype=np.float32) / 255.0
+            _rng = np.random.default_rng(
+                stable_transform_seed(path_key, spec, occurrence, base_seed)
+            )
+            _noise = _rng.normal(0.0, float(_value), size=_pixels.shape)
+            _noisy = np.clip(_pixels + _noise, 0.0, 1.0)
+            return Image.fromarray(np.rint(_noisy * 255.0).astype(np.uint8), mode="RGB")
+
+        if _operation == "brightness":
+            return ImageEnhance.Brightness(_image).enhance(float(_value))
+        if _operation == "contrast":
+            return ImageEnhance.Contrast(_image).enhance(float(_value))
+        if _operation == "saturation":
+            return ImageEnhance.Color(_image).enhance(float(_value))
+
+        if _operation == "crop":
+            _width, _height = _image.size
+            _crop_width = max(1, int(round(_width * float(_value))))
+            _crop_height = max(1, int(round(_height * float(_value))))
+            _left = (_width - _crop_width) // 2
+            _top = (_height - _crop_height) // 2
+            return _image.crop((_left, _top, _left + _crop_width, _top + _crop_height))
+
+        raise ValueError(f"Unknown transform operation: {_operation}")
+
+
+    def apply_transform_chain(image, specs, path_key, base_seed):
+        _current = image
+        _stages = [("Original", _current)]
+        _occurrences = {}
+        for _spec in specs:
+            _key = repr(_spec)
+            _occurrence = _occurrences.get(_key, 0)
+            _occurrences[_key] = _occurrence + 1
+            _current = apply_robustness_transform(
+                _current, _spec, path_key, base_seed, _occurrence
+            )
+            _stages.append((transform_spec_label(_spec), _current))
+        return _stages
+
+
+    def image_to_png_bytes(image):
+        _buffer = io.BytesIO()
+        image.save(_buffer, format="PNG")
+        return _buffer.getvalue()
+
+
+    def make_transform_card(image, stage_label, display_mode):
+        _width, _height = image.size
+        _display_image = image
+        _display_note = "whole image"
+        _image_style = {"max-width": "100%", "height": "auto"}
+        _render_width = 360
+
+        if display_mode == "Center detail":
+            _side = max(1, min(128, _width, _height))
+            _left = (_width - _side) // 2
+            _top = (_height - _side) // 2
+            _display_image = image.crop((_left, _top, _left + _side, _top + _side))
+            _display_note = f"center {_side}×{_side}px detail; display-only zoom"
+            _render_width = 384
+        elif display_mode == "Pixel zoom":
+            _side = max(1, min(64, _width, _height))
+            _left = (_width - _side) // 2
+            _top = (_height - _side) // 2
+            _display_image = image.crop((_left, _top, _left + _side, _top + _side))
+            _display_note = f"center {_side}×{_side}px nearest-neighbor display zoom"
+            _image_style["image-rendering"] = "pixelated"
+            _render_width = 384
+
+        return mo.vstack([
+            mo.image(
+                image_to_png_bytes(_display_image),
+                width=_render_width,
+                alt=f"{stage_label}; {_width} by {_height} pixels",
+                style=_image_style,
+            ),
+            mo.md(f"**{stage_label}**<br>{_width}×{_height}px · {_display_note}"),
+        ]).style({"min-width": "380px"})
+
+
+    def make_transform_strip(stages, display_mode):
+        return mo.hstack(
+            [
+                make_transform_card(_stage_image, _stage_label, display_mode)
+                for _stage_label, _stage_image in stages
+            ],
+            justify="start",
+            align="start",
+            wrap=False,
+            gap=1.0,
+        ).style({"overflow-x": "auto", "padding-bottom": "0.75rem"})
+
+
+    def transform_item_title(item, position, hide_labels):
+        if hide_labels:
+            return f"Image {'AB'[position]} · labels hidden"
+        if item["row"]["label"] == "real":
+            return "Authentic · binary negative"
+        return "Pure-generated · binary positive"
+
+
+    return (
+        CHAIN_PRESETS,
+        TRANSFORM_FAMILIES,
+        TRANSFORM_OPTIONS,
+        apply_robustness_transform,
+        apply_transform_chain,
+        load_eda_image,
+        make_transform_strip,
+        transform_item_title,
+        transform_spec_label,
+    )
+
+
+@app.cell(hide_code=True)
+def transform_controls(sample_index, seed_control):
+    _pair_choices = {}
+    for _pair_dataset in ["SID Set", "WildFake", "CIFAKE"]:
+        _dataset_rows = sample_index[sample_index["dataset"] == _pair_dataset]
+        _real_pool = _dataset_rows[_dataset_rows["label"] == "real"].copy()
+        _fake_pool = _dataset_rows[
+            _dataset_rows["label"].isin(["fake", "full_synthetic"])
+        ].copy()
+        if _real_pool.empty or _fake_pool.empty:
+            continue
+
+        _fake_pool["_pixel_count"] = _fake_pool["width"] * _fake_pool["height"]
+        _fake_pool = _fake_pool.sort_values(
+            ["_pixel_count", "generation_model", "local_path"],
+            ascending=[False, True, True],
+        )
+        _model_first = _fake_pool.drop_duplicates("generation_model", keep="first")
+        _remaining = _fake_pool.drop(index=_model_first.index)
+        _ranked_fakes = pd.concat([_model_first, _remaining]).head(8)
+
+        _real_pool["_pixel_count"] = _real_pool["width"] * _real_pool["height"]
+        for _pair_number, (_fake_index, _fake_row) in enumerate(
+            _ranked_fakes.iterrows(), start=1
+        ):
+            _source_split_matches = _real_pool[
+                (_real_pool["source_dataset"] == _fake_row["source_dataset"])
+                & (_real_pool["split"] == _fake_row["split"])
+            ]
+            _source_matches = _real_pool[
+                _real_pool["source_dataset"] == _fake_row["source_dataset"]
+            ]
+            _split_matches = _real_pool[_real_pool["split"] == _fake_row["split"]]
+            if not _source_split_matches.empty:
+                _real_candidates = _source_split_matches
+                _match_note = "source/split matched"
+            elif not _source_matches.empty:
+                _real_candidates = _source_matches
+                _match_note = "source matched"
+            elif not _split_matches.empty:
+                _real_candidates = _split_matches
+                _match_note = "split matched"
+            else:
+                _real_candidates = _real_pool
+                _match_note = "dataset matched"
+
+            _real_candidates = _real_candidates.sort_values(
+                ["_pixel_count", "local_path"], ascending=[False, True]
+            )
+            _real_index = _real_candidates.index[
+                (_pair_number - 1) % len(_real_candidates)
+            ]
+            _caption = (
+                f"{_pair_dataset} · {_fake_row['generation_model']} · "
+                f"{int(_fake_row['width'])}×{int(_fake_row['height'])} · "
+                f"pair {_pair_number} ({_match_note})"
+            )
+            _pair_choices[_caption] = [int(_real_index), int(_fake_index)]
+
+    transform_pair_count = len(_pair_choices)
+    _pair_default = next(iter(_pair_choices)) if _pair_choices else None
+    transform_pair_control = mo.ui.dropdown(
+        _pair_choices if _pair_choices else {"No binary pairs available": []},
+        value=_pair_default if _pair_default is not None else "No binary pairs available",
+        label="Dataset/model pair · larger generated images first",
+        searchable=True,
+        full_width=True,
+        disabled=not _pair_choices,
+    )
+    transform_seed_control = mo.ui.slider(
+        0, 100, step=1, value=int(seed_control.value), show_value=True,
+        label="Transform seed",
+    )
+    transform_display_control = mo.ui.dropdown(
+        ["Fitted whole image", "Center detail", "Pixel zoom"],
+        value="Fitted whole image",
+        label="Display mode",
+    )
+    transform_hide_labels_control = mo.ui.checkbox(
+        value=False,
+        label="Hide class labels and metadata",
+    )
+
+    transform_global_controls = mo.vstack([
+        transform_pair_control,
+        mo.hstack(
+            [
+                transform_seed_control,
+                transform_display_control,
+                transform_hide_labels_control,
+            ],
+            wrap=True,
+            justify="start",
+        ),
+    ])
+
+    return (
+        transform_display_control,
+        transform_global_controls,
+        transform_hide_labels_control,
+        transform_pair_control,
+        transform_pair_count,
+        transform_seed_control,
+    )
+
+
+@app.cell(hide_code=True)
+def selected_transform_pair(
+    load_eda_image,
+    repo_root,
+    sample_index,
+    transform_hide_labels_control,
+    transform_item_title,
+    transform_pair_control,
+    transform_pair_count,
+):
+    selected_transform_items = []
+    if transform_pair_count and transform_pair_control.value:
+        _selected_indices = [int(_index) for _index in transform_pair_control.value]
+        _selected_rows = sample_index.loc[_selected_indices]
+        for _position, (_, _selected_row) in enumerate(_selected_rows.iterrows()):
+            selected_transform_items.append({
+                "row": _selected_row,
+                "image": load_eda_image(repo_root / _selected_row["local_path"]),
+                "path_key": str(_selected_row["local_path"]),
+                "position": _position,
+            })
+
+    if not selected_transform_items:
+        transform_pair_summary = mo.callout(
+            "No authentic/pure-generated pair is available in the local EDA sample.",
+            kind="warn",
+        )
+    elif transform_hide_labels_control.value:
+        transform_pair_summary = mo.callout(
+            "Class labels and source metadata are hidden to reduce expectancy bias. Reveal them after making a visual judgment.",
+            kind="info",
+        )
+    else:
+        _summary_lines = []
+        for _item in selected_transform_items:
+            _row = _item["row"]
+            _summary_lines.append(
+                f"- **{transform_item_title(_item, _item['position'], False)}:** "
+                f"{_row['dataset']} · {_row['split']} · model {_row['generation_model']} · "
+                f"family {_row['generator_family']} · source {_row['source_dataset']} · "
+                f"{int(_row['width'])}×{int(_row['height'])}"
+            )
+        transform_pair_summary = mo.md("\n".join(_summary_lines))
+
+    return selected_transform_items, transform_pair_summary
+
+
+@app.cell(hide_code=True)
+def atlas_controls(TRANSFORM_FAMILIES):
+    atlas_family_control = mo.ui.dropdown(
+        list(TRANSFORM_FAMILIES),
+        value="JPEG compression",
+        label="Transform family",
+    )
+    atlas_controls_panel = mo.hstack(
+        [atlas_family_control], wrap=True, justify="start"
+    )
+    return atlas_controls_panel, atlas_family_control
+
+
+@app.cell(hide_code=True)
+def transform_atlas(
+    TRANSFORM_FAMILIES,
+    apply_robustness_transform,
+    atlas_controls_panel,
+    atlas_family_control,
+    make_transform_strip,
+    selected_transform_items,
+    transform_display_control,
+    transform_hide_labels_control,
+    transform_item_title,
+    transform_seed_control,
+):
+    if not selected_transform_items:
+        atlas_section = mo.callout(
+            "No paired images are available for the transform atlas.", kind="warn"
+        )
+    else:
+        _atlas_rows = []
+        _atlas_variants = TRANSFORM_FAMILIES[atlas_family_control.value]
+        for _item in selected_transform_items:
+            _atlas_stages = [("Original", _item["image"])]
+            for _variant_label, _variant_spec in _atlas_variants:
+                _atlas_stages.append((
+                    _variant_label,
+                    apply_robustness_transform(
+                        _item["image"],
+                        _variant_spec,
+                        _item["path_key"],
+                        transform_seed_control.value,
+                    ),
+                ))
+            _atlas_rows.append(mo.vstack([
+                mo.md(
+                    f"### {transform_item_title(_item, _item['position'], transform_hide_labels_control.value)}"
+                ),
+                make_transform_strip(_atlas_stages, transform_display_control.value),
+            ]))
+
+        atlas_section = mo.vstack([
+            atlas_controls_panel,
+            mo.md(
+                "Each row repeats the unchanged original, then applies one documented "
+                "severity directly to that original. Scroll horizontally to compare pixels."
+            ),
+            *_atlas_rows,
+        ]).style({
+            "max-height": "540px",
+            "overflow-y": "auto",
+            "padding-right": "0.5rem",
+        })
+    return (atlas_section,)
+
+
+@app.cell(hide_code=True)
+def chain_controls(CHAIN_PRESETS, TRANSFORM_OPTIONS):
+    chain_preset_control = mo.ui.dropdown(
+        list(CHAIN_PRESETS),
+        value="Manual",
+        label="Exploratory preset",
+    )
+    chain_step_1_control = mo.ui.dropdown(
+        list(TRANSFORM_OPTIONS),
+        value="Resize 0.5× → upscale",
+        label="Step 1",
+    )
+    chain_step_2_control = mo.ui.dropdown(
+        list(TRANSFORM_OPTIONS),
+        value="JPEG quality 70",
+        label="Step 2",
+    )
+    chain_step_3_control = mo.ui.dropdown(
+        list(TRANSFORM_OPTIONS),
+        value="None",
+        label="Step 3",
+    )
+    chain_step_4_control = mo.ui.dropdown(
+        list(TRANSFORM_OPTIONS),
+        value="None",
+        label="Step 4",
+    )
+    chain_step_controls = [
+        chain_step_1_control,
+        chain_step_2_control,
+        chain_step_3_control,
+        chain_step_4_control,
+    ]
+    chain_controls_panel = mo.vstack([
+        mo.hstack([chain_preset_control], wrap=True, justify="start"),
+        mo.hstack(chain_step_controls, wrap=True, justify="start"),
+    ])
+    return chain_controls_panel, chain_preset_control, chain_step_controls
+
+
+@app.cell(hide_code=True)
+def transform_chain(
+    CHAIN_PRESETS,
+    TRANSFORM_OPTIONS,
+    apply_transform_chain,
+    chain_controls_panel,
+    chain_preset_control,
+    chain_step_controls,
+    make_transform_strip,
+    selected_transform_items,
+    transform_display_control,
+    transform_hide_labels_control,
+    transform_item_title,
+    transform_seed_control,
+    transform_spec_label,
+):
+    if chain_preset_control.value == "Manual":
+        _chain_specs = [
+            TRANSFORM_OPTIONS[_control.value]
+            for _control in chain_step_controls
+            if TRANSFORM_OPTIONS[_control.value] is not None
+        ]
+        _chain_source_note = "Manual chain"
+    else:
+        _chain_specs = CHAIN_PRESETS[chain_preset_control.value]
+        _chain_source_note = f"Exploratory preset: {chain_preset_control.value}"
+
+    _chain_description = (
+        " → ".join(transform_spec_label(_spec) for _spec in _chain_specs)
+        if _chain_specs else "No transforms selected"
+    )
+
+    if not selected_transform_items:
+        chain_section = mo.callout(
+            "No paired images are available for the chain explorer.", kind="warn"
+        )
+    else:
+        _chain_rows = []
+        for _item in selected_transform_items:
+            _chain_stages = apply_transform_chain(
+                _item["image"],
+                _chain_specs,
+                _item["path_key"],
+                transform_seed_control.value,
+            )
+            _chain_rows.append(mo.vstack([
+                mo.md(
+                    f"### {transform_item_title(_item, _item['position'], transform_hide_labels_control.value)}"
+                ),
+                make_transform_strip(_chain_stages, transform_display_control.value),
+            ]))
+
+        chain_section = mo.vstack([
+            chain_controls_panel,
+            mo.callout(
+                f"**{_chain_source_note}:** {_chain_description}. Presets are qualitative "
+                "EDA hypotheses, not organizer-defined evaluation pipelines.",
+                kind="info",
+            ),
+            *_chain_rows,
+        ]).style({
+            "max-height": "540px",
+            "overflow-y": "auto",
+            "padding-right": "0.5rem",
+        })
+    return (chain_section,)
+
+
+@app.cell(hide_code=True)
+def order_controls(TRANSFORM_OPTIONS):
+    _order_option_labels = [
+        _label for _label, _spec in TRANSFORM_OPTIONS.items() if _spec is not None
+    ]
+    order_a_control = mo.ui.dropdown(
+        _order_option_labels,
+        value="Resize 0.5× → upscale",
+        label="Operation A",
+    )
+    order_b_control = mo.ui.dropdown(
+        _order_option_labels,
+        value="JPEG quality 70",
+        label="Operation B",
+    )
+    order_controls_panel = mo.hstack(
+        [order_a_control, order_b_control],
+        wrap=True,
+        justify="start",
+    )
+    return order_a_control, order_b_control, order_controls_panel
+
+
+@app.cell(hide_code=True)
+def transform_order(
+    TRANSFORM_OPTIONS,
+    apply_robustness_transform,
+    make_transform_strip,
+    order_a_control,
+    order_b_control,
+    order_controls_panel,
+    selected_transform_items,
+    transform_display_control,
+    transform_hide_labels_control,
+    transform_item_title,
+    transform_seed_control,
+):
+    _order_a_spec = TRANSFORM_OPTIONS[order_a_control.value]
+    _order_b_spec = TRANSFORM_OPTIONS[order_b_control.value]
+    _order_second_occurrence = 1 if _order_a_spec == _order_b_spec else 0
+
+    if not selected_transform_items:
+        order_section = mo.callout(
+            "No paired images are available for the order comparison.", kind="warn"
+        )
+    else:
+        _order_rows = []
+        for _item in selected_transform_items:
+            _original = _item["image"]
+            _path_key = _item["path_key"]
+            _order_a_image = apply_robustness_transform(
+                _original,
+                _order_a_spec,
+                _path_key,
+                transform_seed_control.value,
+                0,
+            )
+            _order_b_image = apply_robustness_transform(
+                _original,
+                _order_b_spec,
+                _path_key,
+                transform_seed_control.value,
+                0,
+            )
+            _order_ab_image = apply_robustness_transform(
+                _order_a_image,
+                _order_b_spec,
+                _path_key,
+                transform_seed_control.value,
+                _order_second_occurrence,
+            )
+            _order_ba_image = apply_robustness_transform(
+                _order_b_image,
+                _order_a_spec,
+                _path_key,
+                transform_seed_control.value,
+                _order_second_occurrence,
+            )
+            _order_stages = [
+                ("Original", _original),
+                (f"A only · {order_a_control.value}", _order_a_image),
+                ("A → B", _order_ab_image),
+                (f"B only · {order_b_control.value}", _order_b_image),
+                ("B → A", _order_ba_image),
+            ]
+            _order_rows.append(mo.vstack([
+                mo.md(
+                    f"### {transform_item_title(_item, _item['position'], transform_hide_labels_control.value)}"
+                ),
+                make_transform_strip(_order_stages, transform_display_control.value),
+            ]))
+
+        order_section = mo.vstack([
+            order_controls_panel,
+            mo.md(
+                f"Compare **A = {order_a_control.value}** and **B = {order_b_control.value}**. "
+                "For stochastic operations, the same image uses the same operation-specific "
+                "random draw in both orders; the two classes use independent draws."
+            ),
+            *_order_rows,
+        ]).style({
+            "max-height": "540px",
+            "overflow-y": "auto",
+            "padding-right": "0.5rem",
+        })
+    return (order_section,)
+
+
+@app.cell(hide_code=True)
+def transform_lab(
+    atlas_section,
+    chain_section,
+    order_section,
+    transform_global_controls,
+    transform_pair_summary,
+):
+    transform_lab_tabs = mo.ui.tabs(
+        {
+            "Single-transform atlas": atlas_section,
+            "Sequential chain": chain_section,
+            "Order comparison": order_section,
+        },
+        value="Single-transform atlas",
+        lazy=True,
+    )
+
+    transform_lab_view = mo.vstack([
+        mo.md("## Robustness transform lab"),
+        mo.md(
+            "Choose an authentic/generated pair independently of the main gallery filters, "
+            "then judge—qualitatively—whether documented redistribution transforms obscure "
+            "visible cues. The picker includes up to eight pairs each from SID Set, WildFake, "
+            "and CIFAKE. It prioritizes larger generated images and model diversity as a "
+            "navigation heuristic, not as a human-rated realism score. Display zoom never "
+            "changes pipeline pixels."
+        ),
+        transform_global_controls,
+        transform_pair_summary,
+        mo.callout(
+            "**Explicit EDA semantics.** Sources are EXIF-transposed and converted to RGB. "
+            "JPEG uses fixed 4:2:0 subsampling, no optimization/progressive encoding, and is "
+            "decoded before the next step. Pillow Gaussian radius is treated as pixel σ. "
+            "Resize uses LANCZOS downsampling and upsampling back to the pre-step size. "
+            "Noise σ is applied in clipped [0,1] RGB with a stable per-image seed. Color "
+            "jitter varies brightness, contrast, or saturation independently at 0.8/1.2. "
+            "Center crop retains 80% of each spatial dimension and is not resized back. "
+            "The brief leaves transform composition and several implementation details open, "
+            "so these are reproducible notebook choices rather than organizer-confirmed rules.",
+            kind="info",
+        ),
+        transform_lab_tabs,
+        mo.callout(
+            "This is qualitative EDA, not evidence of detector robustness. Inspect several "
+            "pairs, seeds, datasets, resolutions, and generator families before forming a hypothesis.",
+            kind="warn",
+        ),
+    ])
+
+    transform_lab_view
 
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def records(filtered):
     record_table = filtered[
         [
@@ -496,7 +1204,6 @@ def records(filtered):
         mo.md("## Inspect the records"),
         mo.ui.table(record_table, selection="multi", pagination=True, page_size=15),
     ])
-
     return
 
 
@@ -515,10 +1222,9 @@ def boundary():
         mo.md("""
     ### Deliberately deferred
 
-    Only after reviewing these views should we decide which frequency representations or filters are worth testing. This notebook currently computes **none**.
+    The robustness lab performs only the six documented pixel-transform families for **qualitative inspection**. This notebook still computes no FFT, DCT, high-pass or spectral features, trains no detector, and makes no quantitative robustness claim.
     """),
     ])
-
     return
 
 

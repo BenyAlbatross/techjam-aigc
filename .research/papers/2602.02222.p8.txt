@@ -1,0 +1,109 @@
+                         160     Inference Time (s)
+                                                                                                                                   100
+                                                                                                                                                                                                                Real                                                            Generated
+
+
+
+
+                                                                                                                                    Detection Accuracy (B.Acc %)
+                                 Standard Benchmark                                                                       143.0s   90
+                         140     In-the-wild Benchmark
+ Inference Latency (s)
+
+
+
+
+                                                                                                                                                                       Image
+                                                                                                                                   80
+                         120
+                                                                                                                                   70
+                         100                                                                                                       60
+                         80                                                                                   69.9s                50
+                                                                                                     65.6s
+                                                                                           59.9s
+
+
+
+
+                                                                                                                                                                       Residual Map
+                         60                                                        49.9s                                           40
+                         40                                        28.9s   30.4s                                                   30
+                                                           19.6s
+                         20              8.7s    11.7s                                                                             20
+                                7.2s
+                          0                                                                                                        10
+                                                         DRC UnivFD C2P-CLIP MIRROR atForme
+                                                                                            r                               e
+                               NPR     SAFE Aligned         T                                      AIDE      DDA      B-Fre
+                                                                                   F
+
+                                                                                                                                                                       Figure 7: Feature reconstruction residuals. Real images
+Figure 6: Inference efficiency comparison. Time per 1,000
+                                                                                                                                                                       produce sparse, low-magnitude residuals due to effective man-
+samples on an Nvidia Tesla V100 GPU. MIRROR’s inference                                                                                                                               Ground Truth: Real   Ground Truth: Real         Ground Truth: Real      GroundGround
+                                                                                                                                                                                                                                                                     Truth: Truth:
+                                                                                                                                                                                                                                                                            Fake Real
+
+                                                                                                                                                                       ifold projection, while generated images show pronounced
+                                                                                                                                                                                                                       Ground Truth: Fake         Ground Truth: Fake      Ground Truth: Fake
+
+speed is highly competitive among existing detectors.
+                                                                                                                                                                       residual activations in regions that violate internal priors.
+ceptible to human observers (see Sec. 5).As reported in Ta-
+                                                                                                                                                                       real samples, reconstructed features F̂ closely match input
+ble 8, We observe that detectors relying on low-level cues
+                                                                                                                                                                       features F , yielding sparse, low-magnitude residuals overall.
+perform poorly across all generators, while detectors based
+                                                                                                                                                                       In contrast, generated images produce pronounced residual
+on pretrained priors achieve only limited improvements and
+                                                                                                                                                                       activations, typically concentrated in semantically complex
+still struggle on the human-imperceptible subset. In contrast,
+                                                                                                                                                                       regions. This pattern reflects human-like reference-based veri-
+MIRROR achieves a balanced accuracy of up to 89.6% on
+                                                                                                                                                                       fication and provides interpretable evidence for the model’s
+the original dataset, surpassing both lay users (76.9%) and
+                                                                                                                                                                       decisions.
+visual experts (88.3%). Moreover, MIRROR maintains a high
+                                                                                                                                                                          Computational Efficiency. We evaluate MIRROR’s infer-
+balanced accuracy of 89.5% on the human-imperceptible sub-
+                                                                                                                                                                       ence efficiency relative to standard detectors. Despite the dis-
+set. These results highlight the core value of our approach,
+                                                                                                                                                                       crete memory bank and reference reconstructor, the overhead
+demonstrating its effectiveness as an assistive tool for detect-
+                                                                                                                                                                       is minimal since inference is dominated by the DINOv3-large
+ing generative threats that evade human perceptual scrutiny.
+                                                                                                                                                                       backbone. On a single Nvidia Tesla V100 GPU, MIRROR
+                                                                                                                                                                       achieves 20.03 FPS, processing 1,000 samples in 49.91 sec-
+6.3                            Ablation Study and Analysis                                                                                                             onds. As shown in Fig. 6, this performance is competitive with
+Impact of Capacity K and Sparsity top-k. As shown in                                                                                                                   black-box detectors, demonstrating that MIRROR framework
+Fig. 5, performance follows an inverted U-shaped trend with                                                                                                            maintains deployment scalability while improving generaliza-
+respect to K, peaking at 4096. Insufficient capacity fails to                                                                                                          tion.
+cover the real-image manifold, while excessive capacity intro-
+duces redundancy and overfitting. A similar trade-off appears
+for projection sparsity top-k: small values underfit complex                                                                                                           7                   Conclusion
+textures, whereas large values dilute residual separability by
+absorbing generative artifacts. We therefore set K = 4096                                                                                                              We identify a fundamental limitation of artifact-driven AIGI
+and top-k = 128 as a balanced configuration.                                                                                                                           detectors, namely their poor scalability and generalization.
+   Impact of Memory Prior. We compare Memory Bank pro-                                                                                                                 Inspired by human visual verification, we propose MIRROR,
+totypes sourced from real, generated, or mixed samples. As                                                                                                             which formulates detection as a Reference–Comparison pro-
+shown in Table 4 (a), the real-only configuration performs best,                                                                                                       cess by modeling the real-image manifold with a learnable
+while generated-only slightly degrades due to the lower distri-                                                                                                        memory bank. Extensive experiments, including the proposed
+butional consistency of forgeries. In contrast, the mixed set-                                                                                                         Human-AIGI benchmark, show that MIRROR consistently
+ting leads to a severe performance drop, as combining authen-                                                                                                          outperforms existing methods and surpasses human perfor-
+tic and forged prototypes breaks the Reference–Comparison                                                                                                              mance on human-imperceptible samples.
+paradigm, causing residuals to lose discriminative power.
+   Impact of the Reference-Comparison Paradigm. To vali-
+date the advantage of Reference–Comparison over black-box                                                                                                              References
+classification, we compare MIRROR with a baseline that di-
+rectly classifies encoded features. As shown in Table 4(b), the                                                                                                          [1] Quentin Bammey. Synthbuster: Towards detection of
+baseline suffers a 5.4% drop relative to MIRROR. Moreover,                                                                                                                   diffusion model generated images. IEEE Open Journal
+progressively adding Reconstruct Perplexity and Comparison                                                                                                                   of Signal Processing, 5:1–9, 2023.
+Residual consistently improves performance, confirming the
+effectiveness of the human-inspired Reference–Comparison                                                                                                                 [2] Yoshua Bengio, Aaron Courville, and Pascal Vincent.
+paradigm for robust generalization.                                                                                                                                          Representation learning: A review and new perspectives.
+   Visualization of Reconstruction Residuals. Fig. 7 shows                                                                                                                   IEEE transactions on pattern analysis and machine in-
+feature reconstructions for real and generated images. For                                                                                                                   telligence, 35(8):1798–1828, 2013.
+
+
+                                                                                                                                                                   8
+

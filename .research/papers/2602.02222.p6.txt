@@ -1,0 +1,98 @@
+Table 1: Performance comparison on Standard Benchmarks. We report Balanced Accuracy (B.Acc), JPEG Robustness (J.Rob),
+and the Resize Robustness (R.Rob) to comprehensively evaluate the detector’s generalization and robustness performance. The
+best and second-best results are highlighted in bold and underline, respectively. DRCT [8], Aligned [30], B-Free [17], and
+DDA [9] are evaluated using their officially released weights. Other methods based on architectural innovations are evaluated
+using the same training set as ours, and evaluation results using their official weights are additionally reported in the appendix.
+                           AIGCDetect                  GenImage                   DRCT-2M                       UnivFakeDetect                                    Synthbuster                                      EvalGEN                                                Average
+ Method
+                   B.Acc     J.Rob    R.Rob    B.Acc     J.Rob    R.Rob   B.Acc    J.Rob     R.Rob      B.Acc       J.Rob              R.Rob           B.Acc          J.Rob         R.Rob              B.Acc               J.Rob        R.Rob              B.Acc           J.Rob           R.Rob
+ NPR [34]           63.9      64.0    48.2      73.7     73.7     46.6    59.5      58.3      37.4          51.1     51.1                  49.2            64.6        64.0             34.4           66.1                 65.7          64.2             63.2            62.8              46.7
+ UnivFD [27]        56.5      50.1    48.7      62.5     53.6     50.8    69.5      57.3      52.5          48.3     51.1                  43.0            65.8        59.2             52.3           73.8                 61.3          56.6             62.7            55.4              50.7
+ FatFormer [25]     82.1      71.5    80.0      71.5     58.4     68.4    53.9      52.1      52.4          86.7     68.9                  85.2            69.2        57.1             65.6           56.7                 53.4          57.5             70.0            60.2              68.2
+ SAFE [21]          48.4      57.8    49.4      47.7     64.4     49.4    50.3      62.4      49.2          49.7     48.5                  49.8            51.6        53.8             49.9           50.2                 55.4          49.1             49.7            57.1              49.5
+ C2P-CLIP [35]      80.0      65.7    77.6      71.1     55.6     67.8    54.4      54.0      55.7          87.3     68.8                  85.2            69.4        57.3             66.4           56.8                 52.1          65.8             69.8            58.9              69.8
+ AIDE [37]          84.0      53.4    77.0      88.6     55.3     76.3    59.2      54.6      72.5          77.9     51.5                  70.8            75.4        76.8             62.5           59.5                 58.8          76.4             74.1            58.4              72.6
+ DRCT [8]           67.1      67.1    67.5      78.8     78.5     80.3    97.0      93.0      98.4          66.8     69.5                  69.7            81.0        80.6             83.3           81.9                 85.5          82.4             78.8            79.0              80.3
+ Aligned [30]       55.7      54.5    55.3      57.5     55.9     57.0    54.9      54.7      54.3          60.5     59.7                  61.0            54.5        53.0             53.8           65.8                 65.2          67.5             58.2            57.2              58.2
+ B-Free [17]        84.7      85.0    82.7      89.6     90.2     87.9    99.2      99.0      98.2          87.8     87.0                  86.2            95.7        95.9             94.8           94.6                 93.7          92.5             91.9            91.8              90.4
+ DDA [9]            81.5      81.8    79.1      88.9     88.7     88.1    97.0      97.7      95.6          69.3     69.3                  66.7            96.5        95.6             94.6           96.6                 90.1          93.9             88.3            87.2              86.3
+ MIRROR (DINOv2)    90.5      90.0    88.6      91.3     94.1     93.7    92.8      88.9      94.2          84.6     85.8                  85.0            97.0        96.4             97.6           98.1                 97.1          96.6          92.4↑0.5          92.1↑0.3         92.6↑2.2
+ MIRROR (DINOv3)    91.7      91.5    91.5      94.2     96.7     94.9    93.0      90.4      93.4          88.2     88.3                  87.5            98.1        97.5             97.6           99.0                 98.5          98.6          94.0↑2.1          93.8↑2.0         93.9↑3.5
+
+
+
+Table 2: Performance comparison on In-the-wild Benchmarks. These datasets have undergone low-level degradation caused by
+network propagation. The best and second-best results in the summary columns are highlighted in bold and underline, respectively.
+                     Cham-                  SynthWildx                    WildRF                      AIGIBench                                             CO-SPY-Bench/in-the-wild                                                                   RR-           BFree-                 Avg
+ Method
+                      eleon                                                                                                                                                                                                                           Dataset        Online                B.Acc
+                                 DALLE3        Firefly    Midj.    FB     Reddit    Twitter     SocRF            ComAI               Civitai           DALLE3               instavibe.ai                Lexica                  Midj.v6
+ NPR [34]             55.2           62.9       53.8      63.0     53.8    53.7       57.7           55.8          52.0                51.3                 74.4                   6.0                    3.9                        80.7              48.3               40.5              50.8
+ UnivFD [27]          39.5           52.5       52.4      50.7     54.1    55.1       66.5           51.6          45.4                89.4                 76.6                   78.3                  63.1                        84.1              51.1               57.2              60.5
+ FatFormer [25]       57.8           52.6       56.6      50.0     52.5    65.4       39.7           55.7          50.4                 0.4                  2.2                    0.0                   0.3                        15.2              50.4               32.7              36.4
+ SAFE [21]            56.8           48.8       46.6      48.7     49.7    49.2       34.7           49.2          49.3                 0.1                  0.9                    0.5                   0.3                         2.4              49.3               32.6              29.3
+ C2P-CLIP [35]        57.6           49.6       57.9      49.6     51.9    67.6       40.4           58.1          50.4                 0.0                  4.5                    0.2                   0.2                        23.2              50.0               32.7              37.1
+ AIDE [37]            65.7           66.4       48.2      66.4     61.6    66.3       52.5           59.2          62.2                15.8                 34.0                   7.2                   19.5                        64.5              57.6               52.1              50.0
+ DRCT [8]             79.8           85.9       58.9      90.5     90.3    66.8       79.6           71.3          84.6                99.1                 82.1                   22.0                  55.8                        94.8              58.2               77.1              81.1
+ Aligned [30]         61.3           49.6       53.9      52.4     48.4    54.0       40.6           51.0          60.2                 7.5                  8.4                    6.2                  11.5                         9.7              47.7               38.1              37.5
+ B-Free [17]          78.3           96.1       92.3      95.3     95.6    85.5       96.7           84.9          79.7                98.8                 97.4                   5.9                   53.6                        98.6              69.5               87.1              82.2
+ DDA [9]              83.5           91.1       84.7      91.6     85.3    82.5       89.3           79.9          88.9                99.7                 94.6                   35.4                  73.7                        97.9              70.3               81.2              83.1
+ MIRROR (DINOv2)      85.4           91.2       86.1      89.5     93.8    90.2       92.7           82.3          88.9                94.6                 93.4                   72.5                  91.1                        85.6              76.8               84.3           87.4↑4.3
+ MIRROR (DINOv3)      90.7           95.9       88.4      94.9     97.1    96.6       96.4           87.6          93.4                99.2                 98.1                   75.0                  94.2                        89.8              78.9               83.0           91.2↑8.1
+
+
+
+models spanning GANs, diffusion models, and autoregres-                                                                         94                                                                                         94
+
+sive architectures. (2) In-the-wild Benchmarks: To assess                                                                       92                                                                                         92
+                                                                                                                                                                  Peak: 90.1 %                                                                             Peak: 90.1 %
+real-world generalization, we use Chameleon [37], Synth-                                                                        90                                                                                         90
+                                                                                                                    B.Acc (%)
+
+
+
+
+                                                                                                                                                                                                               B.Acc (%)
+
+
+
+Wildx [13], WildRF [4], AIGIBench [23], CO-SPY-Bench [10],                                                                      88                                                                                         88        Limited Recon.
+
+BFree-Online [17], and RRDataset [20]. These datasets are                                                                       86          Underfitting                                 Overfitting                       86                                                   Anomaly Leakage
+
+collected from complex network environments and include re-                                                                     84         Standard Benchmarks
+                                                                                                                                           In-the-wild Benchmarks                                                          84        Standard Benchmarks
+                                                                                                                                                                                                                                     In-the-wild Benchmarks
+                                                                                                                                           Human-AIGI Benchmark                                                                      Human-AIGI Benchmark
+alistic degradations introduced during online propagation. (3)                                                                  82
+                                                                                                                                           Average Performance
+                                                                                                                                                                                                                           82
+                                                                                                                                                                                                                                     Average Performance
+                                                                                                                                     512       1024        2048      4096        8192     16384        32768                    16        32          64       128        256        512      1024
+Human-AIGI Benchmark: Crucially, we evaluate MIRROR                                                                                                   Number of Prototypes (K)                                                                  Sparsity Constraint (top-k)
+
+on Dorig. and Dhard , defined in Sec. 5, to measure perfor-
+mance in high-risk scenarios where human visual inspection                                                         Figure 5: Sensitivity analysis of K and top-k. Insufficient
+fails.                                                                                                             K limits manifold coverage, while excessive K causes over-
+                                                                                                                   fitting via prototype redundancy. Sparsity top-k exhibits a
+   Implementation Details. In Phase 1, we adopt DINOv3-
+                                                                                                                   similar trade-off: strict k hinders ideal reference reconstruc-
+large [32] as the feature extractor and collect 200k real images
+                                                                                                                   tion , while excessive k allows generative anomalies to leak
+from MSCOCO [24] for self-supervised training. The memory
+                                                                                                                   through prototype combinations, narrowing the residual gap.
+bank size is set to K = 4096. In Phase 2, we use a LoRA-
+finetuned DINOv3 as the feature extractor and finetune the                                                         port three evaluation metrics: Balanced Accuracy (B.Acc),
+model on SDv1.4 [41] 1 . Training is performed with the                                                            JPEG Robustness (J.Rob) under QF=90 compression, and
+AdamW optimizer [19], an initial learning rate of 1 × 10−4 ,                                                       Resize Robustness (R.Rob) under resize=0.9. We compare
+for 5 epochs, using a cosine annealing learning rate schedule.                                                     MIRROR against a broad set of state-of-the-art detectors.
+All images are cropped to a resolution of 224 × 224 during                                                         Artifact- and pretraining-based methods include NPR [34],
+both training and inference.                                                                                       UnivFD [27], FatFormer [25], C2P-CLIP [35], SAFE [21],
+   Evaluation Metrics and Comparative Methods. We re-                                                              and AIDE [37]. These methods capture generic forgery traces
+    1 The SD v1.4 images from GenImage used in the training set are com-                                           through architectural design or specialized training. For fair
+pressed using JPEG with a quality factor of 96 to align their format with that                                     comparison, all methods are retrained using the same data
+of real images.                                                                                                    configuration as MIRROR, including the real samples used in
+
+
+                                                                                                            6
+

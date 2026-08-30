@@ -1,0 +1,66 @@
+ROR’s accuracy further approaches the human perceptual                   hierarchical priors and verification mechanisms comparable
+limit (i.e., AIGI detection experts). These results indicate that        to human perception.
+MIRROR can serve as a practical and reliable assistive tool
+for AIGI detection.
+                                                                         2.2    Detection Benchmarks
+   Our main contributions are summarized as follows:
+                                                                         Early AIGI detection benchmarks mainly target GAN imagery,
+    • We identify a key limitation of existing detectors: chas-          exemplified by the CNNSpot dataset [36]. Later datasets sub-
+      ing evolving generative artifacts leads to poor scalability.       stantially broaden generator coverage: GenImage [41] and
+      Inspired by human vision, we reformulate AIGI detec-               AIGCDetect [40] provide large-scale samples from diverse
+      tion as a Reference-Comparison process that anchors                models, while DRCT-2M [8] offers million-level data tailored
+      decisions on invariant reality priors by comparing inputs          for diffusion reconstruction. Evaluation protocols have also
+      against an internal reference.                                     been strengthened, including UniversalFakeDetect [27] for
+                                                                         cross-model testing with CLIP backbones, Synthbuster [1] for
+    • We propose MIRROR, a novel framework that encodes
+                                                                         systematic diffusion evaluation, and EvalGEN [9] for emerg-
+      real-world regularities using a learnable memory bank
+                                                                         ing autoregressive generators. Despite their scale, many of
+      of orthogonal prototypes. MIRROR constructs an Ideal
+                                                                         these benchmarks rely on randomly synthesized images with
+      Reference by sparsely projecting input features onto
+                                                                         simple prompts, which may underrepresent the complexity of
+      the real-image manifold and identifies forgeries through
+                                                                         human-targeted forgeries.
+      reconstruction residuals, enabling robust, generator-
+      agnostic detection.                                                   To better reflect real-world conditions, several in-the-wild
+                                                                         benchmarks collect web images or simulate realistic degrada-
+    • We introduce the Human-AIGI Benchmark, includ-                     tion. Chameleon [37] curates high-resolution samples that are
+      ing a Human-Imperceptible subset curated through psy-              challenging even for humans, exposing detector generalization
+      chophysical experiments, to quantify when detectors sur-           issues. SynthWildx [40], WildRF [4], and AIGIBench [23]
+      pass human perception. Evaluations across 14 bench-                further expand web diversity, while RRDataset [20] and Re-
+      marks show that MIRROR achieves strong generalization              alChain [26] model post-processing and propagation to stress-
+      on human-imperceptible samples, marking the “Superhu-              test robustness. Nevertheless, most existing benchmarks em-
+      man Crossover”.                                                    phasize generator diversity or semantic coverage, but do not
+                                                                         quantify where human perception starts to fail. As a result,
+                                                                         they cannot directly measure whether a detector truly improves
+2     Related Work                                                       upon human judgment on the most deceptive samples.
+
+2.1     AI-Generated Image Detection
+                                                                         3     Motivation
+AI-generated image (AIGI) detection has been extensively
+studied, with a central focus on generalization to unseen gener-         Our motivation stems from a fundamental difference in deci-
+ators [36, 27]. Early approaches primarily relied on low-level           sion paradigms between machine and human vision. Existing
+artifacts, exploiting generator-specific fingerprints in the spa-        detectors typically formulate AIGI detection as artifact classi-
+tial or spectral domain [14, 15]. CNNSpot [36] demonstrated              fication, which overfits generator-specific traces and degrades
+cross-GAN transferability, and subsequent works explored fre-            as generative models evolve. In contrast, humans adopt a
+quency irregularities [28, 33], upsampling traces [34]. How-             Reference–Comparison strategy, anchoring judgments in long-
+ever, such texture-level cues are fragile under generator evolu-         term understanding of invariant physical regularities rather
+tion and real-world post-processing [26].                                than artifact memorization. This paradigm aligns with the
+   To improve robustness, recent methods increasingly lever-             cognitive theory that perception operates as hypothesis testing.
+age pre-trained foundation models. UnivFD [27] combines                  Neuroscience studies show that the visual cortex functions
+CLIP [29] features with lightweight classifiers, while Fat-              as an active inference system, generating internal predictions
+Former [25] and AIDE [37] adapt CLIP representations via                 as references and continuously comparing them with sensory
+task-specific modules. Effort [38] further exploits pretraining          input; mismatches between observation and reference elicit
+by disentangling semantic and forgery-related subspaces.                 strong neural responses [11, 12]. This mechanism supports
+   Another line of work attributes performance degradation               robust perception in unfamiliar environments.
+to data bias, and mitigates shortcut learning through recon-                Our psychophysical experiments further validate the effec-
+struction or alignment between real and synthetic data. Rep-             tiveness of this underlying mechanism for detecting generated
+resentative methods include FakeInversion [6], SemGIR [39],              images. Results show that even when lay user have never been
+DRCT [8], B-Free [17], AlignedForensics [30], and Dual                   systematically exposed to large-scale generated imagery, pro-
+Data Alignment [9]. Despite these advances, most existing                viding explicit real-image references significantly improves
+detectors remain black-box discriminators and lack explicit,             their detection accuracy (see Fig. 3(a)). Moreover, computer
+
+
+                                                                     3
+

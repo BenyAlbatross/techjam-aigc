@@ -1,0 +1,79 @@
+ACM MM ’26, October 2026, Amsterdam, The Netherlands                                                                                            Anonymous Author(s)
+
+
+Table 8: Limitations under Reconstruction and Editing. De-                                 91.4% on Chameleon, falling short of PE-Linear’s 95.9%). Worse still,
+tection accuracy on DDA-COCO (VAE-based reconstruction)                                    rigidly specialized architectures like DDA suffer catastrophic degra-
+and BR-Gen (Diffusion-based local editing).                                                dation (∼50-60%) when forced onto new generic feature spaces. This
+                                                                                           reveals that complex inductive biases—such as explicit frequency
+      Method
+                                 DDA-COCO                       BR-Gen                     filtering or strict VAE alignment—actually act as information bottle-
+                             SDXL    SD2       SD3.5L   Brush     Power    SDXL            necks, inadvertently constraining the raw, universal discriminative
+      CNNSpot                0.014   0.017     0.004    0.121     0.091    0.073           power naturally emergent in modern representations.
+      DDA                    0.949   0.997     0.682    0.648     0.589    0.465
+      OMAT                   0.211   0.304     0.135    0.697     0.715    0.681
+      Effort                 0.511   0.549     0.682    0.801     0.793    0.767
+                                                                                           5.5    Protocol V: The Pitfall of
+      SigLIP2-Linear         0.071   0.079      0.017   0.597     0.623    0.476                  Parameter-Efficient Fine-Tuning
+      MetaCLIP2-Linear       0.057   0.074      0.037   0.544     0.575    0.500           Another prevalent paradigm for adapting foundation models is
+      PE-CLIP-Linear         0.066   0.170      0.024   0.564     0.581    0.528
+      DINOv3-Linear          0.030   0.079      0.004   0.592     0.613    0.450           Parameter-Efficient Fine-Tuning (PEFT). If a simple linear layer
+                                                                                           suffices, would unfreezing the backbone via Low-Rank Adaptation
+reconstruction patterns, maintains robust performance. As shown                            (LoRA) yield even better task-specific performance? To test this,
+in Table 8 (Right), VFMs struggle to generalize to localized manip-                        we applied LoRA with rank 𝑟 ∈ {4, 8} to modern VFMs, fine-tuning
+ulations (BR-Gen), with performance hovering around 50%–60%.                               them on the GenImage (SD v1.4) training set.
+We attribute this to the global pooling mechanism inherent to
+                                                                                           Table 10: LoRA Fine-Tuning vs. Frozen Linear Probe. Unfreez-
+our linear probing approach: the dominant feature signal from the
+                                                                                           ing the backbone via LoRA significantly degrades generaliza-
+unaltered “real” regions likely suppresses the subtle forensic traces
+                                                                                           tion in the wild. Best results in bold.
+within the edited mask. In contrast, methods like Effort, designed
+to amplify anomaly feature, achieve higher accuracy.
+                                                                                            Backbone    Strategy                GenImage   Chameleon   AIGIHolmes
+
+5.4    Protocol IV: The Bottleneck of Specialized                                                       Linear Probe (Frozen)     0.892      0.930       0.942
+                                                                                            MetaCLIP2   LoRA (r=4)                0.734      0.817       0.823
+       Architectures                                                                                    LoRA (r=8)                0.780      0.880       0.896
+
+A natural question arises from our primary finding: if modern                                           Linear Probe (Frozen)     0.938      0.959       0.978
+                                                                                            PE          LoRA (r=4)                0.810      0.719       0.879
+Vision Foundation Models (VFMs) possess such powerful represen-                                         LoRA (r=8)                0.761      0.635       0.891
+tations, could their performance be further amplified by attaching                                      Linear Probe (Frozen)     0.964      0.914       0.972
+State-Of-The-Art specialized forensic architectures? To investigate                         DINOv3      LoRA (r=4)                0.954      0.803       0.977
+this, we upgraded recent expert models—Effort [32], AIDE [31], and                                      LoRA (r=8)                0.928      0.718       0.945
+
+DDA [6]—by swapping their original legacy backbones with our                                  Table 10 highlights the Risk of Modifying Internal Knowl-
+top-performing modern VFMs (MetaCLIP2, PE, and DINOv3).                                    edge. Contrary to the intuition that fine-tuning improves task
+                                                                                           adaptation, applying LoRA actively dismantles generalizability. For
+Table 9: Impact of Upgrading Specialized Architectures.                                    instance, LoRA fine-tuning on PE (r=8) causes its in-the-wild detec-
+While modern backbones improve the performance of spe-                                     tion accuracy (Chameleon) to plummet from 95.9% to a mere 63.5%.
+cialized methods, they still severely underperform the simple                              We attribute this to manifold distortion and catastrophic forgetting.
+frozen linear probe. Original baselines are in italics, best re-                           By unfreezing the backbone to optimize for a single generator (SD
+sults in bold.                                                                             v1.4), the model rapidly overfits to a narrow, transient distribution
+                                                                                           of local artifacts, irrevocably overwriting the broad "world knowl-
+ Method & Backbone                     GenImage         Chameleon         AIGIHolmes
+                                                                                           edge" of synthetic anomalies it implicitly derived from massive
+                                                                                           pre-training data.
+ Effort (Original: CLIP-L)                   0.807        0.588              0.722
+ Effort + MetaCLIP2                          0.748        0.720              0.799
+ Effort + PE                                 0.856        0.761              0.924         6     Conclusion
+ AIDE (Original: ResNet/ConvNeXt)            0.768        0.574              0.970         In this work, we revisit AIGI detection from the perspective of pre-
+ AIDE + MetaCLIP2                            0.834        0.709              0.922         trained visual representations. We show that frozen features from
+ AIDE + PE                                   0.883        0.914              0.947
+                                                                                           modern Vision Foundation Models, combined with a lightweight
+ DDA (Original: DINOv2)                      0.890        0.824              0.963
+ DDA + MetaCLIP2                             0.557        0.563              0.596
+                                                                                           classifier, form a remarkably strong baseline for generalizable AIGI
+ DDA + PE                                    0.534        0.559              0.659         detection. Across standard benchmarks, in-the-wild datasets, and
+ DDA + DINOv3                                0.572        0.751              0.713         recent unseen generators, this simple setup consistently matches or
+ MetaCLIP2-Linear                            0.892        0.930             0.942          outperforms recent specialized detectors. Our analyses further sug-
+ PE-CLIP-Linear                              0.938        0.959             0.978          gest that this capability is closely related to exposure to synthetic
+ DINOv3-Linear                               0.964        0.914             0.972
+                                                                                           web content during pre-training, rather than primarily to forensic-
+                                                                                           specific architectural design. In VLMs, this appears as semantic
+  The results in Table 9 expose the Bottleneck of Inductive Bias.                          alignment with forgery-related concepts, while in SSL models it
+While upgrading expert models (e.g., AIDE, Effort) with modern                             appears as implicit discrimination of generative distributions. Al-
+VFMs improves their baseline performance, they still strictly under-                       though fully controlled pre-training ablations are beyond the scope
+perform our minimalist linear probe (e.g., AIDE with PE achieves                           of this work, our evidence consistently supports this interpretation.
+                                                                                       8
+

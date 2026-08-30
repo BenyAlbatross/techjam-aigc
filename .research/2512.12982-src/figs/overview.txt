@@ -1,0 +1,42 @@
+                                                             Prototype
+                   STAGE I                                                                     STAGE 2
+
+                                 MLP                                `                                    Wv
+
+
+
+
+                                                                    …
+Prototype Set                                                                                                                    Real
+                                         Real / Fake                                                                              or
+• GANs                           LCE                                     Scaling-Up                                              Fake
+                                         embeddings         top K
+                          head
+                                                                         Generators
+                                                                                                         Wk
+• Diffusions
+
+
+
+
+                                                                                                                   softmax
+         `       Image                                  P                                                     ⊗              ⊗
+
+
+
+
+                                                                                                                                 FC
+                                                        C                                    Image
+                Encoder                                                                                  Wq
+
+
+
+
+                                                                …
+                                            …
+
+• APIs                                                  A                                   Encoder
+                                                                         4.7k+ Generators                         LCE
+                                 proj.
+                                               frozen       trainable    LoRA-finetune
+

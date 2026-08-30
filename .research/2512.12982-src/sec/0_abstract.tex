@@ -1,0 +1,17 @@
+% jiyuheng version
+
+\begin{abstract}
+The pursuit of a universal AI-generated image (AIGI) detector often relies on aggregating data from numerous generators to improve generalization.
+%
+However, this paper identifies a paradoxical phenomenon we term the \textbf{``Benefit then Conflict''} dilemma, where detector performance stagnates and eventually degrades as source diversity expands.
+%
+Our systematic analysis, diagnoses this failure by identifying two core issues: severe \textbf{data-level heterogeneity}, which causes the feature distributions of real and synthetic images to increasingly overlap, and a critical \textbf{model-level bottleneck} from fixed, pretrained encoders that cannot adapt to the rising complexity.
+%
+To address these challenges, we propose Generator-Aware Prototype Learning (GAPL) , a framework that constrain representation with a structured learning paradigm.
+%
+GAPL learns a compact set of canonical forgery prototypes to create a unified, low-variance feature space, effectively countering data heterogeneity.
+%
+To resolve the model bottleneck, it employs a two-stage training scheme with Low-Rank Adaptation, enhancing its discriminative power while preserving valuable pretrained knowledge.
+%
+This approach establishes a more robust and generalizable decision boundary. Through extensive experiments, we demonstrate that GAPL achieves state-of-the-art performance, showing superior detection accuracy across a wide variety of GAN and diffusion-based generators. Code is available at \url{https://github.com/UltraCapture/GAPL}
+\end{abstract}

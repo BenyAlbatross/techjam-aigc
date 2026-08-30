@@ -1,0 +1,387 @@
+\begin{thebibliography}{10}
+
+\bibitem{bammey2023synthbuster}
+Quentin Bammey.
+\newblock Synthbuster: Towards detection of diffusion model generated images.
+\newblock {\em IEEE Open Journal of Signal Processing}, 5:1--9, 2023.
+
+\bibitem{cavia2024real}
+Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen.
+\newblock Real-time deepfake detection in the real-world.
+\newblock {\em arXiv preprint arXiv:2406.09398}, 2024.
+
+\bibitem{cazenavette2024fakeinversion}
+George Cazenavette, Avneesh Sud, Thomas Leung, and Ben Usman.
+\newblock Fakeinversion: Learning to detect images from unseen text-to-image
+  models by inverting stable diffusion.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 10759--10769, 2024.
+
+\bibitem{chen2024drct}
+Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang.
+\newblock Drct: Diffusion reconstruction contrastive training towards universal
+  detection of diffusion generated images.
+\newblock In {\em Forty-first International Conference on Machine Learning},
+  2024.
+
+\bibitem{chen2024x2}
+Yize Chen, Zhiyuan Yan, Guangliang Cheng, Kangran Zhao, Siwei Lyu, and Baoyuan
+  Wu.
+\newblock X2-dfd: A framework for explainable and extendable deepfake
+  detection.
+\newblock {\em arXiv preprint arXiv:2410.06126}, 2024.
+
+\bibitem{chu2024fire}
+Beilin Chu, Xuan Xu, Xin Wang, Yufei Zhang, Weike You, and Linna Zhou.
+\newblock Fire: Robust detection of diffusion-generated images via
+  frequency-guided reconstruction error.
+\newblock In {\em CVPR}, 2025.
+
+\bibitem{cozzolino2024raising}
+Davide Cozzolino, Giovanni Poggi, Riccardo Corvi, Matthias Nie{\ss}ner, and
+  Luisa Verdoliva.
+\newblock Raising the bar of ai-generated image detection with clip.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 4356--4366, 2024.
+
+\bibitem{cozzolino2024zero}
+Davide Cozzolino, Giovanni Poggi, Matthias Nie{\ss}ner, and Luisa Verdoliva.
+\newblock Zero-shot detection of ai-generated images.
+\newblock In {\em European Conference on Computer Vision}, pages 54--72.
+  Springer, 2024.
+
+\bibitem{nova}
+Haoge Deng, Ting Pan, Haiwen Diao, Zhengxiong Luo, Yufeng Cui, Huchuan Lu,
+  Shiguang Shan, Yonggang Qi, and Xinlong Wang.
+\newblock Autoregressive video generation without vector quantization.
+\newblock {\em arXiv preprint arXiv:2412.14169}, 2024.
+
+\bibitem{fang2025got}
+Rongyao Fang, Chengqi Duan, Kun Wang, Linjiang Huang, Hao Li, Shilin Yan, Hao
+  Tian, Xingyu Zeng, Rui Zhao, Jifeng Dai, et~al.
+\newblock Got: Unleashing reasoning capability of multimodal large language
+  model for visual generation and editing.
+\newblock {\em arXiv preprint arXiv:2503.10639}, 2025.
+
+\bibitem{ghosh2023geneval}
+Dhruba Ghosh, Hannaneh Hajishirzi, and Ludwig Schmidt.
+\newblock Geneval: An object-focused framework for evaluating text-to-image
+  alignment.
+\newblock {\em Advances in Neural Information Processing Systems},
+  36:52132--52152, 2023.
+
+\bibitem{goodfellow2014generative}
+Ian~J Goodfellow et~al.
+\newblock Generative adversarial nets.
+\newblock In {\em Advances in Neural Information Processing Systems}, 2014.
+
+\bibitem{grommelt2024fake}
+Patrick Grommelt, Louis Weiss, Franz-Josef Pfreundt, and Janis Keuper.
+\newblock Fake or jpeg? revealing common biases in generated image detection
+  datasets.
+\newblock {\em arXiv preprint arXiv:2403.17608}, 2024.
+
+\bibitem{guillaro2024bias}
+Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh Sud, Davide Cozzolino,
+  and Luisa Verdoliva.
+\newblock A bias-free training paradigm for more general ai-generated image
+  detection.
+\newblock {\em arXiv preprint arXiv:2412.17671}, 2024.
+
+\bibitem{gye2025sfld}
+Seoyeon Gye, Junwon Ko, Hyounguk Shon, Minchan Kwon, and Junmo Kim.
+\newblock Sfld: Reducing the content bias for ai-generated image detection.
+\newblock {\em arXiv preprint arXiv:2502.17105}, 2025.
+
+\bibitem{han2024infinity}
+Jian Han, Jinlai Liu, Yi~Jiang, Bin Yan, Yuqi Zhang, Zehuan Yuan, Bingyue Peng,
+  and Xiaobing Liu.
+\newblock Infinity: Scaling bitwise autoregressive modeling for high-resolution
+  image synthesis.
+\newblock {\em arXiv preprint arXiv:2412.04431}, 2024.
+
+\bibitem{he2025vlforgery}
+Xinan He, Yue Zhou, Bing Fan, Bin Li, Guopu Zhu, and Feng Ding.
+\newblock Vlforgery face triad: Detection, localization and attribution via
+  multimodal large language models.
+\newblock {\em arXiv preprint arXiv:2503.06142}, 2025.
+
+\bibitem{ho2020denoising}
+Jonathan Ho et~al.
+\newblock Denoising diffusion probabilistic models.
+\newblock {\em Advances in Neural Information Processing Systems},
+  33:6840--6851, 2020.
+
+\bibitem{karageorgiou2024any}
+Dimitrios Karageorgiou, Symeon Papadopoulos, Ioannis Kompatsiaris, and
+  Efstratios Gavves.
+\newblock Any-resolution ai-generated image detection by spectral learning.
+\newblock In {\em CVPR}, 2025.
+
+\bibitem{karras2018progressive}
+Tero Karras et~al.
+\newblock Progressive growing of gans for improved quality, stability, and
+  variation.
+\newblock In {\em International Conference on Learning Representations}, 2018.
+
+\bibitem{karras2019style}
+Tero Karras et~al.
+\newblock A style-based generator architecture for generative adversarial
+  networks.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 4401--4410, 2019.
+
+\bibitem{flux2024}
+Black~Forest Labs.
+\newblock Flux.
+\newblock \url{https://github.com/black-forest-labs/flux}, 2024.
+
+\bibitem{li2024improving}
+Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and Fuli Feng.
+\newblock Improving synthetic image detection towards generalization: An image
+  transformation perspective.
+\newblock {\em arXiv preprint arXiv:2408.06741}, 2024.
+
+\bibitem{li2025artificial}
+Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei Jiang, Lizhi Xiong, and
+  Zhangjie Fu.
+\newblock Is artificial intelligence generated image detection a solved
+  problem?
+\newblock {\em arXiv preprint arXiv:2505.12335}, 2025.
+
+\bibitem{lin2025standing}
+Kaiqing Lin, Yuzhen Lin, Weixiang Li, Taiping Yao, and Bin Li.
+\newblock Standing on the shoulders of giants: Reprogramming visual-language
+  model for general deepfake detection.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, volume~39, pages 5262--5270, 2025.
+
+\bibitem{lin2025seeing}
+Kaiqing Lin, Zhiyuan Yan, Ruoxin Chen, Junyan Ye, Ke-Yue Zhang, Yue Zhou, Peng
+  Jin, Bin Li, Taiping Yao, and Shouhong Ding.
+\newblock Seeing before reasoning: A unified framework for generalizable and
+  explainable fake image detection.
+\newblock {\em arXiv preprint arXiv:2509.25502}, 2025.
+
+\bibitem{lin2025guard}
+Kaiqing Lin, Zhiyuan Yan, Ke-Yue Zhang, Li~Hao, Yue Zhou, Yuzhen Lin, Weixiang
+  Li, Taiping Yao, Shouhong Ding, and Bin Li.
+\newblock Guard me if you know me: Protecting specific face-identity from
+  deepfakes.
+\newblock {\em arXiv preprint arXiv:2505.19582}, 2025.
+
+\bibitem{coco}
+Tsung-Yi Lin et~al.
+\newblock Microsoft coco: Common objects in context.
+\newblock In {\em European Conference on Computer Vision}, pages 740--755.
+  Springer, 2014.
+
+\bibitem{lin2014microsoft}
+Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva
+  Ramanan, Piotr Doll{\'a}r, and C~Lawrence Zitnick.
+\newblock Microsoft coco: Common objects in context.
+\newblock In {\em Computer vision--ECCV 2014: 13th European conference, zurich,
+  Switzerland, September 6-12, 2014, proceedings, part v 13}, pages 740--755.
+  Springer, 2014.
+
+\bibitem{liu2021spatial}
+Honggu Liu et~al.
+\newblock Spatial-phase shallow learning: rethinking face forgery detection in
+  frequency domain.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 772--781, 2021.
+
+\bibitem{liu2024forgery}
+Huan Liu, Zichang Tan, Chuangchuang Tan, Yunchao Wei, Jingdong Wang, and Yao
+  Zhao.
+\newblock Forgery-aware adaptive transformer for generalizable synthetic image
+  detection.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 10770--10780, 2024.
+
+\bibitem{ojha2023towards}
+Utkarsh Ojha et~al.
+\newblock Towards universal fake image detectors that generalize across
+  generative models.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 24480--24489, 2023.
+
+\bibitem{rajan2025aligned}
+Anirudh~Sundara Rajan, Utkarsh Ojha, Jedidiah Schloesser, and Yong~Jae Lee.
+\newblock Aligned datasets improve detection of latent diffusion-generated
+  images, 2025.
+
+\bibitem{rombach2022high}
+Robin Rombach et~al.
+\newblock High-resolution image synthesis with latent diffusion models.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 10684--10695, 2022.
+
+\bibitem{sha2023fake}
+Zeyang Sha, Zheng Li, Ning Yu, and Yang Zhang.
+\newblock De-fake: Detection and attribution of fake images generated by
+  text-to-image generation models.
+\newblock In {\em Proceedings of the 2023 ACM SIGSAC conference on computer and
+  communications security}, pages 3418--3432, 2023.
+
+\bibitem{song2024anti}
+Yiren Song, Shengtao Lou, Xiaokang Liu, Hai Ci, Pei Yang, Jiaming Liu, and
+  Mike~Zheng Shou.
+\newblock Anti-reference: Universal and immediate defense against
+  reference-based generation.
+\newblock {\em arXiv preprint arXiv:2412.05980}, 2024.
+
+\bibitem{Tan2023CVPR}
+Chuangchuang Tan et~al.
+\newblock Learning on gradients: Generalized artifacts representation for
+  gan-generated images detection.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition (CVPR)}, pages 12105--12114, June 2023.
+
+\bibitem{tan2024c2p}
+Chuangchuang Tan, Renshuai Tao, Huan Liu, Guanghua Gu, Baoyuan Wu, Yao Zhao,
+  and Yunchao Wei.
+\newblock C2p-clip: Injecting category common prompt in clip to enhance
+  generalization in deepfake detection.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, 2024.
+
+\bibitem{tan2024frequency}
+Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao Wei.
+\newblock Frequency-aware deepfake detection: Improving generalizability
+  through frequency space domain learning.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, volume~38, pages 5052--5060, 2024.
+
+\bibitem{tan2024rethinking}
+Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao Wei.
+\newblock Rethinking the up-sampling operations in cnn-based generative network
+  for generalizable deepfake detection.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 28130--28139, 2024.
+
+\bibitem{van2016pixel}
+A{\"a}ron Van Den~Oord, Nal Kalchbrenner, and Koray Kavukcuoglu.
+\newblock Pixel recurrent neural networks.
+\newblock In {\em International conference on machine learning}, pages
+  1747--1756. PMLR, 2016.
+
+\bibitem{wang2020cnn}
+Sheng-Yu Wang et~al.
+\newblock Cnn-generated images are surprisingly easy to spot... for now.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, pages 8695--8704, 2020.
+
+\bibitem{wang2020cnn2}
+SY~Wang et~al.
+\newblock Cnn-generated images are surprisingly easy to spot... for now.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2020.
+
+\bibitem{xiao2024omnigen}
+Shitao Xiao, Yueze Wang, Junjie Zhou, Huaying Yuan, Xingrun Xing, Ruiran Yan,
+  Chaofan Li, Shuting Wang, Tiejun Huang, and Zheng Liu.
+\newblock Omnigen: Unified image generation.
+\newblock {\em arXiv preprint arXiv:2409.11340}, 2024.
+
+\bibitem{xu2025fakeshield}
+Zhipei Xu, Xuanyu Zhang, Runyi Li, Zecheng Tang, Qing Huang, and Jian Zhang.
+\newblock Fakeshield: Explainable image forgery detection and localization via
+  multi-modal large language models.
+\newblock In {\em The Thirteenth International Conference on Learning
+  Representations}, 2025.
+
+\bibitem{xu2025avatarshield}
+Zhipei Xu, Xuanyu Zhang, Xing Zhou, and Jian Zhang.
+\newblock Avatarshield: Visual reinforcement learning for human-centric video
+  forgery detection.
+\newblock {\em arXiv preprint arXiv:2505.15173}, 2025.
+
+\bibitem{yan2025ns}
+Jiazhen Yan, Fan Wang, Weiwei Jiang, Ziqiang Li, and Zhangjie Fu.
+\newblock Ns-net: Decoupling clip semantic information through null-space for
+  generalizable ai-generated image detection.
+\newblock {\em arXiv preprint arXiv:2508.01248}, 2025.
+
+\bibitem{yan2024sanity}
+Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and
+  Weidi Xie.
+\newblock A sanity check for ai-generated image detection.
+\newblock {\em arXiv preprint arXiv:2406.19435}, 2024.
+
+\bibitem{yan2025can}
+Zhiyuan Yan, Kaiqing Lin, Zongjian Li, Junyan Ye, Hui Han, Zhendong Wang, Hao
+  Liu, Bin Lin, Hao Li, Xue Xu, et~al.
+\newblock Can understanding and generation truly benefit together--or just
+  coexist?
+\newblock {\em arXiv preprint arXiv:2509.09666}, 2025.
+
+\bibitem{yanorthogonal}
+Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang, Chengchun Liu, Shen Chen,
+  Taiping Yao, Shouhong Ding, Baoyuan Wu, and Li~Yuan.
+\newblock Orthogonal subspace decomposition for generalizable ai-generated
+  image detection.
+\newblock In {\em Forty-second International Conference on Machine Learning}.
+
+\bibitem{yan2024df40}
+Zhiyuan Yan, Taiping Yao, Shen Chen, Yandan Zhao, Xinghe Fu, Junwei Zhu,
+  Donghao Luo, Chengjie Wang, Shouhong Ding, Yunsheng Wu, et~al.
+\newblock Df40: Toward next-generation deepfake detection.
+\newblock {\em arXiv preprint arXiv:2406.13495}, 2024.
+
+\bibitem{yan2025gpt}
+Zhiyuan Yan, Junyan Ye, Weijia Li, Zilong Huang, Shenghai Yuan, Xiangyang He,
+  Kaiqing Lin, Jun He, Conghui He, and Li~Yuan.
+\newblock Gpt-imgeval: A comprehensive benchmark for diagnosing gpt4o in image
+  generation.
+\newblock {\em arXiv preprint arXiv:2504.02782}, 2025.
+
+\bibitem{yu2024semgir}
+Xiao Yu, Kejiang Chen, Kai Zeng, Han Fang, Zijin Yang, Xiuwei Shang, Yuang Qi,
+  Weiming Zhang, and Nenghai Yu.
+\newblock Semgir: Semantic-guided image regeneration based method for
+  ai-generated image detection and attribution.
+\newblock In {\em Proceedings of the 32nd ACM International Conference on
+  Multimedia}, pages 8480--8488, 2024.
+
+\bibitem{zhang2023controlvideo}
+Yabo Zhang, Yuxiang Wei, Dongsheng Jiang, Xiaopeng Zhang, Wangmeng Zuo, and
+  Qi~Tian.
+\newblock Controlvideo: Training-free controllable text-to-video generation.
+\newblock {\em arXiv preprint arXiv:2305.13077}, 2023.
+
+\bibitem{zheng2024breaking}
+Chende Zheng, Chenhao Lin, Zhengyu Zhao, Hang Wang, Xu~Guo, Shuai Liu, and Chao
+  Shen.
+\newblock Breaking semantic artifacts for generalized ai-generated image
+  detection.
+\newblock {\em Advances in Neural Information Processing Systems},
+  37:59570--59596, 2024.
+
+\bibitem{zhong2024patchcraft}
+Nan Zhong, Yiran Xu, Sheng Li, Zhenxing Qian, and Xinpeng Zhang.
+\newblock Patchcraft: Exploring texture patch for efficient ai-generated image
+  detection.
+\newblock {\em arXiv preprint arXiv:2311.12397}, pages 1--18, 2024.
+
+\bibitem{zhou2023exposing}
+Yue Zhou, Bing Fan, Pradeep K.~Atrey, and Feng Ding.
+\newblock Exposing deepfakes using dual-channel network with multi-axis
+  attention and frequency analysis.
+\newblock In {\em Proceedings of the 2023 ACM Workshop on Information Hiding
+  and Multimedia Security}, pages 169--174, 2023.
+
+\bibitem{zhou2025breaking}
+Yue Zhou, Xinan He, KaiQing Lin, Bin Fan, Feng Ding, and Bin Li.
+\newblock Breaking latent prior bias in detectors for generalizable aigc image
+  detection.
+\newblock {\em arXiv preprint arXiv:2506.00874}, 2025.
+
+\bibitem{zhu2023genimage}
+Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong Huang, Guanyu Lin, Wei Li,
+  Zhijun Tu, Hailin Hu, Jie Hu, and Yunhe Wang.
+\newblock Genimage: A million-scale benchmark for detecting ai-generated image.
+\newblock {\em Advances in Neural Information Processing Systems},
+  36:77771--77782, 2023.
+
+\end{thebibliography}

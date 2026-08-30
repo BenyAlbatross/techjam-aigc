@@ -1,0 +1,4 @@
+1 Gen   2 Gens   4 Gens   8 Gens   Thousands   1 Gen   2 Gens   4 Gens    8 Gens   Thousands
+                  (a)                Gens                                            Gens
+                                           v                        (b)
+

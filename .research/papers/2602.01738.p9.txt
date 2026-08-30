@@ -1,0 +1,83 @@
+Simplicity Prevails for Generalizable AIGI Detection                                                                    ACM MM ’26, October 2026, Amsterdam, The Netherlands
+
+
+   At the same time, modern VFMs remain weak on pure VAE                                            In International conference on machine learning. PmLR, 8748–8763.
+reconstruction, localized editing, and severe transmission or re-                              [21] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Björn
+                                                                                                    Ommer. 2021. High-Resolution Image Synthesis with Latent Diffusion Models.
+capture. We therefore view frozen modern VFM representations                                        arXiv 2022. arXiv preprint arXiv:2112.10752 (2021).
+not as a complete solution to multimedia forensics, but as a strong                            [22] Oriane Siméoni, Huy V Vo, Maximilian Seitzer, Federico Baldassarre, Maxime
+                                                                                                    Oquab, Cijo Jose, Vasil Khalidov, Marc Szafraniec, Seungeun Yi, Michaël Rama-
+foundation for robust global AIGI detection. More broadly, our find-                                monjisoa, et al. 2025. Dinov3. arXiv preprint arXiv:2508.10104 (2025).
+ings suggest that future progress may depend less on increasingly                              [23] Richard Sutton. 2019. The bitter lesson. Incomplete Ideas (blog) 13, 1 (2019), 38.
+specialized detector design, and more on effectively leveraging the                            [24] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao
+                                                                                                    Wei. 2024. Frequency-aware deepfake detection: Improving generalizability
+evolving representations learned by foundation models.                                              through frequency space domain learning. In Proceedings of the AAAI Conference
+                                                                                                    on Artificial Intelligence, Vol. 38. 5052–5060.
+                                                                                               [25] Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua Gu, Ping Liu, and Yunchao
+References                                                                                          Wei. 2024. Rethinking the up-sampling operations in cnn-based generative
+ [1] Daniel Bolya, Po-Yao Huang, Peize Sun, et al. 2025. Perception encoder: The                    network for generalizable deepfake detection. In Proceedings of the IEEE/CVF
+     best visual embeddings are not at the output of the network. arXiv preprint                    Conference on Computer Vision and Pattern Recognition. 28130–28139.
+     arXiv:2504.13181 (2025).                                                                  [26] Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-Baptiste Alayrac, Jiahui
+ [2] Lvpan Cai, Haowei Wang, Jiayi Ji, YanShu ZhouMen, Shen Chen, Taiping Yao,                      Yu, Radu Soricut, Johan Schalkwyk, Andrew M Dai, Anja Hauth, Katie Millican,
+     and Xiaoshuai Sun. 2025. Zooming in on fakes: A novel dataset for localized                    et al. 2023. Gemini: a family of highly capable multimodal models. arXiv preprint
+     AI-generated image detection with forgery amplification approach. arXiv preprint               arXiv:2312.11805 (2023).
+     arXiv:2504.11922 (2025).                                                                  [27] Michael Tschannen, Alexey Gritsenko, Xiao Wang, et al. 2025. Siglip 2: Multilin-
+ [3] Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen. 2024. Real-time deepfake               gual vision-language encoders with improved semantic understanding, localiza-
+     detection in the real-world. arXiv preprint arXiv:2406.09398 (2024).                           tion, and dense features. arXiv preprint arXiv:2502.14786 (2025).
+ [4] Baoying Chen, Jishen Zeng, Jianquan Yang, and Rui Yang. 2024. Drct: Diffu-                [28] Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew Owens, and Alexei A
+     sion reconstruction contrastive training towards universal detection of diffusion              Efros. 2020. CNN-generated images are surprisingly easy to spot... for now. In
+     generated images. In Forty-first International Conference on Machine Learning.                 Proceedings of the IEEE/CVF conference on computer vision and pattern recognition.
+ [5] Ruoxin Chen, Jiahui Gao, Kaiqing Lin, Keyue Zhang, Yandan Zhao, Isabel Guan,                   8695–8704.
+     Taiping Yao, and Shouhong Ding. 2025. Task-Model Alignment: A Simple Path                 [29] Zhendong Wang, Jianmin Bao, Wengang Zhou, et al. 2023. Dire for diffusion-
+     to Generalizable AI-Generated Image Detection. arXiv preprint arXiv:2512.06746                 generated image detection. In Proceedings of the IEEE/CVF International Conference
+     (2025).                                                                                        on Computer Vision. 22445–22455.
+ [6] Ruoxin Chen, Junwei Xi, Zhiyuan Yan, et al. 2025. Dual Data Alignment Makes AI-           [30] Hu Xu, Saining Xie, Xiaoqing Ellen Tan, Po-Yao Huang, Russell Howes, Vasu
+     Generated Image Detector Easier Generalizable. arXiv preprint arXiv:2505.14359                 Sharma, Shang-Wen Li, Gargi Ghosh, Luke Zettlemoyer, and Christoph Feichten-
+     (2025).                                                                                        hofer. 2023. Demystifying clip data. arXiv preprint arXiv:2309.16671 (2023).
+ [7] Xi Chen, Xiao Wang, Soravit Changpinyo, Anthony J Piergiovanni, Piotr                     [31] Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and
+     Padlewski, Daniel Salz, Sebastian Goodman, Adam Grycner, Basil Mustafa, Lucas                  Weidi Xie. 2024. A sanity check for ai-generated image detection. arXiv preprint
+     Beyer, et al. 2022. Pali: A jointly-scaled multilingual language-image model. arXiv            arXiv:2406.19435 (2024).
+     preprint arXiv:2209.06794 (2022).                                                         [32] Zhiyuan Yan, Jiangming Wang, Peng Jin, Ke-Yue Zhang, Chengchun Liu, Shen
+ [8] Yung-Sung Chuang, Yang Li, Dong Wang, et al. 2025. Metaclip 2: A worldwide                     Chen, Taiping Yao, Shouhong Ding, Baoyuan Wu, and Li Yuan. 2024. Orthogonal
+     scaling recipe. arXiv preprint arXiv:2507.22062 (2025).                                        Subspace Decomposition for Generalizable AI-Generated Image Detection. arXiv
+ [9] Davide Cozzolino and Luisa Verdoliva. 2019. Noiseprint: A CNN-based camera                     preprint arXiv:2411.15633 (2024).
+     model fingerprint. IEEE Transactions on Information Forensics and Security 15             [33] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. 2023. Sig-
+     (2019), 144–159.                                                                               moid loss for language image pre-training. In Proceedings of the IEEE/CVF inter-
+[10] Joel Frank, Thorsten Eisenhofer, Lea Schönherr, Asja Fischer, Dorothea Kolossa,                national conference on computer vision. 11975–11986.
+     and Thorsten Holz. 2020. Leveraging frequency analysis for deep fake image                [34] Yue Zhou, Xinan He, KaiQing Lin, Bin Fan, Feng Ding, and Bin Li. 2025. Breaking
+     recognition. In International conference on machine learning. PMLR, 3247–3258.                 Latent Prior Bias in Detectors for Generalizable AIGC Image Detection. arXiv
+[11] Yan Ju, Shan Jia, Lipeng Ke, Hongfei Xue, Koki Nagano, and Siwei Lyu. 2022.                    preprint arXiv:2506.00874 (2025).
+     Fusing global and local features for generalized ai-synthesized image detection.          [35] Ziyin Zhou, Yunpeng Luo, Yuanchen Wu, Ke Sun, Jiayi Ji, Ke Yan, Shouhong Ding,
+     In 2022 IEEE International Conference on Image Processing (ICIP). IEEE, 3465–3469.             Xiaoshuai Sun, Yunsheng Wu, and Rongrong Ji. 2025. AIGI-Holmes: Towards
+[12] Chunxiao Li, Xiaoxiao Wang, Meiling Li, Boming Miao, Peng Sun, Yunjian Zhang,                  Explainable and Generalizable AI-Generated Image Detection via Multimodal
+     Xiangyang Ji, and Yao Zhu. 2025. Bridging the Gap Between Ideal and Real-                      Large Language Models. arXiv preprint arXiv:2507.02664 (2025).
+     world Evaluation: Benchmarking AI-Generated Image Detection in Challenging                [36] Mingjian Zhu, Hanting Chen, Qiangyu Yan, et al. 2023. Genimage: A million-scale
+     Scenarios. In Proceedings of the IEEE/CVF International Conference on Computer                 benchmark for detecting ai-generated image. Advances in Neural Information
+     Vision. 20379–20389.                                                                           Processing Systems 36 (2023), 77771–77782.
+[13] Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang, Yao Hu, and Fuli Feng.
+     2025. Improving synthetic image detection towards generalization: An image
+     transformation perspective. In Proceedings of the 31st ACM SIGKDD Conference
+     on Knowledge Discovery and Data Mining V. 1. 2405–2414.
+[14] Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei Jiang, Lizhi Xiong, and
+     Zhangjie Fu. 2025. Is Artificial Intelligence Generated Image Detection a Solved
+     Problem? arXiv preprint arXiv:2505.12335 (2025).
+[15] Zhengzhe Liu, Xiaojuan Qi, and Philip HS Torr. 2020. Global texture enhancement
+     for fake face detection in the wild. In Proceedings of the IEEE/CVF conference on
+     computer vision and pattern recognition. 8060–8069.
+[16] Scott McCloskey and Michael Albright. 2019. Detecting GAN-generated imagery
+     using saturation cues. In 2019 IEEE international conference on image processing
+     (ICIP). IEEE, 4584–4588.
+[17] Augustus Odena, Vincent Dumoulin, and Chris Olah. 2016. Deconvolution and
+     Checkerboard Artifacts. Distill (2016). doi:10.23915/distill.00003
+[18] Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. 2023. Towards universal fake image
+     detectors that generalize across generative models. In Proceedings of the IEEE/CVF
+     Conference on Computer Vision and Pattern Recognition. 24480–24489.
+[19] Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, Marc Szafraniec,
+     Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-
+     Nouby, et al. 2023. Dinov2: Learning robust visual features without supervision.
+     arXiv preprint arXiv:2304.07193 (2023).
+[20] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh,
+     Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark,
+     et al. 2021. Learning transferable visual models from natural language supervision.
+                                                                                           9
+

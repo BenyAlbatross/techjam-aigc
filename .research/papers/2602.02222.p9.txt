@@ -1,0 +1,73 @@
+ [3] J. et al. Betker. Dall-e 3. https://openai.com/                  [16] I. et al. Goodfellow. Generative adversarial nets. Ad-
+     dall-e-3, 2023.                                                       vances in neural information processing systems, 27,
+                                                                           2014.
+ [4] B. et al. Cavia. Real-time deepfake detection in the
+     real-world. arXiv preprint arXiv:2406.09398, 2024.               [17] Fabrizio Guillaro, Giada Zingarini, Ben Usman, Avneesh
+                                                                           Sud, Davide Cozzolino, and Luisa Verdoliva. A bias-free
+ [5] Lawrence Cayton et al. Algorithms for manifold learning.              training paradigm for more general ai-generated image
+     Univ. of California at San Diego Tech. Rep, 12(1-17):1,               detection. In Proceedings of the Computer Vision and
+     2005.                                                                 Pattern Recognition Conference, pages 18685–18694,
+ [6] George Cazenavette, Avneesh Sud, Thomas Leung, and                    2025.
+     Ben Usman. Fakeinversion: Learning to detect images              [18] J. et al. Ho. Denoising diffusion probabilistic mod-
+     from unseen text-to-image models by inverting stable dif-             els. Advances in neural information processing systems,
+     fusion. In Proceedings of the IEEE/CVF Conference on                  33:6840–6851, 2020.
+     Computer Vision and Pattern Recognition, pages 10759–
+     10769, 2024.                                                     [19] Diederik P Kingma and Jimmy Ba. Adam: A method for
+                                                                           stochastic optimization. arXiv preprint arXiv:1412.6980,
+ [7] L. et al. Chai. What makes fake images detectable?
+                                                                           2014.
+     understanding properties that generalize. In European
+     conference on computer vision, pages 103–120. Springer,          [20] Chunxiao Li, Xiaoxiao Wang, Meiling Li, Boming Miao,
+     2020.                                                                 Peng Sun, Yunjian Zhang, Xiangyang Ji, and Yao Zhu.
+                                                                           Bridging the gap between ideal and real-world evalu-
+ [8] B. et al. Chen. Drct: Diffusion reconstruction contrastive
+                                                                           ation: Benchmarking ai-generated image detection in
+     training towards universal detection of diffusion gener-
+                                                                           challenging scenarios. In Proceedings of the IEEE/CVF
+     ated images. In Forty-first International Conference on
+                                                                           International Conference on Computer Vision, pages
+     Machine Learning, 2024.
+                                                                           20379–20389, 2025.
+ [9] R. et al. Chen. Dual data alignment makes ai-generated
+                                                                      [21] O. et al. Li. Improving synthetic image detection towards
+     image detector easier generalizable. arXiv preprint
+                                                                           generalization: An image transformation perspective.
+     arXiv:2505.14359, 2025.
+                                                                           arXiv preprint arXiv:2408.06741, 2024.
+[10] S. et al. Cheng. Co-spy: Combining semantic and pixel
+                                                                      [22] Ouxiang Li, Yuan Wang, Xinting Hu, Huijuan Huang,
+     features to detect synthetic images by ai. In Proceed-
+                                                                           Rui Chen, Jiarong Ou, Xin Tao, Pengfei Wan, Xiaojuan
+     ings of the Computer Vision and Pattern Recognition
+                                                                           Qi, and Fuli Feng. Easier painting than thinking: Can
+     Conference, pages 13455–13465, 2025.
+                                                                           text-to-image models set the stage, but not direct the
+[11] Cristiano Costa, Cristina Scarpazza, and Nicola Filippini.            play? arXiv preprint arXiv:2509.03516, 2025.
+     The anterior insula engages in feature-and context-level
+                                                                      [23] Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei
+     predictive coding processes for recognition judgments.
+                                                                           Jiang, Lizhi Xiong, and Zhangjie Fu. Is artificial intel-
+     Journal of Neuroscience, 45(5), 2025.
+                                                                           ligence generated image detection a solved problem?
+[12] David Daniel Cox and Thomas Dean. Neural networks                     arXiv preprint arXiv:2505.12335, 2025.
+     and neuroscience-inspired computer vision. Current
+     Biology, 24(18):R921–R929, 2014.                                 [24] Tsung-Yi Lin, Michael Maire, Serge Belongie, James
+                                                                           Hays, Pietro Perona, Deva Ramanan, Piotr Dollár, and
+[13] D. et al. Cozzolino. Raising the bar of ai-generated image            C Lawrence Zitnick. Microsoft coco: Common objects
+     detection with clip. In Proceedings of the IEEE/CVF                   in context. In European conference on computer vision,
+     Conference on Computer Vision and Pattern Recognition,                pages 740–755. Springer, 2014.
+     pages 4356–4366, 2024.
+                                                                      [25] H. et al. Liu. Forgery-aware adaptive transformer for
+[14] R. et al. Durall. Watch your up-convolution: Cnn based                generalizable synthetic image detection. In Proceedings
+     generative deep neural networks are failing to reproduce              of the IEEE/CVF Conference on Computer Vision and
+     spectral distributions. In Proceedings of the IEEE/CVF                Pattern Recognition, pages 10770–10780, 2024.
+     conference on computer vision and pattern recognition,
+     pages 7890–7899, 2020.                                           [26] Ruiqi Liu, Yi Han, Zhengbo Zhang, Liwei Yao, Zhiyuan
+                                                                           Yan, Jialiang Shen, ZhiJin Chen, Boyi Sun, Lubin Weng,
+[15] J. et al. Frank. Leveraging frequency analysis for deep               Jing Dong, et al. Beyond artifacts: Real-centric enve-
+     fake image recognition. In International conference on                lope modeling for reliable ai-generated image detection.
+     machine learning, pages 3247–3258. PMLR, 2020.                        arXiv preprint arXiv:2512.20937, 2025.
+
+
+                                                                  9
+

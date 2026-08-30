@@ -1,0 +1,65 @@
+                                                      Simplicity Prevails: The Emergence of Generalizable
+                                                         AIGI Detection in Visual Foundation Models
+                                                                Yue Zhou1 , Xinan He2,1 , Kaiqing Lin1 , Bing Fan3 , Feng Ding2 , Bin Li1∗
+                                                                            1 Shenzhen University 2450042008@email.szu.edu.cn;
+                                                                              2 Nanchang University shahur@email.ncu.edu.cn;
+                                                                                     3 University of North Texas
+
+                                         Abstract
+                                         Specialized detectors for AI-generated images (AIGI) often achieve
+                                         near-perfect accuracy on curated benchmarks, yet their perfor-
+arXiv:2602.01738v2 [cs.CV] 15 Apr 2026
+
+
+
+
+                                         mance degrades substantially in realistic, in-the-wild scenarios. In
+                                         this work, we show that frozen features from modern Vision Foun-
+                                         dation Models (VFMs), combined with a lightweight classifier, form
+                                         a remarkably strong baseline for generalizable AIGI detection. Us-
+                                         ing representative modern encoders, including Perception Encoder,
+                                         MetaCLIP 2, and DINOv3, we conduct a comprehensive evaluation
+                                         across standard benchmarks, recent unseen generators, and chal-
+                                         lenging in-the-wild distributions. Across these settings, this simple
+                                         baseline consistently matches or outperforms recent specialized
+                                                                                                                     Figure 1: The Surge of Generative Data in Web Corpora. We
+                                         detectors, with particularly large gains in realistic scenarios.
+                                                                                                                     track the number of indexed URLs from major open-source
+                                            We further investigate why this simple setup is so effective. Our
+                                                                                                                     AI generation platforms (Civitai and Liblib) within Common
+                                         analyses provide converging evidence that the strong forensic sep-
+                                                                                                                     Crawl snapshots from 2022 to 2025.
+                                         arability of modern VFMs is closely related to their exposure to
+                                         synthetic web content during pre-training. In Vision-Language               era of content creation, synthesizing photorealistic images that
+                                         Models, this manifests as semantic alignment with forgery-related           challenge the boundaries of visual authenticity. While empowering
+                                         concepts, while in Self-Supervised Learning models it appears as            creativity, this technological leap simultaneously introduces pro-
+                                         implicit discrimination of generative distributions. Although a fully       found threats to information integrity, fueling the proliferation of
+                                         controlled pre-training study is beyond the scope of this work,             misinformation. In response, the forensics community has largely
+                                         multiple complementary analyses support this interpretation. We             favored a specialized approach: crafting detectors with increasingly
+                                         also identify important limitations. While modern VFMs are highly           complex module tailored to specific artifacts, such as frequency
+                                         effective for global AIGI detection, they remain vulnerable to se-          anomalies or noise residuals [11, 28]. While these specialized de-
+                                         vere transmission degradation and perform poorly on pure VAE                tectors achieve near-perfect accuracy on curated benchmarks, they
+                                         reconstruction and localized editing. Overall, our results suggest          often suffer from a dramatic performance collapse in realistic sce-
+                                         that progress in generalizable AIGI detection may depend more on            narios. Recent studies, such as the Chameleon benchmark [31], re-
+                                         preserving and leveraging strong pretrained representations than            veal that detectors excelling in controlled environments frequently
+                                         on increasingly complex task-specific forensic designs.                     degrade to 60%–70% accuracy when deployed ‘in-the-wild’. This
+                                                                                                                     fragility suggests that relying on hand-crafted inductive biases may
+                                         CCS Concepts                                                                be a dead end in the face of rapidly evolving generative distribu-
+                                         • Computing methodologies → Computer vision; Artificial in-                 tions.
+                                         telligence; • Information systems → Multimedia content analysis.               Echoing Sutton’s “Bitter Lesson”, we revisit this trend from a
+                                                                                                                     different perspective: rather than asking how to design increas-
+                                         Keywords                                                                    ingly specialized forensic modules, we ask how far one can go
+                                         AI-generated image detection, multimedia forensics, vision founda-          by directly leveraging the frozen representations of modern Vi-
+                                         tion models                                                                 sion Foundation Models (VFMs). We show that a simple linear
+                                                                                                                     classifier, trained on top of frozen features from recent encoders
+                                                                                                                     such as Perception Encoder (PE) [1], MetaCLIP 2 [8], and DINOv3
+                                         1   Introduction                                                            [22], provides a remarkably strong baseline for generalizable AIGI
+                                               “One thing that should be learned from the bitter lesson              detection. We define modern VFMs as the latest generation of en-
+                                               is the great power of general purpose methods, of meth-               coders trained on large-scale and evolving web corpora. Our eval-
+                                               ods that continue to scale with increased computation                 uation spans three distinct protocols: standard benchmarks (e.g.,
+                                               even as the available computation becomes very great.”                GenImage [36]), datasets from the latest unseen generators (e.g.,
+                                                                — Rich Sutton, The Bitter Lesson [23]                AIGIHolmes [35], AIGI-Now [5]), and challenging in-the-wild dis-
+                                            The rapid evolution of generative models, such as Midjourney,            tributions (e.g., Chameleon [31], WildRF [3]). Across all settings,
+                                         Stable Diffusion [21] and Nano Banana[26], has ushered in a new             this simple baseline consistently matches or outperforms recent
+                                                                                                                 1
+
