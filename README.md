@@ -4,6 +4,194 @@ Research and zero-fine-tuning baselines for robust detection of fully AI-generat
 
 See [`TODO.md`](TODO.md) for prioritised next steps and acceptance gates.
 
+## Reproducible public gate
+
+The allowed public gate uses only the pinned SID_Set validation split. It selects
+the first 1,000 valid real rows and first 1,000 valid generated rows after
+sorting by stable sample ID, records content hashes, and excludes label 2 as
+required by [`datasets.toml`](datasets.toml). No evaluation image is used to
+fine-tune, calibrate, ensemble, or change a published decision threshold.
+
+The committed Pixi platforms retain their rich platform names. On the current
+Linux AArch64 NVIDIA GB10 host, install and verify them with:
+
+```bash
+pixi install --platform linux-aarch64-cpu
+pixi run --platform linux-aarch64-cpu test
+
+pixi install --platform linux-aarch64-cuda
+pixi run --platform linux-aarch64-cuda cuda-check
+```
+
+Model snapshots live under the ignored `work/hf-cache/` directory. Fetch only
+immutable registry revisions and verify every primary and auxiliary checkpoint
+against its registered SHA-256:
+
+```bash
+pixi run fetch -- --model all --cache work/hf-cache
+```
+
+Build the controlled manifest without admitting any other dataset:
+
+```bash
+pixi run --platform linux-aarch64-cpu python scripts/data_manifest.py build-sid \
+  --per-class 1000 \
+  --output work/manifests/sid_set_1000x2.json
+pixi run --platform linux-aarch64-cpu python scripts/data_manifest.py validate \
+  work/manifests/sid_set_1000x2.json
+```
+
+Run CUDA inference offline and one model at a time. Each completed model must
+produce 30,000 rows in fifteen atomic, resumable shards. An out-of-memory retry
+may lower the effective batch size, but it may not reduce coverage.
+
+```bash
+HF_HUB_OFFLINE=1 pixi run --platform linux-aarch64-cuda benchmark -- \
+  --models ateeqq_siglip \
+  --dataset sid_set \
+  --manifest work/manifests/sid_set_1000x2.json \
+  --conditions all \
+  --device cuda:0 \
+  --batch-size 32 \
+  --output work/predictions
+```
+
+Repeat that command sequentially for `community_forensics`,
+`frontier_community_forensics`, `wkaandemir_clip`, `divine_resnet50`,
+`divine_efficientnet`, `divine_convnext`, `steganograph`, `capcheck`, and
+`univfd`. Do not change a threshold, revision, expected hash, loader, or
+preprocessing rule in response to a result or failure.
+
+The fifteen preregistered conditions are clean; JPEG quality 90, 70, 50, and
+30; Gaussian blur sigma 0.5, 1, and 2; 0.5x and 0.25x downscale-and-restore;
+Gaussian noise sigma 0.02, 0.05, and 0.10; deterministic 20% color jitter; and
+80% center crop. Transformations are deterministic and class-symmetric.
+
+The report includes error rate, FPR, FNR, balanced accuracy, AUROC, confusion
+counts, 95% grouped-bootstrap confidence intervals, clean-to-transformed score
+change, decision-flip rate, throughput, contamination, invalid counts, and
+worst cohorts. Controlled intervals resample `base_id` 2,000 times. Ranking
+admits only approved, uncontaminated model/dataset pairs and orders them by:
+
+1. higher worst-condition balanced accuracy;
+2. lower worst-real-source FPR;
+3. lower worst-generated-source FNR;
+4. higher aggregate AUROC;
+5. model key, only as a deterministic final tie-break.
+
+The point ordering is not sufficient to declare a winner or top three. A
+winner is reported only when its relevant 95% interval strictly supports every
+comparison, and a top-three set only when every selected/excluded boundary
+comparison is supported. Otherwise the report marks the winner, boundary, or
+both unresolved.
+
+Generate and validate the report with:
+
+```bash
+pixi run report -- \
+  --predictions work/predictions \
+  --manifest work/manifests/sid_set_1000x2.json \
+  --json work/reports/summary.json \
+  --csv work/reports/metrics.csv \
+  --markdown outputs/public-baseline-robustness-report.md
+pixi run --platform linux-aarch64-cpu python scripts/report.py validate \
+  --predictions work/predictions \
+  --manifest work/manifests/sid_set_1000x2.json \
+  --models all
+```
+
+## Pinned third-party inventory
+
+Checkpoint hashes, parameter counts, fixed thresholds, label directions, and
+loader names are authoritative in [`models.toml`](models.toml). Dataset status,
+selection, and exclusions are authoritative in
+[`datasets.toml`](datasets.toml).
+
+| Model key | Repository and immutable revision | License |
+| --- | --- | --- |
+| `ateeqq_siglip` | [`Ateeqq/ai-vs-human-image-detector@60e82406916921b823616bee33397baab38af3f0`](https://huggingface.co/Ateeqq/ai-vs-human-image-detector/tree/60e82406916921b823616bee33397baab38af3f0) | Apache-2.0 |
+| `community_forensics` | [`buildborderless/CommunityForensics-DeepfakeDet-ViT@ac6ee457bea904a373065754107451793b56db00`](https://huggingface.co/buildborderless/CommunityForensics-DeepfakeDet-ViT/tree/ac6ee457bea904a373065754107451793b56db00) | MIT |
+| `frontier_community_forensics` | [`Thermostatic/community-forensics-frontier-detector-2026-08@16db135220b318d811b207db576d90368980b595`](https://huggingface.co/Thermostatic/community-forensics-frontier-detector-2026-08/tree/16db135220b318d811b207db576d90368980b595) | MIT |
+| `wkaandemir_clip` | [`wkaandemir/ai-image-detector@fefa013737a0c3477961d36ee8dbbdc751352366`](https://huggingface.co/wkaandemir/ai-image-detector/tree/fefa013737a0c3477961d36ee8dbbdc751352366) | MIT |
+| `divine_resnet50` | [`divine2k/ai-image-detectors@5dd08026ea41f07ad7c37b79ffaed08282667655`](https://huggingface.co/divine2k/ai-image-detectors/tree/5dd08026ea41f07ad7c37b79ffaed08282667655) | MIT |
+| `divine_efficientnet` | same pinned `divine2k/ai-image-detectors` snapshot | MIT |
+| `divine_convnext` | same pinned `divine2k/ai-image-detectors` snapshot | MIT |
+| `steganograph` | [`delpot/steganograph-ia-detector@b395557b96de82e5aaf97206054af416d657655a`](https://huggingface.co/delpot/steganograph-ia-detector/tree/b395557b96de82e5aaf97206054af416d657655a) | MIT |
+| `capcheck` | [`capcheck/ai-image-detection@a6661e07d38f1a097bba07ca9415538819278f09`](https://huggingface.co/capcheck/ai-image-detection/tree/a6661e07d38f1a097bba07ca9415538819278f09) | Apache-2.0 |
+| `univfd` | [`siddharthksah/deepsafe-weights@71706520a9e12494b3ebc24e6091f5b22b9efcaf`](https://huggingface.co/siddharthksah/deepsafe-weights/tree/71706520a9e12494b3ebc24e6091f5b22b9efcaf) | MIT |
+
+| Dataset | Revision and status | License evidence |
+| --- | --- | --- |
+| SID_Set | [`saberzl/SID_Set@dc03ead57929879319ce30a82bfcfb8d317b10bd`](https://huggingface.co/datasets/saberzl/SID_Set/tree/dc03ead57929879319ce30a82bfcfb8d317b10bd), approved only for the controlled gate | [CC BY 4.0 card](https://huggingface.co/datasets/saberzl/SID_Set/blob/dc03ead57929879319ce30a82bfcfb8d317b10bd/README.md) |
+| Community Forensics Eval | [`OwensLab/CommunityForensics-Eval@7d4a74a88d2cac93b513c0853bf92c260eaceea0`](https://huggingface.co/datasets/OwensLab/CommunityForensics-Eval/tree/7d4a74a88d2cac93b513c0853bf92c260eaceea0), blocked | CC BY-NC-SA 4.0 is not cleared for a prize competition |
+| NTIRE 2026 train | [`deepfakesMSU/NTIRE-RobustAIGenDetection-train@700b6d08a3268b1e7a191306dec7321dd953b12f`](https://huggingface.co/datasets/deepfakesMSU/NTIRE-RobustAIGenDetection-train/tree/700b6d08a3268b1e7a191306dec7321dd953b12f), review-blocked | no license or usage grant is declared |
+| Social-media robustness panel | unavailable revision, blocked | no license is declared; the user deferred this panel |
+
+Community Forensics Eval, NTIRE, the social panel, competition COCO/DALL-E
+assets, and any WildFake addendum are outside this gate. Without written
+permission there is no download, transformation, benchmark, demo, or
+submission use of those datasets.
+
+## Directory inference
+
+Run a selected cached checkpoint offline against a local directory. The output
+is a JSON array whose objects contain exactly `image_path` and `pred`; paths are
+relative and `pred` is finite in `[0, 1]`. Diagnostics must use a separate file.
+
+```bash
+HF_HUB_OFFLINE=1 pixi run --platform linux-aarch64-cuda infer -- \
+  --model ateeqq_siglip \
+  --input path/to/images \
+  --output work/submission/predictions.json \
+  --diagnostics work/submission/diagnostics.json \
+  --device cuda:0 \
+  --cache work/hf-cache
+```
+
+## Cleanup and release blockers
+
+Preview cleanup at any time; it writes `work/cleanup-inventory.json` and deletes
+nothing:
+
+```bash
+pixi run --platform linux-aarch64-cpu cleanup
+```
+
+Only at the end of the competition, after reviewing that inventory, an
+operator may explicitly delete the confined safe targets and write
+`outputs/data-deletion-attestation.json`:
+
+```bash
+pixi run --platform linux-aarch64-cpu python scripts/cleanup.py delete --confirm
+```
+
+Do not run confirmed cleanup during ordinary development or verification.
+
+The technical benchmark gate is not a submission approval. Check the release
+scope with:
+
+```bash
+pixi run --platform linux-aarch64-cpu python scripts/compliance.py check \
+  --scope submission --models all --dataset sid_set
+```
+
+Release remains blocked while any model has `submission_status = "review"`,
+the current problem brief has not been human-verified, the repository is not
+public, or free judging access has not been human-verified. These blockers must
+not be bypassed by editing the registry or release flags without evidence.
+
+## Claim and privacy limits
+
+This is a fixed-threshold technical baseline and robustness error analysis. It
+does not authenticate an image, cover every detector or generator, establish
+performance outside the pinned data and conditions, or resolve undocumented
+training-data overlap. Positive-only legacy smoke tests are not generalization
+estimates and are not part of the controlled gate.
+
+No identity recognition, face matching, EXIF-based person identification, or
+external lookup of depicted people is permitted. Reports use opaque sample IDs
+and omit secrets, usernames, tokens, and private local paths.
+
 ## Current result
 
 Ateeqq SigLIP was the strongest tested open-source baseline. On the frozen 80-image SID_Set confirmation slice:
