@@ -83,6 +83,7 @@ def build_sid(output: Path, per_class: int) -> Path:
     images = ROOT / "work/data/sid_set/images"
     selected = {0: 0, 1: 0}
     samples = []
+    hashes = {}
     excluded = set(entry["excluded_labels"])
     for source_row, row in enumerate(rows):
         label = row.get("label")
@@ -90,6 +91,11 @@ def build_sid(output: Path, per_class: int) -> Path:
             continue
         image, suffix = _image_bytes(row.get("image"))
         digest = hashlib.sha256(image).hexdigest()
+        if digest in hashes:
+            if hashes[digest] != label:
+                raise ValueError("SID_Set has same bytes with conflicting labels")
+            continue
+        hashes[digest] = label
         filename = f"{digest}{suffix.lower()}"
         local = images / filename
         images.mkdir(parents=True, exist_ok=True)
@@ -119,13 +125,16 @@ def build_sid(output: Path, per_class: int) -> Path:
     }, output)
 
 
-def build_ntire(shard_dir: Path, output: Path) -> Path:
+def _build_ntire(shard_dir: Path, output: Path) -> Path:
     samples = []
     with (shard_dir / "labels.csv").open(newline="") as handle:
         rows = sorted(csv.DictReader(handle), key=lambda row: row["image"])
+    images = (shard_dir / "images").resolve()
     for row in rows:
         image = Path(row["image"])
-        path = shard_dir / "images" / image
+        path = (images / image).resolve()
+        if not path.is_relative_to(images):
+            raise ValueError(f"{image}: path must stay under images")
         label = int(row["label"])
         samples.append({
             "sample_id": image.name, "base_id": image.name, "label": label,
@@ -135,6 +144,11 @@ def build_ntire(shard_dir: Path, output: Path) -> Path:
             "license": "UNDECLARED",
         })
     return _write_json({"dataset": "ntire_2026_train", "samples": samples}, output)
+
+
+def build_ntire(shard_dir: Path, output: Path) -> Path:
+    _dataset("ntire_2026_train")
+    return _build_ntire(shard_dir, output)
 
 
 def main() -> int:
@@ -152,7 +166,6 @@ def main() -> int:
     if args.command == "build-sid":
         build_sid(args.output, args.per_class)
     elif args.command == "build-ntire":
-        _dataset("ntire_2026_train")
         build_ntire(args.shard_dir, args.output)
     else:
         errors = validate_manifest(json.loads(args.manifest.read_text()), args.manifest.parent.parent)
