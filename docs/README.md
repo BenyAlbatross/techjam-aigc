@@ -4,6 +4,10 @@
 
 - [Hackathon problem statement and webinar clarifications](problem-statement.md)
 - [AIGC feature robustness laboratory](feature-robustness-lab.md)
+- [Frequency and camera-signal forensics notebook](signal-forensics-eda.md)
+- [Feature selection and transform-robustness teammate report](feature-selection-robustness-report.html)
+- [TRACE-RX-Alternative3 architecture, review, and final design decision](method_proposal/trace-rx-alternative3.html)
+- [TRACE-RX-Alternative3 bias register (B1–B18, M1–M4, S1–S3)](method_proposal/trace-rx-alternative3-bias-register.md)
 - [AIGC exploration and implementation plan](aigc-exploration-implementation-plan.md)
 - [AIGC exploration plan-to-code reconciliation](aigc-exploration-reconciliation.md)
 - [Image generator families, lineages, and detector implications](generator_families/index.html)

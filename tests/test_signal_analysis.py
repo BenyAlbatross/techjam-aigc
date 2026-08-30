@@ -1,9 +1,21 @@
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from scripts.run_signal_analysis import dct_analysis, feature_effects, spectrum_analysis
+_SPEC = importlib.util.spec_from_file_location(
+    "run_signal_analysis",
+    Path(__file__).parents[1] / "scripts/run_signal_analysis.py",
+)
+assert _SPEC is not None and _SPEC.loader is not None
+_MODULE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_MODULE)
+dct_analysis = _MODULE.dct_analysis
+feature_effects = _MODULE.feature_effects
+spectrum_analysis = _MODULE.spectrum_analysis
 
 
 def test_spectrum_harmonic_excess_responds_to_one_eighth_periodicity() -> None:

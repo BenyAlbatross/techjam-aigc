@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIGC feature selection and robustness report</title>
+  <style>
+    :root { --ink:#18202b; --muted:#5d6878; --line:#dce2ea; --panel:#f7f9fc; --blue:#2867b2; --green:#177a55; --green-soft:#e8f7f1; --amber:#9a5b00; --amber-soft:#fff4dc; --red:#a33a3a; --red-soft:#fdeeee; }
+    * { box-sizing:border-box } body { margin:0; color:var(--ink); background:#eef2f7; font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
+    main { width:min(1180px,calc(100% - 32px)); margin:28px auto 60px; background:white; border:1px solid var(--line); border-radius:18px; box-shadow:0 14px 40px rgba(37,51,70,.08); overflow:hidden }
+    header { padding:48px clamp(24px,6vw,72px) 36px; color:white; background:linear-gradient(125deg,#16365f,#2867b2 62%,#5a4b9a) }
+    header p { max-width:820px; margin:10px 0 0; color:#e7f0fc; font-size:1.06rem } .eyebrow { color:#bfd8f7; font-size:.78rem; font-weight:750; letter-spacing:.12em; text-transform:uppercase }
+    h1 { max-width:950px; margin:8px 0 0; font-size:clamp(2rem,4vw,3.5rem); line-height:1.08; letter-spacing:-.035em } h2 { margin:0 0 14px; font-size:1.55rem } h3 { margin:0 0 8px; font-size:1.05rem }
+    section { padding:34px clamp(20px,5vw,64px); border-top:1px solid var(--line) } p { margin:8px 0 14px } code { padding:.12em .35em; border-radius:5px; background:#edf1f6; color:#293547 } a { color:var(--blue) }
+    .lead { font-size:1.08rem; max-width:950px } .decision,.grid-2,.grid-3 { display:grid; gap:16px } .decision { grid-template-columns:1.15fr .85fr; margin-top:20px } .grid-2 { grid-template-columns:repeat(2,1fr) } .grid-3 { grid-template-columns:repeat(3,1fr) }
+    .card { padding:20px; border:1px solid var(--line); border-radius:13px; background:var(--panel) } .card.keep { border-color:#9bd4be; background:var(--green-soft) } .card.warn { border-color:#e8c782; background:var(--amber-soft) }
+    .kicker { color:var(--muted); font-size:.82rem; font-weight:750; letter-spacing:.07em; text-transform:uppercase } .big { margin-top:4px; font-size:1.35rem; font-weight:780; line-height:1.25 }
+    .badges { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px } .badge { display:inline-block; padding:4px 9px; border-radius:999px; border:1px solid var(--line); background:white; font-size:.82rem; font-weight:700 }
+    .badge.keep { color:var(--green); border-color:#91cbb4 } .badge.shortcut { color:var(--amber); border-color:#d7af5d } .badge.discard { color:var(--red); border-color:#e0aaaa }
+    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:11px } table { width:100%; border-collapse:collapse; min-width:850px } th,td { padding:11px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top }
+    th { color:#3b485a; background:#f1f4f8; font-size:.76rem; letter-spacing:.045em; text-transform:uppercase } tr:last-child td { border-bottom:0 } td.num { font-variant-numeric:tabular-nums; white-space:nowrap }
+    .meter { width:112px; height:8px; margin-top:6px; overflow:hidden; border-radius:99px; background:#dce3ed } .meter span { display:block; height:100%; background:var(--blue) } .drop span { background:#d46051 }
+    .callout { padding:16px 18px; border-left:4px solid var(--blue); background:#e9f2ff; border-radius:4px 10px 10px 4px } .callout.warn { border-left-color:var(--amber); background:var(--amber-soft) } .callout.red { border-left-color:var(--red); background:var(--red-soft) }
+    .flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:stretch; gap:10px; margin-top:18px } .node { padding:16px; border:1px solid var(--line); border-radius:11px; background:var(--panel) } .arrow { align-self:center; color:#7155a5; font-size:1.5rem; font-weight:800 }
+    ul,ol { padding-left:1.25rem } li { margin:6px 0 } pre { overflow:auto; padding:16px; border-radius:10px; color:#e7edf5; background:#172231; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace }
+    .small { color:var(--muted); font-size:.88rem } footer { padding:24px clamp(20px,5vw,64px); border-top:1px solid var(--line); color:var(--muted); background:#f7f9fc; font-size:.86rem }
+    @media(max-width:780px){ .decision,.grid-2,.grid-3,.flow { grid-template-columns:1fr } .arrow { transform:rotate(90deg); justify-self:center } header { padding-top:34px } }
+    @media print { body { background:white } main { width:100%; margin:0; border:0; box-shadow:none } section { break-inside:avoid } }
+  </style>
+</head>
+<body><main>
+  <header>
+    <div class="eyebrow">Team decision report · 30 August 2026</div>
+    <h1>Keep the three-feature core. Test the six fragile features—do not promote them wholesale.</h1>
+    <p>A teammate-facing interpretation of the current AUPRC feature laboratory, with transform failure evidence, selection rules, and exact residual-kurtosis implementation references.</p>
+  </header>
+
+  <section>
+    <h2>Executive decision</h2>
+    <p class="lead"><strong>Use the three retained features as the current compact candidate core:</strong> residual kurtosis, Haar high-band kurtosis, and Fourier phase-neighbor coherence. Keep the other six in the experimental matrix because they expose important failure modes, but do not automatically add them to the deployed detector.</p>
+    <div class="decision">
+      <div class="card keep"><div class="kicker">Core candidate set</div><div class="big">3 retained signals from complementary representations</div>
+        <div class="badges"><span class="badge keep">residual_kurtosis</span><span class="badge keep">wavelet_hf_kurtosis</span><span class="badge keep">phase_neighbor_coherence</span></div>
+        <p>All three cleared the current clean, powered-group, and official-transform screens without a powered generator direction reversal.</p>
+      </div>
+      <div class="card warn"><div class="kicker">Do not confuse two claims</div><div class="big">“Large performance drop” is not “strong detector feature.”</div><p>The six examples were chosen because blur, resize, or JPEG damaged their separation. Two are currently marked <em>shortcut</em> and four <em>discard</em>.</p></div>
+    </div>
+    <div class="callout warn" style="margin-top:18px"><strong>The core is not the final answer either.</strong> Residual kurtosis and wavelet high-frequency kurtosis are strongly redundant on clean discovery images (Spearman ρ = 0.887). Compare the three-feature core against a two-feature version before locking the architecture. Phase-neighbor coherence is the most representation-diverse member.</div>
+  </section>
+
+  <section>
+    <h2>What the current experiment establishes</h2>
+    <div class="grid-3">
+      <div class="card"><div class="kicker">Data</div><div class="big">376 binary parent images</div><p>188 discovery and 188 confirmation parents; 110 AIGC and 78 real in confirmation.</p></div>
+      <div class="card"><div class="kicker">Evaluation</div><div class="big">53 features × 20 conditions × 2 views</div><p><code>frozen_v1</code> features under clean, official transforms, and selected compositions.</p></div>
+      <div class="card"><div class="kicker">Primary metric</div><div class="big">AUPRC, AIGC positive</div><p>Confirmation prevalence is 0.585. Normalized AUPRC is (AUPRC − prevalence)/(1 − prevalence).</p></div>
+    </div>
+    <p class="small">Feature orientation was selected only on clean discovery data, then frozen for confirmation. The expanded <code>expanded_v2</code> feature profile has not yet been run, so this is not a final feature freeze.</p>
+  </section>
+
+  <section>
+    <h2>The three retained features</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Feature</th><th>Signal</th><th>Clean confirmation AUPRC</th><th>Worst official condition</th><th>Worst AUPRC</th><th>Why retain</th></tr></thead>
+      <tbody>
+        <tr><td><code>residual_kurtosis</code></td><td>Excess kurtosis of a σ=1 Gaussian high-pass residual</td><td class="num"><strong>0.764</strong> <span class="small">(95% CI 0.701–0.819)</span><div class="meter"><span style="width:76.4%"></span></div></td><td><code>noise_sigma0.10</code></td><td class="num">0.694 <span class="small">(normalized 0.263)</span></td><td>Best clean result of the retained set; stable across JPEG and no powered generator reversal.</td></tr>
+        <tr><td><code>wavelet_hf_kurtosis</code></td><td>Excess kurtosis across first-level Haar LH, HL, and HH coefficients</td><td class="num"><strong>0.757</strong> <span class="small">(95% CI 0.702–0.812)</span><div class="meter"><span style="width:75.7%"></span></div></td><td><code>noise_sigma0.10</code></td><td class="num">0.695 <span class="small">(normalized 0.266)</span></td><td>Confirms related tail-shape evidence in another transform, but is highly correlated with residual kurtosis.</td></tr>
+        <tr><td><code>phase_neighbor_coherence</code></td><td>Mean cosine coherence between adjacent Fourier-phase samples</td><td class="num"><strong>0.728</strong> <span class="small">(95% CI 0.658–0.793)</span><div class="meter"><span style="width:72.8%"></span></div></td><td><code>blur_sigma2</code></td><td class="num">0.678 <span class="small">(normalized 0.223)</span></td><td>Lower clean score but lower nuisance correlation and representation diversity versus the two kurtosis features.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">“Retained” means useful enough to continue testing. It does not mean invariant: blur and resize still reduce all three.</p>
+  </section>
+
+  <section>
+    <h2>The six strong degradation examples</h2>
+    <p>These are excellent stress-test examples, not six presently recommended inputs. Each row states its analysis view because canonical 128×128 preprocessing can mask or alter native codec-grid evidence.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Feature</th><th>Ledger</th><th>Stress view and condition</th><th>Clean → stress AUPRC</th><th>Drop</th><th>Recommended role now</th></tr></thead>
+      <tbody>
+        <tr><td><code>wavelet_level2_ratio</code></td><td><span class="badge shortcut">shortcut</span></td><td>canonical; 0.25× resize</td><td class="num">0.699 → 0.567</td><td class="num"><strong>0.132</strong><div class="meter drop"><span style="width:66%"></span></div></td><td>Trial as one multiscale specialist; reject if worst-condition or held-out-generator AUPRC does not improve.</td></tr>
+        <tr><td><code>residual_neighbor_corr</code></td><td><span class="badge discard">discard</span></td><td>native; σ=2 blur</td><td class="num">0.735 → 0.566</td><td class="num"><strong>0.170</strong><div class="meter drop"><span style="width:85%"></span></div></td><td>Transformation/quality diagnostic. It reverses after severe blur/resize and is near-duplicate with DCT and slope signals.</td></tr>
+        <tr><td><code>fft_mid_energy</code></td><td><span class="badge shortcut">shortcut</span></td><td>canonical; σ=2 blur</td><td class="num">0.691 → 0.634</td><td class="num"><strong>0.057</strong><div class="meter drop"><span style="width:29%"></span></div></td><td>One-at-a-time spectral specialist trial. Maximum nuisance Spearman correlation is 0.833.</td></tr>
+        <tr><td><code>jpeg_blockiness</code></td><td><span class="badge discard">discard</span></td><td>native; JPEG quality 50</td><td class="num">0.589 → 0.481</td><td class="num"><strong>0.108</strong><div class="meter drop"><span style="width:54%"></span></div></td><td>Codec-condition sensor and shortcut audit only; not direct class evidence.</td></tr>
+        <tr><td><code>dct_high_ac_ratio</code></td><td><span class="badge discard">discard</span></td><td>native; 0.25× resize</td><td class="num">0.737 → 0.567</td><td class="num"><strong>0.171</strong><div class="meter drop"><span style="width:85%"></span></div></td><td>Diagnostic/specialist only. Strong clean native score, but direction reversals and nuisance correlation 0.757 make it unsafe alone.</td></tr>
+        <tr><td><code>fft_radial_slope</code></td><td><span class="badge discard">discard</span></td><td>native; 0.25× resize</td><td class="num">0.745 → 0.570</td><td class="num"><strong>0.175</strong><div class="meter drop"><span style="width:88%"></span></div></td><td>Resize/formation diagnostic. Its clean score is view-dependent and maximum nuisance correlation is 0.812.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout red" style="margin-top:18px"><strong>Why “all six” is risky:</strong> this block is internally redundant. On clean discovery images, |ρ| is 0.968 for residual-neighbor correlation versus DCT high-AC ratio, 0.938 for DCT high-AC ratio versus FFT radial slope, and 0.902 for wavelet level-2 ratio versus residual-neighbor correlation. Adding all six increases shortcut capacity much more than independent evidence.</div>
+  </section>
+
+  <section>
+    <h2>Does the hackathon warning show up in our data?</h2>
+    <p><strong>Yes.</strong> Severe blur and resize produce the largest, most consistent losses in high-frequency, local-correlation, DCT, and multiscale features. JPEG damage is clearest in the native view. A post-hoc paired, class-stratified bootstrap over 188 confirmation parents (1,500 resamples; Holm correction within each transform) found:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>View</th><th>Stress</th><th>95% drop interval above zero</th><th>Holm-supported</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>canonical 128</td><td>σ=2 blur</td><td class="num">19 / 48</td><td class="num">4 / 48</td><td>wavelet level-2, FFT mid energy, spectral entropy, self-blur MSE</td></tr>
+        <tr><td>canonical 128</td><td>JPEG quality 30</td><td class="num">5 / 48</td><td class="num">1 / 48</td><td>residual MAD was the clearest corrected loss</td></tr>
+        <tr><td>canonical 128</td><td>0.25× resize</td><td class="num">24 / 48</td><td class="num">14 / 48</td><td>multiscale wavelet, residual correlation, radial slope, high-frequency energy</td></tr>
+        <tr><td>native capped</td><td>σ=2 blur</td><td class="num">11 / 48</td><td class="num">7 / 48</td><td>residual correlation, DCT high AC, wavelet level-2, texture features</td></tr>
+        <tr><td>native capped</td><td>JPEG quality 50</td><td class="num">6 / 48</td><td class="num">3 / 48</td><td>JPEG blockiness, DCT high AC, FFT radial slope</td></tr>
+        <tr><td>native capped</td><td>0.25× resize</td><td class="num">14 / 48</td><td class="num">5 / 48</td><td>radial slope, DCT high AC, residual correlation, texture entropy</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">This significance analysis is post-hoc and supports effect-size interpretation; it was not a preregistered selection test. The saved pipeline table contains point estimates and direction-reversal flags.</p>
+  </section>
+
+  <section>
+    <h2>Recommended feature-selection experiment</h2>
+    <div class="flow">
+      <div class="node"><div class="kicker">Tier A</div><h3>Compact core</h3><p>Compare all 3 retained features with <code>residual_kurtosis + phase_neighbor_coherence</code> to test kurtosis redundancy.</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="kicker">Tier B</div><h3>One specialist at a time</h3><p>Add one family representative per run—never the full correlated block first.</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="kicker">Tier C</div><h3>Nuisance controls</h3><p>Use codec/resize sensors to audit or calibrate reliability, not as direct AIGC votes unless locked evaluation proves value.</p></div>
+    </div>
+    <ol>
+      <li>Make selection only inside discovery data using nested, group-aware validation. Do not tune on current confirmation rows.</li>
+      <li>Compare: best single feature; core-2; core-3; core-3 plus each specialist; and core-3 plus a regularized family set.</li>
+      <li>Train with official transforms and compositions while preserving clean examples. Include transform order and severity sweeps rather than only a Cartesian explosion.</li>
+      <li>Score clean AUPRC, mean official-transform AUPRC, worst-condition normalized AUPRC, leave-one-dataset/generator results, direction reversals, and calibration.</li>
+      <li>Keep an addition only if it improves a locked robustness/generalization target across seeds without a material nuisance correlation or subgroup reversal.</li>
+      <li>After freezing the subset and model, evaluate once on untouched confirmation and then on expanded datasets.</li>
+    </ol>
+    <div class="callout"><strong>Practical architecture:</strong> a small regularized engineered-feature branch is reasonable as one branch of the final system, but should complement a generator-general semantic/representation branch. The workshop’s hybrid suggestion is guidance, not a requirement.</div>
+  </section>
+
+  <section id="residual-kurtosis">
+    <h2>Residual kurtosis: exact implementation and notebook status</h2>
+    <p><strong>The scalar implementation is in the reusable Python package, not duplicated inline in the marimo notebook.</strong> That gives another agent one authoritative implementation instead of drifting copies.</p>
+    <pre>Y = 0.2126 R + 0.7152 G + 0.0722 B        # RGB normalized to [0, 1]
+S = GaussianFilter(Y, sigma=1, mode="reflect")
+E = Y - S
+residual_kurtosis = mean((E - mean(E))^4) / mean((E - mean(E))^2)^2 - 3</pre>
+    <div class="grid-2">
+      <div class="card"><h3>Authoritative scalar code</h3><ul>
+        <li><code>src/techjam_aigc/feature_lab/features.py:28</code> — excess-kurtosis helper</li>
+        <li><code>src/techjam_aigc/feature_lab/features.py:496</code> — σ=1 Gaussian residual</li>
+        <li><code>src/techjam_aigc/feature_lab/features.py:530</code> — feature assignment</li>
+        <li><code>src/techjam_aigc/feature_lab/registry.py:58</code> — registry entry</li>
+      </ul></div>
+      <div class="card"><h3>What is in the marimo notebook</h3><ul>
+        <li><code>notebooks/feature_robustness_lab.py:520</code> — scalar selector defaults to residual kurtosis</li>
+        <li><code>notebooks/feature_robustness_lab.py:541</code> — distribution and transform profile</li>
+        <li><code>notebooks/feature_robustness_lab.py:294</code> — Gaussian-residual visualization</li>
+      </ul></div>
+    </div>
+    <div class="callout warn" style="margin-top:16px"><strong>Visualization caveat:</strong> the notebook displays the <em>absolute</em> Gaussian residual to make structure visible. The evaluated scalar uses the signed residual before computing excess kurtosis. The image map is an explanation aid, not the scalar computation itself.</div>
+  </section>
+
+  <section>
+    <h2>Evidence boundaries and next update</h2>
+    <ul>
+      <li>The sample is small and uneven by generator; several WildFake generator strata are underpowered.</li>
+      <li>The six degradation examples and paired significance analysis are post-hoc—experiment-design evidence, not final benchmark claims.</li>
+      <li><code>expanded_v2</code> (82 planned features) and the expanded chronological/community datasets have not yet been run in this artifact directory.</li>
+      <li>The semantic-control branch is <code>not_run</code>; no weights were silently downloaded.</li>
+      <li>Update this report after subset selection on discovery and one locked evaluation on expanded untouched confirmation data.</li>
+    </ul>
+    <h3>Local evidence sources</h3>
+    <ul>
+      <li><code>data/derived/feature_lab/decision_ledger.csv.gz</code></li>
+      <li><code>data/derived/feature_lab/clean_to_condition_auprc_drop.csv.gz</code></li>
+      <li><code>data/derived/feature_lab/transform_metrics.csv.gz</code></li>
+      <li><code>data/derived/feature_lab/features.csv.gz</code></li>
+      <li><code>data/derived/feature_lab/evaluation_metadata.json</code> and <code>run_metadata.json</code></li>
+      <li><code>docs/problem-statement.md</code>, especially the non-binding transform/hybrid guidance</li>
+    </ul>
+  </section>
+
+  <footer>Prepared from the repository’s frozen-v1 feature-lab artifacts. “Keep,” “shortcut,” and “discard” are current laboratory decisions, not immutable product requirements. Regenerate the conclusions after expanded-data evaluation.</footer>
+</main></body></html>

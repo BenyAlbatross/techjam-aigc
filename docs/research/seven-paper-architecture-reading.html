@@ -172,7 +172,9 @@ blockquote { border-left:3px solid var(--line); margin-left:0; padding-left:1rem
 <li>The format alignment is based largely on JPEG quality estimation. File history also includes chroma subsampling, resizing kernels, sharpening, color management, WebP, screenshots, and repeated encodes.</li>
 <li>Mixing real pixels into a positive changes the pixel-level data while keeping a “synthetic” label. The closer <code>r</code> gets to 1, the less clearly the image is purely generated. This is defensible as representation training, but it is not a literal sample from the target class.</li>
 <li>Several new benchmarks are constructed by the same authors around the failure mode their method addresses. The broad external evaluation helps, but Table 2 also mixes official checkpoints trained on different data, so it is not a clean architecture comparison.</li>
+<li><strong>Selection leakage:</strong> the supplement says balanced accuracy was evaluated “on all datasets” every 10,000 iterations and used for early stopping (Appendix A, p. 15). Those datasets are presented as the evaluation suite. This weakens every headline comparison because the proposed model was selected using its test domains.</li>
 <li>The paper’s own limitation is directly relevant: modern smartphone computational photography can create “synthetic-like” artifacts, and heavy real-world processing remains unresolved (p. 10).</li>
+<li><strong>Paper/release mismatch:</strong> the public training code inspected on 30 August 2026 adds broad JPEG/noise/blur/sharpen/color/resize augmentations, an enabled frequency-blend mix, and a BCE-plus-contrastive objective that are absent from the paper’s three-step account. Those may explain part of the robustness gain. A text-faithful reimplementation and a checkpoint reproduction are different experiments.</li>
 </ul>
 
 <h3>Use in TRACE-RX</h3>
@@ -217,8 +219,13 @@ Phase 2:
 <li>The “human reference–comparison” framing is suggestive, not uniquely implied by the psychophysical data. Explicit reference images and expertise help humans; this does not prove that the proposed sparse dictionary matches the human mechanism.</li>
 <li>COCO is not “the real-image manifold.” It undercovers screenshots, scans, art, medical imagery, CGI, phone computational photography, and platform-processed media. An anomaly score against COCO risks false positives on authentic subtypes.</li>
 <li>DINOv3 pretraining itself may contain synthetic images. A memory learned on its features is not independent of generative exposure even if phase-1 samples are real.</li>
+<li>The stated orthogonality objective <code>||MMᵀ-I||</code> cannot make 4,096 prototypes mutually orthogonal when their DINO feature dimension is smaller (about 1,024): <code>rank(MMᵀ) ≤ D &lt; K</code>. It is a soft redundancy penalty with an unattainable zero, not an orthogonal dictionary.</li>
+<li>Phase 1 learns the memory in frozen-DINO coordinates. Phase 2 changes DINO with LoRA while freezing memory and projection. This coordinate mismatch may intentionally make fake features residual-heavy, but then the method has partly returned to supervised artifact classification.</li>
+<li>There is no same-DINOv3 frozen linear/MLP control, so the incremental value of memory and reference comparison is not identified against the strongest relevant simple baseline.</li>
 <li>Robustness uses mild q90 JPEG and 0.9 resizing, much weaker than this challenge’s q30 and 0.25× conditions. In-the-wild results are more persuasive, but they do not isolate each transform.</li>
 <li>The reported residual can reflect domain or content mismatch as easily as synthetic origin. The authentic-subtype false-positive table is more important for us than the mean benchmark score.</li>
+<li>The Human-AIGI hard subset is selected from generated images and Table 3 is organized only by generator. Its “hard accuracy” is therefore fake recall, not a balanced real/fake operating point. A superhuman claim would need matched authentic FPR and uncertainty, plus the omitted psychophysics protocol details.</li>
+<li><strong>Paper/release mismatch:</strong> the PDF omits phase-1 optimization and LoRA/head details. The public inference snapshot inspected on 30 August 2026 concatenates the raw DINO CLS token into the classifier even though Eq. 5 names only residual/perplexity evidence. Without a no-CLS ablation, a conventional classification bypass can receive credit as reference comparison.</li>
 </ul>
 
 <h3>Use in TRACE-RX</h3>
@@ -256,7 +263,7 @@ AdamW, lr 1e-3, batch 128, 2 epochs, no extra augmentation</pre>
 <li>A VLM retrieving “AI generated” or “midjourney_images” may expose a powerful semantic/source shortcut. That can be operationally useful, but it is not necessarily a generator-invariant forensic concept.</li>
 <li>Recent web pretraining creates difficult leakage questions. Test images, near-duplicates, community source styles, or generator tags may have entered pretraining. Frozen does not mean unbiased or auditable.</li>
 <li>The linear probe is weak on pure VAE reconstruction and local editing (Table 8), and fake recall still drops substantially after recapture. For this challenge, local editing is out of scope; severe redistribution is not.</li>
-<li>The backbone licensing and weight-release conditions matter. Strong performance from a model that cannot be redistributed under the competition rules is not a usable result.</li>
+<li>The backbone licensing and weight-release conditions matter. Strong performance from a model that cannot be redistributed under the competition rules is not a usable result. In particular, the paper’s web-versus-satellite counterfactual explicitly uses DINOv3 ViT-7B, above our 2B cap, and it does not clearly identify the DINOv3 checkpoint size behind every headline row. PE ViT-L is the clearest compliant model named in the text; all others need an exact checkpoint audit.</li>
 </ul>
 
 <h3>Use in TRACE-RX</h3>
@@ -298,7 +305,7 @@ Stage 2 (550k Community-Forensics-small, ~4.7k generators):
 
 <h3>Risks for our repo</h3>
 <ul>
-<li>The training corpus is far beyond the currently prepared hackathon data. Licensing and source overlap across ~4.7k Hugging Face generators require an audit.</li>
+<li>The training corpus is far beyond the currently prepared hackathon data. Licensing and source overlap across ~4.7k Hugging Face generators require an audit. The supplement says only 29 of the 55 evaluated subsets are completely unseen; the other 26 overlap the broad training generator/domain set under different conditions. Stage-1 ProGAN/SD1.4/Midjourney sources also appear in reported benchmark families.</li>
 <li>Generator-aware structure needs generator IDs during prototype construction. If those IDs correlate with resolution, prompt source, or encoding, prototypes can become dataset-source prototypes.</li>
 <li>The scaling study changes data composition as the number of generators grows. A decline can reflect real-source matching, sample allocation per generator, or encoder choice, not heterogeneity alone.</li>
 <li>The paper does not test crop, resize, color, noise, repeated redistribution, or low-FPR behavior. Mean AP across clean benchmark subsets cannot justify robust deployment.</li>
@@ -350,6 +357,8 @@ Prompt path:
 <li>The main benchmarks are curated and near saturation. There is no Chameleon/RRDataset-style in-the-wild test and no systematic JPEG, blur, resize, crop, noise, or color evaluation.</li>
 <li>Frequency-ranked patch selection may become unreliable precisely under q30 JPEG, blur 2, and 0.25× resize—the challenge conditions where TRACE-RX wants to silence fragile evidence.</li>
 <li>Averaging hypotheses can improve accuracy without improving calibration. The repo needs ECE/Brier/selective-risk evidence before treating prompt dispersion as uncertainty.</li>
+<li>The 95.72 DRCT mean hides the hardest failure: SDXL-DR is 56.67. Thirteen near-perfect subsets dominate the macro average. Worst-group and DR-only results are more relevant than the headline.</li>
+<li><strong>Release warning:</strong> the public script inspected at commit <code>09d05b9</code> defaults to 100 rather than one epoch and N=10 rather than N=4, and passes mean test accuracy into early stopping. This does not prove the paper tables were test-selected, but the released script would contaminate evaluation if used unchanged.</li>
 </ul>
 
 <h3>Use in TRACE-RX</h3>
@@ -382,7 +391,7 @@ across stages:
 <h3>Evidence worth retaining</h3>
 <ul>
 <li>All methods are trained on GenImage SD1.4 and tested across UFD, GenImage, and AIGI-Holmes. DoU reports 92.81 average accuracy and 99.52 AP, with 90.02 cross-generator accuracy (Table 1 and Fig. 5).</li>
-<li>AFCL alone raises cross-generator accuracy from 85.56 to 91.15 in the component ablation; CIB and AFCL together are best (Table 1).</li>
+<li>AFCL alone raises cross-generator accuracy from 85.56 to 91.15. The full CIB+AFCL model is best on overall accuracy/AP but falls to 90.02 cross-generator accuracy, so the added bottleneck does not dominate the simpler diversity-only variant on the paper’s central transfer metric (Table 1).</li>
 <li>The learned representation has effective rank 67.38 versus 1.37/1.92 for two comparison detectors, and needs many more PCs for 90% variance (Figs. 2 and 6).</li>
 <li>JPEG and Gaussian-blur curves are included (Fig. 8), but the paper does not report the numeric grid in the text and does not cover the other four challenge transforms.</li>
 <li>The few-shot curve is unusually useful: even 320 samples produces 80.98 accuracy/90.81 AP, showing the method is not solely a full-data effect (Fig. 7).</li>
@@ -395,6 +404,8 @@ across stages:
 <li>Regularizing aggregation weights toward uniformity conflicts with transform reliability. After blur destroys a shallow texture cue, equal voting is undesirable.</li>
 <li>Reported effective rank can be raised by stochastic bottleneck noise or nuisance information. The paper needs a stronger link between each retained direction and cross-transform survival.</li>
 <li>Batch 512 on an H100 is not aligned with the repo’s most constrained training scenario, although frozen backbones allow caching.</li>
+<li>The gap between 99.52 AP and 92.81 accuracy signals a threshold/calibration or class-specific issue. The paper gives no ECE, Brier, AUROC, fixed-threshold transfer, confidence intervals, or numeric per-generator table behind its radar plot.</li>
+<li><strong>Paper/release mismatch:</strong> the public snapshot inspected at commit <code>230856f</code> hooks all 24 CLIP layers and exposes roughly 50M trainable mean/variance adapters, but its per-feature aggregation, missing global CIB, active stochastic sampling in evaluation, and default optimizer schedule differ from the paper. Training code/configs were still marked forthcoming.</li>
 </ul>
 
 <h3>Use in TRACE-RX</h3>
@@ -463,7 +474,8 @@ Training only: four class-specific queues, length 2048 │
 <li><strong>Move canonicalization before modeling.</strong> Add matched decode/re-encode and a metadata-only gate before the first neural experiment, following DDA’s causal lesson.</li>
 <li><strong>Reduce the forensic tower to RGB + residual + DCT initially.</strong> Phase and NPR are fragile and can be added only after cheap feature-lab evidence. A pretrained no-early-downsampling network is safer than a from-scratch 40–60M multimodal transformer.</li>
 <li><strong>Supervise availability from transform lineage.</strong> For branch <code>k</code> and transform <code>t</code>, define a development target from clean-to-transformed margin/accuracy retention. Prevent the gate from learning only transform identity by checking within-transform survival variation and using counterfactual matched classes.</li>
-<li><strong>Use logistic stacking first.</strong> The proposed GLS weights require expert logits to be commensurate unbiased estimators and may become negative. Treat covariance weighting as an ablation after calibrated stacking.</li>
+<li><strong>Use logistic stacking first.</strong> Fit it on out-of-fold expert scores so the fusion layer does not see optimistically fitted logits. The proposed GLS weights require expert logits to be commensurate unbiased estimators and may become negative. Treat covariance weighting as an ablation after calibrated stacking.</li>
+<li><strong>Require a reason to gate.</strong> Reliability-aware fusion is useful only if expert rankings cross across transforms or quality regimes. If the same branch dominates every condition, static stacking is simpler and statistically safer. Train any availability target from out-of-fold branch excess loss/correctness under known transforms; call it estimated usefulness, not directly observed physical “signal survival.”</li>
 <li><strong>Make LoRA conditional.</strong> Narrow LoRA can destroy VFM knowledge; broad LoRA can help prototype learning. Run it only against a fixed frozen control.</li>
 <li><strong>Use DoU’s rank analysis as a diagnostic.</strong> Do not force uniform expert weights at inference.</li>
 <li><strong>Shrink authentic-manifold evidence.</strong> A compact MIRROR-like dictionary is testable; a full taxonomy of authentic prototypes is not yet justified.</li>
@@ -546,6 +558,7 @@ Stretch, one at a time:
 
 <section id="sources">
 <h2>Sources, paper identity, and version notes</h2>
+<p>The critical reproducibility notes also inspect the authors’ public repositories as they stood on 30 August 2026: <a href="https://github.com/roy-ch/Dual-Data-Alignment">DDA</a>, <a href="https://github.com/349793927/MIRROR">MIRROR</a>, <a href="https://github.com/UltraCapture/GAPL">GAPL</a>, <a href="https://github.com/bandaidssssss/PPM_CLIP">PPM-CLIP</a>, and <a href="https://github.com/Yanmou-Hui/DoU">DoU</a>. Code observations are explicitly labeled and are not assumed to describe the unpublished training run behind a paper table.</p>
 <ol>
 <li>Ruoxin Chen et al. <a href="https://arxiv.org/abs/2505.14359">“Dual Data Alignment Makes AI-Generated Image Detector Easier Generalizable.”</a> arXiv:2505.14359v6, NeurIPS 2025 Spotlight. <a href="papers/2025-dual-data-alignment.pdf">Local PDF</a>.</li>
 <li>Ruiqi Liu et al. <a href="https://arxiv.org/abs/2602.02222">“MIRROR: Manifold Ideal Reference ReconstructOR for Generalizable AI-Generated Image Detection.”</a> arXiv:2602.02222v1, 2 Feb 2026. <a href="papers/2026-mirror-real-manifold.pdf">Local PDF</a>.</li>

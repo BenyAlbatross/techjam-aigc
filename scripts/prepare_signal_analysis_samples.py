@@ -263,9 +263,10 @@ def sample_archive(dataset: str, output_root: Path, per_group: int) -> list[dict
             if len(chosen) < per_group:
                 raise RuntimeError(f"{dataset}/{group} has only {len(chosen)} images")
             for member in chosen:
-                payload = archive.read(member)
                 suffix = Path(member).suffix.lower() or ".bin"
                 filename = f"{stable_key(dataset, member)[:16]}{suffix}"
+                destination = output_root / dataset.lower().replace(" ", "_") / group / filename
+                payload = destination.read_bytes() if destination.exists() else archive.read(member)
                 if dataset == "DDA-COCO":
                     label = dda_label(group)
                     family = "camera/web photo" if label == "authentic" else "VAE reconstruction"
@@ -279,7 +280,7 @@ def sample_archive(dataset: str, output_root: Path, per_group: int) -> list[dict
                 records.append(
                     save_record(
                         payload,
-                        destination=output_root / dataset.lower().replace(" ", "_") / group / filename,
+                        destination=destination,
                         dataset=dataset,
                         label=label,
                         generation_model=group,
@@ -299,12 +300,16 @@ def sample_archive(dataset: str, output_root: Path, per_group: int) -> list[dict
                     # The official S3 endpoint currently presents a mismatched
                     # certificate over HTTPS; its documented HTTP endpoint works.
                     coco_url = f"http://images.cocodataset.org/val2017/{coco_name}"
-                    with urllib.request.urlopen(coco_url, timeout=120) as response:
-                        real_payload = response.read()
+                    real_destination = output_root / "dda-coco" / "real" / group / coco_name
+                    if real_destination.exists():
+                        real_payload = real_destination.read_bytes()
+                    else:
+                        with urllib.request.urlopen(coco_url, timeout=120) as response:
+                            real_payload = response.read()
                     records.append(
                         save_record(
                             real_payload,
-                            destination=output_root / "dda-coco" / "real" / group / coco_name,
+                            destination=real_destination,
                             dataset=dataset,
                             label="authentic",
                             generation_model="authentic",
@@ -329,7 +334,7 @@ def sample_archive(dataset: str, output_root: Path, per_group: int) -> list[dict
     return records
 
 
-def fetch_community_row(offset: int, retries: int = 4) -> dict[str, object]:
+def fetch_community_row(offset: int, retries: int = 2) -> dict[str, object]:
     query = urllib.parse.urlencode(
         {
             "dataset": SOURCES["Community Forensics Eval"]["repository"],
@@ -342,7 +347,7 @@ def fetch_community_row(offset: int, retries: int = 4) -> dict[str, object]:
     url = f"https://datasets-server.huggingface.co/rows?{query}"
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(url, timeout=120) as response:
+            with urllib.request.urlopen(url, timeout=45) as response:
                 result = json.load(response)
             return result["rows"][0]["row"]
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, KeyError):
@@ -358,9 +363,64 @@ def sample_community(
     max_per_model: int,
 ) -> list[dict[str, object]]:
     source = SOURCES["Community Forensics Eval"]
-    randomizer = random.Random(int(stable_key("Community Forensics Eval"), 16))
-    offsets = list(range(51_836))
-    randomizer.shuffle(offsets)
+    cached_paths = sorted(
+        (output_root / "community_forensics_eval").glob("**/row_*")
+    )
+    cached_by_label = {
+        label: [
+            int(path.name.split("_")[1])
+            for path in cached_paths
+            if path.parent.name == label.lower()
+        ]
+        for label in ("authentic", "AIGC")
+    }
+    use_cached_offsets = all(
+        len(cached_by_label[label]) >= per_label for label in cached_by_label
+    )
+    if use_cached_offsets:
+        records: list[dict[str, object]] = []
+        for label in ("authentic", "AIGC"):
+            label_paths = [
+                path for path in cached_paths if path.parent.name == label.lower()
+            ][:per_label]
+            for path in label_paths:
+                offset = int(path.name.split("_")[1])
+                payload = path.read_bytes()
+                records.append(
+                    save_record(
+                        payload,
+                        destination=path,
+                        dataset="Community Forensics Eval",
+                        label=label,
+                        generation_model=(
+                            "authentic"
+                            if label == "authentic"
+                            else "mixed; selected with <=2 images/model"
+                        ),
+                        generator_family=(
+                            "real" if label == "authentic" else "mixed published architectures"
+                        ),
+                        source_dataset="CompEval paired authentic sources",
+                        source_member=f"dataset-server/CompEval/{offset}",
+                        repository=source["repository"],
+                        revision=source["revision"],
+                        license_name=source["license_name"],
+                        license_url=source["license_url"],
+                        paired_id=f"community-{offset}",
+                        stratum=f"{label}:cached diverse subset",
+                    )
+                )
+        print(
+            "Community Forensics Eval: reused "
+            f"{sum(record['label'] == 'authentic' for record in records)} real and "
+            f"{sum(record['label'] == 'AIGC' for record in records)} AIGC cached rows; "
+            "per-row model metadata deferred after HTTP 429"
+        )
+        return records
+    else:
+        randomizer = random.Random(int(stable_key("Community Forensics Eval"), 16))
+        offsets = list(range(51_836))
+        randomizer.shuffle(offsets)
     label_counts: Counter[str] = Counter()
     model_counts: Counter[tuple[str, str]] = Counter()
     records: list[dict[str, object]] = []
@@ -372,7 +432,7 @@ def sample_community(
             row = fetch_community_row(offset)
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, KeyError):
             failures += 1
-            if failures > 40:
+            if failures > 100:
                 raise RuntimeError("Too many Community Forensics dataset-server failures")
             continue
         label = "AIGC" if int(row["label"]) == 1 else "authentic"
@@ -453,7 +513,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--per-archive-group", type=int, default=20)
-    parser.add_argument("--community-per-label", type=int, default=30)
+    parser.add_argument("--community-per-label", type=int, default=25)
     parser.add_argument("--community-max-per-model", type=int, default=2)
     parser.add_argument("--inspect-only", action="store_true")
     args = parser.parse_args()

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Architecture, mathematics, implementation, peer critique, and final design decision for TRACE-RX-Alternative3.">
+<title>TRACE-RX-Alternative3 — architecture and decision report</title>
+<style>
+:root{--ink:#172033;--muted:#596275;--line:#d8deea;--soft:#f5f7fb;--blue:#245f9e;--green:#1d6b48;--amber:#985a08;--red:#963131;--violet:#65439a}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:#eef2f7;font:16px/1.64 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1120px;margin:auto;padding:38px 28px 90px;background:#fff;box-shadow:0 0 32px #17203312}h1,h2,h3,h4{line-height:1.22;color:#102a49}h1{margin:.15rem 0 .8rem;font-size:2.4rem}h2{margin-top:2.5rem;padding-top:.65rem;border-top:2px solid var(--line);font-size:1.72rem}h3{margin-top:1.65rem;font-size:1.25rem}p,li{max-width:88ch}a{color:var(--blue)}code{padding:.08rem .28rem;border-radius:4px;background:#eef1f6}pre{padding:14px 17px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:#f7f9fc}table{width:100%;margin:1rem 0 1.6rem;border-collapse:collapse;font-size:.92rem}th,td{padding:9px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}th{color:#173b67;background:#edf3fa}.eyebrow{margin:0;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:.79rem}.lede{max-width:78ch;color:#33415b;font-size:1.15rem}.small{color:var(--muted);font-size:.88rem}.chips{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0}.chip{padding:3px 9px;border:1px solid #c6d3e4;border-radius:999px;background:#f6f9fd;color:#36516f;font-size:.82rem}.callout{margin:1.1rem 0;padding:13px 16px;border-left:5px solid var(--blue);border-radius:4px;background:var(--soft)}.callout.good{border-color:var(--green);background:#f1f8f4}.callout.warn{border-color:var(--amber);background:#fff8ed}.callout.danger{border-color:var(--red);background:#fff3f3}.callout.review{border-color:var(--violet);background:#f7f3fc}nav{margin:1.7rem 0 2.2rem;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#f7f9fc}nav ul{columns:2;margin:.6rem 0 0}.equation{max-width:94ch;margin:1rem 0;padding:13px 16px;overflow-x:auto;border:1px solid #cdd7e5;border-radius:7px;background:#fbfcfe;color:#172e4b;font:1.02rem/1.55 "Cambria Math",Georgia,serif;text-align:center}.equation .label{float:right;color:var(--muted);font:italic .82rem system-ui,sans-serif}.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:#fff}.card h3{margin-top:.1rem}.flow{margin:1.3rem 0;padding:18px;border:1px solid var(--line);border-radius:10px;background:#f9fbfd}.flow-row{display:flex;align-items:stretch;justify-content:center;flex-wrap:wrap;gap:8px}.node{min-width:140px;max-width:205px;padding:11px 12px;border:1px solid #afc1d7;border-radius:7px;background:#fff;text-align:center}.node strong{display:block;color:#173b67}.node.semantic{background:#f0f7fd}.node.memory{border-color:#8eb7aa;background:#f1f9f5}.node.forensic{border-color:#c6aa74;background:#fff8ec}.node.decision{border-color:#927cb8;background:#f7f3fc}.arrow{align-self:center;color:#55718e;font-size:1.3rem;font-weight:700}.keep{color:var(--green);font-weight:700}.modify{color:var(--amber);font-weight:700}.defer{color:var(--violet);font-weight:700}.kill{color:var(--red);font-weight:700}.final{margin-top:3rem;padding:20px 22px;border:3px solid var(--green);border-radius:10px;background:#f0f8f3}.final h2{margin-top:0;padding:0;border:0;color:#145336}@media(max-width:800px){main{padding:28px 18px 60px}h1{font-size:1.9rem}nav ul{columns:1}.grid-2,.grid-3{grid-template-columns:1fr}table{display:block;overflow-x:auto}.arrow{transform:rotate(90deg);width:100%;text-align:center}}@media print{body{background:#fff}main{max-width:none;box-shadow:none}nav,.card,.callout,.flow,table{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<header>
+<p class="eyebrow">Architecture report · TikTok TechJam 2026 · 30 August 2026</p>
+<h1>TRACE-RX-Alternative3</h1>
+<p class="lede"><strong>Content-routed authentic visual-reference support for robust AI-generated image detection.</strong> This report records the original hypothesis, its mathematical and implementation details, two commissioned peer reviews, and the comprehensive modifications agreed at the end.</p>
+<div class="chips"><span class="chip">pure-AIGC vs authentic</span><span class="chip">real-only memory</span><span class="chip">frozen VFM</span><span class="chip">transform calibration</span><span class="chip">continuous confidence</span></div>
+<div class="callout good"><strong>Decision: proceed after substantial modification.</strong> Keep a content-routed authentic <em>visual</em> memory. Remove paired forensic memory, clean forensic reconstruction, cross-view InfoNCE, BYOL, and Gram residuals from the MVP. An RGB/high-pass branch is independent and optional.</div>
+<div class="callout warn"><strong>Status and scope.</strong> This is a falsifiable proposal, not an implemented result and not proof of a “real-image manifold.” The <a href="../problem-statement.md">challenge brief</a> remains authoritative: licensed public data, no organizer-demo training, no test-label use, fewer than 2B parameters, no watermark dependence, reproducible directory-to-JSON inference, and an original contribution.</div>
+</header>
+<nav><strong>Contents</strong><ul><li><a href="#contract">Challenge contract</a></li><li><a href="#trace">Relationship to TRACE-RX</a></li><li><a href="#concepts">Concepts and intuition</a></li><li><a href="#initial">Initial proposal</a></li><li><a href="#initial-math">Initial mathematics</a></li><li><a href="#prior">Prior art and novelty</a></li><li><a href="#reviews">Colleague reviews</a></li><li><a href="#sources">Sources</a></li><li><a href="#decision">Final design and modifications</a></li></ul></nav>
+
+<section id="contract">
+<h2>1. Challenge contract and architectural thesis</h2>
+<p>The task is binary, image-level classification of <strong>purely generated</strong> versus <strong>authentic</strong> images. AI editing and partial compositing are outside the stated focus. Hidden evaluation may include old and new generator families and JPEG, blur, resize, noise, color jitter, crop, and chains of transformations.</p>
+<p>The original thesis was: instead of fitting the moving distribution of fake artifacts, retrieve a context-appropriate authentic reference and classify the unexplained residual. Three intuitions support it:</p>
+<div class="grid-3"><article class="card"><h3>Stable anchor</h3><p>Fake labels never alter the authentic reference memory.</p></article><article class="card"><h3>Conditional comparison</h3><p>A night scene should not be reconstructed from an undifferentiated mixture of documents, portraits, and landscapes.</p></article><article class="card"><h3>Secondary evidence</h3><p>Distance and entropy enter fusion; neither alone declares an image fake.</p></article></div>
+<table><thead><tr><th>Challenge condition</th><th>Design consequence</th></tr></thead><tbody>
+<tr><td>JPEG 90/70/50/30</td><td>Raw residuals require authentic quality normalization; format history cannot be a class shortcut.</td></tr>
+<tr><td>Blur σ 0.5/1/2; resize 0.5×/0.25×</td><td>Do not claim to recover erased high-frequency or sensor evidence.</td></tr>
+<tr><td>Noise and color jitter</td><td>Apply transformations symmetrically by label; quality variables cannot become direct class features.</td></tr>
+<tr><td>Crop 80%</td><td>Compare the observed endpoint with authentic endpoint support, not an impossible clean target.</td></tr>
+<tr><td>Demo-only COCO/DALL-E split</td><td>Never build memory, select, calibrate, or tune on it.</td></tr>
+<tr><td>Original technical contribution</td><td>“Real-only memory” is already MIRROR. Routing and transform-conditioned calibration must each beat their controls.</td></tr>
+<tr><td>Required output</td><td>Return <code>image_path</code> and continuous AIGC <code>pred</code> for every image.</td></tr>
+</tbody></table>
+</section>
+
+<section id="trace">
+<h2>2. Relationship to the original TRACE-RX</h2>
+<p>The <a href="trace_rx_training_proposal.pdf">original TRACE-RX</a> proposes a global VFM, a 40–60M native forensic tower, authentic prototypes, inference interventions, and availability/variance/covariance fusion. Its enduring strengths are lineage-safe partitions, transform-survival analysis, unseen-source and generator groups, authentic false-positive control, calibration, and a locked test. Alternative3 retains those scientific safeguards while simplifying the model.</p>
+<table><thead><tr><th>TRACE-RX element</th><th>Decision</th><th>Reason</th></tr></thead><tbody>
+<tr><td>Frozen VFM trial</td><td class="keep">Keep</td><td>Mandatory strongest simple baseline and memory feature space.</td></tr>
+<tr><td>Authentic prototypes</td><td class="modify">Replace</td><td>Content-routed patch memory with unconditioned and shuffled controls.</td></tr>
+<tr><td>Five-modality custom tower</td><td class="modify">Shrink</td><td>At most one pretrained RGB/high-pass branch after the core hypothesis.</td></tr>
+<tr><td>Inference interventions</td><td class="defer">Defer</td><td>Quality-conditioned normalization costs no repeated VFM inference.</td></tr>
+<tr><td>Reliability/covariance fusion</td><td class="kill">Remove from MVP</td><td>Experts are not commensurate unbiased estimates; default to L2 logistic stacking.</td></tr>
+<tr><td>Lineage, transforms, calibration, locked test</td><td class="keep">Keep</td><td>They make any gain interpretable.</td></tr>
+</tbody></table>
+</section>
+
+<section id="concepts">
+<h2>3. Concepts and ML intuition</h2>
+<h3>Semantic key</h3>
+<p>A semantic key is a normalized centroid in the global VFM feature space. It is an address, not a text label and not necessarily a human category. Keys answer <em>where should the memory look?</em>; patch prototypes answer <em>what authentic visual structure is supported there?</em></p>
+<pre>image → global vector c → nearest authentic semantic keys → open routes → authentic patch prototypes</pre>
+<h3>Authentic-reference support</h3>
+<p>A patch has high support if a sparse combination of real-only prototypes approximates it. Low support might indicate synthetic structure, but it can equally indicate rare authentic content. Support therefore remains an auxiliary feature.</p>
+<h3>VICReg/BYOL-style consistency</h3>
+<p>VICReg and BYOL align augmented views without ordinary negative examples. VICReg adds variance and covariance terms to prevent collapse; BYOL uses an online predictor and slow target encoder. Neither guarantees preservation of origin evidence. If a transformation destroys it:</p>
+<div class="equation">I(T(X);Y) &lt; I(X;Y) &nbsp;⇒&nbsp; forcing z(X)≈z(T(X)) can remove provenance information.</div>
+<p>The final MVP uses neither full BYOL nor forensic VICReg. Mild semantic-route consistency remains a later ablation.</p>
+<h3>Small cross-view provenance subspace</h3>
+<p>The initial plan projected global RGB and forensic representations into a 64–128D common space with opposite-class negatives. A small dimension does not prevent shortcuts; even one dimension supports:</p>
+<div class="equation">z<sub>i</sub><sup>global</sup>=z<sub>i</sub><sup>forensic</sup>=u<sub>yᵢ</sub>.</div>
+<p>This satisfies the loss while encoding codec, source, resolution, content, or other binary shortcuts. The final MVP uses late fusion instead.</p>
+</section>
+
+<section id="initial">
+<h2>4. Initial architecture sent for review</h2>
+<div class="flow"><div class="flow-row"><div class="node"><strong>Input</strong>clean or redistributed</div><span class="arrow">→</span><div class="node semantic"><strong>Frozen VFM</strong>global + patch tokens</div><span class="arrow">→</span><div class="node memory"><strong>Paired real memory</strong>semantic, visual, forensic slots</div><span class="arrow">→</span><div class="node"><strong>Comparison</strong>residuals, entropy, relations</div><span class="arrow">→</span><div class="node decision"><strong>Learned fusion</strong>AIGC score</div></div><div class="flow-row" style="margin-top:10px"><div class="node forensic"><strong>Forensic encoder</strong>native RGB + residual</div><span class="arrow">→</span><div class="node memory"><strong>Forensic values</strong>paired slot IDs</div><span class="arrow">→</span><div class="node decision"><strong>Shared subspace</strong>InfoNCE</div></div></div>
+<p>A global semantic query selected memory regions. Visual and forensic patches then attended to paired values. Proposed evidence included visual and forensic residuals, retrieval entropy, semantic–forensic disagreement, relation residuals, and contrastive agreement.</p>
+<div class="callout danger"><strong>The critical flaw.</strong> Authentic content and acquisition are not reliably paired. A portrait may be a phone photo, DSLR image, scan, screenshot, or re-encoded upload. Paired-slot disagreement can measure an uncommon but authentic content/source combination rather than provenance.</div>
+</section>
+
+<section id="initial-math">
+<h2>5. Initial mathematical formulation—and why parts were rejected</h2>
+<div class="equation">c=E<sub>global</sub>(x), &nbsp; P=E<sub>patch</sub>(x)∈ℝ<sup>N×d</sup>, &nbsp; R=E<sub>forensic</sub>(x). <span class="label">(1)</span></div>
+<div class="equation">α<sub>j</sub>=softmax<sub>j</sub>(q(c)<sup>⊤</sup>k(s<sub>j</sub>)/τ<sub>S</sub>). <span class="label">(2)</span></div>
+<div class="equation">ℓ<sub>iℓ</sub>=q(p<sub>i</sub>)<sup>⊤</sup>k(m<sub>ℓ</sub>)/√d+γlog(ε+α<sub>group(ℓ)</sub>), &nbsp; a<sub>iℓ</sub>=TopKSoftmax(ℓ<sub>iℓ</sub>). <span class="label">(3)</span></div>
+<div class="equation">p̂<sub>i</sub>=Σa<sub>iℓ</sub>v(m<sub>ℓ</sub>), &nbsp; d<sub>i</sub>=1−cos(p<sub>i</sub>,p̂<sub>i</sub>). <span class="label">(4)</span></div>
+<h3>Clean reconstruction is non-identifiable after destructive transforms</h3>
+<p>The initial loss compared a transformed query to clean features:</p>
+<div class="equation">𝓛<sub>rec</sub>=ΣHuber(sg(P<sub>i</sub>(x))−P̂<sub>i</sub>(T(x)))+λ[1−cos(P<sub>i</sub>(x),P̂<sub>i</sub>(T(x)))]. <span class="label">(5)</span></div>
+<p>If distinct clean forensic signals map to one endpoint, no function can recover both. Under squared loss, h*(x̃)=𝔼[F<sub>for</sub>(X)|T(X)=x̃], a conditional average rather than erased camera evidence. The final design uses same-endpoint support.</p>
+<h3>Relational residuals are not independent evidence</h3>
+<p>With P=P̂+E:</p>
+<div class="equation">PP<sup>⊤</sup>−P̂P̂<sup>⊤</sup>=EP̂<sup>⊤</sup>+P̂E<sup>⊤</sup>+EE<sup>⊤</sup>. <span class="label">(6)</span></div>
+<p>A Gram residual is a nonlinear transformation of the same reconstruction error. It is deferred until ordinary mean, tail, variance, and local autocorrelation controls are stable.</p>
+<h3>Representation losses</h3>
+<div class="equation">𝓛<sub>VICReg</sub>=λ𝓛<sub>invariance</sub>+μ𝓛<sub>variance</sub>+ν𝓛<sub>covariance</sub>. <span class="label">(7)</span></div>
+<p>Variance prevents constant collapse; it does not ensure provenance. Opposite-class-only cross-view InfoNCE admits the class-collapse solution above. Both leave the hackathon critical path.</p>
+</section>
+
+<section id="prior">
+<h2>6. Prior art and novelty boundary</h2>
+<table><thead><tr><th>Work</th><th>Relevant lesson</th><th>Limit on our claim</th></tr></thead><tbody>
+<tr><td><a href="https://arxiv.org/abs/2602.02222">MIRROR</a></td><td>Real-only DINO memory, sparse reconstruction, residuals, retrieval concentration.</td><td>Alternative3 did not invent authentic memory; a finite memory is not the real manifold.</td></tr>
+<tr><td><a href="https://arxiv.org/html/2508.19236">MemoryVLA</a></td><td>High-level queries retrieve lower-level memory in temporal robot control.</td><td>Architectural inspiration, not provenance evidence.</td></tr>
+<tr><td><a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Gong_Memorizing_Normality_to_Detect_Anomaly_Memory-Augmented_Deep_Autoencoder_for_Unsupervised_ICCV_2019_paper.html">MemAE</a> / <a href="https://openaccess.thecvf.com/content/CVPR2022/html/Roth_Towards_Total_Recall_in_Industrial_Anomaly_Detection_CVPR_2022_paper.html">PatchCore</a></td><td>Nominal memory can constrain reconstruction and measure patch support.</td><td>Rare authentic images are not synthetic anomalies.</td></tr>
+<tr><td><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Karageorgiou_Any-Resolution_AI-Generated_Image_Detection_by_Spectral_Learning_CVPR_2025_paper.html">SPAI</a> / <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Chu_FIRE_Robust_Detection_of_Diffusion-Generated_Images_via_Frequency-Guided_Reconstruction_Error_CVPR_2025_paper.html">FIRE</a></td><td>Reconstruction error can support AIGC detection.</td><td>Does not make erased forensic detail recoverable.</td></tr>
+<tr><td><a href="https://openaccess.thecvf.com/content/CVPR2026/html/Gong_Cross-modal_Representation_Learning_for_Diffusion-generated_Image_Detection_CVPR_2026_paper.html">SDID</a></td><td>RGB/NPR cross-modal learning improves its cross-generator protocol.</td><td>No full TechJam transform, low-FPR, or calibration evidence.</td></tr>
+<tr><td><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Guillaro_A_Bias-Free_Training_Paradigm_for_More_General_AI-generated_Image_Detection_CVPR_2025_paper.html">B-Free</a> / <a href="https://arxiv.org/abs/2505.14359">DDA</a></td><td>Content, format, dimensions, and frequency mismatches dominate detectors.</td><td>Architecture comparisons are invalid before confound controls.</td></tr>
+</tbody></table>
+<div class="callout good"><strong>Defensible novelty.</strong> Test whether content routing improves authentic visual-reference comparison and whether authentic quality-conditioned normalization preserves it under redistribution. The claim exists only if routed memory beats unconditioned and shuffled routing, and calibrated residuals beat raw residuals.</div>
+</section>
+
+<section id="reviews">
+<h2>7. Colleague reviews and adjudication</h2>
+<h3>Red-team colleague</h3>
+<p>The red team’s highest risks were authentic-domain coverage, false semantic–forensic pairing, codec/source/content leakage, non-identifiable reconstruction, hackathon scope, insufficient novelty versus MIRROR, cross-view shortcut transfer, and memory overcapacity.</p>
+<p>Let S be content, A acquisition, T redistribution, and R forensic representation. The initial paired memory models p(R|S,Y=real), while many forensic cues are better approximated by p(R|A,T,Y=real). The red team therefore required semantic routing only for visual VFM memory and removed paired forensic slots, cross-memory JS, clean forensic recovery, InfoNCE, BYOL, Gram residuals, and test-time writes.</p>
+<h3>Independent broad-ML colleague</h3>
+<div class="callout review"><strong>Independent ruling.</strong> Narrow further: do not initially build any forensic memory. First prove content-routed visual memory plus authentic quality-conditioned residual calibration. Admit one independent RGB/high-pass branch only if it earns complementary low-FPR value.</div>
+<p>The reviewer also required master-disjoint memory/null/fusion subsets, quality variables used only for normalization, median/MAD calibration with shrinkage, repeated selection around 5% FPR while still reporting 1%, and pre-registered entry and kill gates.</p>
+<table><thead><tr><th>Question</th><th>Original TRACE-RX</th><th>Initial Alternative3</th><th>Final ruling</th></tr></thead><tbody>
+<tr><td>Representation</td><td>Global VFM + large tower</td><td>Paired visual/forensic memories</td><td>Frozen VFM + routed visual memory</td></tr>
+<tr><td>Forensics</td><td>Mandatory multi-modal tower</td><td>Semantically paired memory</td><td>Optional independent RGB/high-pass</td></tr>
+<tr><td>Reconstruction</td><td>Prototype distance</td><td>Clean transformed-to-clean target</td><td>Observed-endpoint support</td></tr>
+<tr><td>Attention</td><td>Complex reliability machinery</td><td>Several cross-branch paths</td><td>One-way sparse patch-to-memory read</td></tr>
+<tr><td>Auxiliary losses</td><td>BCE/CVaR/pAUC</td><td>VICReg/BYOL + InfoNCE</td><td>None in MVP</td></tr>
+<tr><td>Fusion</td><td>Availability/covariance</td><td>Dynamic gate</td><td>L2 logistic stacking</td></tr>
+</tbody></table>
+</section>
+
+<section id="sources">
+<h2>8. Sources</h2>
+<p><a href="../problem-statement.md">Challenge brief</a> · <a href="trace_rx_training_proposal.pdf">TRACE-RX proposal</a> · <a href="TRACE-RX_Critique.pdf">TRACE-RX critique</a> · <a href="https://arxiv.org/abs/2602.02222">MIRROR</a> · <a href="https://arxiv.org/html/2508.19236">MemoryVLA</a> · <a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Gong_Memorizing_Normality_to_Detect_Anomaly_Memory-Augmented_Deep_Autoencoder_for_Unsupervised_ICCV_2019_paper.html">MemAE</a> · <a href="https://openaccess.thecvf.com/content/CVPR2022/html/Roth_Towards_Total_Recall_in_Industrial_Anomaly_Detection_CVPR_2022_paper.html">PatchCore</a> · <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Karageorgiou_Any-Resolution_AI-Generated_Image_Detection_by_Spectral_Learning_CVPR_2025_paper.html">SPAI</a> · <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Chu_FIRE_Robust_Detection_of_Diffusion-Generated_Images_via_Frequency-Guided_Reconstruction_Error_CVPR_2025_paper.html">FIRE</a> · <a href="https://openaccess.thecvf.com/content/CVPR2026/html/Gong_Cross-modal_Representation_Learning_for_Diffusion-generated_Image_Detection_CVPR_2026_paper.html">SDID</a> · <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Cheng_CO-SPY_Combining_Semantic_and_Pixel_Features_to_Detect_Synthetic_Images_CVPR_2025_paper.html">CO-SPY</a> · <a href="https://arxiv.org/abs/2105.04906">VICReg</a> · <a href="https://proceedings.neurips.cc/paper_files/paper/2020/hash/f3ada80d5c4ee70142b17b8192b2958e-Abstract.html">BYOL</a> · <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Guillaro_A_Bias-Free_Training_Paradigm_for_More_General_AI-generated_Image_Detection_CVPR_2025_paper.html">B-Free</a> · <a href="https://arxiv.org/abs/2505.14359">DDA</a>.</p>
+<p class="small">These works use different data, backbones, metrics, and transformations. They motivate experiments, not a shared leaderboard or an Alternative3 performance claim.</p>
+</section>
+
+<section id="decision" class="final">
+<h2>9. Final joint decision and comprehensive modifications</h2>
+<p><strong>Proceed with the modified TRACE-RX-Alternative3.</strong> Its core is a frozen VFM, a real-only content-routed visual prototype memory, sparse observed-endpoint comparison, authentic quality-conditioned residual normalization, and regularized logistic stacking. The forensic branch is independent and optional.</p>
+<h3>Final architecture</h3>
+<div class="flow"><div class="flow-row"><div class="node"><strong>Input endpoint</strong>documented RGB decode</div><span class="arrow">→</span><div class="node semantic"><strong>Frozen VFM</strong>global c + patches pᵢ</div><span class="arrow">→</span><div class="node memory"><strong>Semantic router</strong>top real visual regions</div><span class="arrow">→</span><div class="node memory"><strong>Sparse memory</strong>endpoint reference p̂ᵢ</div><span class="arrow">→</span><div class="node"><strong>Quality calibration</strong>robust residual scores</div></div><div class="flow-row" style="margin-top:12px"><div class="node semantic"><strong>Global score</strong>linear frozen feature</div><span class="arrow">→</span><div class="node decision"><strong>L2 stack</strong>global + memory [+ forensic]</div><span class="arrow">→</span><div class="node decision"><strong>Temperature</strong>continuous pred</div></div><div class="flow-row" style="margin-top:12px"><div class="node forensic"><strong>Optional branch</strong>uniform RGB + high-pass</div><span class="arrow">→</span><div class="node forensic"><strong>Admission gate</strong>FPR, complementarity, latency</div></div></div>
+
+<h3>Exact computation</h3>
+<div class="equation">c(x)=E<sub>global</sub>(x)/||E<sub>global</sub>(x)||₂, &nbsp; p<sub>i</sub>(x)=E<sub>patch,i</sub>(x)/||E<sub>patch,i</sub>(x)||₂. <span class="label">(8)</span></div>
+<p>Fit spherical k-means keys using only authentic memory-building masters:</p>
+<div class="equation">{s<sub>j</sub>}=argmin Σ<sub>x∈D<sub>mem</sub><sup>real</sup></sub>min<sub>j</sub>||c(x)−s<sub>j</sub>||₂², &nbsp; α<sub>j</sub>=e<sup>c⊤sⱼ/τˢ</sup>/Σ<sub>u</sub>e<sup>c⊤sᵤ/τˢ</sup>. <span class="label">(9)</span></div>
+<p>Fit patch prototypes inside each semantic region from clean and independently transformed authentic endpoints. Query only the open regions:</p>
+<div class="equation">ℓ<sub>iℓ</sub>=p<sub>i</sub><sup>⊤</sup>m<sub>ℓ</sub>/τ<sub>P</sub>+γlog(α<sub>group(ℓ)</sub>+ε), &nbsp; a<sub>iℓ</sub>=TopKSoftmax(ℓ<sub>iℓ</sub>). <span class="label">(10)</span></div>
+<div class="equation">p̂<sub>i</sub>=normalize(Σa<sub>iℓ</sub>m<sub>ℓ</sub>), &nbsp; d<sub>i</sub>=1−p<sub>i</sub><sup>⊤</sup>p̂<sub>i</sub>. <span class="label">(11)</span></div>
+<p>This is the only cross-attention in the MVP. Memory is frozen; test inputs never write.</p>
+<h3>Authentic quality-conditioned calibration</h3>
+<div class="equation">q(x)=[q<sub>block</sub>,q<sub>blur</sub>,q<sub>noise</sub>,q<sub>HF-rolloff</sub>]. <span class="label">(12)</span></div>
+<p>Estimate blockiness, blur (Laplacian/Tenengrad), noise (wavelet-MAD), and high-frequency rolloff. Cluster a disjoint authentic null subset into quality states. Do not pass q directly to the classifier.</p>
+<div class="equation">μ<sub>b</sub>=median(d | Q=b,Y=real), &nbsp; σ<sub>b</sub>=1.4826·median(|d−μ<sub>b</sub>| | Q=b,Y=real). <span class="label">(13)</span></div>
+<div class="equation">d̃<sub>i</sub>=clip((d<sub>i</sub>−μ̃<sub>b(x)</sub>)/(σ̃<sub>b(x)</sub>+ε),−8,8). <span class="label">(14)</span></div>
+<p>Shrink small cells toward global authentic statistics. This is nuisance normalization, not likelihood estimation.</p>
+<h3>Evidence and output</h3>
+<div class="equation">m(x)=[mean(d̃),Q<sub>.90</sub>(d̃),std(d̃),f<sub>95</sub>,H̄<sub>P</sub>,H<sub>S</sub>,d<sub>S</sub>]. <span class="label">(15)</span></div>
+<p>The seven features describe residual level, upper tail, spatial heterogeneity, authentic-tail fraction, patch retrieval concentration, route ambiguity, and finite semantic support. None is calibrated uncertainty.</p>
+<div class="equation">u(x)=[z<sub>global</sub>(x),m(x),𝟙<sub>for-admitted</sub>f(x)], &nbsp; s(x)=b+w<sup>⊤</sup>u(x), &nbsp; pred(x)=sigmoid(s(x)/T). <span class="label">(16)</span></div>
+<p>Fit L2 logistic stacking on a dedicated fusion split and temperature on calibration only. Emit <code>image_path</code> and <code>pred</code> for every image.</p>
+
+<h3>Concrete starting values</h3>
+<table><thead><tr><th>Component</th><th>Start</th><th>Bounded test</th></tr></thead><tbody>
+<tr><td>Frozen encoder</td><td>DINOv2-L/14 while licenses are verified</td><td>Same head/protocol for allowed alternatives</td></tr><tr><td>Input</td><td>224×224</td><td>No resolution sweep in MVP</td></tr><tr><td>Semantic keys / routes</td><td>16 / top 2</td><td>Keys 16,32; routes only after stability</td></tr><tr><td>Visual prototypes</td><td>512 total</td><td>256,512,1024</td></tr><tr><td>Patch top-k</td><td>8</td><td>4,8,16</td></tr><tr><td>τ<sub>S</sub>, τ<sub>P</sub>, γ</td><td>0.07, 0.05, 1.0</td><td>γ=0 unconditioned control</td></tr><tr><td>Memory views</td><td>One clean + one sampled endpoint/master</td><td>Fixed across comparisons</td></tr><tr><td>Quality states</td><td>8</td><td>4,8 after cell audit</td></tr><tr><td>Robust shrinkage</td><td>200-example equivalent</td><td>Fixed initially</td></tr><tr><td>Logistic C / seeds</td><td>0.1 / one screening, three finalist</td><td>C∈{.01,.1,1,10}</td></tr>
+</tbody></table>
+
+<h3>Optional forensic expert</h3>
+<p>After the memory ablations, test ImageNet-pretrained ResNet-18 with stride-1 first convolution, no max-pool, six-channel RGB plus r(x)=x−G<sub>σ=1</sub>*x, and twelve uniform native 224×224 patches. Aggregate mean, 90th percentile, and standard deviation of patch logits. Train with label-symmetric transforms. Do not route, align, or give it memory.</p>
+
+<h3>Training phases and ablation ladder</h3>
+<ol><li><strong>Protocol/confound gate:</strong> licenses, lineage, duplicates, matched codec/size, symmetric journeys, nuisance probes, held-out codec/resizer.</li><li><strong>A0:</strong> frozen VFM + linear head.</li><li><strong>A1:</strong> A0 + real kNN/shrinkage Mahalanobis.</li><li><strong>A2:</strong> A0 + unconditioned sparse memory.</li><li><strong>A3/A3-R:</strong> semantic routing versus random/shuffled routes.</li><li><strong>A4:</strong> authentic quality-conditioned residual calibration.</li><li><strong>A5:</strong> optional independent RGB/high-pass branch.</li><li><strong>Fusion/calibration:</strong> static stacking, temperature, then locked test once.</li></ol>
+<p>Memory construction, authentic null fitting, and supervised fusion use master-disjoint subsets. With 80,000 licensed masters, prefer roughly 64k expert/memory, 5k fusion, 5k development, 5k calibration, and 1k locked test.</p>
+
+<h3>Entry and kill gates</h3>
+<p>Select repeatedly with normalized partial AUC over FPR [0,0.05] and TPR@5%; still report TPR@1%. Define δ<sub>min</sub>=max(1 normalized-pAUC point, 2×finalist seed SD).</p>
+<table><thead><tr><th>Gate</th><th>Keep when</th><th>Otherwise</th></tr></thead><tbody>
+<tr><td>Data</td><td>No lineage/duplicate leakage; nuisance AUC ≤0.60; adequate subgroup sizes.</td><td>Fix data before architecture.</td></tr>
+<tr><td>Routing</td><td>Mild-transform top-two route Jaccard ≥0.75; A3 beats A2 and A3-R by δ<sub>min</sub>; paired 90% lower bound positive; worst-real-subtype FPR rises ≤1 point.</td><td>Use unconditioned or no memory.</td></tr>
+<tr><td>Calibration</td><td>Authentic between-transform residual variance falls ≥20%; worst-transform TPR@5% rises ≥2 points; clean TPR falls ≤1; held-out codec/resizer agrees.</td><td>Use raw residuals or remove memory evidence.</td></tr>
+<tr><td>Forensics</td><td>Fused pAUC gain ≥δ<sub>min</sub>; lower bound positive; helps weak transform; worst-real FPR rises ≤1; latency ≤2× core.</td><td>Ship global + memory only.</td></tr>
+<tr><td>Whole memory</td><td>Leave-one-real-source-out authentic score tail does not worsen.</td><td>Kill memory even if mean AUC rises.</td></tr>
+</tbody></table>
+
+<h3>Comprehensive modification ledger</h3>
+<table><thead><tr><th>Initial component</th><th>Action</th><th>Rationale/replacement</th></tr></thead><tbody>
+<tr><td>Paired semantic–visual–forensic slots</td><td class="kill">Remove</td><td>Semantics route visual support only.</td></tr><tr><td>Semantic–forensic JS disagreement</td><td class="kill">Remove</td><td>Detects unusual authentic source combinations.</td></tr><tr><td>Clean forensic reconstruction</td><td class="kill">Remove</td><td>Non-identifiable after destructive transforms.</td></tr><tr><td>Clean visual denoising loss</td><td class="modify">Replace</td><td>Observed-endpoint authentic support first.</td></tr><tr><td>Cross-view InfoNCE</td><td class="kill">Remove</td><td>Binary shortcut solution.</td></tr><tr><td>BYOL / forensic VICReg</td><td class="kill">Remove</td><td>Complexity and possible provenance erasure.</td></tr><tr><td>Mild route consistency</td><td class="defer">Defer</td><td>Only after routing beats controls.</td></tr><tr><td>Gram residual</td><td class="defer">Defer</td><td>Reuse of reconstruction error.</td></tr><tr><td>All-token cross-attention</td><td class="kill">Remove</td><td>Only sparse patch-to-memory attention remains.</td></tr><tr><td>Forensic memory</td><td class="defer">Defer</td><td>Separate acquisition hypothesis.</td></tr><tr><td>RGB/high-pass branch</td><td class="modify">Optional</td><td>Admission by complementarity/FPR/latency.</td></tr><tr><td>Reliability/covariance fusion</td><td class="kill">Remove from MVP</td><td>Static L2 stacking.</td></tr><tr><td>Test-time memory writes</td><td class="kill">Prohibit</td><td>Prevent poisoning and order dependence.</td></tr><tr><td>“Real manifold” language</td><td class="modify">Narrow</td><td>Finite authentic support, residual, concentration.</td></tr>
+</tbody></table>
+
+<div class="grid-2"><article class="card"><h3 class="keep">Defensible if measured</h3><ul><li>Memory uses only authentic training images.</li><li>Content routing restricts visual reference comparison.</li><li>Residuals are normalized against similar authentic quality.</li><li>The named component improves the named held-out metric with interval.</li><li>The model is below 2B and returns continuous confidence.</li></ul></article><article class="card"><h3 class="kill">Claims to avoid</h3><ul><li>The memory learns the real-image manifold.</li><li>Memory distance is forgery probability.</li><li>Keys recover causal human categories.</li><li>The model reconstructs erased sensor detail.</li><li>Entropy is calibrated uncertainty or attention is explanation.</li><li>The detector certifies authenticity or every future generator.</li></ul></article></div>
+<p><strong>Approval statement.</strong> TRACE-RX-Alternative3 is approved for experimentation in this modified form. Every claim now has a control, an entry gate, an authentic-harm constraint, and a kill condition. If routing fails, use unconditioned memory. If memory harms held-out authentic sources, remove it. If forensics is not complementary, ship the smaller model.</p>
+<p><strong>The success criterion is not that every module survives. It is that the team can state exactly which hypothesis survived a valid test.</strong></p>
+</section>
+</main></body></html>
