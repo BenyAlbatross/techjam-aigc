@@ -6,6 +6,7 @@ work/v/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.worktrees/
 
 # Credentials and machine-local state
 .env
