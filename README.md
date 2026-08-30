@@ -4,6 +4,10 @@ Research and zero-fine-tuning baselines for robust detection of fully AI-generat
 
 See [`TODO.md`](TODO.md) for prioritised next steps and acceptance gates.
 
+To continue the interrupted full public-gate run on another machine, follow
+[`docs/handoffs/2026-08-30-machine-transfer.md`](docs/handoffs/2026-08-30-machine-transfer.md),
+including its artifact checks and copy-paste continuation prompt.
+
 ## Reproducible public gate
 
 The allowed public gate uses only the pinned SID_Set validation split. It selects

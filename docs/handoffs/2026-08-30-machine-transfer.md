@@ -145,6 +145,69 @@ After report generation:
 6. Run Task 8 review, whole-branch review, and branch-finishing workflow before
    merge.
 
+## Continuation order
+
+Follow this order on the new machine:
+
+1. Confirm the checkout contains this checkpoint:
+
+   ```bash
+   git merge-base --is-ancestor 78ac04a HEAD
+   git status --short --branch
+   ```
+
+   The first command must exit 0. Start from a clean worktree.
+2. Read `AGENTS.md`, this handoff, the governing design, and the implementation
+   plan before changing code or registry state.
+3. Install both Pixi platforms and run the CPU test suite and CUDA check.
+4. Transfer or regenerate ignored runtime artifacts. Validate the manifest,
+   then confirm 150 shards, zero temporary shards, and 300,000 rows.
+5. Do not rerun model inference when transferred shards validate. Resume at
+   report generation.
+6. Let report generation finish even if it takes longer than 34 minutes. It
+   does not currently checkpoint partial bootstrap results.
+7. Validate the report, inspect uncertainty claims, run compliance and
+   prohibited-claim checks, then commit only permitted summary files.
+8. Complete Task 8 review and whole-branch review before merge or submission.
+9. Handle the team WildFake dataset as a separate follow-up. Do not mix it into
+   the completed SID gate or train on it.
+
+## Copy-paste prompt for the next Codex session
+
+```text
+Continue the public-baseline robustness run in this repository.
+
+Start on branch public-baseline-robustness. Read AGENTS.md,
+docs/handoffs/2026-08-30-machine-transfer.md,
+docs/superpowers/specs/2026-08-29-public-baseline-robustness-design.md, and
+docs/superpowers/plans/2026-08-30-public-baseline-robustness.md before acting.
+Use Superpowers workflows, Ponytail minimalism, and Caveman Ultra communication.
+Preserve all existing and unrelated work.
+
+First verify commit 78ac04a is an ancestor of HEAD and the worktree is clean.
+Install the locked linux-aarch64-cpu and linux-aarch64-cuda Pixi platforms.
+Run the full CPU test suite and CUDA check. Validate transferred ignored
+artifacts: SID manifest, 150 JSONL prediction shards, zero temporary shards,
+and 300,000 total rows. If those checks pass, do not rerun inference.
+
+Resume Task 8 at the CPU-heavy report command documented in the handoff. Let it
+finish, then run report validation, uncertainty/claim review, submission
+compliance, git hygiene checks, Task 8 review, and whole-branch review. Commit
+and push only permitted code, tests, README/compliance changes, and the final
+Markdown report. Never commit images, weights, credentials, caches, manifests,
+local JSON/CSV reports, or prediction shards. Do not push, merge, publish, or
+run confirmed cleanup without the required workflow and authorization.
+
+Keep all release blockers visible. Do not change fixed model revisions, hashes,
+thresholds, label directions, preprocessing, dataset permissions, or safe-load
+guarantees in response to results.
+
+Treat techjam-aigc/wildfake-eval-subset as a separate pending request. Do not
+download, run, register as approved, or train on it until the user approves a
+design and written competition-use clearance exists. Never blend its results
+into the completed SID report.
+```
+
 ## Pending team Hugging Face dataset request
 
 The user requested adding the team's dataset after the current SID run:
