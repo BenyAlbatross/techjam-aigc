@@ -24,3 +24,11 @@ outputs/spark-a916-evaluation/data/**/*.img
 outputs/spark-a916-evaluation/data/**/*.png
 outputs/spark-a916-evaluation/data/**/*.jpg
 outputs/spark-a916-evaluation/data/**/*.jpeg
+.pixi/
+work/data/
+work/manifests/
+work/predictions/
+work/reports/
+work/cleanup-inventory.json
+*.zip
+*.pth

@@ -1,0 +1,38 @@
+[workspace]
+name = "techjam-aigc"
+channels = ["https://prefix.dev/conda-forge"]
+platforms = [
+  { name = "linux-64-cuda", platform = "linux-64", cuda = "13.0" },
+  { name = "linux-64-cpu", platform = "linux-64" },
+]
+
+[dependencies]
+python = "3.12.*"
+
+[pypi-dependencies]
+ai-image-detector = { git = "https://github.com/lynote-ai/ai-image-detector.git", rev = "d3f4976d36c59974a25f55a0a7850b9866d3223b" }
+datasets = "==5.0.1"
+huggingface-hub = "==1.29.0"
+numpy = "==2.5.2"
+pillow = "==12.3.0"
+pytest = ">=8,<10"
+safetensors = "==0.8.0"
+timm = "==1.0.29"
+transformers = "==5.16.1"
+
+[target.linux-64-cuda.pypi-dependencies]
+torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130" }
+torchvision = { version = "==0.28.0", index = "https://download.pytorch.org/whl/cu130" }
+
+[target.linux-64-cpu.pypi-dependencies]
+torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cpu" }
+torchvision = { version = "==0.28.0", index = "https://download.pytorch.org/whl/cpu" }
+
+[tasks]
+test = "pytest -q"
+compliance = "python scripts/compliance.py check --scope benchmark"
+fetch = "python scripts/fetch_models.py"
+benchmark = "python scripts/benchmark.py"
+report = "python scripts/report.py"
+infer = "python scripts/infer.py"
+cleanup = "python scripts/cleanup.py preview"
