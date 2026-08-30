@@ -32,3 +32,4 @@ work/reports/
 work/cleanup-inventory.json
 *.zip
 *.pth
+*.pt
