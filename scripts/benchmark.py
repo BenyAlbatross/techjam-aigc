@@ -47,6 +47,15 @@ CONDITIONS = (
     "color_jitter_20",
     "center_crop_80",
 )
+REQUIRED_ROW_FIELDS = {
+    "identity", "model", "model_revision", "model_hash", "dataset",
+    "dataset_revision", "sample_id", "base_id", "content_hash", "label",
+    "cohort", "condition", "condition_parameters", "raw_score",
+    "probability_ai", "threshold", "decision", "device",
+    "effective_batch_size", "elapsed_seconds", "git_commit", "config_hash",
+    "seed", "attempted_count", "valid_count", "excluded_count",
+    "per_class_counts",
+}
 
 
 def _sample_seed(sample_id: str) -> int:
@@ -189,11 +198,30 @@ def validate_shard(path: Path, expected: set[str]) -> list[str]:
                     errors.append(f"line {number}: row must be an object")
                     continue
                 rows.append(row)
+                errors.extend(
+                    f"line {number}: {error}"
+                    for error in _prediction_row_errors(row)
+                )
     except OSError as error:
         return [f"cannot read shard: {error}"]
 
     if len(rows) != len(expected):
         errors.append(f"row count {len(rows)} does not match expected {len(expected)}")
+    if rows:
+        for field in (
+            "model", "model_revision", "model_hash", "dataset",
+            "dataset_revision", "condition", "threshold", "device",
+            "effective_batch_size", "elapsed_seconds", "git_commit",
+            "config_hash", "seed", "attempted_count", "valid_count",
+            "excluded_count", "per_class_counts",
+        ):
+            if any(row.get(field) != rows[0].get(field) for row in rows[1:]):
+                errors.append(f"conflicting {field} metadata")
+        for number, row in enumerate(rows, 1):
+            if row.get("valid_count") != len(expected):
+                errors.append(
+                    f"line {number}: valid_count does not match expected row count"
+                )
     identities: dict[str, dict] = {}
     for row in rows:
         identity = row.get("identity")
@@ -221,6 +249,129 @@ def validate_shard(path: Path, expected: set[str]) -> list[str]:
 def _hash_json(value: object) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _is_number(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _is_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_hex(value: object, lengths: set[int]) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) in lengths
+        and all(character in "0123456789abcdefABCDEF" for character in value)
+    )
+
+
+def _prediction_row_errors(row: dict) -> list[str]:
+    missing = REQUIRED_ROW_FIELDS - row.keys()
+    errors = [f"missing required field: {field}" for field in sorted(missing)]
+
+    for field in (
+        "model", "model_revision", "dataset", "dataset_revision", "sample_id",
+        "base_id", "cohort", "device",
+    ):
+        if field in row and (not isinstance(row[field], str) or not row[field]):
+            errors.append(f"{field} must be a non-empty string")
+    for field in ("identity", "model_hash", "content_hash", "config_hash"):
+        if field in row and not _is_hex(row[field], {64}):
+            errors.append(f"{field} must be a SHA-256 hex string")
+    if "git_commit" in row and not _is_hex(row["git_commit"], {40, 64}):
+        errors.append("git_commit must be a Git object hex string")
+
+    condition = row.get("condition")
+    sample_id = row.get("sample_id")
+    if condition not in CONDITIONS:
+        errors.append("condition must be canonical")
+    if "condition_parameters" in row:
+        if not isinstance(row["condition_parameters"], dict):
+            errors.append("condition_parameters must be an object")
+        elif condition in CONDITIONS and isinstance(sample_id, str) and sample_id:
+            if row["condition_parameters"] != _condition_parameters(condition, sample_id):
+                errors.append("condition_parameters do not match condition")
+
+    label = row.get("label")
+    if "label" in row and (not _is_int(label) or label not in (0, 1)):
+        errors.append("label must be 0 or 1")
+    raw_score = row.get("raw_score")
+    if "raw_score" in row and (
+        not _is_number(raw_score) or not math.isfinite(raw_score)
+    ):
+        errors.append("raw_score must be finite")
+    probability = row.get("probability_ai")
+    if "probability_ai" in row and (
+        not _is_number(probability)
+        or not math.isfinite(probability)
+        or not 0.0 <= probability <= 1.0
+    ):
+        errors.append("probability_ai must be finite and within [0, 1]")
+    threshold = row.get("threshold")
+    if "threshold" in row and (
+        not _is_number(threshold)
+        or not math.isfinite(threshold)
+        or not 0.0 <= threshold <= 1.0
+    ):
+        errors.append("threshold must be finite and within [0, 1]")
+    decision = row.get("decision")
+    if "decision" in row and (not _is_int(decision) or decision not in (0, 1)):
+        errors.append("decision must be 0 or 1")
+    if (
+        _is_number(probability)
+        and math.isfinite(probability)
+        and _is_number(threshold)
+        and math.isfinite(threshold)
+        and _is_int(decision)
+        and decision != int(probability >= threshold)
+    ):
+        errors.append("decision does not match probability_ai and threshold")
+
+    effective_size = row.get("effective_batch_size")
+    if "effective_batch_size" in row and (
+        not _is_int(effective_size) or effective_size < 1
+    ):
+        errors.append("effective_batch_size must be positive")
+    elapsed = row.get("elapsed_seconds")
+    if "elapsed_seconds" in row and (
+        not _is_number(elapsed) or not math.isfinite(elapsed) or elapsed < 0
+    ):
+        errors.append("elapsed_seconds must be finite and non-negative")
+    if "seed" in row and (not _is_int(row["seed"]) or row["seed"] != SEED):
+        errors.append(f"seed must equal {SEED}")
+
+    for field, minimum in (
+        ("attempted_count", 1), ("valid_count", 1), ("excluded_count", 0),
+    ):
+        if field in row and (not _is_int(row[field]) or row[field] < minimum):
+            errors.append(f"{field} must be an integer >= {minimum}")
+    if all(field in row and _is_int(row[field]) for field in (
+        "attempted_count", "valid_count", "excluded_count"
+    )) and row["valid_count"] + row["excluded_count"] != row["attempted_count"]:
+        errors.append("attempted_count must equal valid_count plus excluded_count")
+    counts = row.get("per_class_counts")
+    if "per_class_counts" in row:
+        valid_counts = (
+            isinstance(counts, dict)
+            and set(counts) == {"0", "1"}
+            and all(_is_int(value) and value >= 0 for value in counts.values())
+        )
+        if not valid_counts:
+            errors.append("per_class_counts must contain non-negative 0 and 1 counts")
+        elif _is_int(row.get("valid_count")) and sum(counts.values()) != row["valid_count"]:
+            errors.append("per_class_counts must sum to valid_count")
+
+    identity_fields = (
+        "model_revision", "model_hash", "dataset_revision", "content_hash",
+        "condition", "git_commit", "config_hash",
+    )
+    if "identity" in row and all(field in row for field in identity_fields):
+        recomputed = _hash_json([row[field] for field in identity_fields])
+        if row["identity"] != recomputed:
+            errors.append("identity does not match row metadata")
+    return errors
 
 
 def _config_hash(model_entry: dict, dataset_entry: dict) -> str:
@@ -381,28 +532,49 @@ def run_panel(
             raise RuntimeError(f"{model_name}: adapter metadata conflicts with registry")
 
         for condition, path in pending:
-            transformed = [
-                apply_condition(image, condition, row["sample_id"])
-                for image, row in zip(base_images, sample_rows, strict=True)
-            ]
+            transformed = []
+            for image, sample in zip(base_images, sample_rows, strict=True):
+                try:
+                    transformed.append(
+                        apply_condition(image, condition, sample["sample_id"])
+                    )
+                except torch.cuda.OutOfMemoryError:
+                    raise
+                except Exception as error:
+                    raise RuntimeError(
+                        f"{model_name}/{dataset_name}/{condition}: "
+                        f"transformation failed for sample ID {sample['sample_id']}"
+                    ) from error
             started = time.perf_counter()
-            scores, effective_size = score_with_backoff(
-                adapter, transformed, batch_size
-            )
-            elapsed = time.perf_counter() - started
-            if len(scores) != valid:
-                raise RuntimeError(
-                    f"{model_name}/{condition}: returned {len(scores)} scores for {valid} images"
+            try:
+                scores, effective_size = score_with_backoff(
+                    adapter, transformed, batch_size
                 )
+                if len(scores) != valid:
+                    raise ValueError(
+                        f"returned {len(scores)} scores for {valid} images"
+                    )
+                normalized_scores = []
+                for score in scores:
+                    if not isinstance(score, (tuple, list)) or len(score) != 2:
+                        raise ValueError("adapter score must be a (raw_score, p_ai) pair")
+                    raw_score, probability_ai = map(float, score)
+                    if not math.isfinite(raw_score) or not 0.0 <= probability_ai <= 1.0:
+                        raise ValueError("adapter returned an invalid score")
+                    normalized_scores.append((raw_score, probability_ai))
+            except torch.cuda.OutOfMemoryError:
+                raise
+            except Exception as error:
+                sample_ids = ", ".join(str(row["sample_id"]) for row in sample_rows)
+                raise RuntimeError(
+                    f"{model_name}/{dataset_name}/{condition}: "
+                    f"scoring failed for sample IDs [{sample_ids}]"
+                ) from error
+            elapsed = time.perf_counter() - started
             rows = []
             for sample, (raw_score, probability_ai) in zip(
-                sample_rows, scores, strict=True
+                sample_rows, normalized_scores, strict=True
             ):
-                raw_score, probability_ai = float(raw_score), float(probability_ai)
-                if not math.isfinite(raw_score) or not 0.0 <= probability_ai <= 1.0:
-                    raise RuntimeError(
-                        f"{model_name}/{condition}/{sample['sample_id']}: invalid score"
-                    )
                 cohort = sample.get("generator_family") or sample.get("source_family", "")
                 rows.append({
                     "identity": _identity(
