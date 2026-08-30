@@ -157,11 +157,17 @@ def _load_aidetector_hf(entry: dict, device: str, cache: Path):
     return detector
 
 
+def univfd_preprocess(visual):
+    from open_clip.transform import PreprocessCfg, image_transform_v2
+
+    return image_transform_v2(PreprocessCfg(
+        size=visual.image_size, mean=visual.image_mean, std=visual.image_std
+    ), is_train=False)
+
 def _load_univfd(entry: dict, snapshot: Path, device: str):
     from aidetector.model import AIImageDetector
     from open_clip.constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
     from open_clip.model import build_model_from_openai_state_dict, get_cast_dtype
-    from open_clip.transform import PreprocessCfg, image_transform_v2
 
     detector = AIImageDetector.__new__(AIImageDetector)
     detector._torch = torch

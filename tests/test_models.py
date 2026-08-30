@@ -141,6 +141,17 @@ def test_torchscript_auxiliary_loader_avoids_pickle_loading(tmp_path: Path, monk
     loaded = model_adapters.load_torchscript(archive)
 
     assert torch.equal(loaded(torch.zeros(1, 1)), module(torch.zeros(1, 1)))
+
+def test_univfd_preprocess_uses_openai_torchscript_image_metadata():
+    visual = SimpleNamespace(
+        image_size=224,
+        image_mean=(0.48145466, 0.4578275, 0.40821073),
+        image_std=(0.26862954, 0.26130258, 0.27577711),
+    )
+
+    tensor = model_adapters.univfd_preprocess(visual)(Image.new("RGB", (8, 8)))
+
+    assert tensor.shape == (3, 224, 224)
 def test_pinned_hf_detector_parameter_counts_match_verified_weights():
     with (model_adapters.ROOT / "models.toml").open("rb") as handle:
         models = tomllib.load(handle)["models"]
