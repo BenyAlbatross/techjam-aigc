@@ -108,6 +108,21 @@ def test_ntire_builder_rejects_paths_outside_images(tmp_path: Path, name: str):
         data_manifest._build_ntire(shard, tmp_path / "manifest.json")
 
 
+def test_ntire_builder_rejects_images_directory_symlink_outside_shard(tmp_path: Path):
+    shard = tmp_path / "shard"
+    shard.mkdir()
+    outside_images = tmp_path / "outside-images"
+    outside_images.mkdir()
+    shutil.copy(FIXTURES / "real.ppm", outside_images / "image.ppm")
+    (shard / "images").symlink_to(outside_images, target_is_directory=True)
+    with (shard / "labels.csv").open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["image", "label"])
+        writer.writeheader()
+        writer.writerow({"image": "image.ppm", "label": "0"})
+    with pytest.raises(ValueError, match="images must stay under shard"):
+        data_manifest._build_ntire(shard, tmp_path / "manifest.json")
+
+
 def test_sid_duplicate_bytes_do_not_fill_class_quota(tmp_path: Path, monkeypatch):
     rows = [
         {"id": "real-1", "label": 0, "image": {"bytes": b"real", "path": "one.jpg"}},

@@ -126,10 +126,13 @@ def build_sid(output: Path, per_class: int) -> Path:
 
 
 def _build_ntire(shard_dir: Path, output: Path) -> Path:
+    shard = shard_dir.resolve()
+    images = (shard / "images").resolve()
+    if not images.is_relative_to(shard):
+        raise ValueError("images must stay under shard")
     samples = []
-    with (shard_dir / "labels.csv").open(newline="") as handle:
+    with (shard / "labels.csv").open(newline="") as handle:
         rows = sorted(csv.DictReader(handle), key=lambda row: row["image"])
-    images = (shard_dir / "images").resolve()
     for row in rows:
         image = Path(row["image"])
         path = (images / image).resolve()
