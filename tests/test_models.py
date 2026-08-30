@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 from types import SimpleNamespace
 
 import pytest
@@ -129,6 +130,24 @@ def test_adapter_rejects_registry_parameter_mismatch():
         )
 
 
+
+
+def test_torchscript_auxiliary_loader_avoids_pickle_loading(tmp_path: Path, monkeypatch):
+    archive = tmp_path / "auxiliary.pt"
+    module = torch.jit.trace(torch.nn.Linear(1, 1), torch.zeros(1, 1))
+    torch.jit.save(module, archive)
+    monkeypatch.setattr(torch, "load", lambda *args, **kwargs: pytest.fail("pickle load"))
+
+    loaded = model_adapters.load_torchscript(archive)
+
+    assert torch.equal(loaded(torch.zeros(1, 1)), module(torch.zeros(1, 1)))
+def test_pinned_hf_detector_parameter_counts_match_verified_weights():
+    with (model_adapters.ROOT / "models.toml").open("rb") as handle:
+        models = tomllib.load(handle)["models"]
+
+    assert models["steganograph"]["parameters"] == 85_800_194
+    assert models["capcheck"]["parameters"] == 85_800_194
+    assert models["univfd"]["parameters"] == 427_617_282
 def test_fetch_verifies_auxiliary_and_deletes_only_mismatch(tmp_path: Path, monkeypatch):
     snapshot = tmp_path / "snapshot"
     (snapshot / "nested").mkdir(parents=True)
@@ -187,6 +206,32 @@ def test_offline_fetch_requires_an_existing_snapshot(tmp_path: Path, monkeypatch
     assert fetch_model("demo", tmp_path / "cache") == snapshot
 
 
+
+def test_fetch_cli_all_expands_to_every_registered_model(tmp_path: Path, monkeypatch, capsys):
+    registry = tmp_path / "models.toml"
+    registry.write_text(
+        '[models.first]\nstatus="approved"\nsubmission_status="review"\n'
+        'repository="owner/first"\nrevision="fixed"\nfile="one.bin"\n'
+        'sha256="' + "0" * 64 + '"\nlicense="MIT"\nthreshold=0.5\n'
+        'parameters=1\nloader="hf_ai_logit"\n'
+        '[models.second]\nstatus="approved"\nsubmission_status="review"\n'
+        'repository="owner/second"\nrevision="fixed"\nfile="two.bin"\n'
+        'sha256="' + "1" * 64 + '"\nlicense="MIT"\nthreshold=0.5\n'
+        'parameters=1\nloader="hf_ai_logit"\n'
+    )
+    fetched = []
+    monkeypatch.setattr(fetch_models, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        fetch_models, "fetch_model",
+        lambda name, cache: fetched.append((name, cache)) or cache / name,
+    )
+
+    assert fetch_models.main(["--model", "all", "--cache", str(tmp_path / "cache")]) == 0
+    assert fetched == [
+        ("first", tmp_path / "cache"),
+        ("second", tmp_path / "cache"),
+    ]
+    assert "first verified one.bin" in capsys.readouterr().out
 def test_load_model_sets_offline_before_fetch(monkeypatch, tmp_path: Path):
     observed = []
 

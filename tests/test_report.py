@@ -538,7 +538,7 @@ def test_render_report_covers_required_sections_without_paths():
     assert "Top three: model-a" not in markdown
 
 
-def test_cli_reads_existing_rows_and_writes_json_csv_and_markdown(tmp_path: Path):
+def test_cli_reads_existing_rows_and_writes_json_csv_and_markdown(tmp_path: Path, monkeypatch):
     predictions = tmp_path / "predictions"
     predictions.mkdir()
     prediction_rows = [
@@ -604,6 +604,14 @@ def test_cli_reads_existing_rows_and_writes_json_csv_and_markdown(tmp_path: Path
     ):
         assert field in pair
     assert "Top-three rule" in markdown_path.read_text()
+
+    monkeypatch.setattr(report, "ROOT", tmp_path)
+    assert main([
+        "validate",
+        "--predictions", str(predictions),
+        "--manifest", str(manifest),
+        "--models", "all",
+    ]) == 0
 
     with pytest.raises(SystemExit):
         main([

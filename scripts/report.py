@@ -666,24 +666,37 @@ def _write_csv(path: Path, summary: dict) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("command", nargs="?", choices=["validate"])
     parser.add_argument("--predictions", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--models", type=Path, default=ROOT / "models.toml")
+    parser.add_argument("--models", default=str(ROOT / "models.toml"))
     parser.add_argument("--datasets", type=Path, default=ROOT / "datasets.toml")
-    parser.add_argument("--json", type=Path, required=True)
-    parser.add_argument("--csv", type=Path, required=True)
-    parser.add_argument("--markdown", type=Path, required=True)
+    parser.add_argument("--json", type=Path)
+    parser.add_argument("--csv", type=Path)
+    parser.add_argument("--markdown", type=Path)
     args = parser.parse_args(argv)
 
     rows = _load_rows(args.predictions)
     manifest = json.loads(args.manifest.read_text())
     selected = {manifest["dataset"]: {item["sample_id"] for item in manifest["samples"]}}
+    if args.command == "validate":
+        if args.models != "all":
+            parser.error("validate requires --models all")
+        errors = validate_coverage(
+            rows, selected, expected_models=sorted(_load_toml(ROOT / "models.toml", "models"))
+        )
+        if errors:
+            print("invalid report coverage:\n" + "\n".join(errors))
+            return 1
+        return 0
+    if None in (args.json, args.csv, args.markdown):
+        parser.error("--json, --csv, and --markdown are required to generate a report")
     errors = validate_coverage(rows, selected, expected_models=sorted({item["model"] for item in rows}))
     if errors:
         raise ValueError("invalid report coverage:\n" + "\n".join(errors))
     summary = build_summary(
         rows,
-        _load_toml(args.models, "models"),
+        _load_toml(Path(args.models), "models"),
         _load_toml(args.datasets, "datasets"),
     )
     args.json.parent.mkdir(parents=True, exist_ok=True)

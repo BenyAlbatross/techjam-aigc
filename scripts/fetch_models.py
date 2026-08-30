@@ -57,18 +57,21 @@ def fetch_model(name: str, cache: Path) -> Path:
     return snapshot
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True)
     parser.add_argument("--cache", type=Path, default=Path("work/hf-cache"))
-    args = parser.parse_args()
-    snapshot = fetch_model(args.model, args.cache)
-    entry = load_registry(ROOT / "models.toml", "models")[args.model]
-    for asset in _assets(entry):
-        print(f"{args.model} verified {asset['file']} sha256={asset['sha256']}")
-    print(snapshot)
+    args = parser.parse_args(argv)
+    models = load_registry(ROOT / "models.toml", "models")
+    names = sorted(models) if args.model == "all" else [args.model]
+    for name in names:
+        snapshot = fetch_model(name, args.cache)
+        for asset in _assets(models[name]):
+            print(f"{name} verified {asset['file']} sha256={asset['sha256']}")
+        print(snapshot)
+    return 0
 
 
 if __name__ == "__main__":

@@ -19,6 +19,9 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def load_torchscript(path: Path):
+    return torch.jit.load(path, map_location="cpu")
+
 def assert_parameter_limit(count: int) -> None:
     if count >= 2_000_000_000:
         raise RuntimeError(f"Model exceeds 2B parameter limit: {count}")
@@ -154,6 +157,34 @@ def _load_aidetector_hf(entry: dict, device: str, cache: Path):
     return detector
 
 
+def _load_univfd(entry: dict, snapshot: Path, device: str):
+    from aidetector.model import AIImageDetector
+    from open_clip.constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
+    from open_clip.model import build_model_from_openai_state_dict, get_cast_dtype
+    from open_clip.transform import PreprocessCfg, image_transform_v2
+
+    detector = AIImageDetector.__new__(AIImageDetector)
+    detector._torch = torch
+    detector.device = torch.device(device)
+    detector.threshold = float(entry["threshold"])
+    detector.model_name = entry["architecture"]
+    detector.pretrained = str(snapshot / entry["auxiliary"]["file"])
+    detector.repo_id = entry["repository"]
+    archive = load_torchscript(Path(detector.pretrained))
+    detector.clip_model = build_model_from_openai_state_dict(
+        archive.state_dict(), cast_dtype=get_cast_dtype("fp32")
+    ).to(detector.device).float().eval()
+    detector.clip_model.visual.image_mean = OPENAI_DATASET_MEAN
+    detector.clip_model.visual.image_std = OPENAI_DATASET_STD
+    detector.preprocess = image_transform_v2(
+        PreprocessCfg(**detector.clip_model.visual.preprocess_cfg), is_train=False
+    )
+    output_dim = getattr(detector.clip_model.visual, "output_dim", 768)
+    detector.head = torch.nn.Linear(int(output_dim), 1).to(detector.device)
+    detector._load_head(snapshot / entry["file"])
+    detector.head.eval()
+    return detector
+
 def _load_timm(entry: dict, snapshot: Path, device: str):
     import timm
     from safetensors.torch import load_file
@@ -241,18 +272,7 @@ def load_model(name: str, device: str, cache: Path) -> ModelAdapter:
             name, entry, _load_aidetector_hf(entry, device, cache), device
         )
     if kind == "aidetector_univfd":
-        from aidetector.model import AIImageDetector
-
-        auxiliary = entry["auxiliary"]
-        detector = AIImageDetector(
-            device=device,
-            threshold=float(entry["threshold"]),
-            model_name=entry["architecture"],
-            pretrained=str(snapshot / auxiliary["file"]),
-            weight_path=snapshot / entry["file"],
-            repo_id=entry["repository"],
-        )
-        return ModelAdapter(name, entry, detector, device)
+        return ModelAdapter(name, entry, _load_univfd(entry, snapshot, device), device)
     raise RuntimeError(f"Unsupported loader: {kind}")
 
 

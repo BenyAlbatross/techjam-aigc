@@ -111,7 +111,7 @@ file = "model.safetensors"
 sha256 = "2f27de34eb5eebc250920e4ecbc471a7b8913d07c20b53f5d63fc0e41104a812"
 license = "MIT"
 threshold = 0.5
-parameters = 85800000
+parameters = 85800194
 loader = "aidetector_hf"
 label_direction = "ai=1,real=0"
 
@@ -124,7 +124,7 @@ file = "model.safetensors"
 sha256 = "4f5d0d4e8e6475faccca9385a2869648bb1f18d3f64c0239ad2bca909d3adc50"
 license = "Apache-2.0"
 threshold = 0.5
-parameters = 85800000
+parameters = 85800194
 loader = "aidetector_hf"
 label_direction = "ai=1,real=0"
 
@@ -137,7 +137,7 @@ file = "universalfakedetect/fc_weights.pth"
 sha256 = "477100745713bcc957beb2b40859536859b6483fd6301b3b9293151b194c7847"
 license = "MIT"
 threshold = 0.5
-parameters = 428000000
+parameters = 427617282
 loader = "aidetector_univfd"
 label_direction = "ai=1,real=0"
 architecture = "ViT-L-14"
