@@ -21,6 +21,13 @@ else:
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROLLED_DATASET = "sid_set"
+METRIC_NAMES = ("error_rate", "fpr", "fnr", "balanced_accuracy", "roc_auc")
+RANKING_KEYS = (
+    "worst_condition_balanced_accuracy",
+    "worst_real_source_fpr",
+    "worst_ai_source_fnr",
+    "aggregate_roc_auc",
+)
 
 
 def _ratio(numerator: int, denominator: int) -> float | None:
@@ -88,6 +95,15 @@ def grouped_bootstrap(
         return None, None
     if replicates < 1:
         raise ValueError("replicates must be positive")
+    values = []
+    for sampled in _grouped_samples(rows, seed, replicates):
+        value = statistic(sampled)
+        if value is not None and math.isfinite(float(value)):
+            values.append(float(value))
+    return _percentile_interval(values)
+
+
+def _grouped_samples(rows: list[dict], seed: int, replicates: int):
     groups: dict[str, list[dict]] = defaultdict(list)
     for item in rows:
         group_id = item.get("base_id")
@@ -100,18 +116,34 @@ def grouped_bootstrap(
         groups[str(group_id)].append(item)
     group_ids = sorted(groups)
     rng = np.random.default_rng(seed)
-    values = []
     for _ in range(replicates):
         sampled = []
         for index in rng.integers(0, len(group_ids), size=len(group_ids)):
             sampled.extend(groups[group_ids[int(index)]])
-        value = statistic(sampled)
-        if value is not None and math.isfinite(float(value)):
-            values.append(float(value))
+        yield sampled
+
+
+def _percentile_interval(values: list[float]) -> tuple[float | None, float | None]:
     if not values:
         return None, None
     low, high = np.percentile(values, [2.5, 97.5])
     return float(low), float(high)
+
+
+def _grouped_intervals(
+    rows: list[dict],
+    statistic: Callable[[list[dict]], dict],
+    keys: Iterable[str],
+    replicates: int,
+) -> dict[str, list[float | None]]:
+    values = {key: [] for key in keys}
+    for sampled in _grouped_samples(rows, SEED, replicates):
+        result = statistic(sampled)
+        for key in keys:
+            value = result[key]
+            if value is not None and math.isfinite(float(value)):
+                values[key].append(float(value))
+    return {key: list(_percentile_interval(items)) for key, items in values.items()}
 
 
 def paired_deltas(rows: list[dict]) -> list[dict]:
@@ -181,13 +213,13 @@ def validate_coverage(
 
     models = sorted(expected_models or {item.get("model") for item in rows})
     expected_keys = set()
-    expected_counts = {}
+    count_expectations = {}
     for model in models:
         for dataset, selected in selected_samples.items():
             conditions = CONDITIONS if dataset == CONTROLLED_DATASET else ("clean",)
             sample_ids = _sample_ids(selected)
             if sample_ids is None:
-                expected_counts[(model, dataset)] = selected * len(conditions)
+                count_expectations[(model, dataset)] = (selected, conditions)
             else:
                 expected_keys.update(
                     (model, dataset, sample_id, condition)
@@ -200,35 +232,46 @@ def validate_coverage(
         errors.append(f"missing expected row: {key}")
     for key in sorted(actual_keys - expected_keys) if expected_keys else ():
         errors.append(f"unexpected row: {key}")
-    for pair, expected_count in expected_counts.items():
-        actual_count = sum(item["model"] == pair[0] and item["dataset"] == pair[1] for item in rows)
-        if actual_count != expected_count:
+    for pair, (selected_count, conditions) in count_expectations.items():
+        pair_rows = [
+            item for item in rows
+            if item["model"] == pair[0] and item["dataset"] == pair[1]
+        ]
+        actual_conditions = {item["condition"] for item in pair_rows}
+        if actual_conditions != set(conditions):
             errors.append(
-                f"coverage mismatch for {pair}: expected {expected_count}, got {actual_count}"
+                f"condition set mismatch for {pair}: expected {sorted(conditions)}, "
+                f"got {sorted(actual_conditions)}"
             )
+        sample_sets = []
+        for condition in conditions:
+            condition_rows = [item for item in pair_rows if item["condition"] == condition]
+            if len(condition_rows) != selected_count:
+                errors.append(
+                    f"condition count mismatch for {pair}/{condition}: "
+                    f"expected {selected_count}, got {len(condition_rows)}"
+                )
+            sample_sets.append({item["sample_id"] for item in condition_rows})
+        if sample_sets and any(items != sample_sets[0] for items in sample_sets[1:]):
+            errors.append(f"sample identities differ across conditions for {pair}")
     return errors
 
 
 def rank_models(summary: list[dict], contamination: dict) -> list[str]:
-    required = (
-        "worst_condition_balanced_accuracy",
-        "worst_real_source_fpr",
-        "worst_ai_source_fnr",
-        "aggregate_roc_auc",
-    )
     eligible = []
     for item in summary:
         reasons = []
+        model_entry = contamination.get(item["model"], {})
+        if model_entry.get("status") != "approved":
+            reasons.append(f"model status is {model_entry.get('status')}")
         if item.get("dataset_status") != "approved":
             reasons.append(f"dataset status is {item.get('dataset_status')}")
-        contaminated = contamination.get(item["model"], {}).get(
-            "contaminated_datasets", []
-        )
+        contaminated = model_entry.get("contaminated_datasets", [])
         if item["dataset"] in contaminated:
             reasons.append(f"contaminated model/dataset pair: {item['dataset']}")
         if item.get("ranking_eligible") is False:
             reasons.append(item.get("exclusion_reason", "marked ineligible"))
-        if any(item.get(key) is None for key in required):
+        if any(item.get(key) is None for key in RANKING_KEYS):
             reasons.append("ranking metrics are incomplete")
         item["ranking_eligible"] = not reasons
         item["exclusion_reason"] = "; ".join(dict.fromkeys(reasons))
@@ -257,6 +300,70 @@ def _worst_cohort(rows: list[dict], label: int, metric_name: str) -> tuple[str |
     return f"{cohort}/{condition}", value
 
 
+def _ranking_statistics(rows: list[dict]) -> dict:
+    condition_rows: dict[str, list[dict]] = defaultdict(list)
+    for item in rows:
+        condition_rows[item["condition"]].append(item)
+    balanced = [metrics(items)["balanced_accuracy"] for items in condition_rows.values()]
+    _, worst_fpr = _worst_cohort(rows, 0, "fpr")
+    _, worst_fnr = _worst_cohort(rows, 1, "fnr")
+    return {
+        "worst_condition_balanced_accuracy": min(
+            (value for value in balanced if value is not None), default=None
+        ),
+        "worst_real_source_fpr": worst_fpr,
+        "worst_ai_source_fnr": worst_fnr,
+        "aggregate_roc_auc": metrics(rows)["roc_auc"],
+    }
+
+
+def _comparison_supported(first: dict, second: dict) -> bool:
+    intervals_first = first.get("ranking_confidence_intervals", {})
+    intervals_second = second.get("ranking_confidence_intervals", {})
+    for index, key in enumerate(RANKING_KEYS):
+        if first[key] == second[key]:
+            continue
+        first_ci = intervals_first.get(key, [None, None])
+        second_ci = intervals_second.get(key, [None, None])
+        if None in first_ci or None in second_ci:
+            return False
+        if index in (0, 3):
+            return first_ci[0] > second_ci[1]
+        return first_ci[1] < second_ci[0]
+    return False
+
+
+def _ranking_resolution(pairs: list[dict], ranking: list[str]) -> dict:
+    by_model = {item["model"]: item for item in pairs}
+    ordered = [by_model[model] for model in ranking]
+    unresolved_groups = []
+    if ordered:
+        group = [ordered[0]["model"]]
+        for first, second in zip(ordered, ordered[1:]):
+            if _comparison_supported(first, second):
+                if len(group) > 1:
+                    unresolved_groups.append(group)
+                group = [second["model"]]
+            else:
+                group.append(second["model"])
+        if len(group) > 1:
+            unresolved_groups.append(group)
+    winner_supported = (
+        None if not ordered
+        else len(ordered) == 1 or _comparison_supported(ordered[0], ordered[1])
+    )
+    boundary_supported = (
+        _comparison_supported(ordered[2], ordered[3]) if len(ordered) >= 4 else None
+    )
+    return {
+        "unresolved_groups": unresolved_groups,
+        "winner_supported": winner_supported,
+        "selected_winner": ordered[0]["model"] if ordered and winner_supported else None,
+        "top_three_boundary_supported": boundary_supported,
+        "selected_top_three": ranking[:3] if boundary_supported else [],
+    }
+
+
 def build_summary(
     rows: list[dict],
     model_registry: dict,
@@ -272,27 +379,23 @@ def build_summary(
     conditions = []
     for (model, dataset, condition), items in sorted(condition_groups.items()):
         result = metrics(items)
-        ci = grouped_bootstrap(
-            items,
-            lambda sampled: metrics(sampled)["balanced_accuracy"],
-            replicates=replicates,
+        intervals = _grouped_intervals(
+            items, metrics, METRIC_NAMES, replicates,
         )
         conditions.append({
             "model": model,
             "dataset": dataset,
             "condition": condition,
             "metrics": result,
-            "balanced_accuracy_ci": list(ci),
+            "metric_confidence_intervals": intervals,
+            "balanced_accuracy_ci": intervals["balanced_accuracy"],
         })
 
     pairs = []
     for (model, dataset), items in sorted(pair_groups.items()):
-        condition_metrics = [
-            item["metrics"] for item in conditions
-            if item["model"] == model and item["dataset"] == dataset
-        ]
-        real_cohort, worst_fpr = _worst_cohort(items, 0, "fpr")
-        ai_cohort, worst_fnr = _worst_cohort(items, 1, "fnr")
+        ranking_statistics = _ranking_statistics(items)
+        real_cohort, _ = _worst_cohort(items, 0, "fpr")
+        ai_cohort, _ = _worst_cohort(items, 1, "fnr")
         shard_rows = {}
         for item in items:
             shard_rows.setdefault(item["condition"], item)
@@ -301,15 +404,12 @@ def build_summary(
         pairs.append({
             "model": model,
             "dataset": dataset,
+            "model_status": model_registry.get(model, {}).get("status", "unknown"),
             "dataset_status": dataset_registry.get(dataset, {}).get("status", "unknown"),
-            "worst_condition_balanced_accuracy": min(
-                (item["balanced_accuracy"] for item in condition_metrics
-                 if item["balanced_accuracy"] is not None),
-                default=None,
+            **ranking_statistics,
+            "ranking_confidence_intervals": _grouped_intervals(
+                items, _ranking_statistics, RANKING_KEYS, replicates,
             ),
-            "worst_real_source_fpr": worst_fpr,
-            "worst_ai_source_fnr": worst_fnr,
-            "aggregate_roc_auc": metrics(items)["roc_auc"],
             "worst_cohorts": {"real": real_cohort, "ai": ai_cohort},
             "throughput_rows_per_second": len(items) / elapsed if elapsed else None,
             "invalid_count": invalid,
@@ -322,6 +422,7 @@ def build_summary(
         "pairs": pairs,
         "deltas": paired_deltas(rows),
         "ranking": ranking,
+        "ranking_resolution": _ranking_resolution(pairs, ranking),
         "limitations": [
             "No thresholds were tuned or calibrated.",
             "Only approved uncontaminated model/dataset pairs enter ranking.",
@@ -344,17 +445,23 @@ def render_report(summary: dict) -> str:
         "",
         "## Per-condition metrics and 95% confidence intervals",
         "",
-        "| Model | Dataset | Condition | N | Error | FPR | FNR | Balanced accuracy | 95% CI | AUROC |",
-        "|---|---|---|---:|---:|---:|---:|---:|---|---:|",
+        "| Model | Dataset | Condition | N | TP | TN | FP | FN | Error (95% CI) | FPR (95% CI) | FNR (95% CI) | Balanced accuracy (95% CI) | AUROC (95% CI) |",
+        "|---|---|---|---:|---:|---:|---:|---:|---|---|---|---|---|",
     ]
     for item in summary.get("conditions", []):
         metric = item["metrics"]
-        ci = item["balanced_accuracy_ci"]
+        intervals = item["metric_confidence_intervals"]
+        confusion = metric["confusion"]
         lines.append(
             f"| {item['model']} | {item['dataset']} | {item['condition']} | "
-            f"{metric['n']} | {_fmt(metric.get('error_rate'))} | {_fmt(metric.get('fpr'))} | "
-            f"{_fmt(metric.get('fnr'))} | {_fmt(metric.get('balanced_accuracy'))} | "
-            f"[{_fmt(ci[0])}, {_fmt(ci[1])}] | {_fmt(metric.get('roc_auc'))} |"
+            f"{metric['n']} | {confusion['tp']} | {confusion['tn']} | {confusion['fp']} | "
+            f"{confusion['fn']} | {_fmt(metric['error_rate'])} "
+            f"[{_fmt(intervals['error_rate'][0])}, {_fmt(intervals['error_rate'][1])}] | "
+            f"{_fmt(metric['fpr'])} [{_fmt(intervals['fpr'][0])}, {_fmt(intervals['fpr'][1])}] | "
+            f"{_fmt(metric['fnr'])} [{_fmt(intervals['fnr'][0])}, {_fmt(intervals['fnr'][1])}] | "
+            f"{_fmt(metric['balanced_accuracy'])} [{_fmt(intervals['balanced_accuracy'][0])}, "
+            f"{_fmt(intervals['balanced_accuracy'][1])}] | {_fmt(metric['roc_auc'])} "
+            f"[{_fmt(intervals['roc_auc'][0])}, {_fmt(intervals['roc_auc'][1])}] |"
         )
     lines.extend([
         "",
@@ -369,6 +476,23 @@ def render_report(summary: dict) -> str:
             f"| {item['model']} | {item['dataset']} | {_fmt(cohorts.get('real'))} | "
             f"{_fmt(item.get('worst_real_source_fpr'))} | {_fmt(cohorts.get('ai'))} | "
             f"{_fmt(item.get('worst_ai_source_fnr'))} |"
+        )
+    lines.extend([
+        "",
+        "## Ranking uncertainty",
+        "",
+        "| Model | Dataset | Worst BA (95% CI) | Worst FPR (95% CI) | Worst FNR (95% CI) | Aggregate AUROC (95% CI) |",
+        "|---|---|---|---|---|---|",
+    ])
+    for item in summary.get("pairs", []):
+        intervals = item.get("ranking_confidence_intervals", {})
+        values = [
+            f"{_fmt(item[key])} [{_fmt(intervals.get(key, [None, None])[0])}, "
+            f"{_fmt(intervals.get(key, [None, None])[1])}]"
+            for key in RANKING_KEYS
+        ]
+        lines.append(
+            f"| {item['model']} | {item['dataset']} | " + " | ".join(values) + " |"
         )
     lines.extend([
         "",
@@ -414,8 +538,24 @@ def render_report(summary: dict) -> str:
         "",
         "Rank eligible uncontaminated pairs by worst-condition balanced accuracy (descending), "
         "worst real-source FPR (ascending), worst AI-source FNR (ascending), aggregate AUROC "
-        "(descending), then model name. Top three: "
-        + (", ".join(summary.get("ranking", [])[:3]) or "none"),
+        "(descending), then model name. Deterministic display order: "
+        + (", ".join(summary.get("ranking", [])) or "none"),
+        "",
+    ])
+    resolution = summary.get("ranking_resolution", {})
+    groups = resolution.get("unresolved_groups", [])
+    lines.extend([
+        "Statistically unresolved groups: "
+        + ("; ".join(", ".join(group) for group in groups) or "none"),
+        "",
+        "Selected winner: " + (
+            resolution.get("selected_winner") or "unresolved"
+        ),
+        "",
+        "Selected top three: " + (
+            ", ".join(resolution.get("selected_top_three", []))
+            if resolution.get("selected_top_three") else "unresolved"
+        ),
         "",
         "## Scope limitations",
         "",
@@ -446,32 +586,67 @@ def _load_toml(path: Path, section: str) -> dict:
         return tomllib.load(handle).get(section, {})
 
 
-def _write_csv(path: Path, conditions: list[dict]) -> None:
+def _write_csv(path: Path, summary: dict) -> None:
     fields = [
-        "model", "dataset", "condition", "n", "error_rate", "fpr", "fnr",
-        "balanced_accuracy", "roc_auc", "balanced_accuracy_ci_low",
-        "balanced_accuracy_ci_high",
+        "record_type", "model", "dataset", "condition", "n", "tp", "tn", "fp", "fn",
+        "error_rate", "fpr", "fnr", "balanced_accuracy", "roc_auc",
+        *(f"{metric}_ci_{bound}" for metric in METRIC_NAMES for bound in ("low", "high")),
+        "paired_count", "mean_score_delta", "decision_flip_rate",
+        *RANKING_KEYS,
+        *(f"{key}_ci_{bound}" for key in RANKING_KEYS for bound in ("low", "high")),
+        "throughput_rows_per_second", "invalid_count", "model_status", "dataset_status",
+        "ranking_eligible", "exclusion_reason", "rank", "unresolved_group",
+        "winner_supported", "top_three_boundary_supported", "selected_winner",
+        "selected_top_three",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
-        for item in conditions:
+        for item in summary["conditions"]:
             metric = item["metrics"]
-            ci = item["balanced_accuracy_ci"]
-            writer.writerow({
+            intervals = item["metric_confidence_intervals"]
+            output = {
+                "record_type": "condition",
                 "model": item["model"],
                 "dataset": item["dataset"],
                 "condition": item["condition"],
                 "n": metric["n"],
+                **metric["confusion"],
                 "error_rate": metric["error_rate"],
                 "fpr": metric["fpr"],
                 "fnr": metric["fnr"],
                 "balanced_accuracy": metric["balanced_accuracy"],
                 "roc_auc": metric["roc_auc"],
-                "balanced_accuracy_ci_low": ci[0],
-                "balanced_accuracy_ci_high": ci[1],
-            })
+            }
+            for metric_name, interval in intervals.items():
+                output[f"{metric_name}_ci_low"], output[f"{metric_name}_ci_high"] = interval
+            writer.writerow(output)
+        for item in summary["deltas"]:
+            writer.writerow({"record_type": "delta", **item})
+        resolution = summary["ranking_resolution"]
+        ranking = summary["ranking"]
+        for item in summary["pairs"]:
+            output = {
+                "record_type": "pair",
+                **{key: item.get(key) for key in (
+                    "model", "dataset", *RANKING_KEYS, "throughput_rows_per_second",
+                    "invalid_count", "model_status", "dataset_status", "ranking_eligible",
+                    "exclusion_reason",
+                )},
+                "rank": ranking.index(item["model"]) + 1 if item["model"] in ranking else "",
+                "unresolved_group": next((
+                    ",".join(group) for group in resolution["unresolved_groups"]
+                    if item["model"] in group
+                ), ""),
+                "winner_supported": resolution["winner_supported"],
+                "top_three_boundary_supported": resolution["top_three_boundary_supported"],
+                "selected_winner": resolution["selected_winner"],
+                "selected_top_three": ",".join(resolution["selected_top_three"]),
+            }
+            for key, interval in item["ranking_confidence_intervals"].items():
+                output[f"{key}_ci_low"], output[f"{key}_ci_high"] = interval
+            writer.writerow(output)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -498,7 +673,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
-    _write_csv(args.csv, summary["conditions"])
+    _write_csv(args.csv, summary)
     args.markdown.parent.mkdir(parents=True, exist_ok=True)
     args.markdown.write_text(render_report(summary))
     return 0

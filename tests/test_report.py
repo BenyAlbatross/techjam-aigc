@@ -179,6 +179,53 @@ def test_validate_coverage_requires_clean_only_for_wild_panels():
     ))
 
 
+def test_count_coverage_rejects_replaced_controlled_condition():
+    rows = [
+        row(sample, label, 0.1 if label == 0 else 0.9, condition=condition)
+        for condition in CONDITIONS
+        for sample, label in (("r", 0), ("a", 1))
+    ]
+    for item in rows[-2:]:
+        item["condition"] = "replacement"
+
+    errors = validate_coverage(
+        rows, {"sid_set": 2}, expected_models=["model-a"]
+    )
+
+    assert any("condition set" in error for error in errors)
+
+
+def test_count_coverage_rejects_wrong_per_condition_count():
+    rows = [
+        row(sample, label, 0.1 if label == 0 else 0.9, condition=condition)
+        for condition in CONDITIONS
+        for sample, label in (("r", 0), ("a", 1))
+    ]
+    rows[-1]["condition"] = CONDITIONS[0]
+    rows[-1]["sample_id"] = "third"
+
+    errors = validate_coverage(
+        rows, {"sid_set": 2}, expected_models=["model-a"]
+    )
+
+    assert any("condition count" in error for error in errors)
+
+
+def test_count_coverage_requires_identical_sample_sets_across_conditions():
+    rows = [
+        row(sample, label, 0.1 if label == 0 else 0.9, condition=condition)
+        for condition in CONDITIONS
+        for sample, label in (("r", 0), ("a", 1))
+    ]
+    rows[-1]["sample_id"] = "replacement"
+
+    errors = validate_coverage(
+        rows, {"sid_set": 2}, expected_models=["model-a"]
+    )
+
+    assert any("sample identities differ" in error for error in errors)
+
+
 def summary_row(model: str, **overrides) -> dict:
     result = {
         "model": model,
@@ -194,6 +241,12 @@ def summary_row(model: str, **overrides) -> dict:
     return result
 
 
+def approved_registry(*models: str, **overrides) -> dict:
+    registry = {model: {"status": "approved"} for model in models}
+    registry.update(overrides)
+    return registry
+
+
 def test_rank_models_excludes_contaminated_and_unapproved_pairs():
     summary = [
         summary_row("clean"),
@@ -201,7 +254,13 @@ def test_rank_models_excludes_contaminated_and_unapproved_pairs():
         summary_row("review", dataset="review_set", dataset_status="review"),
         summary_row("blocked", dataset="blocked_set", dataset_status="blocked"),
     ]
-    contamination = {"contaminated": {"contaminated_datasets": ["leaked"]}}
+    contamination = approved_registry(
+        "clean", "review", "blocked",
+        contaminated={
+            "status": "approved",
+            "contaminated_datasets": ["leaked"],
+        },
+    )
 
     assert rank_models(summary, contamination) == ["clean"]
     assert summary[0]["ranking_eligible"] is True
@@ -209,6 +268,17 @@ def test_rank_models_excludes_contaminated_and_unapproved_pairs():
     assert "contaminated" in summary[1]["exclusion_reason"]
     assert summary[2]["ranking_eligible"] is False
     assert summary[3]["ranking_eligible"] is False
+
+
+def test_rank_models_excludes_unapproved_model_registry_entries():
+    summary = [summary_row("approved"), summary_row("review")]
+
+    assert rank_models(summary, {
+        "approved": {"status": "approved"},
+        "review": {"status": "review"},
+    }) == ["approved"]
+    assert summary[1]["ranking_eligible"] is False
+    assert "model status is review" in summary[1]["exclusion_reason"]
 
 
 def test_rank_models_uses_every_preregistered_tie_break_in_order():
@@ -221,7 +291,7 @@ def test_rank_models_uses_every_preregistered_tie_break_in_order():
         summary_row("balanced", worst_condition_balanced_accuracy=0.71),
     ]
 
-    assert rank_models(summary, {}) == [
+    assert rank_models(summary, approved_registry(*(item["model"] for item in summary))) == [
         "balanced",
         "fpr",
         "fnr",
@@ -251,20 +321,109 @@ def test_summary_uses_worst_source_condition_not_cross_condition_average():
         "opaque-real/jpeg_q90"
     )
 
+
+def test_summary_retains_all_condition_and_pair_ranking_intervals():
+    rows = [
+        row("r1", 0, 0.1, base_id="pair-1"),
+        row("a1", 1, 0.9, base_id="pair-1"),
+        row("r2", 0, 0.2, base_id="pair-2"),
+        row("a2", 1, 0.8, base_id="pair-2"),
+    ]
+
+    summary = build_summary(
+        rows,
+        {"model-a": {"status": "approved"}},
+        {"sid_set": {"status": "approved"}},
+        replicates=20,
+    )
+
+    assert summary["conditions"][0]["metric_confidence_intervals"] == {
+        "error_rate": [0.0, 0.0],
+        "fpr": [0.0, 0.0],
+        "fnr": [0.0, 0.0],
+        "balanced_accuracy": [1.0, 1.0],
+        "roc_auc": [1.0, 1.0],
+    }
+    assert summary["pairs"][0]["ranking_confidence_intervals"] == {
+        "worst_condition_balanced_accuracy": [1.0, 1.0],
+        "worst_real_source_fpr": [0.0, 0.0],
+        "worst_ai_source_fnr": [0.0, 0.0],
+        "aggregate_roc_auc": [1.0, 1.0],
+    }
+
+
+def test_overlapping_ranking_intervals_make_winner_and_boundary_unresolved():
+    rows = []
+    models = ("a", "b", "c", "d")
+    for model in models:
+        rows.extend([
+            row("r", 0, 0.1, model=model, base_id="paired"),
+            row("a", 1, 0.9, model=model, base_id="paired"),
+        ])
+
+    summary = build_summary(
+        rows,
+        approved_registry(*models),
+        {"sid_set": {"status": "approved"}},
+        replicates=20,
+    )
+
+    assert summary["ranking"] == ["a", "b", "c", "d"]
+    assert summary["ranking_resolution"] == {
+        "unresolved_groups": [["a", "b", "c", "d"]],
+        "winner_supported": False,
+        "selected_winner": None,
+        "top_three_boundary_supported": False,
+        "selected_top_three": [],
+    }
+
+
+def test_ranking_resolution_has_no_winner_when_no_pair_is_eligible():
+    rows = [
+        row("r", 0, 0.1, base_id="paired"),
+        row("a", 1, 0.9, base_id="paired"),
+    ]
+
+    summary = build_summary(
+        rows,
+        {"model-a": {"status": "review"}},
+        {"sid_set": {"status": "approved"}},
+        replicates=20,
+    )
+
+    assert summary["ranking"] == []
+    assert summary["ranking_resolution"]["winner_supported"] is None
+    assert summary["ranking_resolution"]["selected_winner"] is None
+
 def _report_summary() -> dict:
     return {
         "conditions": [{
             "model": "model-a",
             "dataset": "sid_set",
             "condition": "clean",
-            "metrics": {"n": 2, "balanced_accuracy": 1.0, "roc_auc": 1.0},
-            "balanced_accuracy_ci": [1.0, 1.0],
+            "metrics": {
+                "n": 2, "error_rate": 0.0, "fpr": 0.0, "fnr": 0.0,
+                "balanced_accuracy": 1.0, "roc_auc": 1.0,
+                "confusion": {"tp": 1, "tn": 1, "fp": 0, "fn": 0},
+            },
+            "metric_confidence_intervals": {
+                name: [value, value] for name, value in {
+                    "error_rate": 0.0, "fpr": 0.0, "fnr": 0.0,
+                    "balanced_accuracy": 1.0, "roc_auc": 1.0,
+                }.items()
+            },
         }],
         "pairs": [summary_row(
             "model-a",
             throughput_rows_per_second=2.0,
             invalid_count=0,
             worst_cohorts={"real": "opaque-real", "ai": "opaque-ai"},
+            ranking_confidence_intervals={
+                "worst_condition_balanced_accuracy": [0.5, 1.0],
+                "worst_real_source_fpr": [0.0, 0.5],
+                "worst_ai_source_fnr": [0.0, 0.5],
+                "aggregate_roc_auc": [0.5, 1.0],
+            },
         )],
         "deltas": [{
             "model": "model-a",
@@ -275,6 +434,13 @@ def _report_summary() -> dict:
             "decision_flip_rate": 0.5,
         }],
         "ranking": ["model-a"],
+        "ranking_resolution": {
+            "unresolved_groups": [["model-a", "model-b"]],
+            "winner_supported": False,
+            "selected_winner": None,
+            "top_three_boundary_supported": False,
+            "selected_top_three": [],
+        },
         "limitations": ["No thresholds were tuned or calibrated."],
     }
 
@@ -291,9 +457,14 @@ def test_render_report_covers_required_sections_without_paths():
         "Top-three rule",
         "Scope limitations",
         "opaque-real",
+        "TP | TN | FP | FN",
+        "Statistically unresolved groups",
+        "Selected winner: unresolved",
+        "Selected top three: unresolved",
     ):
         assert text in markdown
     assert "image_path" not in markdown
+    assert "Top three: model-a" not in markdown
 
 
 def test_cli_reads_existing_rows_and_writes_json_csv_and_markdown(tmp_path: Path):
@@ -334,9 +505,33 @@ def test_cli_reads_existing_rows_and_writes_json_csv_and_markdown(tmp_path: Path
     summary = json.loads(json_path.read_text())
     assert summary["ranking"] == ["model-a"]
     assert len(summary["conditions"]) == 15
+    assert set(summary["conditions"][0]["metric_confidence_intervals"]) == {
+        "error_rate", "fpr", "fnr", "balanced_accuracy", "roc_auc",
+    }
+    assert set(summary["pairs"][0]["ranking_confidence_intervals"]) == {
+        "worst_condition_balanced_accuracy", "worst_real_source_fpr",
+        "worst_ai_source_fnr", "aggregate_roc_auc",
+    }
     with csv_path.open(newline="") as handle:
         csv_rows = list(csv.DictReader(handle))
-    assert len(csv_rows) == 15
+    assert {item["record_type"] for item in csv_rows} == {
+        "condition", "delta", "pair",
+    }
+    condition = next(item for item in csv_rows if item["record_type"] == "condition")
+    pair = next(item for item in csv_rows if item["record_type"] == "pair")
+    delta = next(item for item in csv_rows if item["record_type"] == "delta")
+    assert {"tp", "tn", "fp", "fn"} <= condition.keys()
+    for metric in ("error_rate", "fpr", "fnr", "balanced_accuracy", "roc_auc"):
+        assert f"{metric}_ci_low" in condition
+        assert f"{metric}_ci_high" in condition
+    assert delta["mean_score_delta"] != ""
+    assert delta["decision_flip_rate"] != ""
+    for field in (
+        "throughput_rows_per_second", "invalid_count", "ranking_eligible",
+        "exclusion_reason", "rank", "winner_supported",
+        "top_three_boundary_supported",
+    ):
+        assert field in pair
     assert "Top-three rule" in markdown_path.read_text()
 
     with pytest.raises(SystemExit):
