@@ -142,6 +142,43 @@ def test_torchscript_auxiliary_loader_avoids_pickle_loading(tmp_path: Path, monk
 
     assert torch.equal(loaded(torch.zeros(1, 1)), module(torch.zeros(1, 1)))
 
+
+def test_univfd_loader_assigns_openai_metadata_preprocess(tmp_path: Path, monkeypatch):
+    from types import ModuleType
+
+    class FakeDetector:
+        def _load_head(self, path):
+            self.loaded_head = path
+
+    class FakeClip(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.visual = SimpleNamespace(
+                output_dim=1,
+                image_size=224,
+                image_mean=(0.1, 0.2, 0.3),
+                image_std=(0.4, 0.5, 0.6),
+            )
+
+    detector_module = ModuleType("aidetector.model")
+    detector_module.AIImageDetector = FakeDetector
+    monkeypatch.setitem(sys.modules, "aidetector.model", detector_module)
+    import open_clip.model as open_clip_model
+    monkeypatch.setattr(
+        open_clip_model, "build_model_from_openai_state_dict", lambda state, cast_dtype: FakeClip()
+    )
+    monkeypatch.setattr(open_clip_model, "get_cast_dtype", lambda precision: None)
+    monkeypatch.setattr(
+        model_adapters, "load_torchscript", lambda path: SimpleNamespace(state_dict=dict)
+    )
+    entry_data = entry("aidetector_univfd", architecture="ViT-L-14")
+    entry_data["repository"] = "owner/repo"
+    entry_data["file"] = "head.pth"
+    entry_data["auxiliary"] = {"file": "auxiliary.pt"}
+
+    detector = model_adapters._load_univfd(entry_data, tmp_path, "cpu")
+
+    assert detector.preprocess(Image.new("RGB", (8, 8))).shape == (3, 224, 224)
 def test_univfd_preprocess_uses_openai_torchscript_image_metadata():
     visual = SimpleNamespace(
         image_size=224,

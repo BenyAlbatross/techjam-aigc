@@ -182,9 +182,7 @@ def _load_univfd(entry: dict, snapshot: Path, device: str):
     ).to(detector.device).float().eval()
     detector.clip_model.visual.image_mean = OPENAI_DATASET_MEAN
     detector.clip_model.visual.image_std = OPENAI_DATASET_STD
-    detector.preprocess = image_transform_v2(
-        PreprocessCfg(**detector.clip_model.visual.preprocess_cfg), is_train=False
-    )
+    detector.preprocess = univfd_preprocess(detector.clip_model.visual)
     output_dim = getattr(detector.clip_model.visual, "output_dim", 768)
     detector.head = torch.nn.Linear(int(output_dim), 1).to(detector.device)
     detector._load_head(snapshot / entry["file"])
