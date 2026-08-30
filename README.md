@@ -46,3 +46,10 @@ features. See [the experiment contract](docs/feature-robustness-lab.md), the
 The original visual EDA notebook provides interactive dataset filters, summaries, galleries, and record-level inspection.
 
 See [data/README.md](data/README.md) for the local data layout and sampling scope.
+
+## TRACE-RX-M v2 training
+
+The staged PyTorch implementation lives under `src/techjam_aigc/trace_rx_m`.
+See the [training guide](docs/trace-rx-m-training.md) for the gated DINOv3
+licence check, manifest contract, configuration assumptions, and S0--S6
+commands.

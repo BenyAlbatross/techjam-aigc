@@ -18,6 +18,12 @@ dependencies = [
 dev = [
     "pytest>=8.4",
 ]
+train = [
+    "huggingface-hub>=0.34",
+    "torch>=2.7",
+    "transformers>=4.56",
+    "wandb>=0.21",
+]
 
 [project.scripts]
 techjam-aigc = "techjam_aigc:main"
