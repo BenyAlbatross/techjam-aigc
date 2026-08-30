@@ -1,0 +1,32 @@
+[datasets.sid_set]
+status = "approved"
+repository = "saberzl/SID_Set"
+revision = "dc03ead57929879319ce30a82bfcfb8d317b10bd"
+split = "validation"
+license = "CC-BY-4.0"
+license_url = "https://huggingface.co/datasets/saberzl/SID_Set/blob/dc03ead57929879319ce30a82bfcfb8d317b10bd/README.md"
+use = "controlled_gate"
+
+[datasets.community_forensics_eval]
+status = "blocked"
+repository = "OwensLab/CommunityForensics-Eval"
+revision = "7d4a74a88d2cac93b513c0853bf92c260eaceea0"
+split = "CompEval"
+license = "CC-BY-NC-SA-4.0"
+reason = "Non-commercial restriction is not cleared for a prize competition."
+
+[datasets.ntire_2026_train]
+status = "review"
+repository = "deepfakesMSU/NTIRE-RobustAIGenDetection-train"
+revision = "700b6d08a3268b1e7a191306dec7321dd953b12f"
+split = "shard_0"
+license = "UNDECLARED"
+reason = "Dataset card has no license field or usage grant."
+
+[datasets.social_media_robustness]
+status = "blocked"
+repository = "danb21/social-media-robustness-sdxl-instantid"
+revision = "unavailable"
+split = "all"
+license = "UNDECLARED"
+reason = "User deferred this gated benchmark."

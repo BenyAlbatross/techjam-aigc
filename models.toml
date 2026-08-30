@@ -1,0 +1,147 @@
+[models.ateeqq_siglip]
+status = "approved"
+submission_status = "review"
+repository = "Ateeqq/ai-vs-human-image-detector"
+revision = "60e82406916921b823616bee33397baab38af3f0"
+file = "model.safetensors"
+sha256 = "ab0b8cad7462a047ff4e2888cb4f11b1abe568d73ce07a2649a3f1541f73675f"
+license = "Apache-2.0"
+threshold = 0.5
+parameters = 92885762
+loader = "hf_multiclass"
+label_direction = "ai=1,real=0"
+architecture = "SigLIP"
+
+[models.community_forensics]
+status = "approved"
+submission_status = "review"
+repository = "buildborderless/CommunityForensics-DeepfakeDet-ViT"
+revision = "ac6ee457bea904a373065754107451793b56db00"
+file = "model.safetensors"
+sha256 = "275ba982236ddd6afddf7131f8133e89f537574b964cf8fa5825b4956d741692"
+license = "MIT"
+threshold = 0.5
+parameters = 21811969
+loader = "hf_ai_logit"
+label_direction = "ai=1,real=0"
+architecture = "ViT"
+contaminated_datasets = ["community_forensics_eval"]
+
+[models.frontier_community_forensics]
+status = "approved"
+submission_status = "review"
+repository = "Thermostatic/community-forensics-frontier-detector-2026-08"
+revision = "16db135220b318d811b207db576d90368980b595"
+file = "model.safetensors"
+sha256 = "2f445aecc310caee9b55d3ae0aeebc404a32d72e5836e30523ce0a9a1720cd47"
+license = "MIT"
+threshold = 0.7956581000631541
+parameters = 21811969
+loader = "timm_ai_logit"
+label_direction = "ai=1,real=0"
+architecture = "ViT"
+contaminated_datasets = ["community_forensics_eval"]
+
+[models.wkaandemir_clip]
+status = "approved"
+submission_status = "review"
+repository = "wkaandemir/ai-image-detector"
+revision = "fefa013737a0c3477961d36ee8dbbdc751352366"
+file = "model.safetensors"
+sha256 = "41ce93c6c206a4f3929e19cf9b43b663c63a47422ab27a9bbb67757db5f42339"
+license = "MIT"
+threshold = 0.08
+parameters = 85846273
+loader = "timm_real_logit"
+label_direction = "real=1,ai=0"
+architecture = "CLIP"
+temperature = 0.595
+
+[models.divine_resnet50]
+status = "approved"
+submission_status = "review"
+repository = "divine2k/ai-image-detectors"
+revision = "5dd08026ea41f07ad7c37b79ffaed08282667655"
+file = "resnet50_ai_real_final.pth"
+sha256 = "3f7ac353df62b85f10b75c9a96ebe443f7ad461437fdb1bde9477e842156e6f1"
+license = "MIT"
+threshold = 0.475
+parameters = 23510081
+loader = "torchvision_real_logit"
+label_direction = "real=1,ai=0"
+architecture = "ResNet-50"
+midpoint_assumption = 0.5
+
+[models.divine_efficientnet]
+status = "approved"
+submission_status = "review"
+repository = "divine2k/ai-image-detectors"
+revision = "5dd08026ea41f07ad7c37b79ffaed08282667655"
+file = "efficientNet_BO_Final.pth"
+sha256 = "4f775d3d550550365f4481eb76f794dd850038ea375b64466435d115f37cca6c"
+license = "MIT"
+threshold = 0.475
+parameters = 4008829
+loader = "torchvision_real_logit"
+label_direction = "real=1,ai=0"
+architecture = "EfficientNet-B0"
+midpoint_assumption = 0.5
+
+[models.divine_convnext]
+status = "approved"
+submission_status = "review"
+repository = "divine2k/ai-image-detectors"
+revision = "5dd08026ea41f07ad7c37b79ffaed08282667655"
+file = "convNext_final.pth"
+sha256 = "ec5a7ae3b01eedb5da73ed94a9b6b9110f1c098fb7b50540d99a700efc758d05"
+license = "MIT"
+threshold = 0.475
+parameters = 27820897
+loader = "torchvision_real_logit"
+label_direction = "real=1,ai=0"
+architecture = "ConvNeXt"
+midpoint_assumption = 0.5
+
+[models.steganograph]
+status = "approved"
+submission_status = "review"
+repository = "delpot/steganograph-ia-detector"
+revision = "b395557b96de82e5aaf97206054af416d657655a"
+file = "model.safetensors"
+sha256 = "2f27de34eb5eebc250920e4ecbc471a7b8913d07c20b53f5d63fc0e41104a812"
+license = "MIT"
+threshold = 0.5
+parameters = 85800000
+loader = "aidetector_hf"
+label_direction = "ai=1,real=0"
+
+[models.capcheck]
+status = "approved"
+submission_status = "review"
+repository = "capcheck/ai-image-detection"
+revision = "a6661e07d38f1a097bba07ca9415538819278f09"
+file = "model.safetensors"
+sha256 = "4f5d0d4e8e6475faccca9385a2869648bb1f18d3f64c0239ad2bca909d3adc50"
+license = "Apache-2.0"
+threshold = 0.5
+parameters = 85800000
+loader = "aidetector_hf"
+label_direction = "ai=1,real=0"
+
+[models.univfd]
+status = "approved"
+submission_status = "review"
+repository = "siddharthksah/deepsafe-weights"
+revision = "71706520a9e12494b3ebc24e6091f5b22b9efcaf"
+file = "universalfakedetect/fc_weights.pth"
+sha256 = "477100745713bcc957beb2b40859536859b6483fd6301b3b9293151b194c7847"
+license = "MIT"
+threshold = 0.5
+parameters = 428000000
+loader = "aidetector_univfd"
+label_direction = "ai=1,real=0"
+architecture = "ViT-L-14"
+
+[models.univfd.auxiliary]
+file = "universalfakedetect/ViT-L-14.pt"
+sha256 = "b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836"
