@@ -52,6 +52,8 @@ def check_datasets(entries: dict, names: list[str]) -> list[str]:
             errors.append(f"{name}: missing {sorted(missing)}")
         if entry.get("status") != "approved":
             errors.append(f"{name}: status is {entry.get('status')}")
+        if name == "sid_set" and entry.get("excluded_labels") != [2]:
+            errors.append("sid_set: excluded_labels must be [2]")
     return errors
 
 

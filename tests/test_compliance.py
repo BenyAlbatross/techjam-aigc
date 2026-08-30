@@ -32,3 +32,13 @@ def test_dataset_requires_approval():
         "revision": "abc", "split": "shard_0", "license": "UNDECLARED",
     }}
     assert check_datasets(entry, ["ntire"]) == ["ntire: status is review"]
+
+
+def test_sid_set_requires_exact_label_2_exclusion():
+    entry = {"sid_set": {
+        "status": "approved", "repository": "owner/data",
+        "revision": "abc", "split": "validation", "license": "CC-BY-4.0",
+    }}
+    assert check_datasets(entry, ["sid_set"]) == [
+        "sid_set: excluded_labels must be [2]",
+    ]

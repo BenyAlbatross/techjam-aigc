@@ -6,6 +6,7 @@ split = "validation"
 license = "CC-BY-4.0"
 license_url = "https://huggingface.co/datasets/saberzl/SID_Set/blob/dc03ead57929879319ce30a82bfcfb8d317b10bd/README.md"
 use = "controlled_gate"
+excluded_labels = [2]
 
 [datasets.community_forensics_eval]
 status = "blocked"
