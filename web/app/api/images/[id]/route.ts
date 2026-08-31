@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 import { resolveImage } from "@/lib/data";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
   try {
-    const file = await resolveImage(id);
+    const condition = new URL(request.url).searchParams.get("condition") ?? "clean";
+    const file = await resolveImage(id, condition);
     if (!file) return NextResponse.json({ error: "Image not found" }, { status: 404 });
     const bytes = await fs.readFile(file);
     return new NextResponse(bytes, {

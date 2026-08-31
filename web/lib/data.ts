@@ -8,6 +8,12 @@ const PROJECT_ROOT = path.resolve(process.cwd(), "..");
 const MANIFEST = path.join(PROJECT_ROOT, "work/manifests/sid_set_1000x2_canonical.json");
 const PREDICTIONS = path.join(PROJECT_ROOT, "work/predictions");
 const LIMIT = 72;
+const CONDITION_ORDER = [
+  "clean", "jpeg_q90", "jpeg_q70", "jpeg_q50", "jpeg_q30",
+  "blur_sigma0.5", "blur_sigma1", "blur_sigma2", "resize_0.5", "resize_0.25",
+  "noise_sigma0.02", "noise_sigma0.05", "noise_sigma0.10", "color_jitter_20",
+  "center_crop_80",
+];
 
 type ManifestSample = {
   sample_id: string;
@@ -58,10 +64,10 @@ export async function loadGallery(): Promise<GalleryPayload> {
     const byImage = new Map<string, Prediction[]>();
     const conditions = new Set<string>();
 
-    await Promise.all(modelDirs.map(async (model) => {
-      const clean = path.join(PREDICTIONS, model, "sid_set", "clean.jsonl");
+    await Promise.all(modelDirs.flatMap((model) => CONDITION_ORDER.map(async (condition) => {
+      const shard = path.join(PREDICTIONS, model, "sid_set", `${condition}.jsonl`);
       try {
-        for (const row of await readJsonLines(clean)) {
+        for (const row of await readJsonLines(shard)) {
           const canonicalId = canonicalBySource.get(row.sample_id);
           if (!canonicalId) continue;
           conditions.add(row.condition);
@@ -76,9 +82,9 @@ export async function loadGallery(): Promise<GalleryPayload> {
           byImage.set(canonicalId, values);
         }
       } catch {
-        // A model can be listed while its clean shard is incomplete.
+        // A model can be listed while one condition shard is incomplete.
       }
-    }));
+    })));
 
     const images: GalleryImage[] = selected.map((sample) => ({
       id: sample.sample_id,
@@ -102,7 +108,7 @@ export async function loadGallery(): Promise<GalleryPayload> {
     return {
       images,
       models: modelDirs,
-      conditions: [...conditions],
+      conditions: CONDITION_ORDER.filter((condition) => conditions.has(condition)),
       totalImages: manifest.samples.length,
       source: "local-benchmark",
     };
@@ -111,12 +117,17 @@ export async function loadGallery(): Promise<GalleryPayload> {
   }
 }
 
-export async function resolveImage(id: string): Promise<string | null> {
-  if (!/^[a-f0-9]{64}$/.test(id)) return null;
+export async function resolveImage(id: string, condition = "clean"): Promise<string | null> {
+  if (id.length !== 64 || /[^a-f0-9]/.test(id)) return null;
+  if (!CONDITION_ORDER.includes(condition)) return null;
   const manifest = JSON.parse(await fs.readFile(MANIFEST, "utf8")) as { samples: ManifestSample[] };
   const sample = manifest.samples.find((item) => item.sample_id === id);
   if (!sample) return null;
   const root = path.resolve(PROJECT_ROOT, "work");
+  if (condition !== "clean") {
+    const derivative = path.resolve(root, "app-gallery", id, `${condition}.png`);
+    return derivative.startsWith(`${root}${path.sep}`) ? derivative : null;
+  }
   const candidate = path.resolve(root, sample.path.replace(/^data\//, "data/"));
   return candidate.startsWith(`${root}${path.sep}`) ? candidate : null;
 }

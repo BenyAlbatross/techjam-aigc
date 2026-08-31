@@ -31,35 +31,50 @@ function percentage(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function ImageCard({ image, active, model, onSelect }: {
+function conditionLabel(condition: string) {
+  const labels: Record<string, string> = { clean: "Clean", color_jitter_20: "Color jitter · 20%", center_crop_80: "Center crop · 80%" };
+  if (labels[condition]) return labels[condition];
+  if (condition.startsWith("jpeg_q")) return `JPEG · q${condition.slice(6)}`;
+  if (condition.startsWith("blur_sigma")) return `Blur · σ${condition.slice(10)}`;
+  if (condition.startsWith("resize_")) return `Resize · ${condition.slice(7)}×`;
+  if (condition.startsWith("noise_sigma")) return `Noise · σ${condition.slice(11)}`;
+  return condition.replaceAll("_", " ");
+}
+
+function conditionedUrl(image: GalleryImage, condition: string) {
+  return condition === "clean" ? image.imageUrl : `${image.imageUrl}?condition=${encodeURIComponent(condition)}`;
+}
+
+function ImageCard({ image, active, model, condition, onSelect }: {
   image: GalleryImage;
   active: boolean;
   model: string;
+  condition: string;
   onSelect: () => void;
 }) {
-  const prediction = image.predictions.find((item) => item.model === model) ?? image.predictions[0];
+  const prediction = image.predictions.find((item) => item.model === model && item.condition === condition);
   const incorrect = prediction ? prediction.decision !== image.truth : false;
   return (
     <button className={`image-card ${active ? "active" : ""}`} onClick={onSelect} aria-pressed={active}>
       <span className="image-wrap">
-        <Image src={image.imageUrl} alt={`${truthLabels[image.truth]} sample ${shortId(image.id)}`} fill sizes="(max-width: 760px) 46vw, 220px" />
+        <Image src={conditionedUrl(image, condition)} alt={`${conditionLabel(condition)} ${truthLabels[image.truth]} sample ${shortId(image.id)}`} fill sizes="(max-width: 760px) 46vw, 220px" />
         <span className={`truth-badge ${image.truth}`}>{truthLabels[image.truth]}</span>
         {incorrect ? <span className="error-badge">Mismatch</span> : null}
       </span>
       <span className="card-copy">
         <span className="card-title"><span>{image.sourceFamily}</span><span className="mono">{prediction ? percentage(prediction.probabilityAi) : "—"}</span></span>
-        <span className="card-meta"><span>Clean source</span><span>{image.format ?? "Image"}</span></span>
+        <span className="card-meta"><span>{conditionLabel(condition)}</span><span>{image.format ?? "Image"}</span></span>
       </span>
     </button>
   );
 }
 
-function Lineage({ image }: { image: GalleryImage }) {
+function Lineage({ image, condition }: { image: GalleryImage; condition: string }) {
   return (
     <section className="lineage-section" aria-labelledby="lineage-title">
       <div className="section-heading">
         <div><span className="eyebrow">Provenance</span><h2 id="lineage-title">Modification chain</h2></div>
-        <span className="quiet-badge">1 known step</span>
+        <span className="quiet-badge">{condition === "clean" ? "1 known step" : "2 known steps"}</span>
       </div>
       <div className="lineage-track">
         <div className="lineage-node muted-node">
@@ -67,11 +82,11 @@ function Lineage({ image }: { image: GalleryImage }) {
           <span><strong>Dataset source</strong><small className="mono">{shortId(image.baseId)}</small></span>
         </div>
         <ArrowRight className="lineage-arrow" size={22} />
-        <div className="operation-node"><CircleDot size={14} /><span>Canonicalize</span><small>RGB · 512² · Lanczos</small></div>
+        <div className="operation-node"><CircleDot size={14} /><span>{condition === "clean" ? "Canonicalize" : conditionLabel(condition)}</span><small>{condition === "clean" ? "RGB · 512² · Lanczos" : "Deterministic benchmark transform"}</small></div>
         <ArrowRight className="lineage-arrow" size={22} />
         <div className="lineage-node current-node">
-          <Image src={image.imageUrl} alt="Selected canonical derivative" width={54} height={54} />
-          <span><strong>Selected result</strong><small>Clean benchmark image</small></span>
+          <Image src={conditionedUrl(image, condition)} alt="Selected benchmark derivative" width={54} height={54} />
+          <span><strong>Selected result</strong><small>{conditionLabel(condition)}</small></span>
         </div>
       </div>
       {image.truth === "ai" ? (
@@ -81,9 +96,10 @@ function Lineage({ image }: { image: GalleryImage }) {
   );
 }
 
-function Metadata({ image }: { image: GalleryImage }) {
+function Metadata({ image, condition }: { image: GalleryImage; condition: string }) {
   const rows = [
     ["Truth", truthLabels[image.truth]],
+    ["Transform", conditionLabel(condition)],
     ["Source family", image.sourceFamily],
     ["Generator", image.generatorFamily],
     ["Geometry", `${image.width ?? "?"} × ${image.height ?? "?"}`],
@@ -174,6 +190,7 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
   const [query, setQuery] = useState("");
   const [truth, setTruth] = useState<Truth | "all">("all");
   const [model, setModel] = useState(initialData.models.includes("ateeqq_siglip") ? "ateeqq_siglip" : initialData.models[0] ?? "");
+  const [condition, setCondition] = useState("clean");
   const deferredQuery = useDeferredValue(query.toLowerCase());
   const filtered = useMemo(() => initialData.images.filter((image) => {
     const matchesTruth = truth === "all" || image.truth === truth;
@@ -186,7 +203,10 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
     return <main className="loading-shell"><ImagePlus size={28} /><p>No local gallery manifest found.</p><code>work/manifests/sid_set_1000x2_canonical.json</code></main>;
   }
 
-  const selectedPrediction = selected.predictions.find((item) => item.model === model) ?? selected.predictions[0];
+  const selectedPrediction = selected.predictions.find((item) => item.model === model && item.condition === condition);
+  const cleanPrediction = selected.predictions.find((item) => item.model === model && item.condition === "clean");
+  const scoreDelta = selectedPrediction && cleanPrediction ? selectedPrediction.probabilityAi - cleanPrediction.probabilityAi : null;
+  const conditionScores = selected.predictions.filter((item) => item.condition === condition);
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -207,24 +227,24 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
           <div className="segmented" aria-label="Filter by truth">
             {(["all", "real", "ai"] as const).map((value) => <button key={value} className={truth === value ? "active" : ""} onClick={() => setTruth(value)}>{value === "all" ? "All" : truthLabels[value]}</button>)}
           </div>
-          <label className="model-select">View score from<select value={model} onChange={(event) => setModel(event.target.value)}>{initialData.models.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label className="model-select">Condition<select value={condition} onChange={(event) => setCondition(event.target.value)}>{initialData.conditions.map((item) => <option key={item} value={item}>{conditionLabel(item)}</option>)}</select></label><label className="model-select">Model<select value={model} onChange={(event) => setModel(event.target.value)}>{initialData.models.map((item) => <option key={item}>{item}</option>)}</select></label>
         </div>
 
         <div className="content-grid">
           <section className="gallery-pane" aria-label="Image gallery">
-            <div className="pane-heading"><span><strong>{filtered.length}</strong> loaded samples</span><span>Showing canonical clean panel</span></div>
+            <div className="pane-heading"><span><strong>{filtered.length}</strong> loaded samples</span><span>Showing {conditionLabel(condition)} panel</span></div>
             <div className="gallery-grid">
-              {filtered.map((image) => <ImageCard key={image.id} image={image} active={image.id === selected.id} model={model} onSelect={() => setSelectedId(image.id)} />)}
+              {filtered.map((image) => <ImageCard key={image.id} image={image} active={image.id === selected.id} model={model} condition={condition} onSelect={() => setSelectedId(image.id)} />)}
             </div>
           </section>
 
           <section className="detail-pane">
             <div className="hero-preview">
-              <Image src={selected.imageUrl} alt={`Selected ${truthLabels[selected.truth]} image`} fill sizes="(max-width: 1100px) 90vw, 680px" priority />
+              <Image src={conditionedUrl(selected, condition)} alt={`Selected ${conditionLabel(condition)} ${truthLabels[selected.truth]} image`} fill sizes="(max-width: 1100px) 90vw, 680px" priority />
               <div className="hero-caption"><span className={`truth-badge ${selected.truth}`}>{truthLabels[selected.truth]}</span><span className="mono">{shortId(selected.id)}</span></div>
             </div>
-            <Lineage image={selected} />
-            <Metadata image={selected} />
+            <Lineage image={selected} condition={condition} />
+            <Metadata image={selected} condition={condition} />
           </section>
         </div>
       </section>
@@ -239,7 +259,7 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
             <div className="verdict"><span>Verdict</span><strong>{selectedPrediction.decision === "ai" ? "AI-generated" : "Authentic"}</strong><small>{selectedPrediction.model.replaceAll("_", " ")}</small></div>
           </div>
         ) : <div className="empty-score">No prediction shard for this image.</div>}
-        <div className="all-scores"><div className="subheading"><span>All model outputs</span><small>{selected.predictions.length} available</small></div>{selected.predictions.map((prediction) => <ScoreRow key={prediction.model} prediction={prediction} featured={prediction.model === model} />)}</div>
+        {scoreDelta !== null && condition !== "clean" ? <div className="delta-callout"><span>Clean to transformed</span><strong>{scoreDelta >= 0 ? "+" : ""}{percentage(scoreDelta)}</strong><small>{selectedPrediction?.decision !== cleanPrediction?.decision ? "Decision flipped" : "Decision stable"}</small></div> : null}\n        <div className="all-scores"><div className="subheading"><span>All model outputs</span><small>{conditionScores.length} available</small></div>{conditionScores.map((prediction) => <ScoreRow key={prediction.model} prediction={prediction} featured={prediction.model === model} />)}</div>
         <TestPanel models={initialData.models} />
       </aside>
     </main>

@@ -29,6 +29,7 @@ web/node_modules/
 web/.next/
 web/*.tsbuildinfo
 work/ad-hoc/
+work/app-gallery/
 work/data/
 work/manifests/
 work/predictions/
