@@ -6,6 +6,10 @@ __pycache__/
 data/*
 !data/README.md
 
+# Training outputs and local experiment state are published remotely, not committed.
+artifacts/
+wandb/
+
 # Marimo runtime state and caches.
 .marimo/
 __marimo__/

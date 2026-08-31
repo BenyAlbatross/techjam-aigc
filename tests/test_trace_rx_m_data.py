@@ -194,3 +194,23 @@ def test_batch_sampler_has_exact_mix_pairs_and_generator_rotation() -> None:
         assert rows.loc[rows["sample_kind"].eq("native_aigc"), "generator_family"].nunique() == 3
     sampler.set_epoch(1)
     assert first_epoch != list(sampler)
+
+
+def test_batch_sampler_supports_dataset_without_dda_rows() -> None:
+    frame = _supervised_frame()
+    frame = frame[frame["sample_kind"].ne("dda")]
+    paired_sources = frame["parent_id"].str.startswith("pair-real-")
+    frame = validate_training_manifest(frame[~paired_sources].reset_index(drop=True))
+    sampler = BalancedTraceBatchSampler(
+        frame,
+        batch_size=10,
+        seed=4,
+        batches_per_epoch=2,
+    )
+
+    for batch in sampler:
+        rows = frame.iloc[batch]
+        assert rows["sample_kind"].value_counts().to_dict() == {
+            "authentic": 5,
+            "native_aigc": 5,
+        }

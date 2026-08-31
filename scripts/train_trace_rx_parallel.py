@@ -147,8 +147,7 @@ def run_protocol(args: argparse.Namespace, config: TraceRXParallelConfig) -> Non
         "resampler_parity": "training and evaluation use feature_lab.transforms",
         "lowest_resolution_behavior": (
             f"endpoints are resized to {config.backbone.image_size} square; "
-            "DINOv3-L/16 yields "
-            f"{(config.backbone.image_size // 16) ** 2} patch tokens"
+            "the pinned backbone's patch size determines the token grid"
         ),
         "warning": "Fewer than eight generator families" if generated.nunique() < 8 else None,
     }
@@ -189,7 +188,7 @@ def run_cache(args: argparse.Namespace, config: TraceRXParallelConfig) -> None:
 
 def run_capacity(args: argparse.Namespace, config: TraceRXParallelConfig) -> None:
     torch = _torch()
-    from techjam_aigc.trace_rx_m.integrations import WandbTracker
+    from techjam_aigc.trace_rx_parallel.integrations import WandbTracker
     from techjam_aigc.trace_rx_m.training import (
         evaluate_memory_coverage, file_sha256, fit_authentic_memory,
         load_feature_cache, prototype_usage_histogram, save_memory_artifact,
@@ -312,21 +311,28 @@ def run_capacity(args: argparse.Namespace, config: TraceRXParallelConfig) -> Non
     tracker.finish()
 
 
-def _evaluate_auc(model, loader, device) -> float:
+def _evaluate_aucs(model, loader, device) -> dict[str, float]:
     torch = _torch()
     from sklearn.metrics import roc_auc_score
-    logits, labels = [], []
+    fused_logits, global_logits, memory_logits, labels = [], [], [], []
     model.eval()
     with torch.inference_mode():
         for batch in loader:
-            logits.extend(model(torch.as_tensor(batch["pixel_values"], device=device)).logit.cpu().tolist())
+            output = model(torch.as_tensor(batch["pixel_values"], device=device))
+            fused_logits.extend(output.logit.cpu().tolist())
+            global_logits.extend(output.global_logit.cpu().tolist())
+            memory_logits.extend(output.memory_logit.cpu().tolist())
             labels.extend(torch.as_tensor(batch["target"]).tolist())
     if len(set(labels)) != 2:
-        raise ValueError("Held-out generator validation needs both authentic and AIGC rows.")
-    return float(roc_auc_score(labels, logits))
+        raise ValueError("Development evaluation needs both authentic and AIGC rows.")
+    return {
+        "fused": float(roc_auc_score(labels, fused_logits)),
+        "global": float(roc_auc_score(labels, global_logits)),
+        "memory": float(roc_auc_score(labels, memory_logits)),
+    }
 
 
-def _epoch_log_values(metrics, *, variant: str, optimizer) -> dict[str, float]:
+def _epoch_log_values(metrics, *, variant: str, optimizer, model) -> dict[str, float]:
     values = {
         f"{variant}/train/{name}": float(getattr(metrics, name))
         for name in (
@@ -346,6 +352,11 @@ def _epoch_log_values(metrics, *, variant: str, optimizer) -> dict[str, float]:
         f"{variant}/learning_rate/{group.get('name', index)}": float(group["lr"])
         for index, group in enumerate(optimizer.param_groups)
     })
+    values.update({
+        f"{variant}/fusion/global_weight": float(model.fusion.weight[0, 0].detach()),
+        f"{variant}/fusion/memory_weight": float(model.fusion.weight[0, 1].detach()),
+        f"{variant}/fusion/bias": float(model.fusion.bias[0].detach()),
+    })
     return values
 
 
@@ -353,6 +364,7 @@ def _train_detection_variant(
     *,
     model,
     loader,
+    selection_loader,
     dataset,
     sampler,
     config: TraceRXParallelConfig,
@@ -379,7 +391,7 @@ def _train_detection_variant(
         warmup_fraction=config.optimizer.warmup_fraction,
     )
     history = []
-    best_total = float("inf")
+    best_selection_auc = float("-inf")
     best_epoch = 0
     checkpoint_directory = output / "checkpoints" / variant
     best_path = checkpoint_directory / "best_detector.pt"
@@ -405,19 +417,33 @@ def _train_detection_variant(
                 f"S4 {variant} gate failed: worst authentic-subtype loss rose while mean fell."
             )
         history.append(metrics)
-        tracker.log(
-            _epoch_log_values(metrics, variant=variant, optimizer=optimizer),
-            step=step_offset + epoch,
+        selection_aucs = _evaluate_aucs(model, selection_loader, device)
+        log_values = _epoch_log_values(
+            metrics,
+            variant=variant,
+            optimizer=optimizer,
+            model=model,
         )
+        log_values.update(
+            {
+                f"{variant}/model_selection/{branch}_roc_auc": value
+                for branch, value in selection_aucs.items()
+            }
+        )
+        tracker.log(log_values, step=step_offset + epoch)
         selection = {
-            "name": "training_total_loss",
-            "mode": "min",
-            "value": metrics.total,
+            "name": "development_fused_roc_auc",
+            "mode": "max",
+            "value": selection_aucs["fused"],
             "epoch": epoch,
-            "reason": "held-out generator family is reserved for the one-time S4 validity gate",
+            "branch_roc_auc": selection_aucs,
+            "reason": (
+                "non-held-out development groups select epochs; the configured "
+                "generator family remains reserved for the one-time S4 validity gate"
+            ),
         }
-        if metrics.total < best_total:
-            best_total = metrics.total
+        if selection_aucs["fused"] > best_selection_auc:
+            best_selection_auc = selection_aucs["fused"]
             best_epoch = epoch
             save_detector_checkpoint(
                 model,
@@ -429,6 +455,7 @@ def _train_detection_variant(
                 epoch=epoch,
                 selection_metric=selection,
             )
+            publisher.upload_best(best_path, epoch=epoch, variant=variant)
         if epoch % config.hub.checkpoint_every_epochs == 0:
             periodic_path = checkpoint_directory / f"epoch-{epoch:04d}.pt"
             save_detector_checkpoint(
@@ -460,13 +487,16 @@ def _train_detection_variant(
             "epoch": config.optimizer.detection_epochs,
         },
     )
-    return best_path, final_path, best_epoch, best_total
+    return best_path, final_path, best_epoch, best_selection_auc
 
 
 def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> None:
     torch = _torch()
     from techjam_aigc.trace_rx_m.backbone import DinoV3PatchEncoder
-    from techjam_aigc.trace_rx_m.integrations import HubCheckpointPublisher, WandbTracker
+    from techjam_aigc.trace_rx_parallel.integrations import (
+        HubCheckpointPublisher,
+        WandbTracker,
+    )
     from techjam_aigc.trace_rx_parallel.model import TraceRXParallel
     from techjam_aigc.trace_rx_m.training import (
         file_sha256, load_memory_artifact, seed_everything,
@@ -483,10 +513,39 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
     heldout_in_train = train["generator_family"].astype(str).str.casefold().eq(family.casefold())
     train = add_balance_weights(train[~heldout_in_train].reset_index(drop=True))
     development = manifest[manifest["role"].eq("development")].copy()
-    keep = development["target"].eq(0) | development["generator_family"].astype(str).str.casefold().eq(family.casefold())
-    development = development[keep].reset_index(drop=True)
+    if "development_purpose" in development:
+        selection_development = development[
+            development["development_purpose"].eq("model_selection")
+        ].reset_index(drop=True)
+        gate_development = development[
+            development["development_purpose"].eq("generator_gate")
+        ].reset_index(drop=True)
+    else:
+        heldout_dev = development["generator_family"].astype(str).str.casefold().eq(
+            family.casefold()
+        )
+        selection_development = development[
+            development["target"].eq(0) | (~heldout_dev)
+        ].reset_index(drop=True)
+        gate_development = development[
+            development["target"].eq(0) | heldout_dev
+        ].reset_index(drop=True)
     if heldout_in_train.sum() == 0:
         raise ValueError("The configured held-out generator family is absent from supervised rows.")
+    gate_positive_families = set(
+        gate_development.loc[
+            gate_development["target"].eq(1), "generator_family"
+        ].astype(str).str.casefold()
+    )
+    if gate_positive_families != {family.casefold()}:
+        raise ValueError(
+            "Generator-gate positives must contain exactly the held-out family; "
+            f"found {sorted(gate_positive_families)}."
+        )
+    if set(selection_development["target"]) != {0, 1} or set(
+        gate_development["target"]
+    ) != {0, 1}:
+        raise ValueError("Both development purposes require authentic and AIGC rows.")
 
     device = torch.device(args.device)
     memory_path = args.output / "s3_memory.pt"
@@ -502,7 +561,18 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
     model = TraceRXParallel(encoder, memory, config.head)
     model.configure_for_detection()
     loader, dataset, sampler = _loader(train, args.repo_root, config, augment=True)
-    validation_loader, _, _ = _loader(development, args.repo_root, config, augment=False)
+    selection_loader, _, _ = _loader(
+        selection_development,
+        args.repo_root,
+        config,
+        augment=False,
+    )
+    gate_loader, _, _ = _loader(
+        gate_development,
+        args.repo_root,
+        config,
+        augment=False,
+    )
     tracker = WandbTracker(
         config.tracking,
         stage="s4-detection",
@@ -511,11 +581,31 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
     exit_code = 1
     try:
         tracker.watch(model)
+        summary_path = manifest_path.with_suffix(".summary.json")
+        dataset_paths = [manifest_path]
+        if summary_path.is_file():
+            dataset_paths.append(summary_path)
+        dataset_metadata = {
+            "dataset_id": str(manifest.get("dataset_id", pd.Series(["unknown"])).iloc[0]),
+            "dataset_revision": str(
+                manifest.get("dataset_revision", pd.Series(["unknown"])).iloc[0]
+            ),
+            "manifest_sha256": manifest_hash,
+            "training_rows": len(train),
+            "model_selection_rows": len(selection_development),
+            "generator_gate_rows": len(gate_development),
+            "held_out_generator_family": family,
+        }
+        tracker.log_dataset_artifact(dataset_paths, metadata=dataset_metadata)
+        tracker.summarize({
+            f"dataset/{key}": value for key, value in dataset_metadata.items()
+        })
         publisher = HubCheckpointPublisher(config.hub, run_id=tracker.run_id)
-        best_variant_path, final_variant_path, best_epoch, best_total = (
+        best_variant_path, final_variant_path, best_epoch, best_selection_auc = (
             _train_detection_variant(
                 model=model,
                 loader=loader,
+                selection_loader=selection_loader,
                 dataset=dataset,
                 sampler=sampler,
                 config=config,
@@ -529,13 +619,19 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
                 step_offset=0,
             )
         )
-        auc = _evaluate_auc(model, validation_loader, device)
+        gate_aucs = _evaluate_aucs(model, gate_loader, device)
+        auc = gate_aucs["fused"]
+        lora_gate_aucs = gate_aucs
         tracker.log(
-            {"lora/held_out_generator/roc_auc": auc},
+            {
+                f"lora/held_out_generator/{branch}_roc_auc": value
+                for branch, value in gate_aucs.items()
+            },
             step=config.optimizer.detection_epochs,
         )
         fallback_used = False
         selected_variant = "lora"
+        frozen_gate_aucs = None
         if auc < config.data.held_out_min_roc_auc:
             # Pre-declared failure path: discard LoRA and retrain only the heads
             # against the same memory. Never retune adapters on this held-out result.
@@ -547,10 +643,11 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             model = TraceRXParallel(DinoV3PatchEncoder(frozen_config), memory, config.head)
             model.configure_for_detection(frozen_encoder_fallback=True)
             tracker.watch(model)
-            best_variant_path, final_variant_path, best_epoch, best_total = (
+            best_variant_path, final_variant_path, best_epoch, best_selection_auc = (
                 _train_detection_variant(
                     model=model,
                     loader=loader,
+                    selection_loader=selection_loader,
                     dataset=dataset,
                     sampler=sampler,
                     config=config,
@@ -564,9 +661,14 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
                     step_offset=config.optimizer.detection_epochs,
                 )
             )
-            auc = _evaluate_auc(model, validation_loader, device)
+            gate_aucs = _evaluate_aucs(model, gate_loader, device)
+            frozen_gate_aucs = gate_aucs
+            auc = gate_aucs["fused"]
             tracker.log(
-                {"frozen/held_out_generator/roc_auc": auc},
+                {
+                    f"frozen/held_out_generator/{branch}_roc_auc": value
+                    for branch, value in gate_aucs.items()
+                },
                 step=2 * config.optimizer.detection_epochs,
             )
 
@@ -576,23 +678,28 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
         shipping_path = args.output / "s4_detector.pt"
         shutil.copy2(best_variant_path, best_path)
         shutil.copy2(final_variant_path, final_path)
-        # The shipping detector remains the final epoch, preserving the proposal's
-        # one-time validity check semantics. The independently named best checkpoint
-        # is selected only by training loss and is never selected on the held-out family.
+        # The shipping detector remains the final epoch. The independently named
+        # best checkpoint is selected on non-held-out dev groups and never on the
+        # one-time generator gate.
         shutil.copy2(final_path, shipping_path)
         validity_path = args.output / "s4_validity.json"
         validity = {
             "held_out_generator_family": family,
             "roc_auc": auc,
+            "held_out_branch_roc_auc": gate_aucs,
+            "variant_held_out_branch_roc_auc": {
+                "lora": lora_gate_aucs,
+                "frozen": frozen_gate_aucs,
+            },
             "threshold": config.data.held_out_min_roc_auc,
             "frozen_encoder_fallback": fallback_used,
             "selected_variant": selected_variant,
             "best_checkpoint": {
                 "path": best_path.name,
                 "epoch": best_epoch,
-                "metric": "training_total_loss",
-                "mode": "min",
-                "value": best_total,
+                "metric": "development_fused_roc_auc",
+                "mode": "max",
+                "value": best_selection_auc,
                 "held_out_family_used_for_selection": False,
             },
             "final_checkpoint": final_path.name,
@@ -601,10 +708,18 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             "huggingface_repo_id": config.hub.repo_id,
         }
         validity_path.write_text(json.dumps(validity, indent=2) + "\n")
+        final_metadata_paths = [
+            memory_path,
+            args.config,
+            validity_path,
+            manifest_path,
+        ]
+        if summary_path.is_file():
+            final_metadata_paths.append(summary_path)
         hub_commit_url = publisher.upload_final_bundle(
             best_path=best_path,
             final_path=final_path,
-            metadata_paths=(memory_path, args.config, validity_path),
+            metadata_paths=final_metadata_paths,
         )
         validity["huggingface_final_commit"] = hub_commit_url
         validity_path.write_text(json.dumps(validity, indent=2) + "\n")
@@ -614,7 +729,11 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             "frozen_encoder_fallback": fallback_used,
             "selected_variant": selected_variant,
             "best/epoch": best_epoch,
-            "best/training_total_loss": best_total,
+            "best/development_fused_roc_auc": best_selection_auc,
+            **{
+                f"held_out_generator/{branch}_roc_auc": value
+                for branch, value in gate_aucs.items()
+            },
             "huggingface/final_commit": hub_commit_url,
         })
         tracker.log_model_artifact(
@@ -622,6 +741,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             metadata={
                 "selected_variant": selected_variant,
                 "best_epoch": best_epoch,
+                "best_development_fused_roc_auc": best_selection_auc,
                 "held_out_generator_roc_auc": auc,
                 "source_memory_sha256": memory_hash,
                 "manifest_sha256": manifest_hash,

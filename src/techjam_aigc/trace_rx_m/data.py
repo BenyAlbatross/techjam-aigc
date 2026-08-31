@@ -330,7 +330,10 @@ class BalancedTraceBatchSampler:
             raise ValueError("dda_positive_share must lie in the proposal's 10--20% range.")
         self.batch_size = int(batch_size)
         self.real_count = batch_size // 2
-        self.dda_count = max(1, round((batch_size // 2) * dda_positive_share))
+        has_dda = self.frame["sample_kind"].eq("dda").any()
+        self.dda_count = (
+            max(1, round((batch_size // 2) * dda_positive_share)) if has_dda else 0
+        )
         self.native_count = batch_size // 2 - self.dda_count
         self.dda_positive_share = dda_positive_share
         self.seed = int(seed)
@@ -340,7 +343,10 @@ class BalancedTraceBatchSampler:
             raise ValueError("batches_per_epoch must be positive.")
 
         kinds = self.frame["sample_kind"]
-        for kind in SAMPLE_KINDS:
+        required_kinds = {"authentic", "native_aigc"}
+        if has_dda:
+            required_kinds.add("dda")
+        for kind in required_kinds:
             if not kinds.eq(kind).any():
                 raise ValueError(f"Supervised sampling requires {kind!r} rows.")
         self._parent_to_index = {
@@ -360,11 +366,12 @@ class BalancedTraceBatchSampler:
         rng = random.Random(f"{self.seed}:{self.epoch}")
         real = self._cycle("authentic", "source_dataset", rng)
         native = self._cycle("native_aigc", "generator_family", rng)
-        dda = self._cycle("dda", "generator_family", rng)
+        dda = self._cycle("dda", "generator_family", rng) if self.dda_count else None
         for _ in range(self.batches_per_epoch):
             batch: list[int] = []
             used: set[int] = set()
             for _ in range(self.dda_count):
+                assert dda is not None
                 dda_index = dda.take(excluding=used)
                 source_id = str(self.frame.iloc[dda_index]["source_parent_id"])
                 source_index = self._parent_to_index[source_id]
@@ -414,4 +421,3 @@ def add_balance_weights(frame: pd.DataFrame) -> pd.DataFrame:
     weights = 1.0 / (group_counts * groups_per_class)
     result["balance_weight"] = weights / weights.mean()
     return result
-

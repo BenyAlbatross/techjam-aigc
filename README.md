@@ -53,6 +53,7 @@ The new detector lives under `src/techjam_aigc/trace_rx_parallel`: a global
 classifier and authentic-memory classifier consume the shared encoder in
 parallel, followed by learned late fusion. See the
 [parallel training guide](docs/trace-rx-parallel-training.md) for the
-architecture, gated DINOv3 licence check, manifest contract, configuration,
-and S0--S6 commands. The existing `trace_rx_m` package supplies the shared,
+architecture, pinned public DINOv2 backbone, manifest contract, TechJam 2026
+dataset preparation, W&B/Hugging Face publication, and S0--S6 commands. The
+existing `trace_rx_m` package supplies the shared,
 audited data protocol and memory implementation.
