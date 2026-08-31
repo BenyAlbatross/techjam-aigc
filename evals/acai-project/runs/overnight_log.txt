@@ -1,0 +1,66 @@
+[overnight] bank ready: torch.Size([52500, 1536])
+[overnight] TASK 1: leave-one-generator-out on WildFake
+[overnight]   adm        AUROC 0.8813 +/- 0.0009  clean 0.9192  margin -0.0808
+[overnight]   ddim       AUROC 0.9807 +/- 0.0002  clean 0.9916  margin -0.0084
+[overnight]   ddpm       AUROC 0.8796 +/- 0.0005  clean 0.9021  margin -0.0979
+[overnight]   gan_based  AUROC 0.8710 +/- 0.0005  clean 0.8887  margin -0.0046
+[overnight]   imagen     AUROC 0.8801 +/- 0.0008  clean 0.9584  margin -0.0416
+[overnight]   MEAN 0.8986  WORST gan_based 0.8710
+[overnight] TASK 2: external evaluation on techjam-aigc/wildfake-eval-subset
+[overnight]   laion_matched: 7652 rows, leakage check {'config': 'laion_matched', 'checked': 3000, 'sha256_collisions': 0, 'clean': True}
+[overnight] !! task2_external FAILED: AttributeError("'Pandas' object has no attribute 'label'")
+[overnight] TASK 1b: LOGO models scored on external `laion_matched`
+[overnight] !! task1b_logo_external FAILED: AttributeError("'Pandas' object has no attribute 'label'")
+[overnight] TASK 3a: fusion ablation (pure DINOv3 vs H0/H1/H3), judged on held-out generators
+[overnight]   none  mean 0.8990  worst gan_based 0.8712
+[overnight]   h0    mean 0.9023  worst ddpm 0.8532
+[overnight]   h1    mean 0.9015  worst ddpm 0.8506
+[overnight]   h3    mean 0.9010  worst ddpm 0.8556
+[overnight]   DeLong h0 vs none: diff +0.0032 p=1.14e-08
+[overnight]   DeLong h1 vs none: diff +0.0024 p=0.000292
+[overnight]   DeLong h3 vs none: diff +0.0022 p=0.000122
+[overnight] TASK 3b: composition study (40 mixtures + references)
+[overnight]   all_clean        mean 0.9142  worst 0.8701
+[overnight]   all_transformed  mean 0.9103  worst 0.8639
+[overnight]   uniform_50_50    mean 0.9123  worst 0.8677
+[overnight]   dirichlet_0      mean 0.9145  worst 0.8657
+[overnight]   dirichlet_1      mean 0.9124  worst 0.8653
+[overnight]   dirichlet_2      mean 0.9149  worst 0.8657
+[overnight]   dirichlet_3      mean 0.9107  worst 0.8709
+[overnight]   dirichlet_4      mean 0.9071  worst 0.8696
+[overnight]   dirichlet_5      mean 0.9127  worst 0.8658
+[overnight]   dirichlet_6      mean 0.9079  worst 0.8703
+[overnight]   dirichlet_7      mean 0.9050  worst 0.8697
+[overnight]   dirichlet_8      mean 0.9132  worst 0.8679
+[overnight]   dirichlet_9      mean 0.9098  worst 0.8719
+[overnight]   dirichlet_10     mean 0.9104  worst 0.8710
+[overnight]   dirichlet_11     mean 0.9104  worst 0.8671
+[overnight]   dirichlet_12     mean 0.9154  worst 0.8688
+[overnight]   dirichlet_13     mean 0.9125  worst 0.8672
+[overnight]   dirichlet_14     mean 0.9130  worst 0.8699
+[overnight]   dirichlet_15     mean 0.9115  worst 0.8671
+[overnight]   dirichlet_16     mean 0.9137  worst 0.8650
+[overnight]   dirichlet_17     mean 0.9109  worst 0.8664
+[overnight]   dirichlet_18     mean 0.9147  worst 0.8676
+[overnight]   dirichlet_19     mean 0.9064  worst 0.8678
+[overnight]   dirichlet_20     mean 0.9137  worst 0.8700
+[overnight]   dirichlet_21     mean 0.9117  worst 0.8669
+[overnight]   dirichlet_22     mean 0.9137  worst 0.8689
+[overnight]   dirichlet_23     mean 0.9153  worst 0.8704
+[overnight]   dirichlet_24     mean 0.9118  worst 0.8690
+[overnight]   dirichlet_25     mean 0.9120  worst 0.8696
+[overnight]   dirichlet_26     mean 0.9089  worst 0.8623
+[overnight]   dirichlet_27     mean 0.9149  worst 0.8692
+[overnight]   dirichlet_28     mean 0.9132  worst 0.8676
+[overnight]   dirichlet_29     mean 0.9081  worst 0.8696
+[overnight]   dirichlet_30     mean 0.9127  worst 0.8690
+[overnight]   dirichlet_31     mean 0.9141  worst 0.8687
+[overnight]   dirichlet_32     mean 0.9109  worst 0.8664
+[overnight]   dirichlet_33     mean 0.9112  worst 0.8713
+[overnight]   dirichlet_34     mean 0.9126  worst 0.8687
+[overnight]   dirichlet_35     mean 0.9141  worst 0.8670
+[overnight]   dirichlet_36     mean 0.9118  worst 0.8681
+[overnight]   dirichlet_37     mean 0.9116  worst 0.8659
+[overnight]   dirichlet_38     mean 0.9123  worst 0.8670
+[overnight]   dirichlet_39     mean 0.9147  worst 0.8670
+[overnight] ALL DONE. completed=['task1_logo', 'task3a_fusion', 'task3b_composition'] failed=['task1b_logo_external', 'task2_external']

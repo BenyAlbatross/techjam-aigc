@@ -1,0 +1,13 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Vendored upstream detector source (external repo clones, pinned in src/acai/tracerx/model.py)
+vendor/

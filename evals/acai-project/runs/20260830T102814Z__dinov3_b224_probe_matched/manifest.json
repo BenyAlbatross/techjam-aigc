@@ -1,0 +1,9 @@
+{
+  "mixture": null,
+  "n_eval": 45000,
+  "n_train": 7000,
+  "tier": "T1",
+  "train_chains": {
+    "clean": 7000
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "overall": {
+    "auroc": 0.9123947167078189
+  },
+  "tasks_completed": [
+    "task1_logo"
+  ],
+  "tasks_failed": []
+}

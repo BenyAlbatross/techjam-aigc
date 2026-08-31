@@ -1,0 +1,16 @@
+{
+  "eval_source": null,
+  "mixture": null,
+  "n_eval": 45000,
+  "n_train": 7000,
+  "tier": "T1",
+  "train_chains": {
+    "clean": 7000
+  },
+  "train_exclude_generator": null,
+  "train_source": null,
+  "train_sources": {
+    "sid_set": 3500,
+    "wildfake": 3500
+  }
+}

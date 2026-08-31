@@ -1,0 +1,17 @@
+[overnight] bank ready: torch.Size([52500, 1536])
+[overnight] TASK 2: external evaluation on techjam-aigc/wildfake-eval-subset
+[overnight]   laion_matched: 7652 rows, leakage check {'config': 'laion_matched', 'checked': 3000, 'sha256_collisions': 0, 'clean': True}
+[overnight]     AUROC 0.7055  clean 0.7355  worst noise 0.6518
+[overnight]   cross_generator: 5494 rows, leakage check {'config': 'cross_generator', 'checked': 3000, 'sha256_collisions': 0, 'clean': True}
+[overnight]     AUROC 0.6876  clean 0.7198  worst noise 0.6546
+[overnight]   normalized: 13841 rows, leakage check {'config': 'normalized', 'checked': 3000, 'sha256_collisions': 0, 'clean': True}
+[overnight]     AUROC 0.8220  clean 0.8715  worst noise 0.7572
+[overnight]   default: 13841 rows, leakage check {'config': 'default', 'checked': 3000, 'sha256_collisions': 0, 'clean': True}
+[overnight]     AUROC 0.8509  clean 0.9241  worst noise 0.7570
+[overnight] TASK 1b: LOGO models scored on external `laion_matched`
+[overnight]   without adm        external AUROC 0.7147 (delta +0.0053)
+[overnight]   without ddim       external AUROC 0.6987 (delta -0.0107)
+[overnight]   without ddpm       external AUROC 0.6926 (delta -0.0168)
+[overnight]   without gan_based  external AUROC 0.6686 (delta -0.0408)
+[overnight]   without imagen     external AUROC 0.6815 (delta -0.0279)
+[overnight] ALL DONE. completed=['task1b_logo_external', 'task2_external'] failed=[]

@@ -1,0 +1,25 @@
+{
+  "batch": 128,
+  "build": "data/build_matched",
+  "device": "cuda",
+  "epochs": 40,
+  "fusion": "none",
+  "git": {
+    "branch": "",
+    "dirty": true,
+    "sha": ""
+  },
+  "hidden": 0,
+  "img_size": 224,
+  "lora": 0,
+  "lr": 0.001,
+  "mixture": null,
+  "mode": "probe",
+  "name": "dinov3_b224_probe_matched",
+  "pool": "cls_mean",
+  "seed": 0,
+  "tier": "T1",
+  "variant": "b",
+  "wd": 0.0001,
+  "workers": 12
+}

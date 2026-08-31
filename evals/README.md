@@ -40,13 +40,15 @@ evals/
   OPEN-QUESTIONS.md      unresolved threads + recommended next steps
   HOW-TO-RUN.md          reproduction instructions
   scripts/               the six evaluation scripts actually used
-  acai/                  supporting library (metrics, transforms, data, sealed scorecard)
-  results/               *.json summaries
-  results/predictions/   per-image scores as parquet — the source of truth for every table
-  docs/                  the earlier DINOv3-baseline work (superseded but has useful method notes)
+  acai-project/          the complete standalone project this work was done in:
+                           src/acai/   supporting library (metrics, transforms, sealed scorecard)
+                           runs/       every logged run + per-image predictions as parquet
+                           docs/       the earlier DINOv3-baseline work and original plan
+                           tests/      124 tests (see caveat below)
+  docs/                  copies of the two key project docs, for reading without digging
 ```
 
-Every table in FINDINGS.md is recomputable from `results/predictions/*.parquet`. If a number here
+Every table in FINDINGS.md is recomputable from `acai-project/runs/*.parquet`. If a number here
 disagrees with a table, trust the parquet.
 
 ## Caveats to carry forward

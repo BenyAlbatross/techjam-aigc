@@ -1,0 +1,28 @@
+{
+  "batch": 128,
+  "build": "data/build_matched",
+  "device": "cuda",
+  "epochs": 40,
+  "eval_source": "wildfake",
+  "fusion": "none",
+  "git": {
+    "branch": "",
+    "dirty": true,
+    "sha": ""
+  },
+  "hidden": 0,
+  "img_size": 224,
+  "lora": 0,
+  "lr": 0.001,
+  "mixture": null,
+  "mode": "probe",
+  "name": "transfer_sid_set_to_wildfake",
+  "pool": "cls_mean",
+  "seed": 0,
+  "tier": "T1",
+  "train_exclude_generator": null,
+  "train_source": "sid_set",
+  "variant": "b",
+  "wd": 0.0001,
+  "workers": 12
+}

@@ -1,0 +1,21 @@
+[project]
+name = "acai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=5.0.1",
+    "hf-transfer>=0.1.9",
+    "huggingface-hub>=1.29.0",
+    "pillow>=12.3.0",
+    "pyarrow>=25.0.1",
+    "tqdm>=4.70.0",
+]
+
+[project.scripts]
+acai = "acai:main"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"

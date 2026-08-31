@@ -1,0 +1,4 @@
+run,name,status,seconds,fusion,variant,img_size,auroc,auprc,tpr_at_fpr01,git
+20260830T164014Z__overnight,overnight,ok,61.7,,,,0.9123947167078189,,,
+20260830T164226Z__overnight,overnight,ok,396.4,,,,0.8985627180246913,,,
+20260830T165011Z__overnight,overnight,ok,364.1,,,,0.0,,,

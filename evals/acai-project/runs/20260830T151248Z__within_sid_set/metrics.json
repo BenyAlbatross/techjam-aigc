@@ -1,0 +1,32 @@
+{
+  "overall": {
+    "auprc": 0.996368622956308,
+    "auprc_lift": 1.992737245912616,
+    "auroc": 0.9959815190123457,
+    "balanced_acc_50": 0.9607555555555556,
+    "balanced_acc_eer": 0.9677777777777778,
+    "brier": 0.03251394372188731,
+    "ece": 0.032984227777278295,
+    "eer": 0.03222222222222222,
+    "n": 22500,
+    "n_pos": 11250,
+    "note": "AUPRC is reported with its base rate: its random baseline IS the positive rate, so it is not comparable across evaluations with different prevalence",
+    "prevalence": 0.5,
+    "tpr_at_fpr01": 0.9403555555555555,
+    "tpr_at_fpr05": 0.9791111111111112
+  },
+  "robustness": {
+    "clean_auroc": 0.9998186666666667,
+    "clean_to_mean_drop": 0.004114666666666711,
+    "clean_to_worst_drop": 0.01303664197530885,
+    "transformed_auroc_mean": 0.995704,
+    "worst_condition": {
+      "auroc": 0.9785297777777777,
+      "condition": "noise:0.1"
+    },
+    "worst_family": {
+      "auroc": 0.9867820246913579,
+      "family": "noise"
+    }
+  }
+}

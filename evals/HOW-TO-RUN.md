@@ -44,6 +44,12 @@ Model weights download automatically via `huggingface_hub` on first run.
 | `eval_chains.py m` / `p` | both on calibration x chains of 1..6 | 33,510 each |
 | `eval_chains_wf.py m` / `p` | both on `data_draft` WildFake x chains of 1..6 | 30,000 each |
 
+Point Python at the library first:
+
+```bash
+export PYTHONPATH=evals/acai-project/src
+```
+
 Run one model per process:
 
 ```bash
@@ -53,7 +59,7 @@ python eval_chains.py p > chains_p.log 2>&1
 
 Roughly 4–8 minutes each on a GB10.
 
-## The supporting library (`acai/`)
+## The supporting library (`acai-project/src/acai/`)
 
 | module | what it is |
 |---|---|

@@ -1,0 +1,29 @@
+{
+  "batch": 128,
+  "build": "data/build_matched",
+  "device": "cuda",
+  "epochs": 40,
+  "eval_source": null,
+  "fusion": "none",
+  "git": {
+    "branch": "",
+    "dirty": true,
+    "sha": ""
+  },
+  "hidden": 0,
+  "img_size": 224,
+  "lora": 0,
+  "lr": 0.001,
+  "mixture": null,
+  "mode": "probe",
+  "name": "control_halfdata_bothsources",
+  "pool": "cls_mean",
+  "seed": 0,
+  "tier": "T1",
+  "train_exclude_generator": null,
+  "train_frac": 0.5,
+  "train_source": null,
+  "variant": "b",
+  "wd": 0.0001,
+  "workers": 12
+}

@@ -1,0 +1,10 @@
+{
+  "overall": {
+    "auroc": 0.0
+  },
+  "tasks_completed": [
+    "task1b_logo_external",
+    "task2_external"
+  ],
+  "tasks_failed": []
+}

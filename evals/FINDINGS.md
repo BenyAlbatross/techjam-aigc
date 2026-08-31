@@ -1,6 +1,6 @@
 # Findings
 
-All numbers recomputable from `results/predictions/*.parquet`. Positive class = AI throughout.
+All numbers recomputable from `acai-project/runs/*.parquet`. Positive class = AI throughout.
 Read [DEFINITIONS.md](DEFINITIONS.md) first — several dataset names are near-homonyms.
 
 ---

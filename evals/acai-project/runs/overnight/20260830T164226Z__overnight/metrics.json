@@ -1,0 +1,14 @@
+{
+  "overall": {
+    "auroc": 0.8985627180246913
+  },
+  "tasks_completed": [
+    "task1_logo",
+    "task3a_fusion",
+    "task3b_composition"
+  ],
+  "tasks_failed": [
+    "task1b_logo_external",
+    "task2_external"
+  ]
+}

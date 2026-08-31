@@ -1,0 +1,12 @@
+{
+  "epochs": 40,
+  "git": {
+    "branch": "",
+    "dirty": true,
+    "sha": ""
+  },
+  "max_ext_images": 2400,
+  "n_mixtures": 40,
+  "name": "overnight",
+  "tasks": "2,1b"
+}

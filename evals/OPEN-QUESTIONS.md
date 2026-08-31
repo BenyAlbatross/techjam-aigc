@@ -57,10 +57,10 @@ transforms (+0.096, +0.054). Degrading the image is destroying the misleading cu
 ## 4. Does transform ORDER matter?  — *data collected, analysis not run*
 
 The chain runs record the full ordered chain per row (`chain` column in
-`results/predictions/chains_*.parquet`), and all 120 orderings of 3-family chains occur. Nobody has
+`acai-project/runs/chains_*.parquet`), and all 120 orderings of 3-family chains occur. Nobody has
 yet tested whether e.g. `jpeg -> blur` differs from `blur -> jpeg`.
 
-**Next step:** group `chains_*.parquet` by the `chain` string and compare AUROC across permutations
+**Next step:** group `acai-project/runs/chains_*.parquet` by the `chain` string and compare AUROC across permutations
 of the same family set. No re-running required — the predictions are already there.
 
 ## 5. Unfinished from my own earlier baseline work

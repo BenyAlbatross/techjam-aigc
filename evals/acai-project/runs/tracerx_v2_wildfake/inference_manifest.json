@@ -1,0 +1,69 @@
+{
+  "model": "techjam-aigc/trace-rx-m-v2",
+  "detector_sha256": "f811c4641a644e1eaed30891f9c075932a1de8680dce812adaf03c9a7daaf25e",
+  "upstream_commit": "a3c393a17d3eea3ac79b438df8cb0bc619630e0b",
+  "encoder_mode": "frozen",
+  "image_size": 224,
+  "configs": [
+    {
+      "config": "default",
+      "status": "ok",
+      "n": 13841,
+      "seconds": 129.6
+    },
+    {
+      "config": "default_transformed",
+      "status": "ok",
+      "n": 13841,
+      "seconds": 131.5
+    },
+    {
+      "config": "normalized",
+      "status": "ok",
+      "n": 13841,
+      "seconds": 85.1
+    },
+    {
+      "config": "normalized_transformed",
+      "status": "ok",
+      "n": 13841,
+      "seconds": 85.1
+    },
+    {
+      "config": "laion_matched",
+      "status": "ok",
+      "n": 7652,
+      "seconds": 54.9
+    },
+    {
+      "config": "laion_matched_transformed",
+      "status": "ok",
+      "n": 7652,
+      "seconds": 55.0
+    },
+    {
+      "config": "cross_generator",
+      "status": "ok",
+      "n": 5494,
+      "seconds": 34.2
+    },
+    {
+      "config": "cross_generator_transformed",
+      "status": "ok",
+      "n": 5494,
+      "seconds": 34.9
+    },
+    {
+      "config": "diverse",
+      "status": "ok",
+      "n": 14394,
+      "seconds": 167.8
+    },
+    {
+      "config": "diverse_transformed",
+      "status": "ok",
+      "n": 14394,
+      "seconds": 190.3
+    }
+  ]
+}

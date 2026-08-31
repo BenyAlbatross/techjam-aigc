@@ -1,0 +1,5 @@
+{"t": 64.621, "stage": "task1_logo", "done": true, "failed": false}
+{"t": 65.174, "stage": "task2_external", "done": true, "failed": true}
+{"t": 65.64, "stage": "task1b_logo_external", "done": true, "failed": true}
+{"t": 337.6, "stage": "task3a_fusion", "done": true, "failed": false}
+{"t": 396.361, "stage": "task3b_composition", "done": true, "failed": false}
