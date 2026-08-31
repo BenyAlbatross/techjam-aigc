@@ -47,9 +47,12 @@ The original visual EDA notebook provides interactive dataset filters, summaries
 
 See [data/README.md](data/README.md) for the local data layout and sampling scope.
 
-## TRACE-RX-M v2 training
+## TRACE-RX-Parallel training
 
-The staged PyTorch implementation lives under `src/techjam_aigc/trace_rx_m`.
-See the [training guide](docs/trace-rx-m-training.md) for the gated DINOv3
-licence check, manifest contract, configuration assumptions, and S0--S6
-commands.
+The new detector lives under `src/techjam_aigc/trace_rx_parallel`: a global
+classifier and authentic-memory classifier consume the shared encoder in
+parallel, followed by learned late fusion. See the
+[parallel training guide](docs/trace-rx-parallel-training.md) for the
+architecture, gated DINOv3 licence check, manifest contract, configuration,
+and S0--S6 commands. The existing `trace_rx_m` package supplies the shared,
+audited data protocol and memory implementation.
