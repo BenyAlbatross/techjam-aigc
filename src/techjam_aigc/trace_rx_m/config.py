@@ -23,13 +23,13 @@ class BackboneConfig:
     def validate(self, *, require_access: bool = True) -> None:
         if require_access and not self.license_accepted:
             raise ValueError(
-                "DINOv3's gated licence must be reviewed and license_accepted=true "
+                "The backbone licence must be reviewed and license_accepted=true "
                 "before feature extraction or training."
             )
         if require_access and not self.revision:
             raise ValueError("Pin backbone.revision to an immutable commit for reproducibility.")
-        if self.image_size <= 0 or self.image_size % 16:
-            raise ValueError("DINOv3-L image_size must be a positive multiple of patch size 16.")
+        if self.image_size <= 0:
+            raise ValueError("backbone.image_size must be positive.")
         if self.lora_rank < 0:
             raise ValueError("lora_rank cannot be negative.")
         if self.lora_rank and not self.lora_targets:
@@ -90,6 +90,7 @@ class OptimizerConfig:
     memory_epochs: int = 20
     detection_epochs: int = 10
     gradient_clip_norm: float = 1.0
+    mixed_precision: str = "bf16"
 
 
 @dataclass(frozen=True)
@@ -226,6 +227,8 @@ class TraceRXMConfig:
             raise ValueError("head.residual_tail_quantile must lie in (0, 1).")
         if not 0 < self.loss.pauc_alpha <= 1:
             raise ValueError("loss.pauc_alpha must lie in (0, 1].")
+        if self.optimizer.mixed_precision not in {"bf16", "fp32"}:
+            raise ValueError("optimizer.mixed_precision must be bf16 or fp32.")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -1,4 +1,4 @@
-"""DINOv3-L patch-token encoder with a small, explicit LoRA implementation."""
+"""DINO-family patch-token encoder with a small, explicit LoRA implementation."""
 
 from __future__ import annotations
 
@@ -58,7 +58,12 @@ def inject_lora(
 
 
 class DinoV3PatchEncoder(nn.Module):
-    """Exact DINOv3-L patch-token extraction, excluding CLS/register tokens."""
+    """DINO-family patch-token extraction, excluding CLS/register tokens.
+
+    The public DINOv2 models are supported as a local-training fallback when
+    the preferred gated DINOv3 checkpoint is unavailable. Model identity and
+    immutable revision remain part of every artifact's provenance.
+    """
 
     def __init__(self, config: BackboneConfig) -> None:
         super().__init__()
@@ -77,6 +82,11 @@ class DinoV3PatchEncoder(nn.Module):
         self.backbone.requires_grad_(False)
         self.output_dim = int(self.backbone.config.hidden_size)
         self.patch_size = int(self.backbone.config.patch_size)
+        if config.image_size % self.patch_size:
+            raise ValueError(
+                f"backbone.image_size={config.image_size} must be divisible by the "
+                f"selected model's patch size {self.patch_size}."
+            )
         self.num_register_tokens = int(getattr(self.backbone.config, "num_register_tokens", 0))
         if config.gradient_checkpointing and hasattr(self.backbone, "gradient_checkpointing_enable"):
             self.backbone.gradient_checkpointing_enable()

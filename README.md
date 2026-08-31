@@ -51,5 +51,5 @@ See [data/README.md](data/README.md) for the local data layout and sampling scop
 
 The staged PyTorch implementation lives under `src/techjam_aigc/trace_rx_m`.
 See the [training guide](docs/trace-rx-m-training.md) for the gated DINOv3
-licence check, manifest contract, configuration assumptions, and S0--S6
-commands.
+licence check, public DINOv2 local fallback, manifest contract, mixed-precision
+configuration, TechJam 2026 split preparation, and S0--S6 commands.

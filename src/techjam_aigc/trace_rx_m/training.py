@@ -214,7 +214,9 @@ def evaluate_memory_coverage(
     if subtypes.size != error.shape[0]:
         raise ValueError("One authentic subtype is required per cached image.")
     fractions = {
-        subtype: float((error[torch.from_numpy(subtypes == subtype)] > threshold).float().mean())
+        str(subtype): float(
+            (error[torch.from_numpy(subtypes == subtype)] > threshold).float().mean()
+        )
         for subtype in sorted(set(subtypes))
     }
     return CoverageMetrics(
@@ -273,6 +275,15 @@ def save_memory_artifact(
     history: list[dict[str, float]],
     coverage: CoverageMetrics,
 ) -> None:
+    def safe_builtin(value: Any) -> Any:
+        if isinstance(value, np.generic):
+            return value.item()
+        if isinstance(value, dict):
+            return {str(key): safe_builtin(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [safe_builtin(item) for item in value]
+        return value
+
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
@@ -286,8 +297,8 @@ def save_memory_artifact(
             "backbone_model_id": backbone_model_id,
             "backbone_revision": backbone_revision,
             "manifest_sha256": manifest_sha256,
-            "history": history,
-            "coverage": asdict(coverage),
+            "history": safe_builtin(history),
+            "coverage": safe_builtin(asdict(coverage)),
         },
         path,
     )
@@ -419,11 +430,6 @@ def train_detection_epoch(
     subtype_counts = defaultdict(int)
     conflict_diagnostics: dict[str, float] = {}
     steps = 0
-    autocast = (
-        torch.autocast(device_type="cuda", dtype=torch.bfloat16)
-        if device.type == "cuda"
-        else nullcontext()
-    )
     for batch in loader:
         pixels = torch.as_tensor(batch["pixel_values"], device=device)
         labels = torch.as_tensor(batch["target"], device=device).float()
@@ -436,6 +442,11 @@ def train_detection_epoch(
             ),
             dtype=torch.bool,
             device=device,
+        )
+        autocast = (
+            torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+            if device.type == "cuda" and optimizer_config.mixed_precision == "bf16"
+            else nullcontext()
         )
         with autocast:
             logits = model(pixels).logit

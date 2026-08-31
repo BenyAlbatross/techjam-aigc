@@ -147,8 +147,7 @@ def run_protocol(args: argparse.Namespace, config: TraceRXMConfig) -> None:
         "resampler_parity": "training and evaluation use feature_lab.transforms",
         "lowest_resolution_behavior": (
             f"endpoints are resized to {config.backbone.image_size} square; "
-            "DINOv3-L/16 yields "
-            f"{(config.backbone.image_size // 16) ** 2} patch tokens"
+            "the selected backbone's patch size determines the token grid"
         ),
         "warning": "Fewer than eight generator families" if generated.nunique() < 8 else None,
     }
@@ -466,13 +465,17 @@ def _train_detection_variant(
 def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     torch = _torch()
     from techjam_aigc.trace_rx_m.backbone import DinoV3PatchEncoder
-    from techjam_aigc.trace_rx_m.integrations import HubCheckpointPublisher, WandbTracker
+    from techjam_aigc.trace_rx_m.integrations import (
+        HubCheckpointPublisher,
+        LocalCheckpointPublisher,
+        WandbTracker,
+    )
     from techjam_aigc.trace_rx_m.model import TraceRXM
     from techjam_aigc.trace_rx_m.training import (
         file_sha256, load_memory_artifact, seed_everything,
     )
 
-    config.validate(require_backbone_access=True, require_remote_artifacts=True)
+    config.validate(require_backbone_access=True)
     family = config.data.held_out_generator_family
     if not family:
         raise ValueError("Set data.held_out_generator_family before S4.")
@@ -511,7 +514,11 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     exit_code = 1
     try:
         tracker.watch(model)
-        publisher = HubCheckpointPublisher(config.hub, run_id=tracker.run_id)
+        publisher = (
+            HubCheckpointPublisher(config.hub, run_id=tracker.run_id)
+            if config.hub.repo_id
+            else LocalCheckpointPublisher(args.output, run_id=tracker.run_id)
+        )
         best_variant_path, final_variant_path, best_epoch, best_total = (
             _train_detection_variant(
                 model=model,
@@ -530,12 +537,14 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
             )
         )
         auc = _evaluate_auc(model, validation_loader, device)
+        lora_auc = auc
         tracker.log(
             {"lora/held_out_generator/roc_auc": auc},
             step=config.optimizer.detection_epochs,
         )
         fallback_used = False
         selected_variant = "lora"
+        frozen_auc = None
         if auc < config.data.held_out_min_roc_auc:
             # Pre-declared failure path: discard LoRA and retrain only the heads
             # against the same memory. Never retune adapters on this held-out result.
@@ -565,6 +574,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
                 )
             )
             auc = _evaluate_auc(model, validation_loader, device)
+            frozen_auc = auc
             tracker.log(
                 {"frozen/held_out_generator/roc_auc": auc},
                 step=2 * config.optimizer.detection_epochs,
@@ -584,6 +594,10 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
         validity = {
             "held_out_generator_family": family,
             "roc_auc": auc,
+            "variant_roc_auc": {
+                "lora": lora_auc,
+                "frozen": frozen_auc,
+            },
             "threshold": config.data.held_out_min_roc_auc,
             "frozen_encoder_fallback": fallback_used,
             "selected_variant": selected_variant,

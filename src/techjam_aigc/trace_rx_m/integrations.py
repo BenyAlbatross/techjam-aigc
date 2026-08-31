@@ -169,3 +169,30 @@ class HubCheckpointPublisher:
             commit_message="Upload TRACE-RX-M best and final weights",
         )
         return str(getattr(result, "commit_url", result))
+
+
+class LocalCheckpointPublisher:
+    """No-op publisher for explicitly local training runs.
+
+    The training loop already writes every periodic and final artifact before
+    invoking the publisher. This adapter keeps that durable local behavior
+    without requiring Hugging Face credentials or silently attempting uploads.
+    """
+
+    def __init__(self, output: Path, *, run_id: str) -> None:
+        self.output = Path(output).resolve()
+        self.run_id = str(run_id)
+
+    def upload_periodic(self, path: Path, *, epoch: int, variant: str) -> str:
+        del epoch, variant
+        return Path(path).resolve().as_uri()
+
+    def upload_final_bundle(
+        self,
+        *,
+        best_path: Path,
+        final_path: Path,
+        metadata_paths: Sequence[Path] = (),
+    ) -> str:
+        del best_path, metadata_paths
+        return Path(final_path).resolve().as_uri()

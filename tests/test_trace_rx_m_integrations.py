@@ -5,7 +5,11 @@ import sys
 from types import SimpleNamespace
 
 from techjam_aigc.trace_rx_m.config import HubConfig, TrackingConfig
-from techjam_aigc.trace_rx_m.integrations import HubCheckpointPublisher, WandbTracker
+from techjam_aigc.trace_rx_m.integrations import (
+    HubCheckpointPublisher,
+    LocalCheckpointPublisher,
+    WandbTracker,
+)
 
 
 class _FakeRun:
@@ -130,3 +134,19 @@ def test_hub_publisher_uploads_periodic_and_canonical_best_final_paths(
     assert "trace/validity.json" in destinations
     assert "trace/runs/run-123/validity.json" in destinations
     assert url.endswith("/final")
+
+
+def test_local_publisher_keeps_local_artifact_urls(tmp_path: Path) -> None:
+    publisher = LocalCheckpointPublisher(tmp_path, run_id="run-123")
+    checkpoint = tmp_path / "epoch.pt"
+    best = tmp_path / "best.pt"
+    final = tmp_path / "final.pt"
+    for path in (checkpoint, best, final):
+        path.touch()
+
+    assert publisher.upload_periodic(
+        checkpoint, epoch=1, variant="lora"
+    ) == checkpoint.resolve().as_uri()
+    assert publisher.upload_final_bundle(
+        best_path=best, final_path=final
+    ) == final.resolve().as_uri()

@@ -8,6 +8,7 @@
 - [Feature selection and transform-robustness teammate report](feature-selection-robustness-report.html)
 - [TRACE-RX-Alternative3 architecture, review, and final design decision](method_proposal/trace-rx-alternative3.html)
 - [TRACE-RX-M v2 PyTorch training and implementation assumptions](trace-rx-m-training.md)
+- [Pinned TechJam 2026 local training run](techjam2026-training-run.md)
 - [TRACE-RX-Alternative3 bias register (B1–B18, M1–M4, S1–S3)](method_proposal/trace-rx-alternative3-bias-register.md)
 - [AIGC exploration and implementation plan](aigc-exploration-implementation-plan.md)
 - [AIGC exploration plan-to-code reconciliation](aigc-exploration-reconciliation.md)

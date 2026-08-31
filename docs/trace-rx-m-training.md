@@ -21,6 +21,13 @@ immutable model commit in `backbone.revision`, and set
 Tokens remain in the environment/Hugging Face credential store and must never
 be committed.
 
+For a fully local run without gated-model credentials,
+`configs/trace-rx-m-techjam2026-local.json` pins the public Apache-2.0
+`facebook/dinov2-base` checkpoint. The encoder supports both DINOv2 and
+DINOv3 patch-token layouts and records the exact model ID and immutable
+revision in every artifact. This is an explicit reproducibility fallback, not
+a claim that the two backbones are equivalent.
+
 The two trainable stages use [Weights & Biases](https://docs.wandb.ai/models/ref/python/functions/init).
 S2/S3 logs every memory-candidate
 loss and the selected coverage result; S4 logs epoch losses, authentic-subtype
@@ -36,12 +43,43 @@ hf auth whoami
 Set `tracking.wandb_project` (and optionally `tracking.wandb_entity`) in the
 config. `online` is the release default; `offline` and `disabled` are explicit
 local-development modes. Set `hub.repo_id` to an `owner/name` model repository
-before S4. S4 fails closed if it is missing. Hugging Face authentication comes
+before S4 when remote checkpoint publication is desired. When it is `null`, S4
+retains periodic, best, and final checkpoints locally and makes no Hub API
+calls. Hugging Face authentication comes
 from the credential store or `HF_TOKEN`; no token belongs in the JSON config.
 The configured repository is created if needed, with `hub.private` controlling
 initial visibility.
 Uploads use the official
 [`huggingface_hub` file/commit APIs](https://huggingface.co/docs/huggingface_hub/guides/upload).
+
+## TechJam 2026 dataset preparation
+
+The pinned `Joshyxwa/techjam2026` snapshot already defines leakage-grouped
+`train`, `dev`, `calibration`, and `own_locked` splits. Preserve those split
+assignments. The preparation command below subdivides only real training
+content groups for the authentic-memory stages, maps `dev` to development,
+reserves `calibration` for S6, and maps `own_locked` to locked evaluation:
+
+```bash
+uv run python scripts/prepare_techjam2026_training.py \
+  --labels data/techjam2026/labels.csv \
+  --source-root data/techjam2026 \
+  --output-root data/techjam2026-normalized \
+  --manifest data/techjam2026-normalized/training-manifest.csv
+```
+
+The source has a class-correlated codec/geometry shortcut: all AIGC files are
+PNG while many authentic files are JPEG, and their resolution distributions
+differ. Preparation therefore decodes every image, applies the model's 224px
+bilinear square resize, and stores fixed-size RGB BMP inputs. S0 then audits
+the metadata of the inputs actually used by training rather than the original
+download wrappers. The pinned dataset revision and exact role counts are saved
+beside the generated manifest.
+
+The local DGX Spark profile uses batches of 512 with CUDA BF16 autocast. Run a
+single-step preflight when other GPU services are resident; if memory is
+constrained, lower only `data.batch_size` without changing the split or
+precision policy.
 
 The manifest is validated before role filtering. It must contain:
 
@@ -101,8 +139,11 @@ report records the proposal's undersizing warning and expected worst-subtype
 false-positive direction.
 
 S4 permanently freezes the selected memory. AdamW uses separate learning rates
-for LoRA and heads, BF16 autocast on CUDA, short warm-up, cosine decay, and
+for LoRA and heads, per-batch BF16 autocast on CUDA (selected explicitly with
+`optimizer.mixed_precision`), short warm-up, cosine decay, and
 gradient clipping. Global CPU/CUDA initialization is seeded from `data.seed`.
+The retrieval scores, sparse softmax, and authentic prototype memory remain
+FP32 for numerical stability; BF16 does not require FP16-style loss scaling.
 The S3 artifact must match the configured backbone model, immutable revision,
 and manifest hash, so a same-dimensional but incompatible feature space cannot
 be used silently. Batches are class-balanced; native positives rotate across

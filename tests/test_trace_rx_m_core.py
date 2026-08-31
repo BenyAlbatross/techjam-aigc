@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 
@@ -8,7 +9,13 @@ from torch import nn
 from torch.nn import functional as F
 
 from techjam_aigc.trace_rx_m.backbone import LoRALinear, inject_lora
-from techjam_aigc.trace_rx_m.config import HeadConfig, LossConfig, MemoryConfig, OptimizerConfig
+from techjam_aigc.trace_rx_m.config import (
+    HeadConfig,
+    LossConfig,
+    MemoryConfig,
+    OptimizerConfig,
+    TraceRXMConfig,
+)
 from techjam_aigc.trace_rx_m.losses import detection_objective, partial_auc_surrogate
 from techjam_aigc.trace_rx_m.memory import AuthenticMemory, residual_patch_statistics
 from techjam_aigc.trace_rx_m.model import TraceRXM
@@ -197,7 +204,9 @@ def test_s1_cache_equivalence_and_s3_backbone_provenance(tmp_path) -> None:
 
     memory = AuthenticMemory(8, 6, 3)
     memory_path = tmp_path / "memory.pt"
-    coverage = CoverageMetrics(8, 3, 0.1, 0.2, 0.05, 0.1, {"camera-a": 0.1})
+    coverage = CoverageMetrics(
+        8, 3, 0.1, 0.2, 0.05, 0.1, {np.str_("camera-a"): np.float64(0.1)}
+    )
     save_memory_artifact(
         memory,
         memory_path,
@@ -242,6 +251,12 @@ def test_pair_resolution_optimizer_groups_and_scheduler() -> None:
         optimizer.step()
         scheduler.step()
     assert scheduler.get_last_lr()[0] == pytest.approx(0.0)
+
+
+def test_mixed_precision_mode_is_explicitly_validated() -> None:
+    TraceRXMConfig(optimizer=OptimizerConfig(mixed_precision="bf16")).validate()
+    with pytest.raises(ValueError, match="mixed_precision"):
+        TraceRXMConfig(optimizer=OptimizerConfig(mixed_precision="fp16")).validate()
 
 
 def test_s4_checkpoint_can_include_resume_state_and_selection_metadata(tmp_path) -> None:

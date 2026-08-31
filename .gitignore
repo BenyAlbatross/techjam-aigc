@@ -6,6 +6,10 @@ __pycache__/
 data/*
 !data/README.md
 
+# Local training outputs and offline experiment logs.
+artifacts/
+wandb/
+
 # Marimo runtime state and caches.
 .marimo/
 __marimo__/
