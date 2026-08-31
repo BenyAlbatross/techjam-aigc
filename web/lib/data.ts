@@ -1,11 +1,17 @@
 import "server-only";
 
-import { promises as fs } from "node:fs";
+import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 import type { GalleryImage, GalleryPayload, Prediction, Truth } from "@/lib/types";
 import { loadAnalytics } from "@/lib/analytics";
 
-const PROJECT_ROOT = path.resolve(process.cwd(), "..");
+const PROJECT_ROOT = [
+  process.env.TRACE_PROJECT_ROOT,
+  path.resolve(process.cwd(), ".."),
+  path.resolve(process.cwd(), "../../.."),
+].filter((candidate): candidate is string => Boolean(candidate))
+  .find((candidate) => existsSync(path.join(candidate, "work/manifests/sid_set_1000x2_canonical.json")))
+  ?? path.resolve(process.cwd(), "..");
 const MANIFEST = path.join(PROJECT_ROOT, "work/manifests/sid_set_1000x2_canonical.json");
 const PREDICTIONS = path.join(PROJECT_ROOT, "work/predictions");
 const LIMIT = 72;
