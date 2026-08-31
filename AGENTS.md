@@ -1,6 +1,6 @@
 # Project instructions
 
-- Communicate with the user in Caveman Ultra unless they disable it.
+- Always use the Caveman skill in `ultra` mode for user communication and agent handoffs unless the user explicitly disables it.
 - Use Superpowers skills before applicable work and Ponytail minimalism for code.
 - Work on branch `xuan`; preserve groupmates' and users' changes.
 - Current priority: zero-fine-tuning public baselines, transformation robustness, and error rates.

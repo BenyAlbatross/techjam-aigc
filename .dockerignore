@@ -1,0 +1,12 @@
+.git
+.github
+.pixi
+.pytest_cache
+**/__pycache__
+**/*.pyc
+web/node_modules
+web/.next
+work/ad-hoc
+work/hf-cache
+work/model-cache
+work/v

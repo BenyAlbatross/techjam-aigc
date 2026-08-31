@@ -2,6 +2,41 @@
 
 Research and zero-fine-tuning baselines for robust detection of fully AI-generated still images under distribution shift.
 
+## Submission handoff
+
+The concrete, evidence-backed submission inventory is maintained in
+[`docs/submission-handoff.md`](docs/submission-handoff.md). It distinguishes
+what is runnable in this checkout from research code that is not wired into the
+inference or web paths, records the local-only access requirements, and lists
+the remaining human-release decisions. The working status checklist is
+[`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md).
+
+The repository is currently a **local prototype**, not a published service.
+The web application can be started without benchmark artifacts, but it shows an
+empty-state message until the ignored canonical manifest is present. A populated
+gallery additionally needs local benchmark images, prediction shards, and the
+generated gallery derivatives described below. Ad hoc uploads require a Linux
+AArch64 CUDA Pixi environment plus cached, hash-verified model files; otherwise
+the route returns a local-model-unavailable response.
+
+For a clean local setup, install Pixi and a Node.js runtime, then install the
+locked web dependencies and run the CPU checks:
+
+```bash
+pixi install --platform linux-aarch64-cpu
+pixi run --platform linux-aarch64-cpu test
+
+cd web
+npm ci
+npm run typecheck
+npm run dev
+```
+
+The CUDA inference and full benchmark paths additionally require the
+`linux-aarch64-cuda` Pixi platform and an NVIDIA CUDA-capable host; see the
+handoff for the exact artifact and access requirements. No credentials or
+runtime artifacts belong in Git.
+
 The integrated local evidence browser lives in `web/`. It presents canonical images as a gallery, traces known transformations and lineage, compares detector outputs, and supports isolated ad hoc testing.
 
 Build its ignored, benchmark-exact transformation cache with:
@@ -221,9 +256,11 @@ No identity recognition, face matching, EXIF-based person identification, or
 external lookup of depicted people is permitted. Reports use opaque sample IDs
 and omit secrets, usernames, tokens, and private local paths.
 
-## Current result
+## Published result scopes
 
-Ateeqq SigLIP was the strongest tested open-source baseline. On the frozen 80-image SID_Set confirmation slice:
+The small frozen confirmation run documented below is a separate 80-image
+cross-platform check, not the basis for selecting a submission model. Its
+results are:
 
 - clean balanced accuracy: **0.925**;
 - clean ROC-AUC: **0.994375**;
@@ -232,7 +269,14 @@ Ateeqq SigLIP was the strongest tested open-source baseline. On the frozen 80-im
 
 The same frozen evaluator ran on `spark-a916` using an NVIDIA GB10 and CUDA 13.0. It completed 1,230 predictions in 37.99 seconds. All binary decisions matched the local CPU reference; color-jitter ROC-AUC differed by 0.000625 while its balanced accuracy and confusion counts matched.
 
-No checkpoint was fine-tuned and no threshold was fitted on the evaluation samples.
+No checkpoint was fine-tuned and no threshold was fitted on the evaluation
+samples. The full 2,000-image-per-condition public-gate report is
+[`outputs/public-baseline-robustness-report.md`](outputs/public-baseline-robustness-report.md).
+Its fixed ordering places `wkaandemir_clip`, `ateeqq_siglip`, and
+`frontier_community_forensics` in the displayed top three, but it explicitly
+reports the winner as unresolved because the relevant confidence-interval
+comparisons are not all conclusive. It is technical evidence only: every model
+is still marked `submission_status = "review"` in `models.toml`.
 
 ## Repository map
 

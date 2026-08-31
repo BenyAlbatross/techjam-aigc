@@ -1,0 +1,15 @@
+# Keep runtime gallery assets in the Cloud Build source archive. Do not include
+# .gitignore here: it excludes the ignored assets that the server needs at runtime.
+.gcloudignore
+.git
+.github
+.pixi
+.pytest_cache
+**/__pycache__
+**/*.pyc
+web/node_modules
+web/.next
+work/ad-hoc
+work/hf-cache
+work/model-cache
+work/v
