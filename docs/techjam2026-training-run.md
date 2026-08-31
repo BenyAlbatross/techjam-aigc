@@ -67,21 +67,27 @@ held-out result.
 | GPT Image 2 vs all real | 770 | 0.93544 |
 | SDXL 1.0 vs all real | 597 | 0.99772 |
 
-Full-dev average precision is 0.90632 and accuracy at an uncalibrated 0.5
-threshold is 0.90658. These aggregates should not obscure the severe Gemini
-reversal. At the final epoch, SID-Set and MIRFlickr remained the hardest real
-subtypes (mean BCE 0.17734 and 0.16582 respectively).
+Full-dev average precision is 0.90632, accuracy at an uncalibrated 0.5
+probability threshold is 0.90658, and balanced accuracy at that threshold is
+0.88515. These aggregates should not obscure the severe Gemini reversal. At
+the final epoch, SID-Set and MIRFlickr remained the hardest real subtypes (mean
+BCE 0.17734 and 0.16582 respectively).
 
 After model selection was closed, `own_locked` was evaluated exactly once. It
 contains 565 Gemini positives and 395 SID-Set real images. ROC-AUC is 0.66224,
 average precision is 0.78601, and uncalibrated 0.5-threshold accuracy is
-0.59167. The large gap between dev-Gemini and locked-Gemini confirms that
-generator name alone does not define a stable distribution.
+0.59167. Balanced accuracy at the same threshold is 0.63900. The large gap
+between dev-Gemini and locked-Gemini confirms that generator name alone does
+not define a stable distribution.
 
 The shipping checkpoint is
 `artifacts/trace-rx-m-techjam2026/s4_detector.pt`, SHA-256
 `f811c4641a644e1eaed30891f9c075932a1de8680dce812adaf03c9a7daaf25e`.
 Local score tables and slice metrics are retained beside it.
+
+An artifact-level audit, prototype-coverage caveats, confusion counts, and the
+reproducible visual report command are documented in
+[`trace-rx-m-training-audit.md`](trace-rx-m-training-audit.md).
 
 S5 reliability and S6 calibration are not claimed for this run. The canonical
 dataset rows contain only clean endpoints, while S5 requires predeclared clean

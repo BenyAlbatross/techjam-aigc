@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "dataset_id": "wildfake-reconstructed-test",
+  "adapter": "csv",
+  "manifest": "data/evaluation/wildfake-aigibench-stratified/manifest.csv",
+  "root": ".",
+  "columns": {
+    "image_path": "image_path",
+    "target": "target",
+    "parent_id": "parent_id",
+    "lineage_id": "lineage_id",
+    "generator_family": "generator_family",
+    "generation_model": "generation_model",
+    "source_dataset": "source_dataset",
+    "authentic_subtype": "authentic_subtype"
+  },
+  "filters": {
+    "dataset_id": [
+      "wildfake-reconstructed-test"
+    ]
+  }
+}

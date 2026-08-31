@@ -1951,6 +1951,7 @@ dependencies = [
     { name = "pillow" },
     { name = "scikit-learn" },
     { name = "scipy" },
+    { name = "wandb" },
 ]
 
 [package.dev-dependencies]
@@ -1973,6 +1974,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.3" },
     { name = "scikit-learn", specifier = ">=1.7" },
     { name = "scipy", specifier = ">=1.15" },
+    { name = "wandb", specifier = ">=0.29.0" },
 ]
 
 [package.metadata.requires-dev]

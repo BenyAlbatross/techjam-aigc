@@ -194,6 +194,25 @@ uv run --group train python scripts/export_trace_rx_m_scores.py \
   --artifacts artifacts/trace-rx-m --output artifacts/trace-rx-m/scores.csv
 ```
 
+Evaluate every frozen score table with the canonical always-report metric set
+(ROC-AUC, average precision, accuracy, and balanced accuracy). The threshold is
+explicit because accuracy and balanced accuracy are threshold-dependent:
+
+```bash
+uv run python scripts/evaluate_trace_rx_m_scores.py \
+  --scores artifacts/trace-rx-m/scores.csv \
+  --output artifacts/trace-rx-m/metrics.json \
+  --score-column logit --threshold 0.0
+```
+
+See `docs/evaluation-metrics.md` for reporting and threshold-selection policy.
+
+For exhaustive clean and transformed model evaluation across one or more
+plug-in datasets, use `scripts/evaluate_trace_rx_m.py`. Dataset specifications,
+transform policy, output tables, and the distinction between stochastic
+training augmentation and deterministic evaluation are documented in
+`docs/evaluation-metrics.md`.
+
 After S5, run the same command again; it detects `s5_reliability.json`, applies
 the admitted availability table or passive fallback, and adds `fused_logit`
 plus the reliability hash for S6.
