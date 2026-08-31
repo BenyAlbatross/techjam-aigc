@@ -2,7 +2,7 @@ import "server-only";
 
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
-import type { GalleryImage, GalleryPayload, Prediction, Truth } from "@/lib/types";
+import type { GalleryImage, GalleryPayload, Prediction, TransformationStep, Truth } from "@/lib/types";
 import { loadAnalytics } from "@/lib/analytics";
 
 const PROJECT_ROOT = [
@@ -36,6 +36,10 @@ type ManifestSample = {
   height?: number;
   file_format?: string;
   sha256: string;
+  transform_chain?: TransformationStep[];
+  modification_chain?: TransformationStep[];
+  transformation_chain?: TransformationStep[];
+  transformations?: TransformationStep[];
 };
 
 type PredictionRow = {
@@ -112,6 +116,7 @@ export async function loadGallery(): Promise<GalleryPayload> {
       sha256: sample.sha256,
       condition: "clean",
       conditionParameters: {},
+      transformChain: sample.transform_chain ?? sample.modification_chain ?? sample.transformation_chain ?? sample.transformations ?? [],
       predictions: (byImage.get(sample.sample_id) ?? []).sort((a, b) => a.model.localeCompare(b.model)),
     }));
 

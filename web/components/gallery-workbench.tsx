@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import type { GalleryImage, GalleryPayload, Prediction, Truth } from "@/lib/types";
-import { AnalyticsDashboard, DatasetCatalog, ModelCatalog } from "@/components/dashboard-views";
+import { AnalyticsDashboard, DatasetCatalog, ModelCatalog, MultiSelect } from "@/components/dashboard-views";
 
 type View = "gallery" | "datasets" | "models" | "analytics";
 type Outcome = "all" | "mismatch" | "correct" | "fp" | "fn" | "tp" | "tn";
@@ -81,28 +81,34 @@ function ImageCard({ image, active, model, condition, onSelect }: {
 }
 
 function Lineage({ image, condition }: { image: GalleryImage; condition: string }) {
+  const recordedSteps = image.transformChain.length ? image.transformChain : [{ id: "canonicalize", label: "Canonicalize", parameters: { color: "RGB", size: "512²", resample: "Lanczos" } }];
+  const steps = condition === "clean" || recordedSteps.some((step) => step.id === condition) ? recordedSteps : [...recordedSteps, { id: condition, label: conditionLabel(condition), parameters: { benchmark: "deterministic" } }];
   return (
     <section className="lineage-section" aria-labelledby="lineage-title">
       <div className="section-heading">
         <div><span className="eyebrow">Provenance</span><h2 id="lineage-title">Modification chain</h2></div>
-        <span className="quiet-badge">{condition === "clean" ? "1 known step" : "2 known steps"}</span>
+        <span className="quiet-badge">{steps.length} known {steps.length === 1 ? "step" : "steps"}</span>
       </div>
-      <div className="lineage-track">
-        <div className="lineage-node muted-node">
-          <span className="node-icon"><Database size={17} /></span>
-          <span><strong>Dataset source</strong><small className="mono">{shortId(image.baseId)}</small></span>
-        </div>
-        <ArrowRight className="lineage-arrow" size={22} />
-        <div className="operation-node"><CircleDot size={14} /><span>{condition === "clean" ? "Canonicalize" : conditionLabel(condition)}</span><small>{condition === "clean" ? "RGB · 512² · Lanczos" : "Deterministic benchmark transform"}</small></div>
-        <ArrowRight className="lineage-arrow" size={22} />
-        <div className="lineage-node current-node">
-          <Image src={conditionedUrl(image, condition)} alt="Selected benchmark derivative" width={54} height={54} />
-          <span><strong>Selected result</strong><small>{conditionLabel(condition)}</small></span>
+      <div className="lineage-scroll" tabIndex={0} aria-label="Ordered image modification chain">
+        <div className="lineage-track">
+          <div className="lineage-node muted-node">
+            <span className="node-icon"><Database size={17} /></span>
+            <span><strong>Dataset source</strong><small className="mono">{shortId(image.baseId)}</small></span>
+          </div>
+          {steps.map((step, index) => <div className="chain-step" key={`${step.id}-${index}`}>
+            <ArrowRight className="lineage-arrow" size={22} />
+            <div className="operation-node"><CircleDot size={14} /><span>{step.label}</span><small>{Object.entries(step.parameters).map(([key, value]) => `${key}: ${String(value)}`).join(" · ") || "Parameters unavailable"}</small></div>
+          </div>)}
+          <div className="chain-step">
+            <ArrowRight className="lineage-arrow" size={22} />
+            <div className="lineage-node current-node">
+              <Image src={conditionedUrl(image, condition)} alt="Selected benchmark derivative" width={54} height={54} />
+              <span><strong>Selected result</strong><small>{conditionLabel(condition)}</small></span>
+            </div>
+          </div>
         </div>
       </div>
-      {image.truth === "ai" ? (
-        <p className="lineage-note"><Sparkles size={14} /> Generator reference is undisclosed in SID Set. No source edge invented.</p>
-      ) : null}
+      {image.truth === "ai" ? <p className="lineage-note"><Sparkles size={14} /> Generator reference is undisclosed in SID Set. No source edge invented.</p> : null}
     </section>
   );
 }
@@ -198,7 +204,10 @@ function TestPanel({ models }: { models: string[] }) {
 
 export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload }) {
   const [view, setView] = useState<View>("gallery");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [outcomeFilter, setOutcomeFilter] = useState<Outcome>("all");
+  const [galleryModels, setGalleryModels] = useState(() => initialData.models.includes("ateeqq_siglip") ? ["ateeqq_siglip"] : initialData.models.slice(0, 1));
+  const [galleryConditions, setGalleryConditions] = useState(() => ["clean"]);
   const [selectedId, setSelectedId] = useState(initialData.images[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [truth, setTruth] = useState<Truth | "all">("all");
@@ -207,12 +216,11 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
   const deferredQuery = useDeferredValue(query.toLowerCase());
   const filtered = useMemo(() => initialData.images.filter((image) => {
     const matchesTruth = truth === "all" || image.truth === truth;
-    const prediction = image.predictions.find((item) => item.model === model && item.condition === condition);
-    const result = outcome(image, prediction);
-    const matchesOutcome = outcomeFilter === "all" || (outcomeFilter === "mismatch" ? result === "fp" || result === "fn" : outcomeFilter === "correct" ? result === "tp" || result === "tn" : result === outcomeFilter);
+    const candidateOutcomes = image.predictions.filter((item) => galleryModels.includes(item.model) && galleryConditions.includes(item.condition)).map((prediction) => outcome(image, prediction));
+    const matchesOutcome = outcomeFilter === "all" || candidateOutcomes.some((result) => outcomeFilter === "mismatch" ? result === "fp" || result === "fn" : outcomeFilter === "correct" ? result === "tp" || result === "tn" : result === outcomeFilter);
     const haystack = `${image.id} ${image.sourceFamily} ${image.generatorFamily}`.toLowerCase();
     return matchesTruth && matchesOutcome && haystack.includes(deferredQuery);
-  }), [condition, deferredQuery, initialData.images, model, outcomeFilter, truth]);
+  }), [deferredQuery, galleryConditions, galleryModels, initialData.images, outcomeFilter, truth]);
   const selected = filtered.find((image) => image.id === selectedId) ?? filtered[0] ?? initialData.images[0];
 
   if (!selected) {
@@ -228,24 +236,32 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
       <header className="topbar">
         <div className="brand"><span className="brand-mark"><FileSearch size={20} /></span><span><strong>TRACE LENS</strong><small>AIGC evidence browser</small></span></div>
         <div className="dataset-state"><span className="pulse" />SID Set · controlled gate <span>{initialData.totalImages.toLocaleString()} images</span></div>
-        <button className="icon-button" aria-label="Open filters"><Filter size={18} /></button>
+        {view === "gallery" ? <button className={filtersOpen ? "icon-button active" : "icon-button"} aria-label="Toggle gallery filters" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}><Filter size={18} /></button> : <span />}
       </header>
+      {filtersOpen && view === "gallery" ? <aside className="filter-drawer" aria-label="Filters">
+        <div className="filter-drawer-head"><div><strong>Filters and display</strong><small>Controls apply to the gallery view</small></div><button onClick={() => setFiltersOpen(false)} aria-label="Close filters"><X size={17} /></button></div>
+        <div className="drawer-section"><span className="drawer-section-title">Filter comparisons</span><MultiSelect title="Models" values={initialData.models} selected={galleryModels} onChange={setGalleryModels} /><MultiSelect title="Conditions" values={initialData.conditions} selected={galleryConditions} onChange={setGalleryConditions} /></div>
+        <div className="drawer-section"><span className="drawer-section-title">Preview and inspect</span></div>
+        <label>Focus model<select value={model} onChange={(event) => setModel(event.target.value)}>{initialData.models.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}</select></label>
+        <label>Preview condition<select value={condition} onChange={(event) => setCondition(event.target.value)}>{initialData.conditions.map((item) => <option key={item} value={item}>{conditionLabel(item)}</option>)}</select></label>
+        <label>Classification outcome<select value={outcomeFilter} onChange={(event) => setOutcomeFilter(event.target.value as Outcome)}><option value="all">All outcomes</option><option value="mismatch">Any mismatch</option><option value="correct">Any correct</option><option value="fp">False positive</option><option value="fn">False negative</option><option value="tp">True positive</option><option value="tn">True negative</option></select></label>
+        <fieldset><legend>Ground truth</legend><div className="segmented">{(["all", "real", "ai"] as const).map((value) => <button key={value} className={truth === value ? "active" : ""} onClick={() => setTruth(value)}>{value === "all" ? "All" : truthLabels[value]}</button>)}</div></fieldset>
+        <button className="button filter-reset" onClick={() => { setTruth("all"); setOutcomeFilter("all"); setCondition("clean"); setGalleryModels(initialData.models); setGalleryConditions(initialData.conditions); setQuery(""); }}>Reset filters</button>
+      </aside> : null}
 
       <aside className="filter-rail">
-        <button className={view === "gallery" ? "rail-icon active" : "rail-icon"} onClick={() => setView("gallery")}><Grid3X3 size={18} /><span>Gallery</span></button>
-        <button className={view === "datasets" ? "rail-icon active" : "rail-icon"} onClick={() => setView("datasets")}><Layers3 size={18} /><span>Datasets</span></button>
-        <button className={view === "models" ? "rail-icon active" : "rail-icon"} onClick={() => setView("models")}><FlaskConical size={18} /><span>Models</span></button>
-        <button className={view === "analytics" ? "rail-icon active" : "rail-icon"} onClick={() => setView("analytics")}><BarChart3 size={18} /><span>Analytics</span></button>
+        <button className={view === "gallery" ? "rail-icon active" : "rail-icon"} onClick={() => { setView("gallery"); setFiltersOpen(false); }}><Grid3X3 size={18} /><span>Gallery</span></button>
+        <button className={view === "datasets" ? "rail-icon active" : "rail-icon"} onClick={() => { setView("datasets"); setFiltersOpen(false); }}><Layers3 size={18} /><span>Datasets</span></button>
+        <button className={view === "models" ? "rail-icon active" : "rail-icon"} onClick={() => { setView("models"); setFiltersOpen(false); }}><FlaskConical size={18} /><span>Models</span></button>
+        <button className={view === "analytics" ? "rail-icon active" : "rail-icon"} onClick={() => { setView("analytics"); setFiltersOpen(false); }}><BarChart3 size={18} /><span>Analytics</span></button>
       </aside>
 
       <section className={view === "gallery" ? "workspace" : "workspace wide-workspace"}>
         {view === "gallery" ? <>
         <div className="toolbar">
           <label className="search-box"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search source or sample ID" /></label>
-          <div className="segmented" aria-label="Filter by truth">
-            {(["all", "real", "ai"] as const).map((value) => <button key={value} className={truth === value ? "active" : ""} onClick={() => setTruth(value)}>{value === "all" ? "All" : truthLabels[value]}</button>)}
-          </div>
-          <label className="model-select">Outcome<select value={outcomeFilter} onChange={(event) => setOutcomeFilter(event.target.value as Outcome)}><option value="all">All outcomes</option><option value="mismatch">Mismatches</option><option value="correct">Correct</option><option value="fp">False positives</option><option value="fn">False negatives</option><option value="tp">True positives</option><option value="tn">True negatives</option></select></label><label className="model-select">Condition<select value={condition} onChange={(event) => setCondition(event.target.value)}>{initialData.conditions.map((item) => <option key={item} value={item}>{conditionLabel(item)}</option>)}</select></label><label className="model-select">Model<select value={model} onChange={(event) => setModel(event.target.value)}>{initialData.models.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <div className="toolbar-context"><span>{conditionLabel(condition)}</span><span>{model.replaceAll("_", " ")}</span><span>{outcomeFilter === "all" ? "All outcomes" : outcomeFilter.toUpperCase()}</span></div>
+          <button className="button toolbar-filter" onClick={() => setFiltersOpen(true)}><Filter size={14} /> Filters</button>
         </div>
 
         <div className="content-grid">

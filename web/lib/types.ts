@@ -10,6 +10,8 @@ export type Prediction = {
   memoryProbability?: number;
 };
 
+export type TransformationStep = { id: string; label: string; parameters: Record<string, unknown>; parentId?: string; imageUrl?: string };
+
 export type GalleryImage = {
   id: string;
   baseId: string;
@@ -26,6 +28,7 @@ export type GalleryImage = {
   sha256: string;
   condition: string;
   conditionParameters: Record<string, unknown>;
+  transformChain: TransformationStep[];
   predictions: Prediction[];
 };
 
