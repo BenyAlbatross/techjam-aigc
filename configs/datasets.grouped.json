@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "merge_policy": "virtual_registry_only",
+  "datasets": [
+    {
+      "id": "elsa_1m_track1",
+      "name": "Elsa 1M Track1",
+      "repository": "elsaEU/ELSA1M_track1",
+      "revision": "199bf769e2ddb673d68442a9756212ddd204426a",
+      "status": "approved",
+      "roles": [
+        "ai_only_external_stress"
+      ],
+      "selected": true,
+      "license": "CC-BY-4.0",
+      "reason": "Rights-cleared generated-image cohort, but it has no packaged real class and cannot support balanced accuracy or AUROC alone.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "sid_set",
+      "name": "Sid Set",
+      "repository": "saberzl/SID_Set",
+      "revision": "dc03ead57929879319ce30a82bfcfb8d317b10bd",
+      "status": "approved",
+      "roles": [
+        "controlled_gate",
+        "larger_local_discovery_and_confirmation"
+      ],
+      "selected": true,
+      "license": "CC-BY-4.0",
+      "reason": null,
+      "sources": [
+        "public-baseline-robustness",
+        "trace-rx-parallel"
+      ],
+      "integration_note": "Approved for the existing evaluation role only; training expansion remains pending its separate audit."
+    },
+    {
+      "id": "community_forensics_eval",
+      "name": "Community Forensics Eval",
+      "repository": "OwensLab/CommunityForensics-Eval",
+      "revision": "7d4a74a88d2cac93b513c0853bf92c260eaceea0",
+      "status": "blocked",
+      "roles": [
+        "unassigned"
+      ],
+      "selected": false,
+      "license": "CC-BY-NC-SA-4.0",
+      "reason": "Non-commercial restriction is not cleared for a prize competition.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "data_draft",
+      "name": "Data Draft",
+      "repository": "Joshyxwa/data_draft",
+      "revision": "e800837135e10a2dca7cbfa49ecf0b5b68830537",
+      "status": "blocked",
+      "roles": [
+        "pipeline_smoke_test_only"
+      ],
+      "selected": false,
+      "license": "MIXED-OTHER",
+      "reason": "Contains 5,000 WildFake-derived files marked licence_audit_required; the card grants no aggregate reuse rights. The public Hub visibility also conflicts with the card's private-only restriction.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "social_media_robustness",
+      "name": "Social Media Robustness",
+      "repository": "danb21/social-media-robustness-sdxl-instantid",
+      "revision": "unavailable",
+      "status": "blocked",
+      "roles": [
+        "unassigned"
+      ],
+      "selected": false,
+      "license": "UNDECLARED",
+      "reason": "User deferred this gated benchmark.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "aigenbench_targeted",
+      "name": "AI-GenBench",
+      "repository": "https://huggingface.co/datasets/lrzpellegrini/AI-GenBench-fake_part",
+      "revision": null,
+      "status": "review",
+      "roles": [
+        "chronological_generator_evaluation"
+      ],
+      "selected": false,
+      "license": "UNDECLARED",
+      "reason": "Audit every constituent source and assign the sealed chronological window before acquisition.",
+      "sources": [
+        "trace-rx-parallel"
+      ]
+    },
+    {
+      "id": "aigc_detection_benchmark",
+      "name": "Aigc Detection Benchmark",
+      "repository": "TheKernel01/AIGC-Detection-Benchmark",
+      "revision": "c91d9024a5a77ef06e2ec681b53f9caf08675663",
+      "status": "review",
+      "roles": [
+        "generator_breadth_candidate"
+      ],
+      "selected": false,
+      "license": "APACHE-2.0-CLAIMED-BY-REPACK",
+      "reason": "The card aggregates 17 generator/real sources but does not document per-source image rights or a reproducible provenance chain.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "cifake",
+      "name": "Cifake",
+      "repository": "yanbax/CIFAKE_autotrain_compatible",
+      "revision": "f67ae8dedee6bb83e7523f6ce3b715a12147a200",
+      "status": "review",
+      "roles": [
+        "low_resolution_diagnostic"
+      ],
+      "selected": false,
+      "license": "MIT-CLAIMED-BY-REPACK",
+      "reason": "Useful 32x32 class-balanced diagnostic, but this is a third-party repack and the image-level rights chain must be confirmed from the original publisher.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "community_forensics_diversity",
+      "name": "Community Forensics",
+      "repository": "https://huggingface.co/datasets/OwensLab/CommunityForensics",
+      "revision": null,
+      "status": "review",
+      "roles": [
+        "optional_generator_diversity_training"
+      ],
+      "selected": false,
+      "license": "UNDECLARED",
+      "reason": "Optional indexed sample only; never download the approximately 1.08 TB corpus wholesale.",
+      "sources": [
+        "trace-rx-parallel"
+      ]
+    },
+    {
+      "id": "ntire_2026_train",
+      "name": "Ntire 2026 Train",
+      "repository": "deepfakesMSU/NTIRE-RobustAIGenDetection-train",
+      "revision": "700b6d08a3268b1e7a191306dec7321dd953b12f",
+      "status": "review",
+      "roles": [
+        "unassigned"
+      ],
+      "selected": false,
+      "license": "UNDECLARED",
+      "reason": "Dataset card has no license field or usage grant.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "synthbuster_plus",
+      "name": "Synthbuster Plus",
+      "repository": "marco-willi/synthbuster-plus",
+      "revision": "dbfb72f1ee96e953ee5cff80c58832fe89e1d2b5",
+      "status": "review",
+      "roles": [
+        "modern_generator_candidate"
+      ],
+      "selected": false,
+      "license": "UNDECLARED",
+      "reason": "Promising modern-generator mixture, but its Hub card declares no license or source-level usage grant.",
+      "sources": [
+        "public-baseline-robustness"
+      ]
+    },
+    {
+      "id": "wildfake_large",
+      "name": "WildFake",
+      "repository": "https://modelscope.cn/datasets/hy2628982280/WildFake/summary",
+      "revision": null,
+      "status": "review",
+      "roles": [
+        "larger_local_discovery_and_confirmation"
+      ],
+      "selected": false,
+      "license": "UNDECLARED",
+      "reason": "The organizer COCO val2017 / DALL-E Advanced demonstration split is forbidden.",
+      "sources": [
+        "trace-rx-parallel"
+      ]
+    }
+  ],
+  "groups": {
+    "approved": [
+      "elsa_1m_track1",
+      "sid_set"
+    ],
+    "review": [
+      "aigenbench_targeted",
+      "aigc_detection_benchmark",
+      "cifake",
+      "community_forensics_diversity",
+      "ntire_2026_train",
+      "synthbuster_plus",
+      "wildfake_large"
+    ],
+    "blocked": [
+      "community_forensics_eval",
+      "data_draft",
+      "social_media_robustness"
+    ],
+    "training_candidates": [
+      "sid_set",
+      "community_forensics_diversity",
+      "wildfake_large"
+    ],
+    "evaluation_only": [
+      "elsa_1m_track1",
+      "sid_set",
+      "aigenbench_targeted"
+    ]
+  },
+  "guardrail": "Grouping does not grant permission. Only approved datasets may be opened, copied, transformed, trained on, or benchmarked."
+}

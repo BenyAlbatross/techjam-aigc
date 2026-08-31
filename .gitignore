@@ -25,6 +25,10 @@ outputs/spark-a916-evaluation/data/**/*.png
 outputs/spark-a916-evaluation/data/**/*.jpg
 outputs/spark-a916-evaluation/data/**/*.jpeg
 .pixi/
+web/node_modules/
+web/.next/
+web/*.tsbuildinfo
+work/ad-hoc/
 work/data/
 work/manifests/
 work/predictions/

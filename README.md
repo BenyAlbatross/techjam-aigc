@@ -2,6 +2,8 @@
 
 Research and zero-fine-tuning baselines for robust detection of fully AI-generated still images under distribution shift.
 
+The integrated local evidence browser lives in `web/`. It presents canonical images as a gallery, traces known transformations and lineage, compares detector outputs, and supports isolated ad hoc testing.
+
 See [`TODO.md`](TODO.md) for prioritised next steps and acceptance gates.
 
 To continue the interrupted full public-gate run on another machine, follow

@@ -1,0 +1,33 @@
+[project]
+name = "techjam-aigc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "altair>=5.5",
+    "marimo>=0.24",
+    "numpy>=2.2",
+    "pandas>=2.3",
+    "pillow>=11.3",
+    "scikit-learn>=1.7",
+    "scipy>=1.15",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+]
+train = [
+    "huggingface-hub>=0.34",
+    "torch>=2.7",
+    "transformers>=4.56",
+    "wandb>=0.21",
+]
+
+[project.scripts]
+techjam-aigc = "techjam_aigc:main"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
