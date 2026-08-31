@@ -286,8 +286,8 @@ def save_memory_artifact(
             "backbone_model_id": backbone_model_id,
             "backbone_revision": backbone_revision,
             "manifest_sha256": manifest_sha256,
-            "history": history,
-            "coverage": asdict(coverage),
+            "history": _checkpoint_safe(history),
+            "coverage": _checkpoint_safe(asdict(coverage)),
         },
         path,
     )
@@ -301,7 +301,12 @@ def load_memory_artifact(
     expected_backbone_revision: str | None = None,
     expected_manifest_sha256: str | None = None,
 ) -> AuthenticMemory:
-    artifact = torch.load(path, map_location="cpu", weights_only=True)
+    # Artifacts written before metadata normalization can contain NumPy scalar
+    # reconstruction helpers. Keep weights-only loading and allowlist only the
+    # small set emitted by our own S3 serializer instead of falling back to
+    # unrestricted pickle loading.
+    with torch.serialization.safe_globals(_legacy_numpy_safe_globals()):
+        artifact = torch.load(path, map_location="cpu", weights_only=True)
     if artifact.get("stage") != "S3":
         raise ValueError("S4 requires a capacity-selected S3 memory artifact.")
     if expected_cache_sha256 and artifact.get("source_cache_sha256") != expected_cache_sha256:
@@ -323,6 +328,36 @@ def load_memory_artifact(
     )
     memory.requires_grad_(False)
     return memory
+
+
+def _checkpoint_safe(value: Any) -> Any:
+    """Convert metadata to primitives accepted by PyTorch's safe loader."""
+
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, Mapping):
+        return {key: _checkpoint_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_checkpoint_safe(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_checkpoint_safe(item) for item in value)
+    return value
+
+
+def _legacy_numpy_safe_globals() -> list[type | Any]:
+    """Return the narrowly scoped NumPy globals used by legacy S3 files."""
+
+    core = getattr(np, "_core", None)
+    dtypes = getattr(np, "dtypes", None)
+    allowed: list[type | Any] = [np.dtype]
+    if core is not None:
+        allowed.append(core.multiarray.scalar)
+    if dtypes is not None:
+        for name in ("Float64DType", "StrDType"):
+            dtype_class = getattr(dtypes, name, None)
+            if dtype_class is not None:
+                allowed.append(dtype_class)
+    return allowed
 
 
 def build_detection_optimizer(model: TraceRXM, config: OptimizerConfig) -> torch.optim.AdamW:

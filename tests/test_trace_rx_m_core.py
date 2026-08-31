@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 
@@ -197,7 +198,15 @@ def test_s1_cache_equivalence_and_s3_backbone_provenance(tmp_path) -> None:
 
     memory = AuthenticMemory(8, 6, 3)
     memory_path = tmp_path / "memory.pt"
-    coverage = CoverageMetrics(8, 3, 0.1, 0.2, 0.05, 0.1, {"camera-a": 0.1})
+    coverage = CoverageMetrics(
+        8,
+        3,
+        np.float64(0.1),
+        np.float64(0.2),
+        np.float64(0.05),
+        np.float64(0.1),
+        {"camera-a": np.float64(0.1)},
+    )
     save_memory_artifact(
         memory,
         memory_path,
@@ -205,7 +214,7 @@ def test_s1_cache_equivalence_and_s3_backbone_provenance(tmp_path) -> None:
         backbone_model_id="test/backbone",
         backbone_revision="immutable",
         manifest_sha256="manifest",
-        history=[],
+        history=[{"loss": np.float64(0.25)}],
         coverage=coverage,
     )
     loaded = load_memory_artifact(
@@ -215,6 +224,9 @@ def test_s1_cache_equivalence_and_s3_backbone_provenance(tmp_path) -> None:
         expected_manifest_sha256="manifest",
     )
     assert loaded.dimension == 6
+    with torch.serialization.safe_globals([]):
+        saved = torch.load(memory_path, map_location="cpu", weights_only=True)
+    assert saved["history"] == [{"loss": 0.25}]
     with pytest.raises(ValueError, match="backbone_revision"):
         load_memory_artifact(memory_path, expected_backbone_revision="different")
 
