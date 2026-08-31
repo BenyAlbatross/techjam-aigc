@@ -38,3 +38,6 @@ work/cleanup-inventory.json
 *.zip
 *.pth
 *.pt
+
+# Joel's eval work: local data and caches are not committed
+evals/data/
