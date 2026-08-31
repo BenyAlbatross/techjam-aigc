@@ -35,4 +35,11 @@ export type GalleryPayload = {
   conditions: string[];
   totalImages: number;
   source: "local-benchmark" | "empty";
+  analytics: AnalyticsPayload;
+  datasets: DatasetRecord[];
 };
+
+export type ConfusionCounts = { tp: number; tn: number; fp: number; fn: number; total: number };
+export type ConditionMetric = { model: string; condition: string; confusion: ConfusionCounts; mismatchRate: number; falsePositiveRate: number; falseNegativeRate: number; balancedAccuracy: number; meanProbabilityAi: number; cleanMismatchCorrelation: number | null; mismatchLift: number | null; newlyWrongRate: number | null; recoveredRate: number | null };
+export type AnalyticsPayload = { metrics: ConditionMetric[]; evaluatedRows: number; samplesPerSlice: number; updatedAt: string | null };
+export type DatasetRecord = { id: string; name: string; repository: string; status: "approved" | "review" | "blocked"; roles: string[]; selected: boolean; license: string; reason: string | null };

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {
   ArrowRight,
+  BarChart3,
   ChevronDown,
   CircleDot,
   Database,
@@ -20,6 +21,10 @@ import {
 } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import type { GalleryImage, GalleryPayload, Prediction, Truth } from "@/lib/types";
+import { AnalyticsDashboard, DatasetCatalog, ModelCatalog } from "@/components/dashboard-views";
+
+type View = "gallery" | "datasets" | "models" | "analytics";
+type Outcome = "all" | "mismatch" | "correct" | "fp" | "fn" | "tp" | "tn";
 
 const truthLabels: Record<Truth, string> = { real: "Authentic", ai: "AI-generated", unknown: "Unknown" };
 
@@ -39,6 +44,12 @@ function conditionLabel(condition: string) {
   if (condition.startsWith("resize_")) return `Resize · ${condition.slice(7)}×`;
   if (condition.startsWith("noise_sigma")) return `Noise · σ${condition.slice(11)}`;
   return condition.replaceAll("_", " ");
+}
+
+function outcome(image: GalleryImage, prediction?: Prediction) {
+  if (!prediction || image.truth === "unknown") return null;
+  if (image.truth === "ai") return prediction.decision === "ai" ? "tp" : "fn";
+  return prediction.decision === "ai" ? "fp" : "tn";
 }
 
 function conditionedUrl(image: GalleryImage, condition: string) {
@@ -186,6 +197,8 @@ function TestPanel({ models }: { models: string[] }) {
 }
 
 export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload }) {
+  const [view, setView] = useState<View>("gallery");
+  const [outcomeFilter, setOutcomeFilter] = useState<Outcome>("all");
   const [selectedId, setSelectedId] = useState(initialData.images[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [truth, setTruth] = useState<Truth | "all">("all");
@@ -194,10 +207,13 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
   const deferredQuery = useDeferredValue(query.toLowerCase());
   const filtered = useMemo(() => initialData.images.filter((image) => {
     const matchesTruth = truth === "all" || image.truth === truth;
+    const prediction = image.predictions.find((item) => item.model === model && item.condition === condition);
+    const result = outcome(image, prediction);
+    const matchesOutcome = outcomeFilter === "all" || (outcomeFilter === "mismatch" ? result === "fp" || result === "fn" : outcomeFilter === "correct" ? result === "tp" || result === "tn" : result === outcomeFilter);
     const haystack = `${image.id} ${image.sourceFamily} ${image.generatorFamily}`.toLowerCase();
-    return matchesTruth && haystack.includes(deferredQuery);
-  }), [deferredQuery, initialData.images, truth]);
-  const selected = initialData.images.find((image) => image.id === selectedId) ?? filtered[0] ?? initialData.images[0];
+    return matchesTruth && matchesOutcome && haystack.includes(deferredQuery);
+  }), [condition, deferredQuery, initialData.images, model, outcomeFilter, truth]);
+  const selected = filtered.find((image) => image.id === selectedId) ?? filtered[0] ?? initialData.images[0];
 
   if (!selected) {
     return <main className="loading-shell"><ImagePlus size={28} /><p>No local gallery manifest found.</p><code>work/manifests/sid_set_1000x2_canonical.json</code></main>;
@@ -216,18 +232,20 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
       </header>
 
       <aside className="filter-rail">
-        <div className="rail-icon active"><Grid3X3 size={18} /><span>Gallery</span></div>
-        <div className="rail-icon"><Layers3 size={18} /><span>Datasets</span></div>
-        <div className="rail-icon"><FlaskConical size={18} /><span>Models</span></div>
+        <button className={view === "gallery" ? "rail-icon active" : "rail-icon"} onClick={() => setView("gallery")}><Grid3X3 size={18} /><span>Gallery</span></button>
+        <button className={view === "datasets" ? "rail-icon active" : "rail-icon"} onClick={() => setView("datasets")}><Layers3 size={18} /><span>Datasets</span></button>
+        <button className={view === "models" ? "rail-icon active" : "rail-icon"} onClick={() => setView("models")}><FlaskConical size={18} /><span>Models</span></button>
+        <button className={view === "analytics" ? "rail-icon active" : "rail-icon"} onClick={() => setView("analytics")}><BarChart3 size={18} /><span>Analytics</span></button>
       </aside>
 
-      <section className="workspace">
+      <section className={view === "gallery" ? "workspace" : "workspace wide-workspace"}>
+        {view === "gallery" ? <>
         <div className="toolbar">
           <label className="search-box"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search source or sample ID" /></label>
           <div className="segmented" aria-label="Filter by truth">
             {(["all", "real", "ai"] as const).map((value) => <button key={value} className={truth === value ? "active" : ""} onClick={() => setTruth(value)}>{value === "all" ? "All" : truthLabels[value]}</button>)}
           </div>
-          <label className="model-select">Condition<select value={condition} onChange={(event) => setCondition(event.target.value)}>{initialData.conditions.map((item) => <option key={item} value={item}>{conditionLabel(item)}</option>)}</select></label><label className="model-select">Model<select value={model} onChange={(event) => setModel(event.target.value)}>{initialData.models.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label className="model-select">Outcome<select value={outcomeFilter} onChange={(event) => setOutcomeFilter(event.target.value as Outcome)}><option value="all">All outcomes</option><option value="mismatch">Mismatches</option><option value="correct">Correct</option><option value="fp">False positives</option><option value="fn">False negatives</option><option value="tp">True positives</option><option value="tn">True negatives</option></select></label><label className="model-select">Condition<select value={condition} onChange={(event) => setCondition(event.target.value)}>{initialData.conditions.map((item) => <option key={item} value={item}>{conditionLabel(item)}</option>)}</select></label><label className="model-select">Model<select value={model} onChange={(event) => setModel(event.target.value)}>{initialData.models.map((item) => <option key={item}>{item}</option>)}</select></label>
         </div>
 
         <div className="content-grid">
@@ -247,9 +265,10 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
             <Metadata image={selected} condition={condition} />
           </section>
         </div>
+        </> : view === "analytics" ? <AnalyticsDashboard metrics={initialData.analytics.metrics} models={initialData.models} conditions={initialData.conditions} model={model} condition={condition} onModel={setModel} onCondition={setCondition} onDrilldown={(next) => { setOutcomeFilter(next); setView("gallery"); }} evaluatedRows={initialData.analytics.evaluatedRows} updatedAt={initialData.analytics.updatedAt} /> : view === "datasets" ? <DatasetCatalog datasets={initialData.datasets} /> : <ModelCatalog metrics={initialData.analytics.metrics} models={initialData.models} onOpen={(nextModel) => { setModel(nextModel); setView("analytics"); }} />}
       </section>
 
-      <aside className="inspector">
+      {view === "gallery" ? <aside className="inspector">
         <div className="inspector-heading"><div><span className="eyebrow">Model evidence</span><h1>Detector output</h1></div><span className="live-dot">Fixed thresholds</span></div>
         {selectedPrediction ? (
           <div className="primary-score">
@@ -259,9 +278,10 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
             <div className="verdict"><span>Verdict</span><strong>{selectedPrediction.decision === "ai" ? "AI-generated" : "Authentic"}</strong><small>{selectedPrediction.model.replaceAll("_", " ")}</small></div>
           </div>
         ) : <div className="empty-score">No prediction shard for this image.</div>}
-        {scoreDelta !== null && condition !== "clean" ? <div className="delta-callout"><span>Clean to transformed</span><strong>{scoreDelta >= 0 ? "+" : ""}{percentage(scoreDelta)}</strong><small>{selectedPrediction?.decision !== cleanPrediction?.decision ? "Decision flipped" : "Decision stable"}</small></div> : null}\n        <div className="all-scores"><div className="subheading"><span>All model outputs</span><small>{conditionScores.length} available</small></div>{conditionScores.map((prediction) => <ScoreRow key={prediction.model} prediction={prediction} featured={prediction.model === model} />)}</div>
+        {scoreDelta !== null && condition !== "clean" ? <div className="delta-callout"><span>Clean to transformed</span><strong>{scoreDelta >= 0 ? "+" : ""}{percentage(scoreDelta)}</strong><small>{selectedPrediction?.decision !== cleanPrediction?.decision ? "Decision flipped" : "Decision stable"}</small></div> : null}
+        <div className="all-scores"><div className="subheading"><span>All model outputs</span><small>{conditionScores.length} available</small></div>{conditionScores.map((prediction) => <ScoreRow key={prediction.model} prediction={prediction} featured={prediction.model === model} />)}</div>
         <TestPanel models={initialData.models} />
-      </aside>
+      </aside> : null}
     </main>
   );
 }

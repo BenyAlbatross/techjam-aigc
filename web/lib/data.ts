@@ -2,7 +2,8 @@ import "server-only";
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { GalleryImage, GalleryPayload, Prediction } from "@/lib/types";
+import type { GalleryImage, GalleryPayload, Prediction, Truth } from "@/lib/types";
+import { loadAnalytics } from "@/lib/analytics";
 
 const PROJECT_ROOT = path.resolve(process.cwd(), "..");
 const MANIFEST = path.join(PROJECT_ROOT, "work/manifests/sid_set_1000x2_canonical.json");
@@ -54,6 +55,7 @@ export async function loadGallery(): Promise<GalleryPayload> {
       samples: ManifestSample[];
     };
     const selected = manifest.samples.slice(0, LIMIT);
+    const truthBySource = new Map<string, Truth>(manifest.samples.map((sample) => [sample.source_sample_id ?? sample.sample_id, sample.truth ?? (sample.label === 1 ? "ai" : "real")]));
     const canonicalBySource = new Map(
       selected.map((sample) => [sample.source_sample_id ?? sample.sample_id, sample.sample_id]),
     );
@@ -86,6 +88,8 @@ export async function loadGallery(): Promise<GalleryPayload> {
       }
     })));
 
+    const { analytics, datasets } = await loadAnalytics(PROJECT_ROOT, modelDirs, CONDITION_ORDER, truthBySource);
+
     const images: GalleryImage[] = selected.map((sample) => ({
       id: sample.sample_id,
       baseId: sample.base_id ?? sample.source_sample_id ?? sample.sample_id,
@@ -111,9 +115,11 @@ export async function loadGallery(): Promise<GalleryPayload> {
       conditions: CONDITION_ORDER.filter((condition) => conditions.has(condition)),
       totalImages: manifest.samples.length,
       source: "local-benchmark",
+      analytics,
+      datasets,
     };
   } catch {
-    return { images: [], models: [], conditions: [], totalImages: 0, source: "empty" };
+    return { images: [], models: [], conditions: [], totalImages: 0, source: "empty", analytics: { metrics: [], evaluatedRows: 0, samplesPerSlice: 0, updatedAt: null }, datasets: [] };
   }
 }
 
