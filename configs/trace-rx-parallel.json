@@ -54,7 +54,7 @@
     "wandb_run_name": "dinov2-base-parallel"
   },
   "hub": {
-    "repo_id": "Joshyxwa/trace-rx-parallel-techjam2026",
+    "repo_id": "albagon/trace-rx-parallel-techjam2026",
     "private": true,
     "revision": "main",
     "path_prefix": "trace-rx-parallel-techjam2026",

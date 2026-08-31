@@ -34,7 +34,7 @@ uv sync --group train
 `configs/trace-rx-parallel.json` pins the public Apache-2.0
 `facebook/dinov2-base` revision and targets its `query` and `value` projections
 with LoRA. It also configures online W&B tracking and the private model repo
-`Joshyxwa/trace-rx-parallel-techjam2026`. Change `hub.repo_id` if the active
+`albagon/trace-rx-parallel-techjam2026`. Change `hub.repo_id` if the active
 Hugging Face account does not own that namespace. Credentials stay in the
 Hugging Face and W&B credential stores; do not place tokens in the config.
 
