@@ -383,6 +383,7 @@ def _train_detection_variant(
     step_offset: int,
     resume: bool,
 ):
+    torch = _torch()
     from techjam_aigc.trace_rx_parallel.training import (
         authentic_subtype_regressed,
         build_detection_optimizer,
@@ -390,7 +391,7 @@ def _train_detection_variant(
         save_detector_checkpoint,
         train_detection_epoch,
     )
-    from techjam_aigc.trace_rx_m.training import seed_everything
+    from techjam_aigc.trace_rx_m.training import EpochMetrics, seed_everything
 
     model.to(device)
     optimizer = build_detection_optimizer(model, config.optimizer)
