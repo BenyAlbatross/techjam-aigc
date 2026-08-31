@@ -8,13 +8,16 @@ from torch import nn
 
 from techjam_aigc.trace_rx_m.config import OptimizerConfig
 from techjam_aigc.trace_rx_m.memory import AuthenticMemory
-from techjam_aigc.trace_rx_m.training import build_detection_optimizer
+from techjam_aigc.trace_rx_m.training import EpochMetrics, build_detection_optimizer
 from techjam_aigc.trace_rx_parallel.config import (
     ParallelHeadConfig,
     TraceRXParallelConfig,
 )
 from techjam_aigc.trace_rx_parallel.model import TraceRXParallel
-from techjam_aigc.trace_rx_parallel.training import save_detector_checkpoint
+from techjam_aigc.trace_rx_parallel.training import (
+    authentic_subtype_regressed,
+    save_detector_checkpoint,
+)
 
 
 class TinyEncoder(nn.Module):
@@ -121,3 +124,13 @@ def test_parallel_checkpoint_is_architecture_tagged(tmp_path) -> None:
     assert "global_classifier.4.weight" in artifact["model_state"]
     assert "memory_classifier.4.weight" in artifact["model_state"]
     assert "fusion.weight" in artifact["model_state"]
+
+
+def test_authentic_subtype_regression_requires_hidden_worst_group_reversal() -> None:
+    def metrics(mean: float, worst: float) -> EpochMetrics:
+        return EpochMetrics(1.0, 1.0, 0.0, 0.0, mean, worst, {}, {})
+
+    previous = metrics(0.20, 0.40)
+    assert authentic_subtype_regressed(previous, metrics(0.19, 0.41))
+    assert not authentic_subtype_regressed(previous, metrics(0.21, 0.41))
+    assert not authentic_subtype_regressed(previous, metrics(0.19, 0.39))

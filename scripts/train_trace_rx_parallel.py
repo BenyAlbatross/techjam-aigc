@@ -50,6 +50,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--resume-detection",
+        action="store_true",
+        help="Resume S4 from the latest validated local periodic checkpoint.",
+    )
     return parser.parse_args()
 
 
@@ -376,14 +381,18 @@ def _train_detection_variant(
     tracker,
     publisher,
     step_offset: int,
+    resume: bool,
 ):
     from techjam_aigc.trace_rx_parallel.training import (
+        authentic_subtype_regressed,
         build_detection_optimizer,
         cosine_warmup_scheduler,
         save_detector_checkpoint,
         train_detection_epoch,
     )
+    from techjam_aigc.trace_rx_m.training import seed_everything
 
+    model.to(device)
     optimizer = build_detection_optimizer(model, config.optimizer)
     scheduler = cosine_warmup_scheduler(
         optimizer,
@@ -396,8 +405,61 @@ def _train_detection_variant(
     checkpoint_directory = output / "checkpoints" / variant
     best_path = checkpoint_directory / "best_detector.pt"
     final_path = checkpoint_directory / "final_detector.pt"
-    for epoch_index in range(config.optimizer.detection_epochs):
+    start_epoch = 0
+    if resume:
+        periodic_paths = sorted(checkpoint_directory.glob("epoch-*.pt"))
+        if periodic_paths:
+            resume_path = periodic_paths[-1]
+            artifact = torch.load(resume_path, map_location="cpu", weights_only=True)
+            expected_mode = "frozen" if variant == "frozen" else "lora"
+            expected = {
+                "stage": "S4",
+                "architecture": "trace-rx-parallel",
+                "encoder_mode": expected_mode,
+                "source_memory_sha256": memory_sha256,
+                "manifest_sha256": manifest_sha256,
+                "config": config.to_dict(),
+            }
+            mismatches = [
+                field for field, value in expected.items() if artifact.get(field) != value
+            ]
+            if mismatches:
+                raise ValueError(
+                    f"Cannot resume {variant} from {resume_path}: mismatched {mismatches}."
+                )
+            incompatible = model.load_state_dict(artifact["model_state"], strict=False)
+            invalid_missing = [
+                name for name in incompatible.missing_keys if not name.startswith("encoder.")
+            ]
+            if incompatible.unexpected_keys or invalid_missing:
+                raise ValueError(
+                    "Resume checkpoint state mismatch; "
+                    f"unexpected={list(incompatible.unexpected_keys)}, "
+                    f"missing={invalid_missing}."
+                )
+            optimizer.load_state_dict(artifact["optimizer_state"])
+            scheduler.load_state_dict(artifact["scheduler_state"])
+            history = [EpochMetrics(**row) for row in artifact.get("history", [])]
+            start_epoch = int(artifact["epoch"])
+            if start_epoch != len(history):
+                raise ValueError("Resume checkpoint epoch does not match its metric history.")
+            if not best_path.is_file():
+                raise FileNotFoundError("Resume requires the matching local best checkpoint.")
+            best_artifact = torch.load(best_path, map_location="cpu", weights_only=True)
+            best_selection = best_artifact.get("selection_metric") or {}
+            best_epoch = int(best_artifact["epoch"])
+            best_selection_auc = float(best_selection["value"])
+            publisher.upload_best(best_path, epoch=best_epoch, variant=variant)
+            tracker.summarize({
+                f"{variant}/resumed_from_epoch": start_epoch,
+                f"{variant}/resumed_from_checkpoint": resume_path.name,
+            })
+
+    stopped_early = False
+    rejected_epoch = None
+    for epoch_index in range(start_epoch, config.optimizer.detection_epochs):
         epoch = epoch_index + 1
+        seed_everything(config.data.seed + epoch_index)
         dataset.set_epoch(epoch_index)
         sampler.set_epoch(epoch_index)
         metrics = train_detection_epoch(
@@ -409,13 +471,26 @@ def _train_detection_variant(
             optimizer_config=config.optimizer,
             device=device,
         )
-        if history and metrics.mean_authentic_loss < history[-1].mean_authentic_loss and (
-            metrics.worst_authentic_subtype_loss
-            > history[-1].worst_authentic_subtype_loss
-        ):
-            raise RuntimeError(
-                f"S4 {variant} gate failed: worst authentic-subtype loss rose while mean fell."
+        if history and authentic_subtype_regressed(history[-1], metrics):
+            stopped_early = True
+            rejected_epoch = epoch
+            tracker.log(
+                {
+                    f"{variant}/early_stop/triggered": 1,
+                    f"{variant}/early_stop/rejected_epoch": epoch,
+                    f"{variant}/early_stop/candidate_mean_authentic_loss": (
+                        metrics.mean_authentic_loss
+                    ),
+                    f"{variant}/early_stop/candidate_worst_authentic_subtype_loss": (
+                        metrics.worst_authentic_subtype_loss
+                    ),
+                },
+                step=step_offset + epoch,
             )
+            rollback_path = checkpoint_directory / f"epoch-{epoch - 1:04d}.pt"
+            rollback = torch.load(rollback_path, map_location="cpu", weights_only=True)
+            model.load_state_dict(rollback["model_state"], strict=False)
+            break
         history.append(metrics)
         selection_aucs = _evaluate_aucs(model, selection_loader, device)
         log_values = _epoch_log_values(
@@ -479,15 +554,25 @@ def _train_detection_variant(
         memory_artifact_sha256=memory_sha256,
         manifest_sha256=manifest_sha256,
         history=history,
-        epoch=config.optimizer.detection_epochs,
+        epoch=len(history),
         selection_metric={
             "name": "final_epoch",
             "mode": "last",
-            "value": config.optimizer.detection_epochs,
-            "epoch": config.optimizer.detection_epochs,
+            "value": len(history),
+            "epoch": len(history),
         },
     )
-    return best_path, final_path, best_epoch, best_selection_auc
+    return (
+        best_path,
+        final_path,
+        best_epoch,
+        best_selection_auc,
+        {
+            "triggered": stopped_early,
+            "rejected_epoch": rejected_epoch,
+            "accepted_epochs": len(history),
+        },
+    )
 
 
 def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> None:
@@ -601,7 +686,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             f"dataset/{key}": value for key, value in dataset_metadata.items()
         })
         publisher = HubCheckpointPublisher(config.hub, run_id=tracker.run_id)
-        best_variant_path, final_variant_path, best_epoch, best_selection_auc = (
+        best_variant_path, final_variant_path, best_epoch, best_selection_auc, lora_stop = (
             _train_detection_variant(
                 model=model,
                 loader=loader,
@@ -617,6 +702,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
                 tracker=tracker,
                 publisher=publisher,
                 step_offset=0,
+                resume=args.resume_detection,
             )
         )
         gate_aucs = _evaluate_aucs(model, gate_loader, device)
@@ -632,6 +718,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
         fallback_used = False
         selected_variant = "lora"
         frozen_gate_aucs = None
+        frozen_stop = None
         if auc < config.data.held_out_min_roc_auc:
             # Pre-declared failure path: discard LoRA and retrain only the heads
             # against the same memory. Never retune adapters on this held-out result.
@@ -643,7 +730,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             model = TraceRXParallel(DinoV3PatchEncoder(frozen_config), memory, config.head)
             model.configure_for_detection(frozen_encoder_fallback=True)
             tracker.watch(model)
-            best_variant_path, final_variant_path, best_epoch, best_selection_auc = (
+            best_variant_path, final_variant_path, best_epoch, best_selection_auc, frozen_stop = (
                 _train_detection_variant(
                     model=model,
                     loader=loader,
@@ -659,6 +746,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
                     tracker=tracker,
                     publisher=publisher,
                     step_offset=config.optimizer.detection_epochs,
+                    resume=args.resume_detection,
                 )
             )
             gate_aucs = _evaluate_aucs(model, gate_loader, device)
@@ -694,6 +782,10 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             "threshold": config.data.held_out_min_roc_auc,
             "frozen_encoder_fallback": fallback_used,
             "selected_variant": selected_variant,
+            "robustness_early_stop": {
+                "lora": lora_stop,
+                "frozen": frozen_stop,
+            },
             "best_checkpoint": {
                 "path": best_path.name,
                 "epoch": best_epoch,
@@ -730,6 +822,9 @@ def run_detection(args: argparse.Namespace, config: TraceRXParallelConfig) -> No
             "selected_variant": selected_variant,
             "best/epoch": best_epoch,
             "best/development_fused_roc_auc": best_selection_auc,
+            "robustness_early_stop": bool(
+                (frozen_stop if selected_variant == "frozen" else lora_stop)["triggered"]
+            ),
             **{
                 f"held_out_generator/{branch}_roc_auc": value
                 for branch, value in gate_aucs.items()

@@ -21,6 +21,16 @@ from techjam_aigc.trace_rx_m.training import (
 from .model import TraceRXParallel
 
 
+def authentic_subtype_regressed(previous: EpochMetrics, candidate: EpochMetrics) -> bool:
+    """Flag a mean-loss gain that hides a worse authentic source subtype."""
+
+    return (
+        candidate.mean_authentic_loss < previous.mean_authentic_loss
+        and candidate.worst_authentic_subtype_loss
+        > previous.worst_authentic_subtype_loss
+    )
+
+
 def save_detector_checkpoint(
     model: TraceRXParallel,
     path: Path,
@@ -109,6 +119,7 @@ def load_detector_checkpoint(
 
 
 __all__ = (
+    "authentic_subtype_regressed",
     "build_detection_optimizer",
     "cosine_warmup_scheduler",
     "load_detector_checkpoint",

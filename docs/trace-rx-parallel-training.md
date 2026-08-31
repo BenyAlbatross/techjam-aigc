@@ -109,6 +109,11 @@ uv run --group train python scripts/train_trace_rx_parallel.py \
   --output artifacts/trace-rx-parallel
 ```
 
+If S4 is interrupted after a periodic checkpoint, rerun the detection command
+with `--resume-detection`. Resume validates the architecture, encoder mode,
+configuration, manifest hash, and authentic-memory hash before restoring model,
+optimizer, scheduler, and metric history state.
+
 Export endpoint scores for S5/S6:
 
 ```bash
@@ -144,6 +149,13 @@ trace-rx-parallel-techjam2026/final_detector.pt
 The same files are retained below the W&B run ID, along with the selected
 memory, config, split audit, manifest, and validity report. Missing or empty
 files fail the upload rather than producing a nominally successful run.
+
+The authentic-source robustness gate uses deterministic early stopping: when a
+candidate epoch lowers mean authentic loss but raises the worst source-subtype
+loss, that candidate is rejected and the model rolls back to the last accepted
+periodic checkpoint. The validity report records the rejected and accepted
+epoch counts; a source-group reversal therefore cannot silently become the
+published final model.
 
 W&B records training losses, authentic-subtype losses, gradient conflicts,
 learning rates, global/memory/fused dev AUC, one-time held-out AUC, fusion
