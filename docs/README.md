@@ -3,6 +3,7 @@
 ## Contents
 
 - [Hackathon problem statement and webinar clarifications](problem-statement.md)
+- [Devpost written project description with references (TRACE LENS)](writeup.md)
 - [AIGC feature robustness laboratory](feature-robustness-lab.md)
 - [Frequency and camera-signal forensics notebook](signal-forensics-eda.md)
 - [Feature selection and transform-robustness teammate report](feature-selection-robustness-report.html)
@@ -14,6 +15,7 @@
 - [TRACE-RX-M WildFake and AIGIBench external generalization evaluation](trace-rx-m-external-generalization-evaluation.md)
 - [TRACE-RX-M training audit and visual error-analysis report](trace-rx-m-training-audit.md)
 - [Canonical detector evaluation metrics](evaluation-metrics.md)
+- [Generator coverage benchmark plan (Gen 1–8 taxonomy, minimal-footprint acquisition)](generator-coverage-benchmark-plan.md)
 - [TRACE-RX-M v2 TechJam, WildFake, and EvalGEN benchmark evaluation](trace-rx-m-v2-benchmark-evaluation.md)
 - [TRACE-RX-Alternative3 bias register (B1–B18, M1–M4, S1–S3)](method_proposal/trace-rx-alternative3-bias-register.md)
 - [AIGC exploration and implementation plan](aigc-exploration-implementation-plan.md)
