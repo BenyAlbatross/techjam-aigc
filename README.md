@@ -4,7 +4,7 @@
 
 This repository implements a robust binary detector for **purely AI-generated versus authentic images** for TikTok TechJam 2026. The detector must generalize across generator families (GAN → diffusion → flow → autoregressive → unified multimodal) and survive common real-world transformations (JPEG recompression, blur, resize, noise, color jitter, crop).
 
-The final model is **TRACE-RX-M v2** (`src/techjam_aigc/trace_rx_m`), an authentic-reference memory detector over a DINOv3 ViT-B/16 backbone: each semantic patch is compared against 2,048 learned authentic prototypes, and residual plus retrieval evidence feeds a compact classifier head. The repository also contains the **three-branch detector** (`src/techjam_aigc/three_branch`) as a research extension. The full architecture, training methodology, results, and references are in the [written project description](docs/writeup.md); the method proposal, bias register, evaluation contracts, and research reports live under [`docs/`](docs/README.md), and the authoritative challenge brief is [`docs/problem-statement.md`](docs/problem-statement.md).
+The final model is **TRACE-RX-M v2** (`src/techjam_aigc/trace_rx_m`), an authentic-reference memory detector over a DINOv3 ViT-B/16 backbone: each semantic patch is compared against 2,048 learned authentic prototypes, and residual plus retrieval evidence feeds a compact classifier head. The full architecture, training methodology, results, and references are in the writeup.
 
 Challenge guardrails respected throughout: public/licensed data only, final model under 2B parameters, no reuse of existing pretrained AIGC detectors, no watermark reliance, and a directory-inference entry point emitting `image_path`/`pred` JSON records.
 
