@@ -102,6 +102,7 @@ export async function loadGallery(): Promise<GalleryPayload> {
     const { analytics, datasets } = await loadAnalytics(PROJECT_ROOT, modelDirs, CONDITION_ORDER, truthBySource);
     const externalMetrics = traceResults.metrics as ConditionMetric[];
     analytics.metrics.push(...externalMetrics);
+    const availableModels = [...new Set([...modelDirs, ...externalMetrics.map((item) => item.model)])].sort();
     analytics.evaluatedRows += traceResults.evaluatedRows;
     analytics.samplesPerSlice = Math.max(analytics.samplesPerSlice, ...externalMetrics.map((item) => item.confusion.total));
     analytics.updatedAt = new Date(Math.max(
@@ -131,7 +132,7 @@ export async function loadGallery(): Promise<GalleryPayload> {
 
     return {
       images,
-      models: modelDirs,
+      models: availableModels,
       conditions: CONDITION_ORDER.filter((condition) => conditions.has(condition)),
       totalImages: manifest.samples.length,
       source: "local-benchmark",
