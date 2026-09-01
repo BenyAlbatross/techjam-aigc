@@ -15,3 +15,11 @@ wandb/
 __marimo__/
 
 data/
+
+# Frontend build outputs and dependencies.
+web/.next/
+web/node_modules/
+web/*.tsbuildinfo
+
+# Local model weights, uploads, and prediction outputs.
+work/
