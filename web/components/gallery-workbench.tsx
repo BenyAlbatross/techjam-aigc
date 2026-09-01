@@ -221,6 +221,8 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
     const haystack = `${image.id} ${image.sourceFamily} ${image.generatorFamily}`.toLowerCase();
     return matchesTruth && matchesOutcome && haystack.includes(deferredQuery);
   }), [deferredQuery, galleryConditions, galleryModels, initialData.images, outcomeFilter, truth]);
+  const analyticsModels = [...new Set(initialData.analytics.metrics.map((item) => item.model))].sort();
+  const analyticsConditions = [...new Set(initialData.analytics.metrics.map((item) => item.condition))].sort();
   const selected = filtered.find((image) => image.id === selectedId) ?? filtered[0] ?? initialData.images[0];
 
   if (!selected) {
@@ -281,7 +283,7 @@ export function GalleryWorkbench({ initialData }: { initialData: GalleryPayload 
             <Metadata image={selected} condition={condition} />
           </section>
         </div>
-        </> : view === "analytics" ? <AnalyticsDashboard metrics={initialData.analytics.metrics} models={initialData.models} conditions={initialData.conditions} model={model} condition={condition} onModel={setModel} onCondition={setCondition} onDrilldown={(next) => { setOutcomeFilter(next); setView("gallery"); }} evaluatedRows={initialData.analytics.evaluatedRows} updatedAt={initialData.analytics.updatedAt} /> : view === "datasets" ? <DatasetCatalog datasets={initialData.datasets} /> : <ModelCatalog metrics={initialData.analytics.metrics} models={initialData.models} onOpen={(nextModel) => { setModel(nextModel); setView("analytics"); }} />}
+        </> : view === "analytics" ? <AnalyticsDashboard metrics={initialData.analytics.metrics} models={analyticsModels} conditions={analyticsConditions} model={model} condition={condition} onModel={setModel} onCondition={setCondition} onDrilldown={(next) => { setOutcomeFilter(next); setView("gallery"); }} evaluatedRows={initialData.analytics.evaluatedRows} updatedAt={initialData.analytics.updatedAt} /> : view === "datasets" ? <DatasetCatalog datasets={initialData.datasets} /> : <ModelCatalog metrics={initialData.analytics.metrics} models={analyticsModels} onOpen={(nextModel) => { setModel(nextModel); setView("analytics"); }} />}
       </section>
 
       {view === "gallery" ? <aside className="inspector">

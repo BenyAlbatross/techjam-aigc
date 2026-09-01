@@ -32,7 +32,7 @@ export function AnalyticsDashboard({ metrics, models, conditions, model, conditi
   const selectedMetrics = useMemo(() => metrics.filter((item) => selectedModels.includes(item.model) && selectedConditions.includes(item.condition)), [metrics, selectedConditions, selectedModels]);
   const c = useMemo(() => selectedMetrics.reduce((sum, item) => ({ tp: sum.tp + item.confusion.tp, tn: sum.tn + item.confusion.tn, fp: sum.fp + item.confusion.fp, fn: sum.fn + item.confusion.fn, total: sum.total + item.confusion.total }), { tp: 0, tn: 0, fp: 0, fn: 0, total: 0 }), [selectedMetrics]);
   const positives = c.tp + c.fn, negatives = c.tn + c.fp;
-  const balancedAccuracy = ((positives ? c.tp / positives : 0) + (negatives ? c.tn / negatives : 0)) / 2;
+  const balancedAccuracy = positives && negatives ? (c.tp / positives + c.tn / negatives) / 2 : null;
   const visibleMetrics = [...selectedMetrics].sort((a, b) => b.mismatchRate - a.mismatchRate);
   const reset = () => { setSelectedModels(models); setSelectedConditions(conditions); };
 
@@ -45,7 +45,7 @@ export function AnalyticsDashboard({ metrics, models, conditions, model, conditi
       <button className="reset-filters" onClick={reset}><RotateCcw size={14} /> Reset</button>
       <span className="filter-scope">{selectedMetrics.length} slices · {c.total.toLocaleString()} scored rows</span>
     </div>
-    <div className="source-strip"><strong>Source</strong><span>local SID Set prediction shards</span><strong>Available coverage</strong><span>{evaluatedRows.toLocaleString()} rows</span><strong>Updated</strong><span>{updatedAt ? new Date(updatedAt).toLocaleString() : "Unknown"}</span></div>
+    <div className="source-strip"><strong>Source</strong><span>local SID Set shards + imported TRACE-RX evaluation</span><strong>Available coverage</strong><span>{evaluatedRows.toLocaleString()} rows</span><strong>Updated</strong><span>{updatedAt ? new Date(updatedAt).toLocaleString() : "Unknown"}</span></div>
     <div className="kpi-grid">
       <article><span>Balanced accuracy</span><strong>{pct(balancedAccuracy)}</strong><small>selected slices</small></article>
       <article><span>Mismatches</span><strong>{(c.fp + c.fn).toLocaleString()}</strong><small>{pct(c.total ? (c.fp + c.fn) / c.total : 0)} of selected rows</small></article>
@@ -69,7 +69,7 @@ export function AnalyticsDashboard({ metrics, models, conditions, model, conditi
       {visibleMetrics.map((item) => <button className="metric-row" key={`${item.model}-${item.condition}`} onClick={() => { setSelectedModels([item.model]); setSelectedConditions([item.condition]); onModel(item.model); onCondition(item.condition); }}><strong>{label(item.model)} · {label(item.condition)}</strong><span>{pct(item.mismatchRate)}</span><span>{item.condition === "clean" ? "baseline" : signed(item.mismatchLift)}</span><span>{item.cleanMismatchCorrelation?.toFixed(2) ?? "—"}</span><span>{pct(item.newlyWrongRate)}</span><span>{pct(item.recoveredRate)}</span></button>)}</div>
     </section>
     <section className="analytics-card heatmap-card"><div className="card-head"><div><h2>Model × condition error heatmap</h2><small>Only selected models and conditions</small></div></div>
-      <div className="heatmap" style={{ gridTemplateColumns: `150px repeat(${selectedConditions.length}, minmax(54px, 1fr))` }}><span></span>{selectedConditions.map((item) => <strong key={item} title={label(item)}>{label(item)}</strong>)}{selectedModels.flatMap((m) => [<b key={m}>{label(m)}</b>, ...selectedConditions.map((cond) => { const value = metrics.find((x) => x.model === m && x.condition === cond)?.mismatchRate ?? 0; return <button key={`${m}-${cond}`} style={{ "--heat": value } as CSSProperties} onClick={() => { setSelectedModels([m]); setSelectedConditions([cond]); onModel(m); onCondition(cond); }} title={`${label(m)} · ${label(cond)}: ${pct(value)}`}>{pct(value)}</button>; })])}</div>
+      <div className="heatmap" style={{ gridTemplateColumns: `150px repeat(${selectedConditions.length}, minmax(54px, 1fr))` }}><span></span>{selectedConditions.map((item) => <strong key={item} title={label(item)}>{label(item)}</strong>)}{selectedModels.flatMap((m) => [<b key={m}>{label(m)}</b>, ...selectedConditions.map((cond) => { const metric = metrics.find((x) => x.model === m && x.condition === cond); const value = metric?.mismatchRate ?? null; return <button key={m + "-" + cond} disabled={!metric} style={{ "--heat": value ?? 0 } as CSSProperties} onClick={() => { setSelectedModels([m]); setSelectedConditions([cond]); onModel(m); onCondition(cond); }} title={`${label(m)} · ${label(cond)}: ${pct(value)}`}>{pct(value)}</button>; })])}</div>
     </section>
   </div>;
 }
@@ -82,7 +82,7 @@ export function DatasetCatalog({ datasets }: { datasets: DatasetRecord[] }) {
 }
 
 export function ModelCatalog({ metrics, models, onOpen }: { metrics: ConditionMetric[]; models: string[]; onOpen: (model: string) => void }) {
-  return <div className="dashboard-view"><div className="view-header"><div><h1>Models</h1><p>Fixed-threshold outputs across the same 15-condition SID Set gate.</p></div></div>
+  return <div className="dashboard-view"><div className="view-header"><div><h1>Models</h1><p>Available fixed-threshold evaluation slices.</p></div></div>
     <div className="model-grid">{models.map((model) => { const slices = metrics.filter((m) => m.model === model); const clean = slices.find((m) => m.condition === "clean"); const worst = [...slices].sort((a,b) => b.mismatchRate - a.mismatchRate)[0]; return <button className="model-card" key={model} onClick={() => onOpen(model)}><span className="model-index">{String(models.indexOf(model) + 1).padStart(2, "0")}</span><h2>{label(model)}</h2><div><span>Clean balanced accuracy<strong>{pct(clean?.balancedAccuracy ?? null)}</strong></span><span>Worst condition<strong>{worst ? label(worst.condition) : "—"}</strong></span><span>Worst mismatch rate<strong>{pct(worst?.mismatchRate ?? null)}</strong></span></div><small>{slices.length} evaluated conditions · open analytics →</small></button>; })}</div>
   </div>;
 }

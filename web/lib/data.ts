@@ -2,7 +2,8 @@ import "server-only";
 
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
-import type { GalleryImage, GalleryPayload, Prediction, TransformationStep, Truth } from "@/lib/types";
+import type { ConditionMetric, GalleryImage, GalleryPayload, Prediction, TransformationStep, Truth } from "@/lib/types";
+import traceResults from "@/data/trace-rx-m-v2-benjamin.json";
 import { loadAnalytics } from "@/lib/analytics";
 
 const PROJECT_ROOT = [
@@ -99,6 +100,14 @@ export async function loadGallery(): Promise<GalleryPayload> {
     })));
 
     const { analytics, datasets } = await loadAnalytics(PROJECT_ROOT, modelDirs, CONDITION_ORDER, truthBySource);
+    const externalMetrics = traceResults.metrics as ConditionMetric[];
+    analytics.metrics.push(...externalMetrics);
+    analytics.evaluatedRows += traceResults.evaluatedRows;
+    analytics.samplesPerSlice = Math.max(analytics.samplesPerSlice, ...externalMetrics.map((item) => item.confusion.total));
+    analytics.updatedAt = new Date(Math.max(
+      analytics.updatedAt ? new Date(analytics.updatedAt).getTime() : 0,
+      new Date(traceResults.updatedAt).getTime(),
+    )).toISOString();
 
     const images: GalleryImage[] = selected.map((sample) => ({
       id: sample.sample_id,
