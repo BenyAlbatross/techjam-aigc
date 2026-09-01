@@ -19,9 +19,27 @@ average precision because it depends on a decision threshold.
 
 Every report must record the threshold and its score scale. For uncalibrated
 logits, the default is logit `0.0`, equivalent to probability `0.5` after a
-sigmoid. A different threshold must be selected using only an allowed
-development or calibration split, frozen before locked evaluation, and reported
-without retuning on locked results.
+sigmoid. A different threshold must be selected using `val`, frozen before
+`test`, and reported without retuning on test results.
+
+The v2 benchmark tables use AIGC as positive class `1` and report the complete
+schema below for every two-class dataset or slice:
+
+- rows, positives, negatives, and positive prevalence;
+- TP, TN, FP, and FN;
+- accuracy, balanced accuracy, ROC-AUC, average precision (AUPRC), and
+  normalized partial ROC-AUC through 5% FPR;
+- precision, recall/sensitivity/TPR, specificity/TNR, F1, FPR, FNR, and
+  Matthews correlation coefficient;
+- predicted-positive rate, decision threshold, score scale, and pAUC limit;
+- per-class logit and sigmoid-probability mean, population standard deviation,
+  median, 5th percentile, and 95th percentile.
+
+EvalGEN is positive-only. Its meaningful fields are rows/positive count, TP,
+FN, recall/TPR, FNR, predicted-positive rate, threshold, and positive score
+distributions. Its TN, FP, accuracy, balanced accuracy, ROC-AUC, AUPRC,
+partial AUC, precision, specificity, F1, and MCC fields are written as
+unavailable values; the evaluator never manufactures an authentic class.
 
 Run the canonical evaluator with:
 
@@ -38,30 +56,32 @@ counts and positive/negative counts. For headline robustness claims, add clean
 to transformed changes and the worst slice; do not substitute a pooled average
 for subgroup results.
 
-## Current shipping checkpoint
-
-The existing clean-only run predates the canonical evaluator. At its
-uncalibrated logit threshold of `0.0`, balanced accuracy is `0.88515` on the
-6,091-row development split and `0.63900` on the 960-row locked split. These
-values supplement, rather than replace, the ROC-AUC, average precision, and
-accuracy already recorded in `techjam2026-training-run.md`.
-
 ## Transformed detector evaluation
 
 The score-only evaluator above does not create transformed images. Use the
-model evaluator for challenge robustness testing:
+model evaluator's v2 benchmark mode for the frozen test suite:
 
 ```bash
 uv run --group train python scripts/evaluate_trace_rx_m.py \
-  --config configs/trace-rx-m-techjam2026-local.json \
-  --checkpoint artifacts/trace-rx-m-techjam2026/s4_detector.pt \
-  --memory artifacts/trace-rx-m-techjam2026/s3_memory.pt \
-  --dataset-spec configs/evaluation/techjam2026-development.json \
-  --transform-profile core \
-  --output artifacts/evaluation/trace-rx-m-techjam2026-development
+  --config configs/trace-rx-m-v2.json \
+  --checkpoint artifacts/trace-rx-m-techjam2026-v2/s4_detector.pt \
+  --memory artifacts/trace-rx-m-techjam2026-v2/s3_memory.pt \
+  --as-is-dataset-spec configs/evaluation/techjam2026-v2-test.json \
+  --uniform-chain-dataset-spec configs/evaluation/wildfake-reconstructed-test-20k.json \
+  --uniform-chain-dataset-spec configs/evaluation/evalgen-positive-only.json \
+  --output artifacts/evaluation/trace-rx-m-v2-test-suite
 ```
 
-`core` evaluates clean images, every transformation and severity explicitly
+This mode evaluates every TechJam asset as supplied and assigns exactly one
+deterministic 1--6-step transform chain to each external source. See
+`trace-rx-m-v2-benchmark-evaluation.md` for the frozen assignment, slicing, and
+artifact contracts. The evaluator rejects configs and checkpoints without
+explicit v2 preprocessing metadata, including historical DINOv2 artifacts.
+
+### Legacy exhaustive mode
+
+The retained `--dataset-spec`/`--transform-profile` interface evaluates clean
+images, every transformation and severity explicitly
 listed in the challenge, and four predeclared compositions. Pass
 `--official-only` to omit the compositions. Additional profiles such as
 `realistic`, `directed_pairs`, and `covering32` may be repeated with
@@ -146,14 +166,14 @@ source's split.
 
 - Training samples transformations stochastically and symmetrically across
   authentic and AIGC labels.
-- Development and locked evaluation apply a deterministic exhaustive matrix so
+- Val and test apply a deterministic exhaustive matrix so
   every source image is measured under the same conditions.
 - The final training policy should include all official single transformations.
   Reserve composed journeys, operation-order changes, or additional severities
   as evaluation-only distribution shifts.
-- Do not tune from locked transformed results. Freeze the model, threshold,
-  transform profile, and reporting policy before opening that split.
+- Do not tune from test results. Freeze the model, threshold, transform profile,
+  and reporting policy before evaluating that split.
 
-The included TechJam development specification points at the existing 224-pixel
+The included TechJam val specification points at the existing 224-pixel
 neutral BMP dataset. New datasets should point at the best licensed source-pixel
 files available so transformations occur before canonical model preprocessing.

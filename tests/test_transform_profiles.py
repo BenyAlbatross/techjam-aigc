@@ -13,6 +13,7 @@ from techjam_aigc.feature_lab.transforms import (
     REALISTIC_SPECS,
     TRANSFORM_SPECS,
     apply_transform,
+    apply_transform_steps,
     deterministic_step_seed,
     get_transform_specs,
     transform_frame,
@@ -115,3 +116,34 @@ def test_reversed_noise_pair_uses_the_same_operation_level_draw() -> None:
         for step in noise_steps
     ]
     assert seeds[0] == seeds[1]
+
+
+def test_public_step_pipeline_preserves_sequential_order_and_noise_replay() -> None:
+    spec = next(
+        item
+        for item in DIRECTED_PAIR_SPECS
+        if tuple(step.operation for step in item.steps) == ("gaussian_noise", "jpeg")
+    )
+    image = _image()
+
+    direct = apply_transform_steps(
+        image,
+        spec.steps,
+        parent_id="stable-parent",
+        base_seed=17,
+    )
+    registered = apply_transform(
+        image,
+        spec.name,
+        parent_id="stable-parent",
+        base_seed=17,
+    )
+    replay = apply_transform_steps(
+        image,
+        spec.steps,
+        parent_id="stable-parent",
+        base_seed=17,
+    )
+
+    np.testing.assert_array_equal(np.asarray(direct), np.asarray(registered))
+    np.testing.assert_array_equal(np.asarray(direct), np.asarray(replay))

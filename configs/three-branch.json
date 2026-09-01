@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "model_name": "three-branch",
+  "backbone": {
+    "model_id": "facebook/dinov3-vith16plus-pretrain-lvd1689m",
+    "revision": "c807c9eeea853df70aec4069e6f56b28ddc82acc",
+    "license_accepted": true,
+    "image_size": 224,
+    "lora_rank": 8,
+    "lora_alpha": 16.0,
+    "lora_dropout": 0.0,
+    "lora_targets": ["q_proj", "k_proj", "v_proj"],
+    "gradient_checkpointing": true
+  },
+  "preprocessing": {
+    "global_image_size": 224,
+    "max_global_short_side": 512,
+    "native_crop_size": 192,
+    "native_crop_count": 5,
+    "image_mean": [0.485, 0.456, 0.406],
+    "image_std": [0.229, 0.224, 0.225]
+  },
+  "memory": {
+    "prototypes_per_class": 256,
+    "topk": 8,
+    "retrieval_temperature": 0.07,
+    "tokens_per_image": 16,
+    "kmeans_batch_size": 8192,
+    "group_balanced_fit": true
+  },
+  "head": {
+    "hidden_dim": 256,
+    "patch_hidden_dim": 256,
+    "forensic_embedding_dim": 128,
+    "dropout": 0.1,
+    "top_fraction": 0.2
+  },
+  "loss": {
+    "pauc_weight": 0.25,
+    "pauc_alpha": 0.05,
+    "ranking_margin": 0.2,
+    "auxiliary_branch_weight": 0.1
+  },
+  "optimizer": {
+    "epochs": 10,
+    "batch_size": 32,
+    "workers": 8,
+    "adapter_lr": 0.00002,
+    "head_lr": 0.0002,
+    "weight_decay": 0.05,
+    "warmup_fraction": 0.05,
+    "gradient_clip_norm": 1.0,
+    "mixed_precision": "bf16"
+  },
+  "data": {
+    "manifest": "data/techjam2026_v2-normalized/training-manifest.csv",
+    "labels": "data/techjam2026_v2/labels.csv",
+    "source_root": "data/techjam2026_v2",
+    "split": "train",
+    "use_all_training_pools": true,
+    "group_balanced_loss": true,
+    "seed": 20260831
+  }
+}

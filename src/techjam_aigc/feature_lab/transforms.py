@@ -266,16 +266,33 @@ def _apply_step(image: Image.Image, step: TransformStep, seed: int) -> Image.Ima
     raise KeyError(step.operation)
 
 
-def apply_transform(image: Image.Image, condition: str, *, parent_id: str = "image", base_seed: int = 20260830) -> Image.Image:
+def apply_transform_steps(
+    image: Image.Image,
+    steps: tuple[TransformStep, ...],
+    *,
+    parent_id: str = "image",
+    base_seed: int = 20260830,
+) -> Image.Image:
+    """Apply an explicit ordered recipe with deterministic stochastic steps."""
+
     result = image.convert("RGB").copy()
     occurrences: dict[str, int] = {}
-    for step in get_transform_spec(condition).steps:
+    for step in steps:
         token = _token(step)
         occurrence = occurrences.get(token, 0)
         occurrences[token] = occurrence + 1
         seed = deterministic_step_seed(parent_id, step, occurrence, base_seed)
         result = _apply_step(result, step, seed)
     return result.convert("RGB")
+
+
+def apply_transform(image: Image.Image, condition: str, *, parent_id: str = "image", base_seed: int = 20260830) -> Image.Image:
+    return apply_transform_steps(
+        image,
+        get_transform_spec(condition).steps,
+        parent_id=parent_id,
+        base_seed=base_seed,
+    )
 
 
 def analysis_view(image: Image.Image, view: str) -> Image.Image:

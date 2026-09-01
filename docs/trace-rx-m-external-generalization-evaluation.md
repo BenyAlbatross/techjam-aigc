@@ -150,7 +150,7 @@ Run the four-endpoint evaluation:
 
 ```bash
 uv run python scripts/evaluate_trace_rx_m.py \
-  --config configs/trace-rx-m-techjam2026-local.json \
+  --config configs/archive/trace-rx-m-dinov2-historical.json \
   --checkpoint artifacts/trace-rx-m-techjam2026/s4_detector.pt \
   --memory artifacts/trace-rx-m-techjam2026/s3_memory.pt \
   --dataset-spec configs/evaluation/aigibench-stratified-test.json \

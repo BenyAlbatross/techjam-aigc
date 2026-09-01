@@ -53,3 +53,11 @@ The staged PyTorch implementation lives under `src/techjam_aigc/trace_rx_m`.
 See the [training guide](docs/trace-rx-m-training.md) for the gated DINOv3
 licence check, public DINOv2 local fallback, manifest contract, mixed-precision
 configuration, TechJam 2026 split preparation, and S0--S6 commands.
+
+## Three-branch model
+
+The updated detector is isolated under `src/techjam_aigc/three_branch` and
+keeps TRACE-RX-M unchanged. It combines global DINO evidence, class-relative
+dual prototype memories, and a native RGB/high-pass forensic branch. See the
+[three-branch training contract](docs/three-branch-model.md) for the exact
+all-train, no-generator-holdout ten-epoch run.

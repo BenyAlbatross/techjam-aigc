@@ -77,6 +77,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--aigibench-count", type=int, default=5_000)
     parser.add_argument("--wildfake-count", type=int, default=10_000)
+    parser.add_argument(
+        "--wildfake-only",
+        action="store_true",
+        help="Prepare only the WildFake reconstructed-test sample.",
+    )
     parser.add_argument("--selection-seed", type=int, default=20260831)
     parser.add_argument(
         "--wildfake-split-seed",
@@ -646,17 +651,23 @@ def _write_manifest(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def main() -> None:
     args = parse_args()
-    if args.aigibench_count < 2 or args.wildfake_count < 2:
-        raise ValueError("Both requested dataset counts must be at least two.")
+    if args.wildfake_count < 2:
+        raise ValueError("--wildfake-count must be at least two.")
+    if not args.wildfake_only and args.aigibench_count < 2:
+        raise ValueError("--aigibench-count must be at least two unless --wildfake-only is set.")
     if args.workers < 1:
         raise ValueError("--workers must be positive.")
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
 
-    print("Resolving AIGIBench test inventory and selection...", flush=True)
-    aigibench, aigibench_inventory, aigibench_quotas = _aigibench_inventory(
-        args.aigibench_count, args.selection_seed, args.workers
-    )
+    aigibench: list[Candidate] = []
+    aigibench_inventory: list[dict[str, Any]] = []
+    aigibench_quotas: dict[str, int] = {}
+    if not args.wildfake_only:
+        print("Resolving AIGIBench test inventory and selection...", flush=True)
+        aigibench, aigibench_inventory, aigibench_quotas = _aigibench_inventory(
+            args.aigibench_count, args.selection_seed, args.workers
+        )
     print("Resolving WildFake reconstructed-test inventory and selection...", flush=True)
     wildfake, wildfake_inventory, wildfake_metadata, wildfake_quotas = _wildfake_inventory(
         args.wildfake_count,
@@ -683,10 +694,11 @@ def main() -> None:
         **{("wildfake-reconstructed-test", key): value for key, value in wildfake_quotas.items()},
     }
     records = _apply_final_quotas(downloaded_records, final_quotas)
-    if len(records) != args.aigibench_count + args.wildfake_count:
+    expected_records = args.wildfake_count + (0 if args.wildfake_only else args.aigibench_count)
+    if len(records) != expected_records:
         raise RuntimeError(
             f"Final manifest has {len(records)} rows instead of "
-            f"{args.aigibench_count + args.wildfake_count}."
+            f"{expected_records}."
         )
     records.sort(key=lambda row: (row["dataset_id"], row["target"], row["stratum"], row["parent_id"]))
     _write_manifest(output / "manifest.csv", records)
@@ -708,13 +720,13 @@ def main() -> None:
             "deduplication": "retain the highest-priority occurrence of each exact source-byte SHA-256",
         },
         "datasets": {
-            "aigibench-stratified-test": {
+            **({"aigibench-stratified-test": {
                 "source": f"https://huggingface.co/datasets/{HF_REPO}",
                 "revision": HF_REVISION,
                 "license": HF_LICENSE,
                 "selected_images": args.aigibench_count,
                 "inventory": aigibench_inventory,
-            },
+            }} if not args.wildfake_only else {}),
             "wildfake-reconstructed-test": {
                 "source": f"https://modelscope.cn/datasets/{MODELSCOPE_REPO}/summary",
                 "revision": "master",

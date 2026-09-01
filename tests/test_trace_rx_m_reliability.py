@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from techjam_aigc.trace_rx_m.calibration import (
-    PositiveTemperatureScaler,
-    binary_logit_nll,
-)
 from techjam_aigc.trace_rx_m.reliability import (
     audit_heldout_availability,
     audit_quality_cell_occupancy,
@@ -51,9 +47,9 @@ def _reliability_fixture() -> ReliabilityTable:
     return ReliabilityTable.fit(
         authentic_null_logits=null_logits,
         authentic_null_quality=null_quality,
-        development_logits=logits,
-        development_labels=labels,
-        development_quality=dev_quality,
+        validation_logits=logits,
+        validation_labels=labels,
+        validation_quality=dev_quality,
         clean_mask=clean,
         n_bins=(2, 1, 1, 1),
         prior_strength=0.1,
@@ -83,19 +79,6 @@ def test_authentic_cell_normalization_and_fusion() -> None:
 
     restored = ReliabilityTable.from_dict(table.to_dict())
     np.testing.assert_allclose(restored.fuse(logits, quality), fused)
-
-
-def test_positive_temperature_fit_improves_overconfident_nll() -> None:
-    logits = np.array([-8.0, -4.0, 4.0, 8.0])
-    labels = np.array([0, 1, 0, 1])
-    scaler = PositiveTemperatureScaler().fit(logits, labels)
-
-    assert scaler.temperature > 1.0
-    assert binary_logit_nll(logits, labels, scaler.temperature) < binary_logit_nll(logits, labels, 1.0)
-    probabilities = scaler.predict_proba(logits)
-    assert np.all((probabilities >= 0.0) & (probabilities <= 1.0))
-    restored = PositiveTemperatureScaler.from_dict(scaler.to_dict())
-    np.testing.assert_allclose(restored.predict_proba(logits), probabilities)
 
 
 def test_normalized_partial_auc_respects_low_fpr_ranking() -> None:

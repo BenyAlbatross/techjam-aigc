@@ -10,6 +10,7 @@ from torch.nn import functional as F
 
 from techjam_aigc.trace_rx_m.backbone import LoRALinear, inject_lora
 from techjam_aigc.trace_rx_m.config import (
+    BackboneConfig,
     HeadConfig,
     LossConfig,
     MemoryConfig,
@@ -122,10 +123,14 @@ def test_lora_injection_updates_only_low_rank_parameters_at_initialization() -> 
     assert not layer.base.weight.requires_grad
 
 
-
-
 def test_lora_defaults_match_transformers_dinov3_attention_layout() -> None:
     transformers = pytest.importorskip("transformers")
+    backbone_config = BackboneConfig()
+    assert backbone_config.model_id == "facebook/dinov3-vith16plus-pretrain-lvd1689m"
+    assert backbone_config.lora_rank == 8
+    assert backbone_config.lora_alpha == 16.0
+    assert backbone_config.lora_targets == ("q_proj", "k_proj", "v_proj")
+
     config = transformers.DINOv3ViTConfig(
         hidden_size=64,
         intermediate_size=128,
@@ -137,12 +142,24 @@ def test_lora_defaults_match_transformers_dinov3_attention_layout() -> None:
     )
     backbone = transformers.DINOv3ViTModel(config)
     names = inject_lora(
-        backbone, targets=("q_proj", "v_proj"), rank=2, alpha=4, dropout=0
+        backbone,
+        targets=backbone_config.lora_targets,
+        rank=backbone_config.lora_rank,
+        alpha=backbone_config.lora_alpha,
+        dropout=backbone_config.lora_dropout,
     )
-    assert len(names) == 4
-    assert all(name.endswith(("q_proj", "v_proj")) for name in names)
+    assert len(names) == 6
+    assert all(name.endswith(("q_proj", "k_proj", "v_proj")) for name in names)
+    assert all(
+        isinstance(backbone.get_submodule(name), LoRALinear)
+        and backbone.get_submodule(name).rank == 8
+        and backbone.get_submodule(name).scaling == 2.0
+        for name in names
+    )
     output = backbone(pixel_values=torch.randn(2, 3, 32, 32), return_dict=True)
     assert output.last_hidden_state[:, 1 + config.num_register_tokens:].shape == (2, 4, 64)
+
+
 def test_primary_objective_excludes_dda_and_pair_loss_orders_it_above_source() -> None:
     logits = torch.tensor([-1.0, 0.2, 0.5, 1.0])
     labels = torch.tensor([0.0, 1.0, 1.0, 0.0])

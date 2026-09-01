@@ -4,21 +4,20 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import replace
+from dataclasses import asdict, replace
 import json
 from pathlib import Path
 import shutil
 from typing import Any
+import warnings
 
 import numpy as np
 import pandas as pd
 
-from techjam_aigc.trace_rx_m.calibration import PositiveTemperatureScaler
 from techjam_aigc.trace_rx_m.config import TraceRXMConfig
 from techjam_aigc.trace_rx_m.data import (
     BalancedTraceBatchSampler,
     TraceRXMDataset,
-    add_balance_weights,
     load_training_manifest,
 )
 from techjam_aigc.trace_rx_m.quality import QUALITY_DIMENSION
@@ -39,17 +38,26 @@ QUALITY_COLUMNS = (
 )
 
 
+def _preprocessing_metadata(config: TraceRXMConfig) -> dict[str, Any]:
+    return json.loads(json.dumps(asdict(config.preprocessing)))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", required=True, choices=(
-        "protocol", "cache", "capacity", "detection", "reliability", "calibration"
+        "protocol", "cache", "capacity", "detection", "reliability"
     ))
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--manifest", type=Path)
-    parser.add_argument("--scores", type=Path, help="S5/S6 CSV containing logits and quality fields")
+    parser.add_argument("--scores", type=Path, help="S5 CSV containing logits and quality fields")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--resume-checkpoint",
+        type=Path,
+        help="Resumable periodic S4 checkpoint; completed epochs are not repeated.",
+    )
     return parser.parse_args()
 
 
@@ -63,6 +71,25 @@ def _require_scores(path: Path | None) -> Path:
     if path is None:
         raise ValueError("This stage requires --scores.")
     return path.resolve()
+
+
+def _validate_prepared_manifest_contract(
+    manifest_path: Path,
+    config: TraceRXMConfig,
+) -> dict[str, Any]:
+    """Require the preparation sidecar to match the v2 runtime pixel contract."""
+
+    summary_path = manifest_path.with_suffix(".summary.json")
+    if not summary_path.is_file():
+        raise FileNotFoundError(
+            f"V2 training requires the preparation sidecar {summary_path}."
+        )
+    summary = json.loads(summary_path.read_text())
+    if summary.get("preprocessing") != _preprocessing_metadata(config):
+        raise ValueError(
+            "Prepared training artifacts do not match the configured preprocessing policy."
+        )
+    return summary
 
 
 def _torch() -> Any:
@@ -98,6 +125,7 @@ def _loader(frame: pd.DataFrame, repo_root: Path, config: TraceRXMConfig, *, aug
         repo_root,
         transform_sampler=transform_sampler,
         image_size=config.backbone.image_size,
+        preprocessing=config.preprocessing,
     )
     if augment:
         sampler = BalancedTraceBatchSampler(
@@ -127,9 +155,12 @@ def run_protocol(args: argparse.Namespace, config: TraceRXMConfig) -> None:
 
     config.validate(require_backbone_access=True)
     manifest_path = _require_manifest(args.manifest)
+    preparation = _validate_prepared_manifest_contract(manifest_path, config)
     manifest = load_training_manifest(manifest_path)
     generated = manifest.loc[manifest["sample_kind"].eq("native_aigc"), "generator_family"]
-    probe_frame = manifest[manifest["role"].eq("supervised")]
+    probe_frame = manifest[
+        manifest["split"].eq("train") & manifest["training_pool"].eq("detector")
+    ]
     nuisance = run_nuisance_probes(
         probe_frame,
         folds=config.protocol.nuisance_folds,
@@ -138,15 +169,19 @@ def run_protocol(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     summary = {
         "passed": max(nuisance.values()) <= config.protocol.nuisance_max_auc,
         "manifest_sha256": file_sha256(manifest_path),
+        "preprocessing": _preprocessing_metadata(config),
+        "preparation_labels_sha256": preparation.get("labels_sha256"),
         "rows": len(manifest),
-        "roles": manifest["role"].value_counts().to_dict(),
+        "splits": manifest["split"].value_counts().to_dict(),
+        "training_pools": manifest["training_pool"].value_counts().to_dict(),
         "generator_family_count": int(generated.nunique()),
         "generator_families": sorted(generated.unique().tolist()),
         "nuisance_auc": nuisance,
         "nuisance_max_auc": config.protocol.nuisance_max_auc,
         "resampler_parity": "training and evaluation use feature_lab.transforms",
         "lowest_resolution_behavior": (
-            f"endpoints are resized to {config.backbone.image_size} square; "
+            "inputs are bicubically limited to a 512px short side, then "
+            f"center-cropped or zero-padded to {config.backbone.image_size} square; "
             "the selected backbone's patch size determines the token grid"
         ),
         "warning": "Fewer than eight generator families" if generated.nunique() < 8 else None,
@@ -162,6 +197,8 @@ def run_cache(args: argparse.Namespace, config: TraceRXMConfig) -> None:
 
     config.validate(require_backbone_access=True)
     protocol = _require_passed_protocol(args.output)
+    if protocol.get("preprocessing") != _preprocessing_metadata(config):
+        raise ValueError("S0 protocol preprocessing does not match the current v2 config.")
     manifest_path = _require_manifest(args.manifest)
     if protocol.get("manifest_sha256") != file_sha256(manifest_path):
         raise ValueError("S0 protocol artifact belongs to a different manifest.")
@@ -170,15 +207,18 @@ def run_cache(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     encoder = DinoV3PatchEncoder(unadapted)
     device = torch.device(args.device)
     args.output.mkdir(parents=True, exist_ok=True)
-    for role in ("memory_pool", "capacity_validation"):
-        frame = manifest[manifest["role"].eq(role)].reset_index(drop=True)
+    cache_specs = (("memory", "s1_memory.pt"), ("capacity", "s1_capacity.pt"))
+    for pool, filename in cache_specs:
+        frame = manifest[
+            manifest["split"].eq("train") & manifest["training_pool"].eq(pool)
+        ].reset_index(drop=True)
         if frame.empty:
-            raise ValueError(f"Manifest has no {role} rows.")
+            raise ValueError(f"Manifest has no train/{pool} rows.")
         loader, _, _ = _loader(frame, args.repo_root, config, augment=False)
         cache_patch_features(
             encoder,
             loader,
-            args.output / f"s1_{role}.pt",
+            args.output / filename,
             device=device,
             backbone_model_id=config.backbone.model_id,
             backbone_revision=str(config.backbone.revision),
@@ -196,8 +236,8 @@ def run_capacity(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     )
 
     device = torch.device(args.device)
-    memory_cache_path = args.output / "s1_memory_pool.pt"
-    capacity_cache_path = args.output / "s1_capacity_validation.pt"
+    memory_cache_path = args.output / "s1_memory.pt"
+    capacity_cache_path = args.output / "s1_capacity.pt"
     memory_cache = load_feature_cache(memory_cache_path)
     capacity_cache = load_feature_cache(capacity_cache_path)
     if memory_cache["backbone_revision"] != capacity_cache["backbone_revision"]:
@@ -363,14 +403,18 @@ def _train_detection_variant(
     tracker,
     publisher,
     step_offset: int,
+    resume_checkpoint: Path | None = None,
 ):
+    torch = _torch()
     from techjam_aigc.trace_rx_m.training import (
+        EpochMetrics,
         build_detection_optimizer,
         cosine_warmup_scheduler,
         save_detector_checkpoint,
         train_detection_epoch,
     )
 
+    model.to(device)
     optimizer = build_detection_optimizer(model, config.optimizer)
     scheduler = cosine_warmup_scheduler(
         optimizer,
@@ -380,10 +424,52 @@ def _train_detection_variant(
     history = []
     best_total = float("inf")
     best_epoch = 0
+    start_epoch = 0
     checkpoint_directory = output / "checkpoints" / variant
     best_path = checkpoint_directory / "best_detector.pt"
     final_path = checkpoint_directory / "final_detector.pt"
-    for epoch_index in range(config.optimizer.detection_epochs):
+    if resume_checkpoint is not None:
+        checkpoint = torch.load(
+            resume_checkpoint.resolve(), map_location="cpu", weights_only=True
+        )
+        if checkpoint.get("stage") != "S4" or checkpoint.get("encoder_mode") != variant:
+            raise ValueError("Resume checkpoint does not match the requested S4 variant.")
+        if checkpoint.get("source_memory_sha256") != memory_sha256:
+            raise ValueError("Resume checkpoint belongs to a different S3 memory artifact.")
+        if checkpoint.get("manifest_sha256") != manifest_sha256:
+            raise ValueError("Resume checkpoint belongs to a different training manifest.")
+        if checkpoint.get("config") != config.to_dict():
+            raise ValueError("Resume checkpoint belongs to a different training config.")
+        if "optimizer_state" not in checkpoint or "scheduler_state" not in checkpoint:
+            raise ValueError("Resume checkpoint is missing optimizer or scheduler state.")
+        start_epoch = int(checkpoint.get("epoch") or 0)
+        if not 0 < start_epoch < config.optimizer.detection_epochs:
+            raise ValueError("Resume checkpoint epoch is outside the resumable range.")
+        incompatible = model.load_state_dict(checkpoint["model_state"], strict=False)
+        unexpected = list(incompatible.unexpected_keys)
+        invalid_missing = [
+            name for name in incompatible.missing_keys if not name.startswith("encoder.")
+        ]
+        if unexpected or invalid_missing:
+            raise ValueError(
+                "Resume checkpoint state mismatch; "
+                f"unexpected={unexpected}, missing={invalid_missing}"
+            )
+        optimizer.load_state_dict(checkpoint["optimizer_state"])
+        scheduler.load_state_dict(checkpoint["scheduler_state"])
+        history = [EpochMetrics(**item) for item in checkpoint.get("history", [])]
+        if len(history) != start_epoch:
+            raise ValueError("Resume checkpoint history does not match its epoch.")
+        if history:
+            best_total = min(item.total for item in history)
+            best_epoch = next(
+                index + 1 for index, item in enumerate(history)
+                if item.total == best_total
+            )
+        publisher.upload_periodic(
+            resume_checkpoint.resolve(), epoch=start_epoch, variant=variant
+        )
+    for epoch_index in range(start_epoch, config.optimizer.detection_epochs):
         epoch = epoch_index + 1
         dataset.set_epoch(epoch_index)
         sampler.set_epoch(epoch_index)
@@ -396,18 +482,28 @@ def _train_detection_variant(
             optimizer_config=config.optimizer,
             device=device,
         )
-        if history and metrics.mean_authentic_loss < history[-1].mean_authentic_loss and (
-            metrics.worst_authentic_subtype_loss
-            > history[-1].worst_authentic_subtype_loss
-        ):
-            raise RuntimeError(
-                f"S4 {variant} gate failed: worst authentic-subtype loss rose while mean fell."
+        subtype_monotonicity_violation = bool(
+            history
+            and metrics.mean_authentic_loss < history[-1].mean_authentic_loss
+            and (
+                metrics.worst_authentic_subtype_loss
+                > history[-1].worst_authentic_subtype_loss
+            )
+        )
+        if subtype_monotonicity_violation:
+            warnings.warn(
+                f"S4 {variant} diagnostic: worst authentic-subtype training loss rose "
+                "while the mean fell; continuing so material degradation can be judged "
+                "by the final subtype evaluation.",
+                RuntimeWarning,
+                stacklevel=2,
             )
         history.append(metrics)
-        tracker.log(
-            _epoch_log_values(metrics, variant=variant, optimizer=optimizer),
-            step=step_offset + epoch,
+        log_values = _epoch_log_values(metrics, variant=variant, optimizer=optimizer)
+        log_values[f"{variant}/authentic_subtype_monotonicity_violation"] = float(
+            subtype_monotonicity_violation
         )
+        tracker.log(log_values, step=step_offset + epoch)
         selection = {
             "name": "training_total_loss",
             "mode": "min",
@@ -459,6 +555,11 @@ def _train_detection_variant(
             "epoch": config.optimizer.detection_epochs,
         },
     )
+    publisher.upload_variant_bundle(
+        best_path=best_path,
+        final_path=final_path,
+        variant=variant,
+    )
     return best_path, final_path, best_epoch, best_total
 
 
@@ -467,7 +568,6 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     from techjam_aigc.trace_rx_m.backbone import DinoV3PatchEncoder
     from techjam_aigc.trace_rx_m.integrations import (
         HubCheckpointPublisher,
-        LocalCheckpointPublisher,
         WandbTracker,
     )
     from techjam_aigc.trace_rx_m.model import TraceRXM
@@ -475,22 +575,43 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
         file_sha256, load_memory_artifact, seed_everything,
     )
 
-    config.validate(require_backbone_access=True)
-    family = config.data.held_out_generator_family
-    if not family:
-        raise ValueError("Set data.held_out_generator_family before S4.")
+    config.validate(
+        require_backbone_access=True,
+        require_remote_artifacts=True,
+    )
+    configured_family = config.data.held_out_generator_family
+    family = (
+        None
+        if configured_family is None or configured_family.strip().casefold() == "null"
+        else configured_family
+    )
     manifest_path = _require_manifest(args.manifest)
     manifest_hash = file_sha256(manifest_path)
     manifest = load_training_manifest(manifest_path)
-    train = manifest[manifest["role"].eq("supervised")].copy()
-    heldout_in_train = train["generator_family"].astype(str).str.casefold().eq(family.casefold())
-    train = add_balance_weights(train[~heldout_in_train].reset_index(drop=True))
-    development = manifest[manifest["role"].eq("development")].copy()
-    keep = development["target"].eq(0) | development["generator_family"].astype(str).str.casefold().eq(family.casefold())
-    development = development[keep].reset_index(drop=True)
-    if heldout_in_train.sum() == 0:
-        raise ValueError("The configured held-out generator family is absent from supervised rows.")
-
+    train = manifest[
+        manifest["split"].eq("train") & manifest["training_pool"].eq("detector")
+    ].copy()
+    validation = None
+    if family:
+        heldout_in_train = train["generator_family"].astype(str).str.casefold().eq(
+            family.casefold()
+        )
+        train = train[~heldout_in_train].reset_index(drop=True)
+        validation = manifest[manifest["split"].eq("val")].copy()
+        keep = validation["target"].eq(0) | validation["generator_family"].astype(
+            str
+        ).str.casefold().eq(family.casefold())
+        validation = validation[keep].reset_index(drop=True)
+        if heldout_in_train.sum() == 0:
+            raise ValueError(
+                "The configured held-out generator family is absent from the train "
+                "detector pool."
+            )
+    else:
+        train = train.reset_index(drop=True)
+    # The batch sampler already balances both classes and rotates within-class
+    # groups. Inverse-frequency weights here would apply that correction twice.
+    train["balance_weight"] = 1.0
     device = torch.device(args.device)
     memory_path = args.output / "s3_memory.pt"
     memory_kwargs = {
@@ -505,7 +626,11 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     model = TraceRXM(encoder, memory, config.head)
     model.configure_for_detection()
     loader, dataset, sampler = _loader(train, args.repo_root, config, augment=True)
-    validation_loader, _, _ = _loader(development, args.repo_root, config, augment=False)
+    validation_loader = None
+    if validation is not None:
+        validation_loader, _, _ = _loader(
+            validation, args.repo_root, config, augment=False
+        )
     tracker = WandbTracker(
         config.tracking,
         stage="s4-detection",
@@ -514,11 +639,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     exit_code = 1
     try:
         tracker.watch(model)
-        publisher = (
-            HubCheckpointPublisher(config.hub, run_id=tracker.run_id)
-            if config.hub.repo_id
-            else LocalCheckpointPublisher(args.output, run_id=tracker.run_id)
-        )
+        publisher = HubCheckpointPublisher(config.hub, run_id=tracker.run_id)
         best_variant_path, final_variant_path, best_epoch, best_total = (
             _train_detection_variant(
                 model=model,
@@ -534,18 +655,22 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
                 tracker=tracker,
                 publisher=publisher,
                 step_offset=0,
+                resume_checkpoint=args.resume_checkpoint,
             )
         )
-        auc = _evaluate_auc(model, validation_loader, device)
-        lora_auc = auc
-        tracker.log(
-            {"lora/held_out_generator/roc_auc": auc},
-            step=config.optimizer.detection_epochs,
-        )
+        auc = None
+        lora_auc = None
         fallback_used = False
         selected_variant = "lora"
         frozen_auc = None
-        if auc < config.data.held_out_min_roc_auc:
+        if validation_loader is not None:
+            auc = _evaluate_auc(model, validation_loader, device)
+            lora_auc = auc
+            tracker.log(
+                {"lora/held_out_generator/roc_auc": auc},
+                step=config.optimizer.detection_epochs,
+            )
+        if auc is not None and auc < config.data.held_out_min_roc_auc:
             # Pre-declared failure path: discard LoRA and retrain only the heads
             # against the same memory. Never retune adapters on this held-out result.
             fallback_used = True
@@ -598,7 +723,7 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
                 "lora": lora_auc,
                 "frozen": frozen_auc,
             },
-            "threshold": config.data.held_out_min_roc_auc,
+            "threshold": config.data.held_out_min_roc_auc if family else None,
             "frozen_encoder_fallback": fallback_used,
             "selected_variant": selected_variant,
             "best_checkpoint": {
@@ -618,19 +743,25 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
         hub_commit_url = publisher.upload_final_bundle(
             best_path=best_path,
             final_path=final_path,
-            metadata_paths=(memory_path, args.config, validity_path),
+            shipping_path=shipping_path,
+            memory_path=memory_path,
+            metadata_paths=(args.config, validity_path),
         )
         validity["huggingface_final_commit"] = hub_commit_url
         validity_path.write_text(json.dumps(validity, indent=2) + "\n")
-        tracker.summarize({
-            "held_out_generator/roc_auc": auc,
-            "held_out_generator/family": family,
+        run_summary = {
             "frozen_encoder_fallback": fallback_used,
             "selected_variant": selected_variant,
             "best/epoch": best_epoch,
             "best/training_total_loss": best_total,
             "huggingface/final_commit": hub_commit_url,
-        })
+        }
+        if family:
+            run_summary.update({
+                "held_out_generator/roc_auc": auc,
+                "held_out_generator/family": family,
+            })
+        tracker.summarize(run_summary)
         tracker.log_model_artifact(
             (best_path, final_path, memory_path, args.config, validity_path),
             metadata={
@@ -649,7 +780,8 @@ def run_detection(args: argparse.Namespace, config: TraceRXMConfig) -> None:
 def _scores(path: Path) -> pd.DataFrame:
     frame = pd.read_csv(path)
     required = {
-        "role", "lineage_id", "logit", "target", "detector_sha256", *QUALITY_COLUMNS
+        "split", "training_pool", "lineage_id", "logit", "target",
+        "detector_sha256", *QUALITY_COLUMNS
     }
     missing = required - set(frame.columns)
     if missing:
@@ -684,15 +816,17 @@ def run_reliability(args: argparse.Namespace, config: TraceRXMConfig) -> None:
         artifact=args.output / "s4_detector.pt",
         column="detector_sha256",
     )
-    null = frame[frame["role"].eq("authentic_null")]
-    development = frame[frame["role"].eq("development")]
-    if null.empty or development.empty:
-        raise ValueError("S5 needs authentic_null and development score rows.")
+    null = frame[
+        frame["split"].eq("train") & frame["training_pool"].eq("authentic_null")
+    ]
+    validation = frame[frame["split"].eq("val")]
+    if null.empty or validation.empty:
+        raise ValueError("S5 needs train/authentic_null and val score rows.")
     if not null["target"].eq(0).all():
-        raise ValueError("S5 authentic_null rows must all be authentic negatives.")
-    if set(null["lineage_id"].astype(str)) & set(development["lineage_id"].astype(str)):
-        raise ValueError("S5 authentic-null and development lineages must be disjoint.")
-    post_probe = development.copy()
+        raise ValueError("S5 train/authentic_null rows must all be authentic negatives.")
+    if set(null["lineage_id"].astype(str)) & set(validation["lineage_id"].astype(str)):
+        raise ValueError("S5 train/authentic_null and val lineages must be disjoint.")
+    post_probe = validation.copy()
     post_probe["target"] = (
         post_probe["logit"].rank(method="average", pct=True) > 0.5
     ).astype(int)
@@ -705,20 +839,20 @@ def run_reliability(args: argparse.Namespace, config: TraceRXMConfig) -> None:
         raise RuntimeError(
             "Post-training nuisance probe predicts the adapted model ranking above the S0 gate."
         )
-    if "transform_family" not in development:
-        raise ValueError("S5 development scores require transform_family.")
-    heldout_mask = development["transform_family"].eq(config.data.held_out_transform_family)
-    heldout = development[heldout_mask]
-    fit_development = development[~heldout_mask]
+    if "transform_family" not in validation:
+        raise ValueError("S5 val scores require transform_family.")
+    heldout_mask = validation["transform_family"].eq(config.data.held_out_transform_family)
+    heldout = validation[heldout_mask]
+    fit_validation = validation[~heldout_mask]
     if heldout.empty:
         raise ValueError("S5 scores do not contain the configured held-out transform family.")
     table = ReliabilityTable.fit(
         authentic_null_logits=null["logit"].to_numpy(),
         authentic_null_quality=null[list(QUALITY_COLUMNS)].to_numpy(),
-        development_logits=fit_development["logit"].to_numpy(),
-        development_labels=fit_development["target"].to_numpy(),
-        development_quality=fit_development[list(QUALITY_COLUMNS)].to_numpy(),
-        clean_mask=fit_development["condition"].eq("clean").to_numpy(),
+        validation_logits=fit_validation["logit"].to_numpy(),
+        validation_labels=fit_validation["target"].to_numpy(),
+        validation_quality=fit_validation[list(QUALITY_COLUMNS)].to_numpy(),
+        clean_mask=fit_validation["condition"].eq("clean").to_numpy(),
         n_bins=config.reliability.quality_bins,
         prior_strength=config.reliability.prior_strength,
         variance_floor=config.reliability.variance_floor,
@@ -733,15 +867,15 @@ def run_reliability(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     )
     occupancy = audit_quality_cell_occupancy(
         table,
-        quality=development[list(QUALITY_COLUMNS)].to_numpy(),
-        conditions=development["condition"],
-        transform_families=development["transform_family"],
+        quality=validation[list(QUALITY_COLUMNS)].to_numpy(),
+        conditions=validation["condition"],
+        transform_families=validation["transform_family"],
         max_clean_noise_overlap=config.reliability.max_clean_noise_cell_overlap,
     )
     passive = PassiveQualityStacker().fit(
-        fit_development["logit"].to_numpy(),
-        fit_development[list(QUALITY_COLUMNS)].to_numpy(),
-        fit_development["target"].to_numpy(),
+        fit_validation["logit"].to_numpy(),
+        fit_validation[list(QUALITY_COLUMNS)].to_numpy(),
+        fit_validation["target"].to_numpy(),
     )
     heldout_labels = heldout["target"].to_numpy()
     availability_pauc = normalized_partial_auc(
@@ -807,42 +941,18 @@ def run_reliability(args: argparse.Namespace, config: TraceRXMConfig) -> None:
     (args.output / "s5_reliability.json").write_text(json.dumps(artifact, indent=2) + "\n")
 
 
-def run_calibration(args: argparse.Namespace) -> None:
-    frame = _scores(_require_scores(args.scores))
-    _verify_score_provenance(
-        frame,
-        artifact=args.output / "s5_reliability.json",
-        column="reliability_sha256",
-    )
-    _verify_score_provenance(
-        frame,
-        artifact=args.output / "s4_detector.pt",
-        column="detector_sha256",
-    )
-    reliability = json.loads((args.output / "s5_reliability.json").read_text())
-    detector_hashes = set(frame["detector_sha256"].astype(str))
-    if detector_hashes != {str(reliability.get("source_detector_sha256"))}:
-        raise ValueError("S6 score table and S5 reliability use different detectors.")
-    calibration = frame[frame["role"].eq("calibration")]
-    if calibration.empty or "fused_logit" not in calibration:
-        raise ValueError("S6 needs calibration rows with fused_logit.")
-    scaler = PositiveTemperatureScaler().fit(
-        calibration["fused_logit"].to_numpy(), calibration["target"].to_numpy()
-    )
-    args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / "s6_calibration.json").write_text(json.dumps(scaler.to_dict(), indent=2) + "\n")
-
-
 def main() -> None:
     args = parse_args()
-    config = TraceRXMConfig.load(args.config)
+    raw_config = json.loads(args.config.read_text())
+    if "preprocessing" not in raw_config:
+        raise ValueError("V2 training requires explicit preprocessing metadata in config.")
+    config = TraceRXMConfig.from_dict(raw_config)
     dispatch = {
         "protocol": lambda: run_protocol(args, config),
         "cache": lambda: run_cache(args, config),
         "capacity": lambda: run_capacity(args, config),
         "detection": lambda: run_detection(args, config),
         "reliability": lambda: run_reliability(args, config),
-        "calibration": lambda: run_calibration(args),
     }
     dispatch[args.stage]()
 

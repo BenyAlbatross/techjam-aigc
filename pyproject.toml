@@ -22,6 +22,7 @@ dev = [
 train = [
     "huggingface-hub>=0.34",
     "torch>=2.7",
+    "torchvision>=0.22",
     "transformers>=4.56",
     "wandb>=0.21",
 ]

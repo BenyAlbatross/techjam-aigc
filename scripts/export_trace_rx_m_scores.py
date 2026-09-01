@@ -31,7 +31,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--roles", nargs="+", default=["authentic_null", "development", "calibration"])
+    parser.add_argument(
+        "--splits",
+        nargs="+",
+        choices=("train", "val", "test"),
+        default=["val"],
+        help="Dataset splits to score; val also includes train/authentic_null for S5.",
+    )
     parser.add_argument("--device", default="cuda")
     return parser.parse_args()
 
@@ -58,13 +64,24 @@ def _apply_reliability(path: Path, logits: np.ndarray, quality: np.ndarray) -> n
 def main() -> None:
     args = parse_args()
     config = TraceRXMConfig.load(args.config)
-    frame = load_training_manifest(args.manifest, roles=args.roles)
+    manifest = load_training_manifest(args.manifest)
+    selected = manifest["split"].isin(args.splits)
+    if "val" in args.splits:
+        selected |= manifest["split"].eq("train") & manifest["training_pool"].eq(
+            "authentic_null"
+        )
+    frame = manifest[selected].reset_index(drop=True)
     missing_endpoint = {"condition", "transform_family"} - set(frame.columns)
     if missing_endpoint:
         raise ValueError(
             f"Score-export manifests require endpoint fields: {sorted(missing_endpoint)}"
         )
-    dataset = TraceRXMDataset(frame, args.repo_root, image_size=config.backbone.image_size)
+    dataset = TraceRXMDataset(
+        frame,
+        args.repo_root,
+        image_size=config.backbone.image_size,
+        preprocessing=config.preprocessing,
+    )
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=config.data.batch_size,

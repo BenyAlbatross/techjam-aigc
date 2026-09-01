@@ -10,6 +10,8 @@ from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
+    confusion_matrix,
+    matthews_corrcoef,
     roc_auc_score,
 )
 
@@ -21,6 +23,24 @@ ALWAYS_REPORT_METRICS = (
     "balanced_accuracy",
 )
 ROBUSTNESS_METRICS = (*ALWAYS_REPORT_METRICS, "normalized_pauc")
+THRESHOLD_REPORT_METRICS = (
+    "precision",
+    "recall",
+    "sensitivity",
+    "true_positive_rate",
+    "specificity",
+    "true_negative_rate",
+    "f1",
+    "false_positive_rate",
+    "false_negative_rate",
+    "matthews_correlation_coefficient",
+    "predicted_positive_rate",
+)
+REPORT_METRICS = (*ROBUSTNESS_METRICS, *THRESHOLD_REPORT_METRICS)
+
+
+def _safe_ratio(numerator: int | float, denominator: int | float) -> float:
+    return float(numerator / denominator) if denominator else float("nan")
 
 
 def binary_detection_metrics(
@@ -45,15 +65,45 @@ def binary_detection_metrics(
         raise ValueError("evaluation requires both binary classes (0 authentic, 1 AIGC)")
 
     predictions = values >= threshold
+    true_negative, false_positive, false_negative, true_positive = confusion_matrix(
+        targets,
+        predictions.astype(int),
+        labels=[0, 1],
+    ).ravel()
+    precision = _safe_ratio(true_positive, true_positive + false_positive)
+    recall = _safe_ratio(true_positive, true_positive + false_negative)
+    specificity = _safe_ratio(true_negative, true_negative + false_positive)
     return {
         "rows": int(targets.size),
         "positives": int(np.sum(targets == 1)),
         "negatives": int(np.sum(targets == 0)),
+        "positive_prevalence": float(np.mean(targets == 1)),
         "threshold": float(threshold),
+        "true_positive": int(true_positive),
+        "true_negative": int(true_negative),
+        "false_positive": int(false_positive),
+        "false_negative": int(false_negative),
         "roc_auc": float(roc_auc_score(targets, values)),
         "average_precision": float(average_precision_score(targets, values)),
         "accuracy": float(accuracy_score(targets, predictions)),
         "balanced_accuracy": float(balanced_accuracy_score(targets, predictions)),
+        "precision": precision,
+        "recall": recall,
+        "sensitivity": recall,
+        "true_positive_rate": recall,
+        "specificity": specificity,
+        "true_negative_rate": specificity,
+        "f1": _safe_ratio(2 * precision * recall, precision + recall),
+        "false_positive_rate": _safe_ratio(
+            false_positive, false_positive + true_negative
+        ),
+        "false_negative_rate": _safe_ratio(
+            false_negative, false_negative + true_positive
+        ),
+        "matthews_correlation_coefficient": float(
+            matthews_corrcoef(targets, predictions)
+        ),
+        "predicted_positive_rate": float(np.mean(predictions)),
     }
 
 
@@ -103,17 +153,67 @@ def robustness_detection_metrics(
 
 def _unscorable_metrics(
     labels: np.ndarray,
+    scores: np.ndarray,
     *,
     threshold: float,
     status: str,
 ) -> dict[str, float | int | str]:
+    positives = int(np.sum(labels == 1))
+    negatives = int(np.sum(labels == 0))
     return {
         "rows": int(labels.size),
-        "positives": int(np.sum(labels == 1)),
-        "negatives": int(np.sum(labels == 0)),
+        "positives": positives,
+        "negatives": negatives,
+        "positive_prevalence": _safe_ratio(positives, len(labels)),
         "threshold": float(threshold),
-        **{metric: float("nan") for metric in ROBUSTNESS_METRICS},
+        "true_positive": float("nan"),
+        "true_negative": float("nan"),
+        "false_positive": float("nan"),
+        "false_negative": float("nan"),
+        **{metric: float("nan") for metric in REPORT_METRICS},
         "status": status,
+    }
+
+
+def positive_only_detection_metrics(
+    labels: Iterable[int] | np.ndarray,
+    scores: Iterable[float] | np.ndarray,
+    *,
+    threshold: float,
+) -> dict[str, float | int | str]:
+    """Return only meaningful positive-class statistics for EvalGEN-like data."""
+
+    targets = np.asarray(labels).reshape(-1)
+    values = np.asarray(scores, dtype=np.float64).reshape(-1)
+    if targets.size == 0 or targets.size != values.size:
+        raise ValueError("labels and scores must be non-empty and have equal length")
+    if set(np.unique(targets)) != {1}:
+        raise ValueError("positive-only evaluation requires target 1 for every row")
+    if not np.isfinite(values).all() or not np.isfinite(threshold):
+        raise ValueError("scores and threshold must be finite")
+    predicted_positive = values >= threshold
+    true_positive = int(predicted_positive.sum())
+    false_negative = int((~predicted_positive).sum())
+    unavailable = {metric: float("nan") for metric in REPORT_METRICS}
+    unavailable.update({
+        "recall": _safe_ratio(true_positive, len(targets)),
+        "sensitivity": _safe_ratio(true_positive, len(targets)),
+        "true_positive_rate": _safe_ratio(true_positive, len(targets)),
+        "false_negative_rate": _safe_ratio(false_negative, len(targets)),
+        "predicted_positive_rate": float(predicted_positive.mean()),
+    })
+    return {
+        "rows": int(len(targets)),
+        "positives": int(len(targets)),
+        "negatives": 0,
+        "positive_prevalence": 1.0,
+        "threshold": float(threshold),
+        "true_positive": true_positive,
+        "true_negative": float("nan"),
+        "false_positive": float("nan"),
+        "false_negative": false_negative,
+        **unavailable,
+        "status": "positive_only",
     }
 
 
@@ -139,15 +239,24 @@ def metric_slices(
         group_values = dict(zip(groups, keys, strict=True))
         labels = frame["target"].to_numpy(dtype=int)
         scores = frame[score_column].to_numpy(dtype=float)
-        if len(np.unique(labels)) < 2:
+        unique_labels = set(np.unique(labels))
+        if unique_labels == {1} and np.isfinite(scores).all():
+            metrics = positive_only_detection_metrics(
+                labels,
+                scores,
+                threshold=threshold,
+            )
+        elif len(unique_labels) < 2:
             metrics = _unscorable_metrics(
                 labels,
+                scores,
                 threshold=threshold,
-                status="unscorable_one_class",
+                status="negative_only",
             )
         elif not np.isfinite(scores).all():
             metrics = _unscorable_metrics(
                 labels,
+                scores,
                 threshold=threshold,
                 status="unscorable_non_finite_scores",
             )
@@ -162,6 +271,7 @@ def metric_slices(
                 "status": "ok",
             }
         metrics["pauc_max_fpr"] = float(max_fpr)
+        metrics["score_scale"] = score_column
         rows.append({**group_values, **metrics})
     return pd.DataFrame(rows)
 
@@ -172,6 +282,7 @@ def comparison_slice_metrics(
     positive_group: str,
     negative_group: str | None,
     output_group: str,
+    base_groups: Iterable[str] = ("dataset_id", "condition", "transform_family"),
     score_column: str = "logit",
     threshold: float = 0.0,
     max_fpr: float = 0.05,
@@ -183,22 +294,15 @@ def comparison_slice_metrics(
     source at a time against all generated images.
     """
 
-    required = {
-        "dataset_id",
-        "condition",
-        "transform_family",
-        "target",
-        positive_group,
-        score_column,
-    }
+    base_group_columns = list(base_groups)
+    required = {"target", positive_group, score_column, *base_group_columns}
     if negative_group is not None:
         required.add(negative_group)
     missing = required - set(predictions.columns)
     if missing:
         raise ValueError(f"Prediction table is missing columns: {sorted(missing)}")
     comparisons: list[pd.DataFrame] = []
-    base_groups = ["dataset_id", "condition", "transform_family"]
-    for _, endpoint in predictions.groupby(base_groups, sort=True):
+    for _, endpoint in predictions.groupby(base_group_columns, sort=True):
         positives = endpoint[endpoint["target"].eq(1)]
         negatives = endpoint[endpoint["target"].eq(0)]
         if negative_group is None:
@@ -216,10 +320,12 @@ def comparison_slice_metrics(
                     )
                 )
     if not comparisons:
-        return pd.DataFrame(columns=[*base_groups, output_group, "status", *ROBUSTNESS_METRICS])
+        return pd.DataFrame(
+            columns=[*base_group_columns, output_group, "status", *REPORT_METRICS]
+        )
     return metric_slices(
         pd.concat(comparisons, ignore_index=True),
-        [*base_groups, output_group],
+        [*base_group_columns, output_group],
         score_column=score_column,
         threshold=threshold,
         max_fpr=max_fpr,
@@ -304,6 +410,108 @@ def paired_endpoint_drift(
                 (~frame["clean_correct"] & frame["condition_correct"]).mean()
             ),
         })
+    return pd.DataFrame(rows)
+
+
+def paired_lineage_drift(
+    predictions: pd.DataFrame,
+    *,
+    score_column: str = "logit",
+    threshold: float = 0.0,
+) -> pd.DataFrame:
+    """Measure TechJam's supplied transformed assets against clean lineage peers."""
+
+    required = {
+        "dataset_id",
+        "lineage_id",
+        "endpoint_class",
+        "condition",
+        "transform_family",
+        "target",
+        score_column,
+    }
+    missing = required - set(predictions)
+    if missing:
+        raise ValueError(f"Prediction table is missing columns: {sorted(missing)}")
+    key = ["dataset_id", "lineage_id"]
+    clean = predictions[predictions["endpoint_class"].eq("clean")][
+        [*key, "target", score_column]
+    ].rename(columns={"target": "clean_target", score_column: "clean_score"})
+    transformed = predictions[predictions["endpoint_class"].eq("transformed")]
+    if clean.duplicated(key).any() or transformed.duplicated(key).any():
+        raise ValueError("Paired lineage drift requires at most one endpoint per class and lineage.")
+    joined = transformed.merge(clean, on=key, how="inner", validate="one_to_one")
+    if joined.empty:
+        return pd.DataFrame(columns=["dataset_id", "condition", "transform_family", "pairs"])
+    if not joined["target"].eq(joined["clean_target"]).all():
+        raise ValueError("Clean and transformed lineage targets disagree.")
+    joined["score_drift"] = joined[score_column] - joined["clean_score"]
+    joined["clean_positive"] = joined["clean_score"].ge(threshold)
+    joined["transformed_positive"] = joined[score_column].ge(threshold)
+    joined["clean_correct"] = joined["clean_positive"].astype(int).eq(joined["target"])
+    joined["transformed_correct"] = joined["transformed_positive"].astype(int).eq(
+        joined["target"]
+    )
+    rows = []
+    for (dataset_id, condition, family), frame in joined.groupby(
+        ["dataset_id", "condition", "transform_family"], sort=True
+    ):
+        correlation = frame[["clean_score", score_column]].corr().iloc[0, 1]
+        rows.append({
+            "dataset_id": dataset_id,
+            "condition": condition,
+            "transform_family": family,
+            "pairs": int(len(frame)),
+            "mean_score_drift": float(frame["score_drift"].mean()),
+            "mean_absolute_score_drift": float(frame["score_drift"].abs().mean()),
+            "clean_transformed_pearson": float(correlation),
+            "prediction_flip_rate": float(
+                frame["clean_positive"].ne(frame["transformed_positive"]).mean()
+            ),
+            "correct_to_incorrect_rate": float(
+                (frame["clean_correct"] & ~frame["transformed_correct"]).mean()
+            ),
+            "incorrect_to_correct_rate": float(
+                (~frame["clean_correct"] & frame["transformed_correct"]).mean()
+            ),
+        })
+    return pd.DataFrame(rows)
+
+
+def score_distribution_slices(
+    predictions: pd.DataFrame,
+    group_columns: Iterable[str],
+    *,
+    score_columns: Iterable[str] = ("logit", "pred"),
+) -> pd.DataFrame:
+    """Summarize class-conditional score distributions for every requested slice."""
+
+    groups = list(group_columns)
+    scores = list(score_columns)
+    required = {"target", *groups, *scores}
+    missing = required - set(predictions)
+    if missing:
+        raise ValueError(f"Prediction table is missing columns: {sorted(missing)}")
+    rows: list[dict[str, object]] = []
+    grouped = predictions.groupby([*groups, "target"], dropna=False, sort=True)
+    for key, frame in grouped:
+        keys = key if isinstance(key, tuple) else (key,)
+        group_values = dict(zip([*groups, "target"], keys, strict=True))
+        for score_column in scores:
+            values = frame[score_column].to_numpy(dtype=float)
+            if not np.isfinite(values).all():
+                raise ValueError(f"Score distribution {score_column!r} contains non-finite values.")
+            rows.append({
+                **group_values,
+                "class_name": "aigc" if int(group_values["target"]) == 1 else "authentic",
+                "score_column": score_column,
+                "rows": int(len(values)),
+                "mean": float(np.mean(values)),
+                "standard_deviation": float(np.std(values)),
+                "median": float(np.median(values)),
+                "p05": float(np.quantile(values, 0.05)),
+                "p95": float(np.quantile(values, 0.95)),
+            })
     return pd.DataFrame(rows)
 
 

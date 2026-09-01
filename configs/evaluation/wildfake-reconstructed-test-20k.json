@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "dataset_id": "wildfake-reconstructed-test-20k",
+  "adapter": "csv",
+  "manifest": "data/evaluation/wildfake-stratified-20k/manifest.csv",
+  "root": ".",
+  "columns": {
+    "image_path": "image_path",
+    "target": "target",
+    "parent_id": "parent_id",
+    "lineage_id": "lineage_id",
+    "generator_family": "generator_family",
+    "generation_model": "generation_model",
+    "source_dataset": "source_dataset",
+    "authentic_subtype": "authentic_subtype"
+  },
+  "filters": {
+    "dataset_id": ["wildfake-reconstructed-test"]
+  },
+  "expected_rows": 20000,
+  "expected_target_counts": {"0": 10000, "1": 10000},
+  "provenance_note": "Deterministic reconstruction of WildFake's published per-stratum 80/20 policy; not the authors' exact unpublished test membership."
+}

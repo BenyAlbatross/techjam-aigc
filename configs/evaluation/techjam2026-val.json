@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "dataset_id": "techjam2026-development",
+  "dataset_id": "techjam2026-v2-val",
   "adapter": "csv",
-  "manifest": "data/techjam2026-normalized/training-manifest.csv",
+  "manifest": "data/techjam2026_v2-normalized/training-manifest.csv",
   "root": ".",
   "columns": {
     "image_path": "local_path",
@@ -15,8 +15,8 @@
     "authentic_subtype": "authentic_subtype"
   },
   "filters": {
-    "role": [
-      "development"
+    "split": [
+      "val"
     ]
   }
 }

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "dataset_id": "evalgen-positive-only",
+  "adapter": "class_folders",
+  "root": "data/evalgen",
+  "classes": {
+    "GenEval-JPEG/Flux": 1,
+    "GenEval-JPEG/GoT": 1,
+    "GenEval-JPEG/Infinity": 1,
+    "GenEval-JPEG/NOVA": 1,
+    "GenEval-JPEG/OmniGen": 1
+  },
+  "class_metadata": {
+    "GenEval-JPEG/Flux": {
+      "generator_family": "diffusion_transformer",
+      "generation_model": "Flux",
+      "source_dataset": "GenEval prompts",
+      "authentic_subtype": "not_applicable"
+    },
+    "GenEval-JPEG/GoT": {
+      "generator_family": "multimodal_diffusion",
+      "generation_model": "GoT",
+      "source_dataset": "GenEval prompts",
+      "authentic_subtype": "not_applicable"
+    },
+    "GenEval-JPEG/Infinity": {
+      "generator_family": "autoregressive",
+      "generation_model": "Infinity",
+      "source_dataset": "GenEval prompts",
+      "authentic_subtype": "not_applicable"
+    },
+    "GenEval-JPEG/NOVA": {
+      "generator_family": "autoregressive",
+      "generation_model": "NOVA",
+      "source_dataset": "GenEval prompts",
+      "authentic_subtype": "not_applicable"
+    },
+    "GenEval-JPEG/OmniGen": {
+      "generator_family": "multimodal_diffusion",
+      "generation_model": "OmniGen",
+      "source_dataset": "GenEval prompts",
+      "authentic_subtype": "not_applicable"
+    }
+  },
+  "expected_counts": {
+    "GenEval-JPEG/Flux": 11060,
+    "GenEval-JPEG/GoT": 11060,
+    "GenEval-JPEG/Infinity": 11060,
+    "GenEval-JPEG/NOVA": 11059,
+    "GenEval-JPEG/OmniGen": 11059
+  },
+  "expected_rows": 55298,
+  "expected_target_counts": {"1": 55298},
+  "published_expected_rows": 55300,
+  "source_archive": "data/evalgen/EvalGEN.zip",
+  "inventory_note": "The published README says 55,300 images; the pinned local ZIP central directory and extracted tree contain 55,298 images. Evaluation uses the extracted tree because Python detects overlapping entries in the ZIP central directory."
+}

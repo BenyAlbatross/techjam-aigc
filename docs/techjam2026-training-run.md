@@ -1,4 +1,8 @@
-# TechJam 2026 local training run
+# Historical TechJam 2026 v1 local training run
+
+This record describes the superseded v1 dataset and artifact set. The active
+`techjam2026_v2` pipeline uses only `train`, `val`, and `test`; do not reuse the
+partition names or commands below for new training.
 
 ## Dataset and split policy
 
@@ -39,8 +43,10 @@ ROC-AUC for dimension, encoded-size metadata, and codec.
 - Batch size: 512, class-balanced with native positives rotated across the
   three non-held-out generator families
 - Schedule: 5 detector epochs, AdamW, short warm-up, cosine decay
-- Tracking/publication: W&B offline; checkpoints retained locally
-- Configuration: `configs/trace-rx-m-techjam2026-local.json`
+- Tracking/publication: W&B offline; this historical run retained checkpoints
+  locally (the current training config publishes future weights to
+  `techjam-aigc/trace-rx-m`)
+- Configuration: `configs/archive/trace-rx-m-dinov2-historical.json`
 
 The mixed-precision preflight observed BF16 attention-projection activations
 and nonzero gradients in all 24 query/value LoRA pairs (48 LoRA tensors).

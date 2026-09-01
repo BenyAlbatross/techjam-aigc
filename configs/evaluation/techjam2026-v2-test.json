@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "dataset_id": "techjam2026-v2-test",
+  "adapter": "csv",
+  "manifest": "data/techjam2026_v2/labels.csv",
+  "root": "data/techjam2026_v2",
+  "columns": {
+    "image_path": "image_path",
+    "target": "label",
+    "parent_id": "asset_id",
+    "lineage_id": "lineage_id",
+    "generator_family": "model_family",
+    "generation_model": "generator_model",
+    "source_dataset": "source_dataset",
+    "authentic_subtype": "source_family",
+    "condition": "transform_variant_id",
+    "transform_family": "transform_family",
+    "transform_variant": "transform_variant_id",
+    "transform_step_count": "is_transformed"
+  },
+  "filters": {
+    "split": ["test"]
+  },
+  "label_map": {
+    "real": 0,
+    "ai_full": 1
+  },
+  "value_maps": {
+    "condition": {"NIL": "clean"},
+    "transform_family": {"NIL": "clean"},
+    "transform_variant": {"NIL": "clean"}
+  },
+  "expected_rows": 2160,
+  "expected_target_counts": {"0": 790, "1": 1370}
+}

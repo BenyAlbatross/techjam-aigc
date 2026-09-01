@@ -4,10 +4,11 @@ from pathlib import Path
 import sys
 from types import SimpleNamespace
 
+import pytest
+
 from techjam_aigc.trace_rx_m.config import HubConfig, TrackingConfig
 from techjam_aigc.trace_rx_m.integrations import (
     HubCheckpointPublisher,
-    LocalCheckpointPublisher,
     WandbTracker,
 )
 
@@ -102,51 +103,71 @@ def test_hub_publisher_uploads_periodic_and_canonical_best_final_paths(
 ) -> None:
     api = _FakeHubApi()
     publisher = HubCheckpointPublisher(
-        HubConfig(repo_id="owner/model", path_prefix="trace", checkpoint_every_epochs=2),
+        HubConfig(
+            repo_id="techjam-aigc/model",
+            path_prefix="trace",
+            checkpoint_every_epochs=2,
+        ),
         run_id="run-123",
         api=api,
     )
     checkpoint = tmp_path / "epoch.pt"
     best = tmp_path / "best.pt"
     final = tmp_path / "final.pt"
+    shipping = tmp_path / "shipping.pt"
+    memory = tmp_path / "memory.pt"
     metadata = tmp_path / "validity.json"
-    for path in (checkpoint, best, final, metadata):
+    for path in (checkpoint, best, final, shipping, memory, metadata):
         path.touch()
 
     publisher.upload_periodic(checkpoint, epoch=2, variant="lora")
+    publisher.upload_variant_bundle(
+        best_path=best,
+        final_path=final,
+        variant="lora",
+    )
     url = publisher.upload_final_bundle(
         best_path=best,
         final_path=final,
+        shipping_path=shipping,
+        memory_path=memory,
         metadata_paths=(metadata,),
     )
 
     assert api.created[0]["exist_ok"] is True
+    assert api.created[0]["repo_id"] == "techjam-aigc/model"
     assert api.uploaded[0]["path_in_repo"] == (
         "trace/runs/run-123/checkpoints/lora/epoch-0002.pt"
     )
-    destinations = {
+    variant_destinations = {
         operation.path_in_repo for operation in api.commits[0]["operations"]
+    }
+    assert variant_destinations == {
+        "trace/runs/run-123/checkpoints/lora/best_detector.pt",
+        "trace/runs/run-123/checkpoints/lora/final_detector.pt",
+    }
+    destinations = {
+        operation.path_in_repo for operation in api.commits[1]["operations"]
     }
     assert "trace/best_detector.pt" in destinations
     assert "trace/final_detector.pt" in destinations
+    assert "trace/s4_best_detector.pt" in destinations
+    assert "trace/s4_final_detector.pt" in destinations
+    assert "trace/s4_detector.pt" in destinations
+    assert "trace/s3_memory.pt" in destinations
     assert "trace/runs/run-123/best_detector.pt" in destinations
     assert "trace/runs/run-123/final_detector.pt" in destinations
+    assert "trace/runs/run-123/s4_detector.pt" in destinations
+    assert "trace/runs/run-123/s3_memory.pt" in destinations
     assert "trace/validity.json" in destinations
     assert "trace/runs/run-123/validity.json" in destinations
     assert url.endswith("/final")
 
 
-def test_local_publisher_keeps_local_artifact_urls(tmp_path: Path) -> None:
-    publisher = LocalCheckpointPublisher(tmp_path, run_id="run-123")
-    checkpoint = tmp_path / "epoch.pt"
-    best = tmp_path / "best.pt"
-    final = tmp_path / "final.pt"
-    for path in (checkpoint, best, final):
-        path.touch()
+def test_hub_config_defaults_to_and_enforces_techjam_organization() -> None:
+    config = HubConfig()
+    assert config.repo_id == "techjam-aigc/trace-rx-m"
+    config.validate(require_repo=True)
 
-    assert publisher.upload_periodic(
-        checkpoint, epoch=1, variant="lora"
-    ) == checkpoint.resolve().as_uri()
-    assert publisher.upload_final_bundle(
-        best_path=best, final_path=final
-    ) == final.resolve().as_uri()
+    with pytest.raises(ValueError, match="techjam-aigc"):
+        HubConfig(repo_id="someone-else/model").validate(require_repo=True)
